@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from coderagent.config.schema import ContextConfig, MemoryConfig
-from coderagent.core.context import ContextEngine
+from coderagent.core.context import MISSING_RESULT, ContextEngine
 from coderagent.core.events import EventBus
 from coderagent.core.session import SessionStore
 from coderagent.tools.permissions import PermissionMode, PermissionPolicy
@@ -143,6 +143,77 @@ def test_restore_rebuilds_the_history_from_the_events(tmp_path):
         {"role": "user", "content": "hello"},
         {"role": "assistant", "content": "hi"},
     ]
+
+
+def _call(call_id: str, name: str = "read") -> dict:
+    """A tool call of the model, in the shape of a provider."""
+    return {"id": call_id, "type": "function", "function": {"name": name, "arguments": "{}"}}
+
+
+def test_a_tool_call_without_a_result_is_repaired(tmp_path):
+    """A session that was killed between the answer and the result can be continued."""
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    engine = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    engine.append({"role": "user", "content": "hello"})
+    engine.append({"role": "assistant", "content": "", "tool_calls": [_call("call_1")]})
+    restored = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    restored.restore()
+    assert restored.build_messages()[-1] == {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": MISSING_RESULT,
+    }
+
+
+def test_the_history_keeps_what_the_log_says(tmp_path):
+    """The repair is what the model sees, not what the session keeps."""
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    engine = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    engine.append({"role": "assistant", "content": "", "tool_calls": [_call("call_1")]})
+    restored = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    restored.restore()
+    assert restored.history.messages == [{"role": "assistant", "content": "", "tool_calls": [_call("call_1")]}]
+
+
+def test_the_results_keep_the_order_of_the_calls(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    engine = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    engine.append({"role": "assistant", "content": "", "tool_calls": [_call("call_1"), _call("call_2")]})
+    engine.append({"role": "tool", "tool_call_id": "call_1", "content": "the first one"})
+    restored = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    restored.restore()
+    messages = restored.build_messages()
+    assert [message.get("tool_call_id") for message in messages[1:]] == ["call_1", "call_2"]
+    assert messages[1]["content"] == "the first one"
+    assert messages[2]["content"] == MISSING_RESULT
+
+
+def test_a_rewound_session_can_still_talk_to_the_model(tmp_path):
+    """The rewind drops the result of a call, and the model is told it is gone."""
+    engine = make_engine(tmp_path)
+    engine.append({"role": "user", "content": "hello"})
+    engine.append({"role": "assistant", "content": "", "tool_calls": [_call("call_1")]})
+    engine.append({"role": "tool", "tool_call_id": "call_1", "content": "the result"})
+    engine.rewind_to(2)
+    assert engine.build_messages()[-1] == {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": MISSING_RESULT,
+    }
+
+
+def test_a_history_that_is_complete_is_left_alone(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    engine = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    engine.append({"role": "assistant", "content": "", "tool_calls": [_call("call_1")]})
+    engine.append({"role": "tool", "tool_call_id": "call_1", "content": "the result"})
+    restored = ContextEngine(session, store, EventBus(), ContextConfig(), FakeModel(), cwd=tmp_path)
+    restored.restore()
+    assert restored.build_messages()[-1] == {"role": "tool", "tool_call_id": "call_1", "content": "the result"}
 
 
 def test_estimated_tokens_grows_with_the_history(tmp_path):

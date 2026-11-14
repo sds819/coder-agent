@@ -431,6 +431,9 @@ cat /etc/passwd              # refused
   `--list`.
 - **The event log is the truth** — every message, tool call, result and cost
   is appended to a JSONL file. A session is rebuilt by replaying it.
+- **A killed session is repaired** — a tool call whose result never came back
+  gets one that says so, so the session can be continued. A `/rewind` that
+  drops a result is repaired the same way.
 - **Checkpoints** — a snapshot of the file before every write. `/rewind` rolls
   back to one.
 - **`/clear`** — starts a new session and keeps the old one in the log.

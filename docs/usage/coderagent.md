@@ -642,6 +642,11 @@ coder --fork <id>         # continue a copy of one of them
 Inside the interface, `/clear` starts a new session, `/resume` and `/fork` do
 the same as on the command line.
 
+A session that was killed in the middle of a tool call can still be continued:
+the call whose result never came back is given a result that says so, so the
+history the model sees stays whole. The same happens after a `/rewind` that
+drops the result of a call.
+
 `/cost` shows what the session has cost and where the money went:
 
 ```

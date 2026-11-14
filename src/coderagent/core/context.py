@@ -35,6 +35,46 @@ from coderagent.tools.permissions import PermissionPolicy, mode_block
 SUMMARY_OVERHEAD = 2000
 """The tokens the prompt template and the answer of a summary take."""
 
+MISSING_RESULT = "Error: the tool call was not finished: the session ended before its result was recorded."
+"""What a tool call that never came back says."""
+
+
+def repair_tool_calls(messages: list[dict]) -> list[dict]:
+    """Give every tool call a result, even the ones that never came back.
+
+    A session that was killed between the answer of the model and the result of
+    a tool has a tool call without a result, and a provider refuses such a
+    history: the session could not be continued. The missing result is a tool
+    message that says the call was not finished.
+
+    The history itself is left as it is: the event log is the truth, and the
+    repair is what the model is shown.
+    """
+    repaired: list[dict] = []
+    index = 0
+    while index < len(messages):
+        message = messages[index]
+        repaired.append(message)
+        index += 1
+        calls = message.get("tool_calls") or []
+        if message.get("role") != "assistant" or not calls:
+            continue
+        group: list[dict] = []
+        while index < len(messages) and messages[index].get("role") == "tool":
+            group.append(messages[index])
+            index += 1
+        answered = {tool.get("tool_call_id"): tool for tool in group}
+        for call in calls:
+            repaired.append(answered.get(call.get("id")) or _missing_result(call))
+        known = {call.get("id") for call in calls}
+        repaired.extend(tool for tool in group if tool.get("tool_call_id") not in known)
+    return repaired
+
+
+def _missing_result(call: dict) -> dict:
+    """The result of a tool call that was never finished."""
+    return {"role": "tool", "tool_call_id": call.get("id", ""), "content": MISSING_RESULT}
+
 
 class ContextEngine:
     def __init__(
@@ -156,7 +196,7 @@ class ContextEngine:
         summary = self._summary_text()
         if summary:
             messages.append({"role": "user", "content": summary})
-        messages.extend(self.history.messages)
+        messages.extend(repair_tool_calls(self.history.messages))
         return messages
 
     def _mode_text(self) -> str:
