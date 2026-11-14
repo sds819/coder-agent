@@ -3996,6 +3996,8 @@
 </table>
 <p>项目的 hook 写在 <code>.coderagent/config.yaml</code>，用户的 hook 写在 <code>~/.coderagent/config.yaml</code>。插件也可以带 hook。
 两个文件像其它配置一样合并：事件是合并的，但同一个事件下 hook 的那份列表会被用户那份整个换掉。</p>
+<p><strong>项目里</strong>的 hook 是没人问过就跑起来的程序，所以它先等一个决定。<strong>用户</strong>的 hook 是用户自己的，
+照用不误。见<a href="../coderagent/#the-code-of-a-project">项目里的代码</a>。</p>
 <p><code>matcher</code> 是拿工具名去匹配的，所以它只对 <code>PreToolUse</code> 和 <code>PostToolUse</code> 有意义。其它事件留空就行。
 它是<strong>搜出来的正则，不是从头对上的</strong>：工具名 <code>multi_edit</code> 会被 <code>edit|write</code> 匹配上；大小写敏感，
 所以 <code>Bash</code> 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。</p>

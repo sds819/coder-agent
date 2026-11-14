@@ -3887,6 +3887,10 @@ server. The MCP SDK is optional:</p>
 <p>The servers are read from the project file <code>.coderagent/config.yaml</code> and from
 the user file <code>~/.coderagent/config.yaml</code>. The two lists are not added
 together: the list of the user replaces the list of the project.</p>
+<p>A server of the <strong>project</strong> runs code without asking the user, so it waits for
+a decision first: cloning a repository must not be enough to start a program.
+The servers of the <strong>user</strong> are the user's own, so they are used as they are.
+See <a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p>
 <table>
 <thead>
 <tr>

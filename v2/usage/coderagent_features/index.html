@@ -5341,6 +5341,9 @@ terminal it does not.</p>
 </code></pre></div>
 <p><code>grep</code> has three modes: <code>content</code> (the default), <code>files_with_matches</code> and
 <code>count</code>. It returns at most 100 matches, <code>glob</code> at most 200 files.</p>
+<p>A link that leads out of the working directory is not followed: <code>grep</code> skips
+it, so a link to <code>~/.ssh/id_rsa</code> is not read. <code>ls</code> shows the link itself, not
+the file it points at.</p>
 <h3 id="when-something-goes-wrong_2">When something goes wrong</h3>
 <p>Every tool answers with an <code>Error: ...</code> line instead of raising, so the model
 sees the message and can correct itself. The messages are:</p>
@@ -5466,7 +5469,8 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
   the ones that destroy something or send it out ask, and a path outside the
   working directory is refused.</li>
 <li><strong>Rules</strong> — <code>~/.coderagent/rules.yaml</code> and <code>.coderagent/rules.yaml</code> decide
-  per tool and per pattern. The user level file wins.</li>
+  per tool and per pattern. The user level file wins. The rules of the project
+  may only deny.</li>
 <li><strong><code>Always allow</code></strong> — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.</li>
 <li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
@@ -5646,6 +5650,11 @@ like the paths of the file tools. The programs of the system may be named
 opens a directory outside it.</p>
 <p>Every part of a command is judged on its own, and the strictest part wins: an
 allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
+<p>The paths of a command are the ones it names, variables and all: <code>cat
+$HOME/.ssh/id_rsa</code> is refused like <code>cat ~/.ssh/id_rsa</code>, and an assignment in
+the command is seen by the words after it (<code>DIR=/etc cat $DIR/passwd</code>). A
+substitution runs a command too: <code>echo $(rm -rf ~)</code> is as dangerous as
+<code>rm -rf ~</code>.</p>
 <div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w">                       </span><span class="c1"># goes through</span>
 git<span class="w"> </span>status<span class="w">                   </span><span class="c1"># goes through</span>
 curl<span class="w"> </span>http://example.com<span class="w">      </span><span class="c1"># asks: sends data out of the machine</span>
@@ -5658,6 +5667,9 @@ cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span
   <code>--list</code>.</li>
 <li><strong>The event log is the truth</strong> — every message, tool call, result and cost
   is appended to a JSONL file. A session is rebuilt by replaying it.</li>
+<li><strong>A killed session is repaired</strong> — a tool call whose result never came back
+  gets one that says so, so the session can be continued. A <code>/rewind</code> that
+  drops a result is repaired the same way.</li>
 <li><strong>Checkpoints</strong> — a snapshot of the file before every write. <code>/rewind</code> rolls
   back to one.</li>
 <li><strong><code>/clear</code></strong> — starts a new session and keeps the old one in the log.</li>
@@ -5899,6 +5911,14 @@ it found:</p>
 <li><strong>MCP servers</strong> — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.</li>
+<li><strong>The code of a project waits</strong> — an MCP server, a hook or a verify command
+  that the project defines runs a program without asking, so it waits for a
+  decision of the user: <code>/trust</code> shows what waits, <code>/trust 1</code> trusts it. The
+  decision belongs to the command: a command that changes is trusted again.</li>
+<li><strong>The project may only take tools away</strong> — the mode of a project may only be
+  <code>plan</code> or <code>readonly</code>, its rules may only deny, its denied paths are added to
+  the ones of the user, and the tools it names may only remove from the tools
+  of the user.</li>
 </ul>
 <h3 id="example_7">Example</h3>
 <p>A sub agent, <code>.coderagent/agents/scout.md</code>:</p>
@@ -6548,11 +6568,11 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Twenty-five built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<p>Twenty-six built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
 <code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/init</code>,
 <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>, <code>/skills</code>,
-<code>/plugins</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>, <code>/context</code> and
-<code>/exit</code> (also <code>/quit</code>).</p>
+<code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>, <code>/context</code>
+and <code>/exit</code> (also <code>/quit</code>).</p>
 <p>Your own commands live in <code>.coderagent/commands/*.md</code> and join them.</p>
 <h3 id="example_13">Example</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># a command in the terminal</span>

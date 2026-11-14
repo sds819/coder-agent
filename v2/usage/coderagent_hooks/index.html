@@ -3995,6 +3995,10 @@ context of the model.</p>
 user in <code>~/.coderagent/config.yaml</code>. A plugin may bring hooks too. The two
 files are merged like the rest of the configuration: the events are merged,
 but the list of the hooks of one event is replaced by the list of the user.</p>
+<p>A hook of the <strong>project</strong> runs a program without asking the user, so it waits
+for a decision first. The hooks of the <strong>user</strong> are the user's own, so they
+are used as they are. See
+<a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p>
 <p>The matcher is matched against the name of the tool, so it only means
 something for <code>PreToolUse</code> and <code>PostToolUse</code>. Leave it empty for the other
 events. It is a <strong>regular expression that is searched, not anchored</strong>: the

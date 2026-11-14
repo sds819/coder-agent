@@ -1484,6 +1484,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-code-of-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The code of a project
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4349,6 +4360,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-code-of-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The code of a project
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4847,6 +4869,11 @@ takes some of them away. The tools of the MCP servers are always there.</p>
 </tbody>
 </table>
 <p>The mode can be changed while the session runs, with <code>/mode</code> or <code>/plan</code>.</p>
+<p>The mode of the <strong>project</strong> may only take tools away: <code>plan</code> and <code>readonly</code> are
+used, the other modes are ignored. The same goes for the rest of the
+permissions — the project may not open directories outside the working
+directory, its rules may only deny, and the tools it names may only remove
+from the tools of the user. The permissions are the user's to decide.</p>
 <p><code>plan</code> and <code>readonly</code> make the permission layer deny the writing tools, so the
 model is told about it: a <code>&lt;permission_mode mode="..."&gt;</code> block goes into the
 conversation, saying what it may do and what it should answer instead. The
@@ -4871,7 +4898,9 @@ matches wins. A command is judged part by part and the strictest part wins, so
 an allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
 <p>The rules of the project live in <code>.coderagent/rules.yaml</code>, the rules of the
 user in <code>~/.coderagent/rules.yaml</code>. Both are read, in that order, so a rule of
-the user beats a rule of the project with the same tool and pattern:</p>
+the user beats a rule of the project with the same tool and pattern. The rules
+of the project may only <strong>deny</strong>: a project cannot allow itself something the
+user has to be asked for.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/rules.yaml</span>
 <span class="nt">rules</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
@@ -4881,11 +4910,14 @@ the user beats a rule of the project with the same tool and pattern:</p>
 <p><code>permissions.deny_paths</code> are the paths that are off limits, whatever the mode
 says. <code>permissions.include_dirs</code> are the directories outside the working
 directory that the agent may still touch. Without them the agent stays inside
-the directory of the session.</p>
+the directory of the session. The paths that the project denies are added to
+the ones of the user, not put in their place.</p>
 <p>The shell has its own boundaries: the commands that only look around (<code>ls</code>,
 <code>cat</code>, <code>grep</code>, <code>git status</code>) go through without a question, the ones that
 destroy something or send it out (<code>rm</code>, <code>curl</code>, <code>git push</code>) ask, and a path
-outside the working directory is refused in every mode.</p>
+outside the working directory is refused in every mode. The paths of a command
+are the ones it names, variables and all, and a substitution runs a command
+too: <code>cat $HOME/.ssh/id_rsa</code> is refused, and <code>echo $(rm -rf ~)</code> asks.</p>
 <p><code>/permissions</code> shows the mode and the rules that are in effect.</p>
 <p>Without a terminal nobody can be asked, so a call that needs approval is
 refused and the model is told that the user refused it. In a script, use
@@ -5077,6 +5109,24 @@ under the name <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>. The MCP SDK is op
 <span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-filesystem .</span>
 </code></pre></div>
 <p>See <a href="../coderagent_mcp/">MCP servers</a>.</p>
+<h3 id="the-code-of-a-project">The code of a project</h3>
+<p>Some of the configuration of a project runs a program without asking anything:
+an MCP server, a hook, a verify command. That program was not written by the
+user, so cloning a repository must not be enough to run it.</p>
+<p>The code of the <strong>project</strong> therefore waits for a decision. The code of the
+<strong>user</strong> — in <code>~/.coderagent/config.yaml</code> — is the user's own, and is used as
+it is:</p>
+<div class="highlight"><pre><span></span><code>/trust<span class="w">            </span><span class="c1"># the code that waits for a decision</span>
+/trust<span class="w"> </span><span class="m">1</span><span class="w">          </span><span class="c1"># trust the first one of the list</span>
+</code></pre></div>
+<p>The decision is remembered in <code>~/.coderagent/trusted.json</code>, and it belongs to
+the <strong>command</strong> it was made for: a server or a hook whose command changes is a
+thing that has to be trusted again. What is left out is left out entirely, so
+a project that is not trusted does not take the servers of the user away.</p>
+<p>What waits is only the code. The rest of the configuration of the project —
+the model, the instructions — is used as it is, because it says what the agent
+may do, not what it may run. The permissions are the exception: the project
+may only take tools away, never give them.</p>
 <h2 id="the-sessions-and-the-money">The sessions and the money</h2>
 <p>A session is an append-only log of events, and that log is the source of
 truth. The sessions live in <code>~/.coderagent/sessions</code>: one <code>.jsonl</code> file with the
@@ -5087,6 +5137,10 @@ coder<span class="w"> </span>--fork<span class="w"> </span>&lt;id&gt;<span class
 </code></pre></div>
 <p>Inside the interface, <code>/clear</code> starts a new session, <code>/resume</code> and <code>/fork</code> do
 the same as on the command line.</p>
+<p>A session that was killed in the middle of a tool call can still be continued:
+the call whose result never came back is given a result that says so, so the
+history the model sees stays whole. The same happens after a <code>/rewind</code> that
+drops the result of a call.</p>
 <p><code>/cost</code> shows what the session has cost and where the money went:</p>
 <div class="highlight"><pre><span></span><code>model: deepseek/deepseek-flash
 calls: 9
