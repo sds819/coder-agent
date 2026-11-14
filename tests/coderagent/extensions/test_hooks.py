@@ -193,8 +193,7 @@ def test_the_context_of_the_hook_goes_to_the_rewritten_prompt(tmp_path):
     hooks = _runner(
         tmp_path,
         "UserPromptSubmit",
-        "import json\n"
-        "print(json.dumps({'updatedInput': 'the rewritten prompt', 'additionalContext': 'and this'}))",
+        "import json\nprint(json.dumps({'updatedInput': 'the rewritten prompt', 'additionalContext': 'and this'}))",
     )
     loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
     loop.run_turn("what the user typed")
@@ -205,9 +204,7 @@ def test_the_context_of_the_hook_goes_to_the_rewritten_prompt(tmp_path):
 
 def test_a_prompt_is_not_the_arguments_of_a_tool(tmp_path):
     """A string `updatedInput` of a tool hook does not replace the arguments."""
-    hooks = _runner(
-        tmp_path, "PreToolUse", "import json\nprint(json.dumps({'updatedInput': 'not arguments'}))"
-    )
+    hooks = _runner(tmp_path, "PreToolUse", "import json\nprint(json.dumps({'updatedInput': 'not arguments'}))")
     executor = build_executor(tmp_path, hooks=hooks)
     executor.execute(executor.plan([_write_call("a.py")]))
     assert (tmp_path / "a.py").read_text(encoding="utf-8") == "new"
