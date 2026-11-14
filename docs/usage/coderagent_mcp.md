@@ -23,6 +23,11 @@ The servers are read from the project file `.coderagent/config.yaml` and from
 the user file `~/.coderagent/config.yaml`. The two lists are not added
 together: the list of the user replaces the list of the project.
 
+A server of the **project** runs code without asking the user, so it waits for
+a decision first: cloning a repository must not be enough to start a program.
+The servers of the **user** are the user's own, so they are used as they are.
+See [The code of a project](coderagent.md#the-code-of-a-project).
+
 | Key | What it is |
 |---|---|
 | `name` | The name of the server. It is part of the name of its tools |

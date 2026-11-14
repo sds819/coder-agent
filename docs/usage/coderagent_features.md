@@ -613,6 +613,10 @@ memory:
 - **MCP servers** — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.
+- **The code of a project waits** — an MCP server, a hook or a verify command
+  that the project defines runs a program without asking, so it waits for a
+  decision of the user: `/trust` shows what waits, `/trust 1` trusts it. The
+  decision belongs to the command: a command that changes is trusted again.
 
 ### Example
 
@@ -1009,11 +1013,11 @@ The sections and what they hold:
 
 ## The commands
 
-Twenty-five built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+Twenty-six built-in commands: `/help`, `/model`, `/mode`, `/plan`,
 `/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/init`,
 `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`, `/skills`,
-`/plugins`, `/memory`, `/status`, `/sandbox`, `/export`, `/context` and
-`/exit` (also `/quit`).
+`/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`, `/context`
+and `/exit` (also `/quit`).
 
 Your own commands live in `.coderagent/commands/*.md` and join them.
 

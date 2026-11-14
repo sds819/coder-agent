@@ -591,6 +591,30 @@ mcp:
 
 See [MCP servers](coderagent_mcp.md).
 
+### The code of a project
+
+Some of the configuration of a project runs a program without asking anything:
+an MCP server, a hook, a verify command. That program was not written by the
+user, so cloning a repository must not be enough to run it.
+
+The code of the **project** therefore waits for a decision. The code of the
+**user** — in `~/.coderagent/config.yaml` — is the user's own, and is used as
+it is:
+
+```bash
+/trust            # the code that waits for a decision
+/trust 1          # trust the first one of the list
+```
+
+The decision is remembered in `~/.coderagent/trusted.json`, and it belongs to
+the **command** it was made for: a server or a hook whose command changes is a
+thing that has to be trusted again. What is left out is left out entirely, so
+a project that is not trusted does not take the servers of the user away.
+
+What waits is only the code. The rest of the configuration of the project —
+the model, the tools, the instructions — is used as it is, because it says what
+the agent may do, not what it may run.
+
 ## The sessions and the money
 
 A session is an append-only log of events, and that log is the source of

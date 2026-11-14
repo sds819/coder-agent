@@ -81,6 +81,13 @@ def bash_call(command: str, call_id: str = "call_1") -> dict:
     }
 
 
+def trust(project, command: str) -> None:
+    """Trust a hook of the project, so that it is used."""
+    from coderagent.core.trust import TRUSTED, key_of, remember
+
+    remember(project, key_of("hook", command), TRUSTED, command)
+
+
 def assistant(content: str = "", tool_calls=None, cost: float = 0.0) -> dict:
     return {
         "role": "assistant",

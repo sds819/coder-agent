@@ -140,7 +140,21 @@ def main(
     if task.startswith("/"):
         run_command(task, config, cwd, store, session)
         return
+    _warn_pending(cwd)
     typer.echo(main_impl(task, config, cwd, output_format, store=store, session=session, permission_mode=permission_mode or None))
+
+
+def _warn_pending(cwd: Path) -> None:
+    """Say that the project has code that is not used, so that it is no surprise."""
+    from coderagent.config.loader import pending_code
+
+    pending = pending_code(cwd)
+    if pending:
+        typer.echo(
+            f"The project has code that waits for a decision of the user: {', '.join(pending.values())}. "
+            "It is not used. Run /trust to see it.",
+            err=True,
+        )
 
 
 @app.command()

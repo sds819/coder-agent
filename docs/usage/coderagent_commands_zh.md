@@ -33,6 +33,7 @@ coder --task "/help"  # 不进界面，直接跑一个命令
 | `/agents` | 可以用的子 agent |
 | `/skills` | 可以用的技能 |
 | `/plugins` | 插件，或者信任其中一个 |
+| `/trust` | 项目里等着用户决定的代码，或者信任它 |
 | `/memory` | 项目的记忆和用户的记忆 |
 | `/status` | 会话的状态 |
 | `/sandbox` | agent 的命令在哪里跑 |

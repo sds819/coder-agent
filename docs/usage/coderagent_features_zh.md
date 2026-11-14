@@ -571,6 +571,9 @@ memory:
   参数提示、能用的工具，还有自己的模型。
 - **MCP 服务器**——stdio。它们的工具和别的工具一样，工具名是
   `mcp__<服务器>__<工具>`，一样要审批，断了会自己重连。
+- **项目里的代码要等一个决定**——项目定义的 MCP 服务器、hook 和验证命令都是
+  没人问就跑起来的程序，所以先等用户决定：`/trust` 列出等着的东西，`/trust 1`
+  信任其中一个。决定是记在命令上的：命令变了要重新信任。
 
 ### 用法例子
 
@@ -945,10 +948,10 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 ## 命令
 
-二十五个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+二十六个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
 `/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/init`、`/cost`、
 `/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
-`/plugins`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
+`/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。
 
 自己的命令放在 `.coderagent/commands/*.md`，和它们一起用。

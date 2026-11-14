@@ -202,6 +202,30 @@ def _mcp(context: CommandContext, argument: str) -> None:
     )
 
 
+def _trust(context: CommandContext, argument: str) -> None:
+    """Show the code of the project that waits for a decision, and trust it."""
+    from coderagent.config.loader import pending_code
+    from coderagent.core.trust import TRUSTED, remember
+
+    pending = pending_code(context.cwd, context.loop.context.user_home)
+    if not pending:
+        context.say("Nothing of the project waits for a decision.")
+        return
+    items = list(pending.items())
+    if not argument:
+        context.say(
+            "\n".join(f"{index}  {key:<16} {command}" for index, (key, command) in enumerate(items, start=1))
+            + "\nRun /trust <number> to trust one of them. It is used the next time the agent starts."
+        )
+        return
+    if not argument.isdigit() or not 1 <= int(argument) <= len(items):
+        context.say(f"'{argument}' is not one of the numbers. Run /trust to see what waits.")
+        return
+    key, command = items[int(argument) - 1]
+    remember(context.cwd, key, TRUSTED, command, context.loop.context.user_home)
+    context.say(f"Trusted '{key}'. It is used the next time the agent starts.")
+
+
 def _permissions(context: CommandContext, argument: str) -> None:
     rules = context.policy.rules
     lines = [f"mode: {context.policy.mode.value}"]
@@ -387,6 +411,7 @@ register(Command(name="init", description="Write an AGENTS.md for this project",
 register(Command(name="cost", description="Show the tokens and the money spent", handler=_cost))
 register(Command(name="todos", description="Show the task list", handler=_todos))
 register(Command(name="mcp", description="Show the MCP servers", handler=_mcp))
+register(Command(name="trust", description="Show the code of the project that waits for a decision", handler=_trust))
 register(Command(name="permissions", description="Show the rules that are in effect", handler=_permissions))
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
 register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))

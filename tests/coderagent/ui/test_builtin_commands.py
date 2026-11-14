@@ -313,6 +313,48 @@ def test_a_plugin_can_be_trusted(tmp_path, monkeypatch):
     assert (tmp_path / "home" / "trusted-plugins.json").exists()
 
 
+def test_the_code_of_the_project_that_waits_is_listed(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    _project_hook(tmp_path, "python lint.py")
+    answer = _run(context, output, "/trust")
+    assert "python lint.py" in answer
+    assert "hook" in answer
+
+
+def test_nothing_waits_when_the_project_has_no_code(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    assert "Nothing of the project waits" in _run(context, output, "/trust")
+
+
+def test_the_code_of_the_project_can_be_trusted(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    _project_hook(tmp_path, "python lint.py")
+    assert "Trusted" in _run(context, output, "/trust 1")
+    assert (tmp_path / "home" / "trusted.json").exists()
+    assert "Nothing of the project waits" in _run(context, output, "/trust")
+
+
+def test_a_number_that_is_not_one_of_them_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    _project_hook(tmp_path, "python lint.py")
+    assert "is not one of the numbers" in _run(context, output, "/trust 9")
+    assert not (tmp_path / "home" / "trusted.json").exists()
+
+
+def _project_hook(project: Path, command: str) -> None:
+    """A project with a hook, whose code waits for a decision of the user."""
+    directory = project / ".coderagent"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "config.yaml").write_text(
+        f"hooks:\n  events:\n    PreToolUse:\n      - matcher: bash\n        hooks:\n          - command: {command}\n",
+        encoding="utf-8",
+    )
+
+
 def test_the_sandbox_is_shown(tmp_path):
     context, output = _context(tmp_path)
     answer = _run(context, output, "/sandbox")

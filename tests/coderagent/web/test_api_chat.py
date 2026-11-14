@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from tests.coderagent.web.conftest import assistant, bash_call  # noqa: E402
+from tests.coderagent.web.conftest import assistant, bash_call, trust  # noqa: E402
 
 
 def test_a_turn_shows_the_conversation_and_the_tool(make_client, send, wait_for):
@@ -88,6 +88,38 @@ def test_a_rewritten_prompt_keeps_what_the_user_typed(make_client, send, wait_fo
         "print(json.dumps({'updatedInput': data['prompt'] + ' (rewritten)'}))\n",
         encoding="utf-8",
     )
+    command = f"{sys.executable} {script}"
+    trust(tmp_path, command)
+    client = make_client(
+        responses=[assistant("all done")],
+        project_config=(
+            "hooks:\n"
+            "  events:\n"
+            "    UserPromptSubmit:\n"
+            "      - hooks:\n"
+            "          - type: command\n"
+            f'            command: "{command}"\n'
+        ),
+    )
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "say hello")
+
+    items = wait_for(client, session_id, "turn_end")
+    message = [item for item in items if item["kind"] == "user_message"][0]
+
+    assert message["content"] == "say hello (rewritten)"
+    assert message["original"] == "say hello"
+
+
+def test_a_hook_of_the_project_that_is_not_trusted_does_not_run(make_client, send, wait_for, tmp_path):
+    """The hook of the project runs code: it waits for a decision of the user."""
+    script = tmp_path / "rewrite.py"
+    script.write_text(
+        "import json, sys\n"
+        "data = json.load(sys.stdin)\n"
+        "print(json.dumps({'updatedInput': data['prompt'] + ' (rewritten)'}))\n",
+        encoding="utf-8",
+    )
     client = make_client(
         responses=[assistant("all done")],
         project_config=(
@@ -105,8 +137,7 @@ def test_a_rewritten_prompt_keeps_what_the_user_typed(make_client, send, wait_fo
     items = wait_for(client, session_id, "turn_end")
     message = [item for item in items if item["kind"] == "user_message"][0]
 
-    assert message["content"] == "say hello (rewritten)"
-    assert message["original"] == "say hello"
+    assert message["content"] == "say hello"
 
 
 def test_an_empty_message_is_refused(make_client):

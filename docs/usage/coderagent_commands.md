@@ -34,6 +34,7 @@ coder --task "/help"  # a command without the interface
 | `/agents` | The sub agents that are available |
 | `/skills` | The skills that are available |
 | `/plugins` | The plugins, or trust one of them |
+| `/trust` | The code of the project that waits for a decision, or trust it |
 | `/memory` | The memory of the project and of the user |
 | `/status` | The state of the session |
 | `/sandbox` | Where the commands of the agent run |

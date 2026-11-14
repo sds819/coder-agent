@@ -2,7 +2,7 @@
 
 from textual.widgets import Static
 
-ROLE_LABEL = {"user": "You", "assistant": "Agent", "error": "Error"}
+ROLE_LABEL = {"user": "You", "assistant": "Agent", "error": "Error", "notice": "Notice"}
 
 
 class MessageBlock(Static):

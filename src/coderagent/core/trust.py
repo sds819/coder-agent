@@ -1,0 +1,199 @@
+"""What the user has agreed to run.
+
+An MCP server, a hook and a verify command run code without asking the user:
+one call after the other, without a question. When they come from the project,
+that code was not written by the user, and cloning a repository must not be
+enough to run it. So the code of a project waits for a decision, and the
+decision is remembered in `~/.coderagent/trusted.json`.
+
+The decision belongs to the command it was made for: a thing that changed its
+command is a thing that has to be trusted again.
+"""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+from coderagent.paths import config_home
+
+TRUST_FILE = "trusted.json"
+TRUSTED = "trusted"
+DENIED = "denied"
+
+
+def trust_path(user_home: Path | None = None) -> Path:
+    """The file with the decisions of the user."""
+    home = Path(user_home) if user_home else config_home()
+    return home / TRUST_FILE
+
+
+def decisions(user_home: Path | None = None) -> dict[str, dict[str, dict]]:
+    """Every decision of the user, per project."""
+    path = trust_path(user_home)
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def project_key(project: Path) -> str:
+    """The key of a project: the directory whose configuration it is."""
+    return str(Path(project).resolve())
+
+
+def decision(project: Path, key: str, command: str, user_home: Path | None = None) -> str:
+    """The decision for a thing of a project. Empty when there is none.
+
+    The command has to be the one that was trusted: when it changes, the thing
+    has to be trusted again.
+    """
+    record = decisions(user_home).get(project_key(project), {}).get(key)
+    if not isinstance(record, dict) or record.get("command") != command:
+        return ""
+    return str(record.get("decision", ""))
+
+
+def is_trusted(project: Path, key: str, command: str, user_home: Path | None = None) -> bool:
+    """Whether the user has trusted this command of this project."""
+    return decision(project, key, command, user_home) == TRUSTED
+
+
+def remember(project: Path, key: str, answer: str, command: str, user_home: Path | None = None) -> Path:
+    """Write the answer of the user into the trust table."""
+    path = trust_path(user_home)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    table = decisions(user_home)
+    table.setdefault(project_key(project), {})[key] = {"decision": answer, "command": command}
+    path.write_text(json.dumps(table, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def key_of(kind: str, command: str) -> str:
+    """A short key for a thing that has no name of its own."""
+    return f"{kind}:{hashlib.sha256(command.encode('utf-8')).hexdigest()[:8]}"
+
+
+def waiting(project: dict, directory: Path, user_home: Path | None = None) -> dict[str, str]:
+    """The code of the project that waits for a decision of the user.
+
+    The key names the thing, the value is the command it would run.
+    """
+    pending: dict[str, str] = {}
+    for server in _entries(project, "mcp", "servers"):
+        command = str(server.get("command") or "")
+        key = f"mcp:{server.get('name')}"
+        if command and not is_trusted(directory, key, command, user_home):
+            pending[key] = command
+    for hook in _hooks(project):
+        command = str(hook.get("command") or "")
+        key = key_of("hook", command)
+        if command and not is_trusted(directory, key, command, user_home):
+            pending[key] = command
+    for command in _entries(project, "verify", "commands"):
+        command = str(command)
+        key = key_of("verify", command)
+        if command and not is_trusted(directory, key, command, user_home):
+            pending[key] = command
+    return pending
+
+
+def without_untrusted(project: dict, directory: Path, user_home: Path | None = None) -> dict:
+    """The configuration of the project without the code that waits for a decision.
+
+    What is left out is left out entirely, so that the user level keeps what
+    it has: a project that is not trusted does not replace the user, it only
+    misses.
+    """
+    pending = waiting(project, directory, user_home)
+    if not pending:
+        return project
+    result = copy.deepcopy(project)
+    _without_servers(result, pending)
+    _without_hooks(result, pending)
+    _without_verify(result, pending)
+    return result
+
+
+def _without_servers(result: dict, pending: dict[str, str]) -> None:
+    """The servers that are left are the ones the user has trusted."""
+    servers = _entries(result, "mcp", "servers")
+    kept = [server for server in servers if f"mcp:{server.get('name')}" not in pending]
+    if len(kept) == len(servers):
+        return
+    if kept:
+        result["mcp"]["servers"] = kept
+    else:
+        result["mcp"].pop("servers", None)
+
+
+def _without_hooks(result: dict, pending: dict[str, str]) -> None:
+    """The hooks that are left are the ones the user has trusted."""
+    events = (result.get("hooks") or {}).get("events") or {}
+    for event, group in list(events.items()):
+        matchers = []
+        for matcher in group or []:
+            hooks = [
+                h for h in (matcher.get("hooks") or []) if key_of("hook", str(h.get("command") or "")) not in pending
+            ]
+            if hooks:
+                matcher["hooks"] = hooks
+                matchers.append(matcher)
+        if matchers:
+            events[event] = matchers
+        else:
+            events.pop(event, None)
+
+
+def _without_verify(result: dict, pending: dict[str, str]) -> None:
+    """The commands that are left are the ones the user has trusted."""
+    commands = _entries(result, "verify", "commands")
+    kept = [command for command in commands if key_of("verify", str(command)) not in pending]
+    if len(kept) == len(commands):
+        return
+    if kept:
+        result["verify"]["commands"] = kept
+    else:
+        result["verify"].pop("commands", None)
+
+
+def _entries(project: dict, section: str, key: str) -> list:
+    """The entries of a section of a configuration, whatever it holds."""
+    value = (project.get(section) or {}).get(key) or []
+    return value if isinstance(value, list) else []
+
+
+def _matchers(project: dict) -> list[dict]:
+    """The hook matchers of a configuration."""
+    events = (project.get("hooks") or {}).get("events") or {}
+    matchers = []
+    for group in events.values():
+        matchers.extend(m for m in (group or []) if isinstance(m, dict))
+    return matchers
+
+
+def _hooks(project: dict) -> list[dict]:
+    """The hooks of a configuration, whatever shape they have."""
+    hooks = []
+    for matcher in _matchers(project):
+        hooks.extend(h for h in (matcher.get("hooks") or []) if isinstance(h, dict))
+    return hooks
+
+
+__all__ = [
+    "DENIED",
+    "TRUSTED",
+    "TRUST_FILE",
+    "decision",
+    "decisions",
+    "is_trusted",
+    "key_of",
+    "project_key",
+    "remember",
+    "trust_path",
+    "waiting",
+    "without_untrusted",
+]

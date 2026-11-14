@@ -33,6 +33,9 @@ hooks:
 项目的 hook 写在 `.coderagent/config.yaml`，用户的 hook 写在 `~/.coderagent/config.yaml`。插件也可以带 hook。
 两个文件像其它配置一样合并：事件是合并的，但同一个事件下 hook 的那份列表会被用户那份整个换掉。
 
+**项目里**的 hook 是没人问过就跑起来的程序，所以它先等一个决定。**用户**的 hook 是用户自己的，
+照用不误。见[项目里的代码](coderagent.md#the-code-of-a-project)。
+
 `matcher` 是拿工具名去匹配的，所以它只对 `PreToolUse` 和 `PostToolUse` 有意义。其它事件留空就行。
 它是**搜出来的正则，不是从头对上的**：工具名 `multi_edit` 会被 `edit|write` 匹配上；大小写敏感，
 所以 `Bash` 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。

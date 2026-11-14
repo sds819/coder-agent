@@ -35,6 +35,11 @@ user in `~/.coderagent/config.yaml`. A plugin may bring hooks too. The two
 files are merged like the rest of the configuration: the events are merged,
 but the list of the hooks of one event is replaced by the list of the user.
 
+A hook of the **project** runs a program without asking the user, so it waits
+for a decision first. The hooks of the **user** are the user's own, so they
+are used as they are. See
+[The code of a project](coderagent.md#the-code-of-a-project).
+
 The matcher is matched against the name of the tool, so it only means
 something for `PreToolUse` and `PostToolUse`. Leave it empty for the other
 events. It is a **regular expression that is searched, not anchored**: the

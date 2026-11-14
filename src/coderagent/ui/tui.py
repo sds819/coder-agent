@@ -122,7 +122,20 @@ class CoderApp(App):
     def on_mount(self) -> None:
         self._subscribe()
         self._update_status()
+        self._say_pending()
         self.query_one("#input", Input).focus()
+
+    def _say_pending(self) -> None:
+        """Say that the project has code that is not used, so that it is no surprise."""
+        from coderagent.config.loader import pending_code
+
+        pending = pending_code(self.cwd, self.loop.context.user_home)
+        if pending:
+            self._add_message(
+                "notice",
+                f"The project has code that waits for a decision of the user: {', '.join(pending.values())}. "
+                "It is not used. Run /trust to see it.",
+            )
 
     # -- the events of the core -------------------------------------------
 
