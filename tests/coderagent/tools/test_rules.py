@@ -57,12 +57,21 @@ def test_a_rule_file_must_be_a_mapping(tmp_path):
         load_rules_file(path)
 
 
-def test_the_project_and_user_rules_are_merged_in_that_order(tmp_path):
+def test_the_project_may_only_deny_and_the_user_wins(tmp_path):
+    """A project cannot allow itself something: only the rules of the user do that."""
     _write(tmp_path / ".coderagent" / "rules.yaml", "rules:\n  - tool: bash\n    pattern: ls\n    decision: allow\n")
     home = tmp_path / "home"
     _write(home / "rules.yaml", "rules:\n  - tool: bash\n    pattern: ls\n    decision: deny\n")
     rules = load_rules(tmp_path, home)
-    assert [(rule.tool, rule.decision) for rule in rules] == [("bash", "allow"), ("bash", "deny")]
+    assert [(rule.tool, rule.decision) for rule in rules] == [("bash", "deny")]
+
+
+def test_the_deny_of_the_project_is_used(tmp_path):
+    _write(tmp_path / ".coderagent" / "rules.yaml", "rules:\n  - tool: bash\n    pattern: rm\n    decision: deny\n")
+    home = tmp_path / "home"
+    _write(home / "rules.yaml", "rules:\n  - tool: bash\n    pattern: ls\n    decision: allow\n")
+    rules = load_rules(tmp_path, home)
+    assert [(rule.tool, rule.decision) for rule in rules] == [("bash", "deny"), ("bash", "allow")]
 
 
 def test_a_missing_rule_file_is_not_an_error(tmp_path):

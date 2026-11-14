@@ -20,6 +20,8 @@ from coderagent.paths import config_home
 TRUST_FILE = "trusted.json"
 TRUSTED = "trusted"
 DENIED = "denied"
+TIGHT_MODES = ("plan", "readonly")
+"""The modes a project may set: they take tools away, they never give them."""
 
 
 def trust_path(user_home: Path | None = None) -> Path:
@@ -160,6 +162,30 @@ def _without_verify(result: dict, pending: dict[str, str]) -> None:
         result["verify"].pop("commands", None)
 
 
+def tightened(project: dict) -> dict:
+    """The configuration of the project without what would loosen the permissions.
+
+    The permissions are the user's: a project may say what the agent may not
+    do, never what it may do without asking. So the mode of the project is only
+    kept when it takes tools away, the directories it opens are dropped, and
+    the rules it brings may only deny.
+    """
+    result = copy.deepcopy(project)
+    permissions = result.get("permissions")
+    if not isinstance(permissions, dict):
+        return result
+    if str(permissions.get("mode") or "") not in TIGHT_MODES:
+        permissions.pop("mode", None)
+    permissions.pop("include_dirs", None)
+    rules = permissions.get("rules")
+    permissions["rules"] = (
+        [rule for rule in rules if isinstance(rule, dict) and str(rule.get("decision")) == "deny"]
+        if isinstance(rules, list)
+        else []
+    )
+    return result
+
+
 def _entries(project: dict, section: str, key: str) -> list:
     """The entries of a section of a configuration, whatever it holds."""
     value = (project.get(section) or {}).get(key) or []
@@ -185,6 +211,7 @@ def _hooks(project: dict) -> list[dict]:
 
 __all__ = [
     "DENIED",
+    "TIGHT_MODES",
     "TRUSTED",
     "TRUST_FILE",
     "decision",
@@ -193,6 +220,7 @@ __all__ = [
     "key_of",
     "project_key",
     "remember",
+    "tightened",
     "trust_path",
     "waiting",
     "without_untrusted",

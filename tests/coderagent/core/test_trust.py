@@ -65,6 +65,88 @@ def test_the_rest_of_the_project_configuration_is_used(tmp_path, monkeypatch):
     assert load_config([], cwd=tmp_path).agent.max_turns == 7
 
 
+def test_the_project_may_not_take_the_permissions_away(tmp_path, monkeypatch):
+    """The permissions are the user's: a project may not loosen them."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"permissions": {"mode": "bypass", "include_dirs": ["/etc"]}})
+    permissions = load_config([], cwd=tmp_path).permissions
+    assert permissions.mode == "default"
+    assert permissions.include_dirs == []
+
+
+def test_the_project_may_take_the_permissions_away(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"permissions": {"mode": "plan"}})
+    assert load_config([], cwd=tmp_path).permissions.mode == "plan"
+
+
+def test_the_user_may_loosen_the_permissions(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"permissions": {"mode": "bypass"}}), encoding="utf-8")
+    _project(tmp_path, {"permissions": {"mode": "plan"}})
+    assert load_config([], cwd=tmp_path).permissions.mode == "bypass"
+
+
+def test_the_project_may_not_allow_itself(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(
+        tmp_path,
+        {
+            "permissions": {
+                "rules": [
+                    {"tool": "bash", "pattern": "rm", "decision": "allow"},
+                    {"tool": "bash", "pattern": "git push", "decision": "deny"},
+                ]
+            }
+        },
+    )
+    assert load_config([], cwd=tmp_path).permissions.rules == [
+        {"tool": "bash", "pattern": "git push", "decision": "deny"}
+    ]
+
+
+def test_the_project_does_not_replace_the_rules_of_the_user(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        json.dumps({"permissions": {"rules": [{"tool": "bash", "pattern": "ls", "decision": "allow"}]}}),
+        encoding="utf-8",
+    )
+    _project(tmp_path, {"permissions": {"rules": [{"tool": "bash", "pattern": "rm", "decision": "deny"}]}})
+    rules = load_config([], cwd=tmp_path).permissions.rules
+    assert [(rule["pattern"], rule["decision"]) for rule in rules] == [("rm", "deny"), ("ls", "allow")]
+
+
+def test_the_paths_the_project_denies_are_added_to_the_ones_of_the_user(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"permissions": {"deny_paths": ["*.env"]}}), encoding="utf-8")
+    _project(tmp_path, {"permissions": {"deny_paths": ["secrets/**"]}})
+    assert load_config([], cwd=tmp_path).permissions.deny_paths == ["secrets/**", "*.env"]
+
+
+def test_the_project_may_only_remove_tools(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"tools": {"enabled": ["read", "bash"]}}), encoding="utf-8")
+    _project(tmp_path, {"tools": {"enabled": ["read", "write", "bash"]}})
+    assert load_config([], cwd=tmp_path).tools.enabled == ["read", "bash"]
+
+
+def test_the_tools_the_project_disables_are_added_to_the_ones_of_the_user(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"tools": {"disabled": ["bash"]}}), encoding="utf-8")
+    _project(tmp_path, {"tools": {"disabled": ["write"]}})
+    assert load_config([], cwd=tmp_path).tools.disabled == ["write", "bash"]
+
+
 def test_the_servers_of_the_user_are_not_touched(tmp_path, monkeypatch):
     """A project that is not trusted does not take the servers of the user away."""
     home = tmp_path / "home"

@@ -338,6 +338,12 @@ The mode decides what the agent may do without asking:
 
 The mode can be changed while the session runs, with `/mode` or `/plan`.
 
+The mode of the **project** may only take tools away: `plan` and `readonly` are
+used, the other modes are ignored. The same goes for the rest of the
+permissions — the project may not open directories outside the working
+directory, its rules may only deny, and the tools it names may only remove
+from the tools of the user. The permissions are the user's to decide.
+
 `plan` and `readonly` make the permission layer deny the writing tools, so the
 model is told about it: a `<permission_mode mode="...">` block goes into the
 conversation, saying what it may do and what it should answer instead. The
@@ -367,7 +373,9 @@ an allowed `pytest` does not carry a `rm` along with it.
 
 The rules of the project live in `.coderagent/rules.yaml`, the rules of the
 user in `~/.coderagent/rules.yaml`. Both are read, in that order, so a rule of
-the user beats a rule of the project with the same tool and pattern:
+the user beats a rule of the project with the same tool and pattern. The rules
+of the project may only **deny**: a project cannot allow itself something the
+user has to be asked for.
 
 ```yaml
 # .coderagent/rules.yaml
@@ -380,7 +388,8 @@ rules:
 `permissions.deny_paths` are the paths that are off limits, whatever the mode
 says. `permissions.include_dirs` are the directories outside the working
 directory that the agent may still touch. Without them the agent stays inside
-the directory of the session.
+the directory of the session. The paths that the project denies are added to
+the ones of the user, not put in their place.
 
 The shell has its own boundaries: the commands that only look around (`ls`,
 `cat`, `grep`, `git status`) go through without a question, the ones that
@@ -612,8 +621,9 @@ thing that has to be trusted again. What is left out is left out entirely, so
 a project that is not trusted does not take the servers of the user away.
 
 What waits is only the code. The rest of the configuration of the project —
-the model, the tools, the instructions — is used as it is, because it says what
-the agent may do, not what it may run.
+the model, the instructions — is used as it is, because it says what the agent
+may do, not what it may run. The permissions are the exception: the project
+may only take tools away, never give them.
 
 ## The sessions and the money
 

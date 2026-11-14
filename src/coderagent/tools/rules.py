@@ -91,12 +91,19 @@ def load_rules_file(path: Path) -> list[Rule]:
 
 
 def load_rules(project_dir: Path, user_home: Path | None = None) -> list[Rule]:
-    """Project rules first, then user rules. Later entries win."""
+    """Project rules first, then user rules. Later entries win.
+
+    The rules of the project may only deny: a project cannot allow itself
+    something the user has to be asked for.
+    """
     home = Path(user_home) if user_home else config_home()
     rules: list[Rule] = []
-    for path in (Path(project_dir) / ".coderagent" / "rules.yaml", home / "rules.yaml"):
-        if path.exists():
-            rules.extend(load_rules_file(path))
+    project = Path(project_dir) / ".coderagent" / "rules.yaml"
+    if project.exists():
+        rules.extend(rule for rule in load_rules_file(project) if rule.decision == "deny")
+    user = home / "rules.yaml"
+    if user.exists():
+        rules.extend(load_rules_file(user))
     return rules
 
 

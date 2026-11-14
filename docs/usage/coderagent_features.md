@@ -282,7 +282,8 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
   the ones that destroy something or send it out ask, and a path outside the
   working directory is refused.
 - **Rules** — `~/.coderagent/rules.yaml` and `.coderagent/rules.yaml` decide
-  per tool and per pattern. The user level file wins.
+  per tool and per pattern. The user level file wins. The rules of the project
+  may only deny.
 - **`Always allow`** — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.
 - **Denied paths** — `permissions.deny_paths`, paths the agent may not touch.
@@ -617,6 +618,10 @@ memory:
   that the project defines runs a program without asking, so it waits for a
   decision of the user: `/trust` shows what waits, `/trust 1` trusts it. The
   decision belongs to the command: a command that changes is trusted again.
+- **The project may only take tools away** — the mode of a project may only be
+  `plan` or `readonly`, its rules may only deny, its denied paths are added to
+  the ones of the user, and the tools it names may only remove from the tools
+  of the user.
 
 ### Example
 
