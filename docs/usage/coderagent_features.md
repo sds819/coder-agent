@@ -223,6 +223,10 @@ The thirteen built-in tools:
 `grep` has three modes: `content` (the default), `files_with_matches` and
 `count`. It returns at most 100 matches, `glob` at most 200 files.
 
+A link that leads out of the working directory is not followed: `grep` skips
+it, so a link to `~/.ssh/id_rsa` is not read. `ls` shows the link itself, not
+the file it points at.
+
 ### When something goes wrong
 
 Every tool answers with an `Error: ...` line instead of raising, so the model
@@ -406,6 +410,12 @@ opens a directory outside it.
 
 Every part of a command is judged on its own, and the strictest part wins: an
 allowed `pytest` does not carry a `rm` along with it.
+
+The paths of a command are the ones it names, variables and all: `cat
+$HOME/.ssh/id_rsa` is refused like `cat ~/.ssh/id_rsa`, and an assignment in
+the command is seen by the words after it (`DIR=/etc cat $DIR/passwd`). A
+substitution runs a command too: `echo $(rm -rf ~)` is as dangerous as
+`rm -rf ~`.
 
 ```bash
 ls -la                       # goes through

@@ -209,6 +209,9 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 `grep` 有三种模式：`content`（默认）、`files_with_matches`、`count`。
 它最多返回 100 条匹配，`glob` 最多 200 个文件。
 
+指向工作目录以外的链接不会被跟过去：`grep` 会跳过它，所以指向
+`~/.ssh/id_rsa` 的链接读不出来。`ls` 显示的是链接自己，不是它指的那个文件。
+
 ### 出错时怎么办
 
 每个工具都不抛异常，而是回答一行 `Error: ...`，模型看得见这句话，可以自己
@@ -379,6 +382,11 @@ rules:
 
 命令的每一段都单独判，取最严的那一段：放行了 `pytest` 也不代表跟着它的
 `rm` 一起放行。
+
+命令里的路径就是它点名的那些路径，变量也算：`cat $HOME/.ssh/id_rsa` 和
+`cat ~/.ssh/id_rsa` 一样被拒绝；命令里的赋值后面的词看得见它
+（`DIR=/etc cat $DIR/passwd`）。替换（`$(...)` 和反引号）也是一条命令：
+`echo $(rm -rf ~)` 和 `rm -rf ~` 一样危险。
 
 ```bash
 ls -la                       # 放行

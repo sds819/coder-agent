@@ -8,12 +8,16 @@ The disk is bounded like the file tools are: the working directory is where the
 agent works, and the system directories hold the programs it runs.
 """
 
+import os
 import re
 import shlex
 from pathlib import Path
 
 SYSTEM_PREFIXES = ("/bin", "/sbin", "/usr", "/lib", "/lib64", "/opt")
 """Where the programs of the system live. A command may name them."""
+
+VARIABLE = re.compile(r"\$(\w+|\{[A-Za-z_][A-Za-z0-9_]*\})")
+"""A variable of a word, like `$HOME` or `${HOME}`."""
 
 COMMANDS: dict[str, object] = {
     # the commands that only look around
@@ -126,9 +130,14 @@ EMBEDDED_PATH = re.compile(r"""['"(]\s*(/[^\s'"()]+)""")
 
 
 def segments(command: str) -> list[str]:
-    """The parts of a command: what a shell would run one after the other."""
+    """The parts of a command: what a shell would run one after the other.
+
+    A substitution runs a command too: what is inside `$(...)` or between
+    backticks is a part of its own, so it is judged on its own.
+    """
     parts: list[str] = []
     current: list[str] = []
+    nested: list[str] = []
     quote = ""
     index = 0
     while index < len(command):
@@ -140,18 +149,49 @@ def segments(command: str) -> list[str]:
         elif char in "'\"":
             quote = char
             current.append(char)
+        elif command[index : index + 2] == "$(":
+            inner, index = _inside(command, index + 2, ")")
+            nested.extend(segments(inner))
+        elif char == "`":
+            inner, index = _inside(command, index + 1, "`")
+            nested.extend(segments(inner))
         elif command[index : index + 2] in ("&&", "||"):
             parts.append("".join(current))
-            current = []
+            parts.extend(nested)
+            current, nested = [], []
             index += 1
         elif char in ";|\n":
             parts.append("".join(current))
-            current = []
+            parts.extend(nested)
+            current, nested = [], []
         else:
             current.append(char)
         index += 1
     parts.append("".join(current))
+    parts.extend(nested)
     return [part.strip() for part in parts if part.strip()]
+
+
+def _inside(command: str, start: int, closer: str) -> tuple[str, int]:
+    """The text of a substitution, and where it ends."""
+    depth = 1
+    quote = ""
+    index = start
+    while index < len(command):
+        char = command[index]
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif closer == ")" and char == "(":
+            depth += 1
+        elif char == closer:
+            depth -= 1
+            if depth == 0:
+                return command[start:index], index + 1
+        index += 1
+    return command[start:], len(command)
 
 
 def tokens(segment: str) -> list[str]:
@@ -221,21 +261,26 @@ def outside_paths(command: str, cwd: Path, include_dirs: list[Path]) -> list[str
 
     The system directories are open for the programs, the working directory for
     everything else. A command that changes the directory moves the ground the
-    paths after it are relative to.
+    paths after it are relative to. The variables of the command are expanded
+    first: a path that hides behind `$HOME` is a path all the same.
     """
     outside: list[str] = []
     cwd = Path(cwd).resolve()
     include_dirs = [Path(directory).resolve() for directory in include_dirs]
     virtual = cwd
+    variables: dict[str, str] = {}
     for segment in segments(command):
         parts = tokens(segment)
         if not parts:
             continue
         program = parts[0].strip("\"'")
+        _remember(variables, program)
+        program = _expand(program, variables)
         if "/" in program and not _allowed(_resolve(program, virtual), cwd, include_dirs, system=True):
             outside.append(program)
         for token in parts[1:]:
-            for candidate in _candidates(token.strip("\"'")):
+            _remember(variables, token)
+            for candidate in _candidates(token.strip("\"'"), variables):
                 if not _allowed(_resolve(candidate, virtual), cwd, include_dirs):
                     outside.append(candidate)
         if Path(program).name == "cd" and len(parts) > 1:
@@ -257,9 +302,13 @@ def _subcommand(arguments: list[str]) -> str:
     return ""
 
 
-def _candidates(value: str) -> list[str]:
+def _candidates(value: str, variables: dict[str, str]) -> list[str]:
     """The paths a word names: the absolute ones, the home ones and the ones that climb out."""
-    if not value or value.startswith("$"):
+    if not value:
+        return []
+    value = _expand(value, variables)
+    if value.startswith("$") or ":" in value:
+        """A list of paths, like `$PATH`, is not one path."""
         return []
     candidates: list[str] = []
     for part in [value, *EMBEDDED_PATH.findall(value)]:
@@ -273,6 +322,29 @@ def _candidates(value: str) -> list[str]:
             elif ".." in half.split("/"):
                 candidates.append(half)
     return candidates
+
+
+def _expand(value: str, variables: dict[str, str]) -> str:
+    """The variables of a word, as the shell would see them.
+
+    A variable that is not set is empty, like it is for the shell: the rest of
+    the word may still name a path.
+    """
+
+    def replace(match: re.Match) -> str:
+        name = match.group(1)
+        if name.startswith("{"):
+            name = name[1:-1]
+        return variables.get(name, os.environ.get(name, ""))
+
+    return VARIABLE.sub(replace, value)
+
+
+def _remember(variables: dict[str, str], token: str) -> None:
+    """The value of an assignment, so that the words after it see it."""
+    name, separator, value = token.partition("=")
+    if separator and value and name.isidentifier():
+        variables[name] = value.strip("\"'")
 
 
 def _resolve(path: str, base: Path) -> Path:

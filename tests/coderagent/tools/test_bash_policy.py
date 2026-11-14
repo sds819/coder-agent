@@ -66,3 +66,29 @@ def test_a_program_of_the_system_may_be_named():
 def test_a_directory_that_is_open_is_not_outside():
     cwd = Path("/tmp/work")
     assert bash_policy.outside_paths("cat /tmp/work/vendor/lib.py", cwd, [Path("/tmp/work/vendor")]) == []
+
+
+def test_a_variable_that_hides_a_path_is_found(monkeypatch):
+    monkeypatch.setenv("SECRET_FILE", "/etc/passwd")
+    assert bash_policy.outside_paths("cat $SECRET_FILE", Path("/tmp/work"), []) == ["/etc/passwd"]
+
+
+def test_a_variable_that_is_not_set_leaves_the_path_it_hides():
+    assert bash_policy.outside_paths("cat $NOT_SET/x", Path("/tmp/work"), []) == ["/x"]
+
+
+def test_an_assignment_is_seen_by_the_words_after_it():
+    assert bash_policy.outside_paths("DIR=/etc cat $DIR/passwd", Path("/tmp/work"), []) == ["/etc/passwd"]
+
+
+def test_a_substitution_is_a_command_of_its_own():
+    assert bash_policy.segments("echo $(rm x)") == ["echo", "rm x"]
+    assert bash_policy.classify("echo $(rm -rf ~)")[0] == "dangerous"
+
+
+def test_a_list_of_paths_is_not_one_path():
+    assert bash_policy.outside_paths("echo $PATH", Path("/tmp/work"), []) == []
+
+
+def test_a_substitution_that_names_a_path_is_found():
+    assert bash_policy.outside_paths("cat `echo /etc/passwd`", Path("/tmp/work"), []) == ["/etc/passwd"]

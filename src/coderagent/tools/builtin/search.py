@@ -125,6 +125,9 @@ class GrepTool:
         for path in candidates:
             if root.is_dir() and _is_ignored(path, root):
                 continue
+            if path.is_symlink() and not ctx.policy.within_bounds(str(path)):
+                """A symlink may lead out of the working directory: the file is not read."""
+                continue
             if matcher and not matcher.match(path.name if root.is_file() else path.relative_to(root).as_posix()):
                 continue
             try:
@@ -215,5 +218,6 @@ class LsTool:
             if kind == "d":
                 lines.append(f"{relative}/")
             else:
-                lines.append(f"{relative} ({path.stat().st_size} B)")
+                """The size of the link itself, like `ls -l` shows it."""
+                lines.append(f"{relative} ({path.lstat().st_size} B)")
         return ToolResult("\n".join(lines), metadata={"count": len(entries)})

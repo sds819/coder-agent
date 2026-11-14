@@ -95,3 +95,23 @@ def test_ls_can_recurse(ctx, tree):
 def test_ls_rejects_missing_paths(ctx):
     assert LsTool().run({"path": "nope"}, ctx).is_error
     assert LsTool().run({"path": "README.md"}, ctx).is_error
+
+
+def test_grep_does_not_read_through_a_symlink_out_of_the_tree(ctx, tree, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside")
+    (outside / "secret.txt").write_text("value here\n", encoding="utf-8")
+    (tree / "link.txt").symlink_to(outside / "secret.txt")
+    assert GrepTool().run({"pattern": "value"}, ctx).content == "README.md:2:value here"
+
+
+def test_grep_reads_a_symlink_that_stays_in_the_tree(ctx, tree):
+    (tree / "link.md").symlink_to(tree / "README.md")
+    assert "link.md:2:value here" in GrepTool().run({"pattern": "value"}, ctx).content
+
+
+def test_ls_shows_the_size_of_the_link_not_the_one_of_the_target(ctx, tree, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside")
+    secret = outside / "secret.txt"
+    secret.write_text("x" * 500, encoding="utf-8")
+    (tree / "link.txt").symlink_to(secret)
+    assert "500 B" not in LsTool().run({"path": "."}, ctx).content

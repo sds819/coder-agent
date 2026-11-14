@@ -394,7 +394,9 @@ the ones of the user, not put in their place.
 The shell has its own boundaries: the commands that only look around (`ls`,
 `cat`, `grep`, `git status`) go through without a question, the ones that
 destroy something or send it out (`rm`, `curl`, `git push`) ask, and a path
-outside the working directory is refused in every mode.
+outside the working directory is refused in every mode. The paths of a command
+are the ones it names, variables and all, and a substitution runs a command
+too: `cat $HOME/.ssh/id_rsa` is refused, and `echo $(rm -rf ~)` asks.
 
 `/permissions` shows the mode and the rules that are in effect.
 
