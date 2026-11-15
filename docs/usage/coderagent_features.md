@@ -831,6 +831,8 @@ $ python -m pytest -q
 - **The approval** — `y`, `n` and `a`, or the arrow keys on a numbered list.
 - **Long output is folded away** — the interesting part stays visible.
 - **The todo panel** — the task list of the current work.
+- **The commands have a place of their own** — the line you typed and the answer
+  of the command are messages of their own; the answer of the agent stays.
 
 ### Example
 
@@ -862,6 +864,7 @@ and `○` (pending).
 | Nothing happens when a tool wants approval | The terminal is not there — the run is headless. | The call is denied. Use `--permission-mode bypass` or a rule. |
 | `▸ 42 more lines` under the output of a tool | The output was longer than the card. | The interesting part is visible; open the file, or run the command again with less output. |
 | The interface does not start | `coder` without a task in a terminal starts the interface; without a terminal it prints `no task given`. | Use `coder --tui` to force it. |
+| `The agent is working. Wait for it, or press ctrl+c to stop it.` | A command was typed while the agent was in the middle of a turn. The command did not run. | Wait for the turn to end, or press `ctrl+c` to stop the agent. |
 
 ## The web interface
 
@@ -1053,6 +1056,10 @@ A command that takes arguments is the rest of the line:
 /model deepseek/deepseek-chat
 /rewind 20261109-3f0a91
 ```
+
+In the terminal interface a command is a message of its own: the line you typed
+is shown, and the answer of the command does not replace the answer of the
+agent. A command is refused while the agent is working.
 
 In the browser the commands are in the palette of the chat page, and the list
 comes from `GET /api/commands`.

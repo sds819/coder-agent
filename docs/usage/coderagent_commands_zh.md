@@ -10,6 +10,15 @@ coder --task "/help"  # 不进界面，直接跑一个命令
 
 > 英文版：[The commands of the coding agent](coderagent_commands.md)
 
+## 在终端界面里
+
+命令也是对话的一部分：你敲的那一行会作为你的消息显示出来，命令的回答是它自己的
+一条消息——agent 的回答不会被它顶掉。
+
+agent 正在干活的时候敲命令会被拒绝：它会说
+`The agent is working. Wait for it, or press ctrl+c to stop it.`，命令不会跑。
+等这一轮结束，或者按 `ctrl+c` 把 agent 停掉。
+
 ## 内置命令
 
 | 命令 | 干什么 |

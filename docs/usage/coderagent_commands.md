@@ -11,6 +11,16 @@ coder --task "fix the failing test"   # one turn, then the answer
 coder --task "/help"  # a command without the interface
 ```
 
+## In the terminal interface
+
+A command is part of the conversation: the line you typed is shown as your own
+message, and the answer of the command is a message of its own. The answer of
+the agent is not replaced by it.
+
+A command is refused while the agent is working — it says
+`The agent is working. Wait for it, or press ctrl+c to stop it.` and the command
+does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
+
 ## The built-in commands
 
 | Command | What it does |
