@@ -6167,6 +6167,8 @@ $ python -m pytest -q
 <li><strong>The approval</strong> — <code>y</code>, <code>n</code> and <code>a</code>, or the arrow keys on a numbered list.</li>
 <li><strong>Long output is folded away</strong> — the interesting part stays visible.</li>
 <li><strong>The todo panel</strong> — the task list of the current work.</li>
+<li><strong>The commands have a place of their own</strong> — the line you typed and the answer
+  of the command are messages of their own; the answer of the agent stays.</li>
 </ul>
 <h3 id="example_10">Example</h3>
 <p>The status bar looks like this:</p>
@@ -6206,6 +6208,11 @@ and <code>○</code> (pending).</p>
 <td>The interface does not start</td>
 <td><code>coder</code> without a task in a terminal starts the interface; without a terminal it prints <code>no task given</code>.</td>
 <td>Use <code>coder --tui</code> to force it.</td>
+</tr>
+<tr>
+<td><code>The agent is working. Wait for it, or press ctrl+c to stop it.</code></td>
+<td>A command was typed while the agent was in the middle of a turn. The command did not run.</td>
+<td>Wait for the turn to end, or press <code>ctrl+c</code> to stop the agent.</td>
 </tr>
 </tbody>
 </table>
@@ -6583,6 +6590,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/mode p
 <div class="highlight"><pre><span></span><code>/model deepseek/deepseek-chat
 /rewind 20261109-3f0a91
 </code></pre></div>
+<p>In the terminal interface a command is a message of its own: the line you typed
+is shown, and the answer of the command does not replace the answer of the
+agent. A command is refused while the agent is working.</p>
 <p>In the browser the commands are in the palette of the chat page, and the list
 comes from <code>GET /api/commands</code>.</p>
 <h3 id="when-something-goes-wrong_13">When something goes wrong</h3>

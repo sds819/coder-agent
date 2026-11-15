@@ -6116,6 +6116,8 @@ $ python -m pytest -q
 <li><strong>审批</strong>——<code>y</code>、<code>n</code>、<code>a</code>，或者方向键在带编号的列表上选。</li>
 <li><strong>长输出折起来</strong>——有意思的那部分留在眼前。</li>
 <li><strong>todo 面板</strong>——这一轮要做的事。</li>
+<li><strong>命令有自己的位置</strong>——你敲的那一行和命令的回答各自是一条消息，agent 的回答
+  还在。</li>
 </ul>
 <h3 id="_32">用法例子</h3>
 <p>状态栏长这样：</p>
@@ -6154,6 +6156,11 @@ $ python -m pytest -q
 <td>界面起不来</td>
 <td>终端里不给任务的 <code>coder</code> 会起界面；没有终端就打印 <code>no task given</code>。</td>
 <td>用 <code>coder --tui</code> 强制起。</td>
+</tr>
+<tr>
+<td><code>The agent is working. Wait for it, or press ctrl+c to stop it.</code></td>
+<td>agent 还在这一轮的中途时敲了命令，命令没有跑。</td>
+<td>等这一轮结束，或者按 <code>ctrl+c</code> 把 agent 停掉。</td>
 </tr>
 </tbody>
 </table>
@@ -6514,6 +6521,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/mode p
 <div class="highlight"><pre><span></span><code>/model deepseek/deepseek-chat
 /rewind 20261109-3f0a91
 </code></pre></div>
+<p>终端界面里，命令是它自己的一条消息：你敲的那一行会显示出来，命令的回答不会顶掉
+agent 的回答。agent 正在干活的时候敲命令会被拒绝。</p>
 <p>浏览器里，命令在聊天页的命令面板里，列表来自 <code>GET /api/commands</code>。</p>
 <h3 id="_42">出错时怎么办</h3>
 <table>
