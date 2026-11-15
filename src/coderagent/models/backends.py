@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Iterator
+from functools import cache
 from typing import Any
 
 import litellm
@@ -12,6 +13,16 @@ from minisweagent.models.utils.cache_control import set_cache_control
 from minisweagent.models.utils.retry import retry
 
 logger = logging.getLogger("coderagent.backend")
+
+
+@cache
+def _warn_about_the_price(model: str, message: str) -> None:
+    """Say that the price of a model is missing, once and not on every call.
+
+    A model that has no price has no cost: the budget of such a model is
+    `agent.token_limit`, and the money never moves.
+    """
+    logger.warning("Could not calculate cost for model %s: %s", model, message)
 
 
 class LiteLLMBackend:
@@ -129,5 +140,5 @@ class LiteLLMBackend:
             )
             return float(prompt_cost) + float(completion_cost)
         except Exception as e:
-            logger.warning("Could not calculate cost for model %s: %s", self.model_name, e)
+            _warn_about_the_price(self.model_name, str(e))
             return 0.0

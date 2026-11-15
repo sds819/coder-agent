@@ -82,3 +82,15 @@ def test_the_text_of_a_stream_becomes_one_message():
     chunks = [_Chunk(content="he"), _Chunk(content="llo")]
     message = message_from_events(backend._events(chunks))
     assert message["content"] == "hello"
+
+
+def test_a_model_without_a_price_is_complained_about_once(caplog):
+    """The warning would come with every call, and it is the same every time."""
+    from coderagent.models.backends import _warn_about_the_price
+
+    _warn_about_the_price.cache_clear()
+    with caplog.at_level("WARNING", logger="coderagent.backend"):
+        _warn_about_the_price("openai/SomeModel", "no price")
+        _warn_about_the_price("openai/SomeModel", "no price")
+    assert len(caplog.records) == 1
+    assert "openai/SomeModel" in caplog.records[0].getMessage()
