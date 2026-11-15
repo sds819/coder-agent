@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from coderagent.config.loader import load_config
-from coderagent.config.schema import BUILTIN_TOOL_NAMES, Config
+from coderagent.config.schema import BUILTIN_TOOL_NAMES, DEFAULT_SYSTEM_PROMPT, Config
 from coderagent.tools.builtin import TOOL_NAMES
 
 
@@ -80,3 +80,11 @@ def test_invalid_value_is_rejected(tmp_path, monkeypatch):
 
 def test_config_defaults_are_valid():
     assert Config().tools.bash_timeout == 120
+
+
+def test_the_default_prompt_is_the_one_of_the_schema_and_names_the_arguments(tmp_path, monkeypatch):
+    """The prompt of the file and the one of the schema must not drift apart."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    prompt = load_config([], cwd=tmp_path).agent.system_prompt
+    assert prompt == DEFAULT_SYSTEM_PROMPT
+    assert "argument names of its schema" in prompt
