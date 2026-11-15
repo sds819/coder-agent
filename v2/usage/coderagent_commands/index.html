@@ -3893,115 +3893,146 @@ does not run. Wait for the turn to end, or press <code>ctrl+c</code> to stop the
 <tr>
 <th>Command</th>
 <th>What it does</th>
+<th>What it takes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>/help</code></td>
 <td>The list of the commands</td>
+<td><code>[name]</code></td>
 </tr>
 <tr>
 <td><code>/model</code> (<code>/m</code>)</td>
 <td>Show or switch the model</td>
+<td><code>[model-name]</code></td>
 </tr>
 <tr>
 <td><code>/mode</code></td>
 <td>Show or switch the permission mode</td>
+<td><code>[default\|acceptEdits\|plan\|bypass\|readonly]</code></td>
 </tr>
 <tr>
 <td><code>/plan</code></td>
 <td>Switch to plan mode, where nothing is changed</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/compact</code></td>
 <td>Compact the conversation now</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/clear</code></td>
 <td>Start a new session</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/resume</code></td>
 <td>List the sessions or resume one</td>
+<td><code>[session-id]</code></td>
 </tr>
 <tr>
 <td><code>/fork</code></td>
 <td>Copy the session into a new one</td>
+<td><code>[session-id]</code></td>
 </tr>
 <tr>
 <td><code>/rewind</code></td>
 <td>Show the checkpoints or roll back to one</td>
+<td><code>[checkpoint-id]</code></td>
 </tr>
 <tr>
 <td><code>/diff</code></td>
 <td>Show the changes in the working tree</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/init</code></td>
 <td>Write an <code>AGENTS.md</code> for this project</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/cost</code></td>
 <td>The tokens and the money spent</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/todos</code></td>
 <td>The task list of the agent</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/mcp</code></td>
 <td>The MCP servers and their state</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/permissions</code></td>
 <td>The rules that are in effect</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/hooks</code></td>
 <td>The hooks that are loaded</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/agents</code></td>
 <td>The sub agents that are available</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/skills</code></td>
 <td>The skills that are available</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/plugins</code></td>
 <td>The plugins, or trust one of them</td>
+<td><code>[trust &lt;name&gt;]</code></td>
 </tr>
 <tr>
 <td><code>/trust</code></td>
 <td>The code of the project that waits for a decision, or trust it</td>
+<td><code>[number]</code></td>
 </tr>
 <tr>
 <td><code>/memory</code></td>
 <td>The memory of the project and of the user</td>
+<td><code>[confirm\|forget &lt;text&gt;]</code></td>
 </tr>
 <tr>
 <td><code>/status</code></td>
 <td>The state of the session</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/sandbox</code></td>
 <td>Where the commands of the agent run</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/export</code></td>
 <td>Write the conversation to a file</td>
+<td><code>[path]</code></td>
 </tr>
 <tr>
 <td><code>/context</code></td>
 <td>The size of the context</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/exit</code> (<code>/quit</code>)</td>
 <td>Leave the interface</td>
+<td></td>
 </tr>
 </tbody>
 </table>
+<p>The third column is what <code>/help</code> prints: the options of a command are written
+there, so nobody has to remember them. <code>/help &lt;name&gt;</code> describes one command and
+says what it takes. The commands of the project (see below) are in the list
+too, with the arguments their file declares.</p>
 <p>The money of <code>/cost</code> is the money of the session. A new session (<code>/clear</code>) starts
 at zero, whatever the session before it spent.</p>
 <p><code>/exit</code> closes the terminal interface, the same way <code>ctrl+q</code> does. In the

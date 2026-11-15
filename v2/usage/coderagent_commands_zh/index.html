@@ -3893,115 +3893,145 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <tr>
 <th>命令</th>
 <th>干什么</th>
+<th>收什么</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>/help</code></td>
 <td>命令的列表</td>
+<td><code>[name]</code></td>
 </tr>
 <tr>
 <td><code>/model</code>（<code>/m</code>）</td>
 <td>看或者换模型</td>
+<td><code>[model-name]</code></td>
 </tr>
 <tr>
 <td><code>/mode</code></td>
 <td>看或者换权限模式</td>
+<td><code>[default\|acceptEdits\|plan\|bypass\|readonly]</code></td>
 </tr>
 <tr>
 <td><code>/plan</code></td>
 <td>切到 plan 模式，什么都不改</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/compact</code></td>
 <td>现在就压缩对话</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/clear</code></td>
 <td>开一个新会话</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/resume</code></td>
 <td>列出会话，或者续接一个</td>
+<td><code>[session-id]</code></td>
 </tr>
 <tr>
 <td><code>/fork</code></td>
 <td>把会话复制成一个新会话</td>
+<td><code>[session-id]</code></td>
 </tr>
 <tr>
 <td><code>/rewind</code></td>
 <td>列出检查点，或者退回去一个</td>
+<td><code>[checkpoint-id]</code></td>
 </tr>
 <tr>
 <td><code>/diff</code></td>
 <td>看工作区里的改动</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/init</code></td>
 <td>给这个项目写一个 <code>AGENTS.md</code></td>
+<td></td>
 </tr>
 <tr>
 <td><code>/cost</code></td>
 <td>已经花掉的 token 和钱</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/todos</code></td>
 <td>agent 的任务清单</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/mcp</code></td>
 <td>MCP 服务器和它们的状态</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/permissions</code></td>
 <td>现在生效的规则</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/hooks</code></td>
 <td>加载了的 hook</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/agents</code></td>
 <td>可以用的子 agent</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/skills</code></td>
 <td>可以用的技能</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/plugins</code></td>
 <td>插件，或者信任其中一个</td>
+<td><code>[trust &lt;name&gt;]</code></td>
 </tr>
 <tr>
 <td><code>/trust</code></td>
 <td>项目里等着用户决定的代码，或者信任它</td>
+<td><code>[number]</code></td>
 </tr>
 <tr>
 <td><code>/memory</code></td>
 <td>项目的记忆和用户的记忆</td>
+<td><code>[confirm\|forget &lt;text&gt;]</code></td>
 </tr>
 <tr>
 <td><code>/status</code></td>
 <td>会话的状态</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/sandbox</code></td>
 <td>agent 的命令在哪里跑</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/export</code></td>
 <td>把对话写成文件</td>
+<td><code>[path]</code></td>
 </tr>
 <tr>
 <td><code>/context</code></td>
 <td>上下文有多大</td>
+<td></td>
 </tr>
 <tr>
 <td><code>/exit</code>（<code>/quit</code>）</td>
 <td>退出界面</td>
+<td></td>
 </tr>
 </tbody>
 </table>
+<p>第三列就是 <code>/help</code> 打印的东西：命令能收什么写在列里，不用记。<code>/help &lt;名字&gt;</code>
+讲一个命令，顺带说它收什么。项目自己的命令（见下）也在列表里，带着它的文件
+里声明的参数。</p>
 <p><code>/cost</code> 里的钱就是会话的钱。新会话（<code>/clear</code>）从零开始，不管上一个会话花了
 多少。</p>
 <p><code>/exit</code> 关掉终端界面，和 <code>ctrl+q</code> 一样。浏览器里没有东西可关，所以它会说
