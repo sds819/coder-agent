@@ -202,7 +202,17 @@ class CoderApp(App):
             return
         block = MessageBlock(role, content, reasoning)
         self.query_one("#conversation", VerticalScroll).mount(block)
-        self.current = block if role == "assistant" else None
+        if role == "assistant":
+            self.current = block
+        elif role == "user":
+            self.current = None
+            """The next answer of the agent is a message of its own."""
+        block.scroll_visible()
+
+    def _add_command(self, text: str) -> None:
+        """The answer of a command: a block of its own, so the answer of the agent stays."""
+        block = MessageBlock("command", text)
+        self.query_one("#conversation", VerticalScroll).mount(block)
         block.scroll_visible()
 
     def _append_text(self, text: str) -> None:
@@ -298,6 +308,11 @@ class CoderApp(App):
 
     def _run_command(self, line: str) -> None:
         """A slash command: quick enough to run in the interface itself."""
+        if self.turn_running.is_set():
+            self._add_message("error", "The agent is working. Wait for it, or press ctrl+c to stop it.")
+            return
+        self._add_message("user", line)
+        """What the user typed is part of the conversation."""
         context = CommandContext(
             loop=self.loop,
             session=self.loop.session,
@@ -308,7 +323,7 @@ class CoderApp(App):
             policy=self.loop.executor.policy,
             checkpoints=self.loop.checkpoints,
             mcp=self.loop.mcp,
-            output=lambda text: self._add_message("assistant", text),
+            output=self._add_command,
             quit=self.action_quit,
         )
         run_command(context, line)

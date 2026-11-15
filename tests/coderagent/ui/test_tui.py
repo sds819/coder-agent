@@ -43,6 +43,10 @@ def _assistant_blocks(app) -> list:
     return [block for block in app.query(MessageBlock) if block.role == "assistant"]
 
 
+def _command_blocks(app) -> list:
+    return [block for block in app.query(MessageBlock) if block.role == "command"]
+
+
 def test_the_diff_of_two_texts():
     diff = make_diff("one\ntwo\n", "one\nthree\n", "a.py")
     assert "-two" in diff
@@ -115,11 +119,48 @@ def test_a_command_is_answered(tmp_path):
         async with app.run_test() as pilot:
             await pilot.press(*"/help")
             await pilot.press("enter")
-            assert await _wait_for(lambda: _assistant_blocks(app))
-            blocks.extend(_assistant_blocks(app))
+            assert await _wait_for(lambda: _command_blocks(app))
+            blocks.extend(_command_blocks(app))
 
     asyncio.run(go())
     assert "compact" in blocks[0].content
+
+
+def test_a_command_does_not_touch_the_answer_of_the_agent(tmp_path):
+    """The answer of a command is a message of its own: the answer of the agent stays."""
+    app = _app(tmp_path)
+    answers = []
+    commands = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+            await pilot.press(*"/help")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _command_blocks(app))
+            answers.extend(_assistant_blocks(app))
+            commands.extend(_command_blocks(app))
+
+    asyncio.run(go())
+    assert answers[0].content == "hello"
+    assert "compact" in commands[0].content
+
+
+def test_the_command_that_was_typed_is_shown(tmp_path):
+    app = _app(tmp_path)
+    typed = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"/help")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _command_blocks(app))
+            typed.extend(block.content for block in app.query(MessageBlock) if block.role == "user")
+
+    asyncio.run(go())
+    assert typed == ["/help"]
 
 
 def test_the_card_of_a_tool_call_is_shown(tmp_path):
