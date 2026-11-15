@@ -48,6 +48,8 @@ class Command:
     description: str
     handler: Callable[[CommandContext, str], None]
     aliases: list[str] = field(default_factory=list)
+    usage: str = ""
+    """What the command takes, when it takes something."""
 
 
 COMMANDS: list[Command] = []

@@ -410,9 +410,9 @@ async function loadCommands() {
   const data = await api("/api/commands");
   select.innerHTML = "";
   for (const command of data.commands) {
-    const option = el("option", "", `/${command.name}`);
+    const option = el("option", "", command.usage ? `/${command.name}  ${command.usage}` : `/${command.name}`);
     option.value = `/${command.name}`;
-    option.title = command.description;
+    option.title = command.usage ? `${command.description} — ${command.usage}` : command.description;
     select.appendChild(option);
   }
 }

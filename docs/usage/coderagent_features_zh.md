@@ -973,6 +973,9 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 自己的命令放在 `.coderagent/commands/*.md`，和它们一起用。
 
+`/help` 会说每个命令收什么——`/mode` 的那几个模式、`/trust` 的编号、自己命令的
+参数——不用记。
+
 ### 用法例子
 
 ```bash

@@ -23,34 +23,39 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 
 ## The built-in commands
 
-| Command | What it does |
-|---|---|
-| `/help` | The list of the commands |
-| `/model` (`/m`) | Show or switch the model |
-| `/mode` | Show or switch the permission mode |
-| `/plan` | Switch to plan mode, where nothing is changed |
-| `/compact` | Compact the conversation now |
-| `/clear` | Start a new session |
-| `/resume` | List the sessions or resume one |
-| `/fork` | Copy the session into a new one |
-| `/rewind` | Show the checkpoints or roll back to one |
-| `/diff` | Show the changes in the working tree |
-| `/init` | Write an `AGENTS.md` for this project |
-| `/cost` | The tokens and the money spent |
-| `/todos` | The task list of the agent |
-| `/mcp` | The MCP servers and their state |
-| `/permissions` | The rules that are in effect |
-| `/hooks` | The hooks that are loaded |
-| `/agents` | The sub agents that are available |
-| `/skills` | The skills that are available |
-| `/plugins` | The plugins, or trust one of them |
-| `/trust` | The code of the project that waits for a decision, or trust it |
-| `/memory` | The memory of the project and of the user |
-| `/status` | The state of the session |
-| `/sandbox` | Where the commands of the agent run |
-| `/export` | Write the conversation to a file |
-| `/context` | The size of the context |
-| `/exit` (`/quit`) | Leave the interface |
+| Command | What it does | What it takes |
+|---|---|---|
+| `/help` | The list of the commands | `[name]` |
+| `/model` (`/m`) | Show or switch the model | `[model-name]` |
+| `/mode` | Show or switch the permission mode | `[default\|acceptEdits\|plan\|bypass\|readonly]` |
+| `/plan` | Switch to plan mode, where nothing is changed | |
+| `/compact` | Compact the conversation now | |
+| `/clear` | Start a new session | |
+| `/resume` | List the sessions or resume one | `[session-id]` |
+| `/fork` | Copy the session into a new one | `[session-id]` |
+| `/rewind` | Show the checkpoints or roll back to one | `[checkpoint-id]` |
+| `/diff` | Show the changes in the working tree | |
+| `/init` | Write an `AGENTS.md` for this project | |
+| `/cost` | The tokens and the money spent | |
+| `/todos` | The task list of the agent | |
+| `/mcp` | The MCP servers and their state | |
+| `/permissions` | The rules that are in effect | |
+| `/hooks` | The hooks that are loaded | |
+| `/agents` | The sub agents that are available | |
+| `/skills` | The skills that are available | |
+| `/plugins` | The plugins, or trust one of them | `[trust <name>]` |
+| `/trust` | The code of the project that waits for a decision, or trust it | `[number]` |
+| `/memory` | The memory of the project and of the user | `[confirm\|forget <text>]` |
+| `/status` | The state of the session | |
+| `/sandbox` | Where the commands of the agent run | |
+| `/export` | Write the conversation to a file | `[path]` |
+| `/context` | The size of the context | |
+| `/exit` (`/quit`) | Leave the interface | |
+
+The third column is what `/help` prints: the options of a command are written
+there, so nobody has to remember them. `/help <name>` describes one command and
+says what it takes. The commands of the project (see below) are in the list
+too, with the arguments their file declares.
 
 The money of `/cost` is the money of the session. A new session (`/clear`) starts
 at zero, whatever the session before it spent.

@@ -21,34 +21,38 @@ agent 正在干活的时候敲命令会被拒绝：它会说
 
 ## 内置命令
 
-| 命令 | 干什么 |
-|---|---|
-| `/help` | 命令的列表 |
-| `/model`（`/m`） | 看或者换模型 |
-| `/mode` | 看或者换权限模式 |
-| `/plan` | 切到 plan 模式，什么都不改 |
-| `/compact` | 现在就压缩对话 |
-| `/clear` | 开一个新会话 |
-| `/resume` | 列出会话，或者续接一个 |
-| `/fork` | 把会话复制成一个新会话 |
-| `/rewind` | 列出检查点，或者退回去一个 |
-| `/diff` | 看工作区里的改动 |
-| `/init` | 给这个项目写一个 `AGENTS.md` |
-| `/cost` | 已经花掉的 token 和钱 |
-| `/todos` | agent 的任务清单 |
-| `/mcp` | MCP 服务器和它们的状态 |
-| `/permissions` | 现在生效的规则 |
-| `/hooks` | 加载了的 hook |
-| `/agents` | 可以用的子 agent |
-| `/skills` | 可以用的技能 |
-| `/plugins` | 插件，或者信任其中一个 |
-| `/trust` | 项目里等着用户决定的代码，或者信任它 |
-| `/memory` | 项目的记忆和用户的记忆 |
-| `/status` | 会话的状态 |
-| `/sandbox` | agent 的命令在哪里跑 |
-| `/export` | 把对话写成文件 |
-| `/context` | 上下文有多大 |
-| `/exit`（`/quit`） | 退出界面 |
+| 命令 | 干什么 | 收什么 |
+|---|---|---|
+| `/help` | 命令的列表 | `[name]` |
+| `/model`（`/m`） | 看或者换模型 | `[model-name]` |
+| `/mode` | 看或者换权限模式 | `[default\|acceptEdits\|plan\|bypass\|readonly]` |
+| `/plan` | 切到 plan 模式，什么都不改 | |
+| `/compact` | 现在就压缩对话 | |
+| `/clear` | 开一个新会话 | |
+| `/resume` | 列出会话，或者续接一个 | `[session-id]` |
+| `/fork` | 把会话复制成一个新会话 | `[session-id]` |
+| `/rewind` | 列出检查点，或者退回去一个 | `[checkpoint-id]` |
+| `/diff` | 看工作区里的改动 | |
+| `/init` | 给这个项目写一个 `AGENTS.md` | |
+| `/cost` | 已经花掉的 token 和钱 | |
+| `/todos` | agent 的任务清单 | |
+| `/mcp` | MCP 服务器和它们的状态 | |
+| `/permissions` | 现在生效的规则 | |
+| `/hooks` | 加载了的 hook | |
+| `/agents` | 可以用的子 agent | |
+| `/skills` | 可以用的技能 | |
+| `/plugins` | 插件，或者信任其中一个 | `[trust <name>]` |
+| `/trust` | 项目里等着用户决定的代码，或者信任它 | `[number]` |
+| `/memory` | 项目的记忆和用户的记忆 | `[confirm\|forget <text>]` |
+| `/status` | 会话的状态 | |
+| `/sandbox` | agent 的命令在哪里跑 | |
+| `/export` | 把对话写成文件 | `[path]` |
+| `/context` | 上下文有多大 | |
+| `/exit`（`/quit`） | 退出界面 | |
+
+第三列就是 `/help` 打印的东西：命令能收什么写在列里，不用记。`/help <名字>`
+讲一个命令，顺带说它收什么。项目自己的命令（见下）也在列表里，带着它的文件
+里声明的参数。
 
 `/cost` 里的钱就是会话的钱。新会话（`/clear`）从零开始，不管上一个会话花了
 多少。

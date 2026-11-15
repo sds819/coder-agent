@@ -37,6 +37,16 @@ def test_the_commands_are_listed(make_client):
     assert {"help", "model", "mode", "resume", "fork", "clear"} <= set(names)
 
 
+def test_the_commands_say_what_they_take(make_client):
+    """The interface of the browser shows the options of a command."""
+    client = make_client()
+
+    commands = {command["name"]: command for command in client.get("/api/commands").json()["commands"]}
+
+    assert "acceptEdits" in commands["mode"]["usage"]
+    assert commands["status"]["usage"] == ""
+
+
 def test_an_unknown_command_says_so(make_client, send, wait_for):
     client = make_client()
     session_id = client.post("/api/sessions").json()["id"]

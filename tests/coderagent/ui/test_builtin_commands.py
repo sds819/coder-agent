@@ -81,6 +81,53 @@ def test_help_describes_one_command(tmp_path):
     assert "Compact the conversation" in _run(context, output, "/help compact")
 
 
+def test_the_help_shows_what_the_commands_take(tmp_path):
+    """The options of a command are part of the help, not a thing to remember."""
+    context, output = _context(tmp_path)
+    answer = _run(context, output, "/help")
+    assert "[default|acceptEdits|plan|bypass|readonly]" in answer
+    assert "[name]" in answer
+
+
+def test_the_help_of_one_command_shows_what_it_takes(tmp_path):
+    context, output = _context(tmp_path)
+    assert "takes: [default|acceptEdits|plan|bypass|readonly]" in _run(context, output, "/help mode")
+
+
+def test_the_mode_says_which_modes_it_takes(tmp_path):
+    context, output = _context(tmp_path)
+    answer = _run(context, output, "/mode")
+    assert "mode: default" in answer
+    assert "acceptEdits" in answer
+
+
+def test_the_help_lists_the_commands_of_the_project(tmp_path):
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "commands"
+    directory.mkdir(parents=True)
+    (directory / "commit.md").write_text(
+        "---\ndescription: Write a commit message\nargument-hint: [file]\n---\nDescribe the change of $1.",
+        encoding="utf-8",
+    )
+    answer = _run(context, output, "/help")
+    assert "/commit" in answer
+    assert "Write a commit message" in answer
+    assert "[file]" in answer
+
+
+def test_the_help_of_a_command_of_the_project(tmp_path):
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "commands"
+    directory.mkdir(parents=True)
+    (directory / "commit.md").write_text(
+        "---\ndescription: Write a commit message\nargument-hint: [file]\n---\nDescribe the change of $1.",
+        encoding="utf-8",
+    )
+    answer = _run(context, output, "/help commit")
+    assert "Write a commit message" in answer
+    assert "takes: [file]" in answer
+
+
 def test_status_shows_the_session(tmp_path):
     context, output = _context(tmp_path)
     assert context.session.id in _run(context, output, "/status")

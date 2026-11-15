@@ -1042,6 +1042,9 @@ and `/exit` (also `/quit`).
 
 Your own commands live in `.coderagent/commands/*.md` and join them.
 
+`/help` says what every command takes — the modes of `/mode`, the number of
+`/trust`, the arguments of your own commands — so nothing has to be remembered.
+
 ### Example
 
 ```bash

@@ -43,7 +43,8 @@ Three columns:
   the output and the diff of the change, approvals are cards with three
   buttons. The box under the conversation takes a message or a slash command
   (`/help`, `/clear`, `/cost`, … — the same commands as the terminal
-  interface). `Interrupt` stops the turn that is running.
+  interface). The dropdown under the box lists them and says what each one
+  takes. `Interrupt` stops the turn that is running.
 
   The page itself does not scroll: every column has its own scrollbar. The
   conversation follows the newest output, unless you scroll up to read

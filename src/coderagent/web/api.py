@@ -268,7 +268,12 @@ def commands() -> dict[str, Any]:
     load_builtins()
     return {
         "commands": [
-            {"name": command.name, "description": command.description, "aliases": command.aliases}
+            {
+                "name": command.name,
+                "description": command.description,
+                "aliases": command.aliases,
+                "usage": command.usage,
+            }
             for command in COMMANDS
         ]
     }

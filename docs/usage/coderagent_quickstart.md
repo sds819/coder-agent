@@ -233,7 +233,8 @@ rules:
 | `/status` | 会话的状态 |
 | `/context` | 上下文用了多少 |
 
-完整列表在 [`/help` 的输出](coderagent_commands.md)里。
+完整列表在 [`/help` 的输出](coderagent_commands.md)里；`/help` 也会说每个命令能收
+什么参数（`/mode` 的几个模式、`/rewind` 的检查点 id 等）。
 
 ## 给项目写一份配置 {#config}
 

@@ -33,15 +33,43 @@ and to the point.
 """
 
 
+MODES = "|".join(item.value for item in PermissionMode)
+"""The modes of the permissions, as they are written."""
+
+
 def _help(context: CommandContext, argument: str) -> None:
     from coderagent.ui.commands import load_builtins
+    from coderagent.ui.custom_commands import load_custom_commands
 
     load_builtins()
-    if argument:
-        command = next((item for item in COMMANDS if item.name == argument), None)
-        context.say(f"/{command.name}: {command.description}" if command else f"No command '/{argument}'.")
+    name = argument.lstrip("/").lower()
+    if name:
+        custom = next((item for item in load_custom_commands(context.cwd) if item.name.lower() == name), None)
+        if custom is not None:
+            context.say(f"/{custom.name}: {custom.description}" + _takes(custom.argument_hint))
+            return
+        command = next((item for item in COMMANDS if item.name == name), None)
+        if command is None:
+            context.say(f"No command '/{name}'.")
+            return
+        context.say(f"/{command.name}: {command.description}" + _takes(command.usage))
         return
-    context.say("\n".join(f"/{command.name:<12} {command.description}" for command in COMMANDS))
+    lines = [_line(command.name, command.description, command.usage) for command in COMMANDS]
+    custom = load_custom_commands(context.cwd)
+    if custom:
+        lines += ["", "The commands of this project:"]
+        lines += [_line(item.name, item.description, item.argument_hint) for item in custom]
+    context.say("\n".join(lines))
+
+
+def _takes(usage: str) -> str:
+    """The line that says what a command takes."""
+    return f"\ntakes: {usage}" if usage else ""
+
+
+def _line(name: str, description: str, usage: str) -> str:
+    line = f"/{name:<12} {description}".rstrip()
+    return f"{line}  {usage}" if usage else line
 
 
 def _model(context: CommandContext, argument: str) -> None:
@@ -65,7 +93,7 @@ def _model(context: CommandContext, argument: str) -> None:
 
 def _mode(context: CommandContext, argument: str) -> None:
     if not argument:
-        context.say(f"mode: {context.policy.mode.value}")
+        context.say(f"mode: {context.policy.mode.value}\nmodes: {MODES}")
         return
     try:
         mode = PermissionMode(argument)
@@ -397,29 +425,59 @@ def _exit(context: CommandContext, argument: str) -> None:
     context.quit()
 
 
-register(Command(name="help", description="List the commands", handler=_help))
-register(Command(name="model", description="Show or switch the model", handler=_model, aliases=["m"]))
-register(Command(name="mode", description="Show or switch the permission mode", handler=_mode))
+register(Command(name="help", description="List the commands", handler=_help, usage="[name]"))
+register(
+    Command(name="model", description="Show or switch the model", handler=_model, aliases=["m"], usage="[model-name]")
+)
+register(Command(name="mode", description="Show or switch the permission mode", handler=_mode, usage=f"[{MODES}]"))
 register(Command(name="plan", description="Switch to plan mode, where nothing is changed", handler=_plan))
 register(Command(name="compact", description="Compact the conversation now", handler=_compact))
 register(Command(name="clear", description="Start a new session", handler=_clear))
-register(Command(name="resume", description="List the sessions or resume one", handler=_resume))
-register(Command(name="fork", description="Copy the session into a new one", handler=_fork))
-register(Command(name="rewind", description="Show the checkpoints or roll back to one", handler=_rewind))
+register(Command(name="resume", description="List the sessions or resume one", handler=_resume, usage="[session-id]"))
+register(Command(name="fork", description="Copy the session into a new one", handler=_fork, usage="[session-id]"))
+register(
+    Command(
+        name="rewind",
+        description="Show the checkpoints or roll back to one",
+        handler=_rewind,
+        usage="[checkpoint-id]",
+    )
+)
 register(Command(name="diff", description="Show the changes in the working tree", handler=_diff))
 register(Command(name="init", description="Write an AGENTS.md for this project", handler=_init))
 register(Command(name="cost", description="Show the tokens and the money spent", handler=_cost))
 register(Command(name="todos", description="Show the task list", handler=_todos))
 register(Command(name="mcp", description="Show the MCP servers", handler=_mcp))
-register(Command(name="trust", description="Show the code of the project that waits for a decision", handler=_trust))
+register(
+    Command(
+        name="trust",
+        description="Show the code of the project that waits for a decision",
+        handler=_trust,
+        usage="[number]",
+    )
+)
 register(Command(name="permissions", description="Show the rules that are in effect", handler=_permissions))
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
 register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))
 register(Command(name="skills", description="Show the skills that are available", handler=_skills))
-register(Command(name="plugins", description="Show the plugins, or trust one of them", handler=_plugins))
-register(Command(name="memory", description="Show the memory of the project and of the user", handler=_memory))
+register(
+    Command(
+        name="plugins",
+        description="Show the plugins, or trust one of them",
+        handler=_plugins,
+        usage="[trust <name>]",
+    )
+)
+register(
+    Command(
+        name="memory",
+        description="Show the memory of the project and of the user",
+        handler=_memory,
+        usage="[confirm|forget <text>]",
+    )
+)
 register(Command(name="status", description="Show the state of the session", handler=_status))
 register(Command(name="sandbox", description="Show where the commands run", handler=_sandbox))
-register(Command(name="export", description="Write the conversation to a file", handler=_export))
+register(Command(name="export", description="Write the conversation to a file", handler=_export, usage="[path]"))
 register(Command(name="context", description="Show the size of the context", handler=_context))
 register(Command(name="exit", description="Leave the interface", handler=_exit, aliases=["quit"]))
