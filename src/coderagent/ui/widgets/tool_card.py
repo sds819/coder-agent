@@ -6,6 +6,7 @@ from typing import Any
 from textual.widgets import Static
 
 from coderagent.ui.widgets.diff_view import colorize_diff
+from coderagent.ui.widgets.markup import literal
 
 
 def summarize(args: dict[str, Any]) -> str:
@@ -42,21 +43,34 @@ class ToolCard(Static):
         self.call_id = call_id
         self.started = time.time()
         self.duration = 0.0
-        self.content = ""
+        self.text = ""
+        """What the tool returned. It is not markup."""
         self.is_error = False
         self.diff = ""
 
+    @property
+    def content(self) -> str:
+        """What the tool returned. It is not markup."""
+        return self.text
+
+    @content.setter
+    def content(self, text: str) -> None:
+        """Set what the tool returned. The output of the tool is not markup."""
+        self.text = text
+        self.clear_cached_dimensions()
+        self.refresh(layout=True)
+
     def render(self) -> str:
         summary = summarize(self.args)
-        title = f"[bold]Tool: {self.tool}[/bold]" + (f" ({summary})" if summary else "")
-        if not self.content:
+        title = f"[bold]Tool: {literal(self.tool)}[/bold]" + (f" ({literal(summary)})" if summary else "")
+        if not self.text:
             return f"{title}  [dim]…[/dim]"
         mark = "[red]✗[/red]" if self.is_error else "[green]✓[/green]"
         lines = [f"{title}  {mark} {self.duration * 1000:.0f}ms"]
         if self.diff:
             lines.append(colorize_diff(self.diff))
         else:
-            lines.append(f"[dim]{_fold(self.content)}[/dim]")
+            lines.append(f"[dim]{literal(_fold(self.text))}[/dim]")
         return "\n".join(lines)
 
     def start(self) -> None:

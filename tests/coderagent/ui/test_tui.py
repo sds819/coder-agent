@@ -192,6 +192,50 @@ def test_the_card_of_a_tool_call_is_shown(tmp_path):
     assert "hi" in cards[0].content
 
 
+def test_the_brackets_of_the_model_do_not_break_the_message():
+    """The text of the model is not markup: a bracket in it must not break the widget."""
+    from textual.content import Content
+
+    from coderagent.ui.widgets import MessageBlock
+
+    text = "[Function(name='read'), id='call_1', type='function')] and [1]"
+    block = MessageBlock("assistant", text)
+    assert block.content == text
+    assert text in str(Content.from_markup(block.render()))
+
+
+def test_the_brackets_of_the_model_do_not_break_the_card():
+    """The output of a tool is not markup either."""
+    from textual.content import Content
+
+    from coderagent.ui.widgets import ToolCard
+
+    text = "[Function(name='read'), id='call_1', type='function')]"
+    card = ToolCard("read", {"path": text})
+    card.finish(text, False, "")
+    assert card.content == text
+    assert text in str(Content.from_markup(card.render()))
+
+
+def test_a_message_with_brackets_is_shown(tmp_path):
+    from textual.content import Content
+
+    answer = "[Function(name='read'), id='call_1', type='function')]"
+    app = _app(tmp_path, responses=[{"role": "assistant", "content": answer, "extra": {"cost": 0.0}}])
+    blocks = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+            blocks.extend(_assistant_blocks(app))
+
+    asyncio.run(go())
+    assert blocks[0].content == answer
+    assert answer in str(Content.from_markup(blocks[0].render()))
+
+
 def test_the_approval_is_asked_and_the_tool_runs(tmp_path):
     call = {
         "id": "call_1",

@@ -2,6 +2,8 @@
 
 from textual.widgets import Static
 
+from coderagent.ui.widgets.markup import literal
+
 MARKS = {"completed": "◉", "in_progress": "◐", "pending": "○"}
 
 
@@ -32,5 +34,7 @@ class TodoPanel(Static):
         lines = ["Todo"]
         for todo in self.todos:
             mark = MARKS.get(todo.get("status", "pending"), "○")
-            lines.append(f"  {mark} {todo.get('content', '')} ({todo.get('status', 'pending')})")
+            content = literal(str(todo.get("content", "")))
+            status = literal(str(todo.get("status", "pending")))
+            lines.append(f"  {mark} {content} ({status})")
         return "\n".join(lines)

@@ -2,6 +2,8 @@
 
 from textual.widgets import Static
 
+from coderagent.ui.widgets.markup import literal
+
 
 class StatusBar(Static):
     """One line with the state of the session."""
@@ -37,4 +39,4 @@ class StatusBar(Static):
         if self.sandbox and self.sandbox != "local":
             parts.append(self.sandbox)
         parts += [part for part in (self.mode, self.state) if part]
-        self.update(" | ".join(parts))
+        self.update(literal(" | ".join(parts)))

@@ -8,6 +8,7 @@ from textual.containers import Vertical
 from textual.widgets import Static
 
 from coderagent.ui.widgets.diff_view import DiffView
+from coderagent.ui.widgets.markup import literal
 from coderagent.ui.widgets.tool_card import summarize
 
 OPTIONS = (("y", "allow"), ("n", "deny"), ("a", "always allow"))
@@ -110,12 +111,12 @@ class ApprovalPrompt(Vertical):
         yield DiffView(self.diff)
 
     def _header(self) -> str:
-        lines = [f"[bold]Allow '{self.tool}'?[/bold]"]
+        lines = [f"[bold]Allow '{literal(self.tool)}'?[/bold]"]
         summary = summarize(self.params)
         if summary:
-            lines.append(f"  {summary}")
+            lines.append(f"  {literal(summary)}")
         if self.reason:
-            lines.append(f"  [dim]{self.reason}[/dim]")
+            lines.append(f"  [dim]{literal(self.reason)}[/dim]")
         return "\n".join(lines)
 
     def move(self, delta: int) -> None:

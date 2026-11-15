@@ -5,6 +5,8 @@ from pathlib import Path
 
 from textual.widgets import Static
 
+from coderagent.ui.widgets.markup import literal
+
 
 def make_diff(before: str, after: str, path: str = "") -> str:
     """The unified diff between two texts."""
@@ -57,16 +59,17 @@ def colorize_diff(diff: str) -> str:
     """The diff, with the colors of the lines."""
     lines = []
     for line in diff.splitlines():
+        text = literal(line)
         if line.startswith(("+++", "---")):
-            lines.append(f"[dim]{line}[/dim]")
+            lines.append(f"[dim]{text}[/dim]")
         elif line.startswith("+"):
-            lines.append(f"[green]{line}[/green]")
+            lines.append(f"[green]{text}[/green]")
         elif line.startswith("-"):
-            lines.append(f"[red]{line}[/red]")
+            lines.append(f"[red]{text}[/red]")
         elif line.startswith("@@"):
-            lines.append(f"[cyan]{line}[/cyan]")
+            lines.append(f"[cyan]{text}[/cyan]")
         else:
-            lines.append(line)
+            lines.append(text)
     return "\n".join(lines)
 
 

@@ -2,6 +2,8 @@
 
 from textual.widgets import Static
 
+from coderagent.ui.widgets.markup import literal
+
 ROLE_LABEL = {"user": "You", "assistant": "Agent", "command": "Command", "error": "Error", "notice": "Notice"}
 
 
@@ -19,25 +21,40 @@ class MessageBlock(Static):
     def __init__(self, role: str, content: str = "", reasoning: str = "", **kwargs) -> None:
         super().__init__(**kwargs)
         self.role = role
-        self.content = content
+        self.text = content
+        """The message, as it was said. It is not markup."""
         self.reasoning = reasoning
+
+    @property
+    def content(self) -> str:
+        """The message, as it was said. It is not markup."""
+        return self.text
+
+    @content.setter
+    def content(self, text: str) -> None:
+        """Set the message. The text of the model is not markup."""
+        self.text = text
+        self.clear_cached_dimensions()
+        self.refresh(layout=True)
 
     def render(self) -> str:
         lines = [f"[bold]{ROLE_LABEL.get(self.role, self.role)}[/bold]"]
         if self.reasoning:
-            lines.append(f"[dim]{self.reasoning}[/dim]")
-        if self.content:
-            lines.append(self.content)
+            lines.append(f"[dim]{literal(self.reasoning)}[/dim]")
+        if self.text:
+            lines.append(literal(self.text))
         return "\n".join(lines)
 
     def append(self, text: str) -> None:
         """Add text to the message, while it is still arriving."""
-        self.content += text
+        self.text += text
         self.refresh()
 
     def set_content(self, text: str) -> None:
-        self.content = text
-        self.refresh()
+        """Set the text of the message."""
+        self.text = text
+        self.clear_cached_dimensions()
+        self.refresh(layout=True)
 
     def add_reasoning(self, text: str) -> None:
         self.reasoning += text
