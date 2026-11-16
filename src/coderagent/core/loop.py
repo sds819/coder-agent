@@ -4,7 +4,10 @@ import logging
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from typing import Any
+
 from coderagent.config.schema import ContextConfig
+from coderagent.core import schema
 from coderagent.core.content import text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
@@ -21,6 +24,10 @@ logger = logging.getLogger("coderagent.core.loop")
 VERIFY_OUTPUT_TOKENS = 2000
 """The tokens of the output of a check that go back to the model."""
 
+MAX_SCHEMA_ATTEMPTS = 2
+"""How many answers the model may give for a schema. Two means: one answer and one try again."""
+
+
 @dataclass
 class TurnResult:
     session_id: str
@@ -29,13 +36,15 @@ class TurnResult:
     cost: float
     """What this turn cost."""
     stop_reason: str
-    """One of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `error`."""
+    """One of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `schema_invalid`, `error`."""
     messages: list[dict] = field(default_factory=list)
     """Messages added during this turn."""
     error: str = ""
     """Why the turn stopped, if it stopped because of an error."""
     session_cost: float = 0.0
     """What the whole session cost, the turns before this one and the reflection included."""
+    output: Any = None
+    """The answer of the agent, when a schema was asked for. None otherwise."""
 
 
 class AgentLoop:
@@ -63,6 +72,7 @@ class AgentLoop:
         schema_budget: int | None = None,
         verify=None,
         exporter=None,
+        output_schema: dict | None = None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -96,6 +106,8 @@ class AgentLoop:
         """The commands that check the work of the agent. None means: no verification."""
         self.exporter = exporter
         """Where the trace of the session goes. None means: it stays in the event log."""
+        self.output_schema = output_schema
+        """The shape the answer of the agent has to have. None means: any shape is fine."""
         self._exported = 0
         """How many events of the session the backend has seen."""
         self.cancel = None
@@ -112,6 +124,9 @@ class AgentLoop:
             policy=self.policy,
         )
         self.context.system_prompt = system_prompt or self.context.system_prompt
+        if output_schema:
+            """The model is told what its answer has to look like."""
+            self.context.system_prompt = f"{self.context.system_prompt}\n\n{schema.note(output_schema)}".strip()
         self.context.hooks = self.hooks
         """The context needs the hooks too: it is the one that compresses."""
         self.context.restore()
@@ -184,6 +199,8 @@ class AgentLoop:
         n_calls = 0
         stop_blocks = 0
         verify_rounds = 0
+        schema_attempts = 0
+        output = None
         base = self.session.total_cost
         before = (self.model.total_cost, self.model.total_tokens)
         while True:
@@ -232,6 +249,22 @@ class AgentLoop:
                         error = failure
                         break
                     continue
+                if self.output_schema:
+                    """The answer has to fit the schema. When it does not, the model gets to try again."""
+                    problems, value = self._check_schema(response)
+                    if problems:
+                        schema_attempts += 1
+                        message = "[schema] The answer does not fit the schema.\n" + "\n".join(
+                            f"- {problem}" for problem in problems
+                        )
+                        self.context.append({"role": "user", "content": message})
+                        turn_messages.append({"role": "user", "content": message})
+                        if schema_attempts >= MAX_SCHEMA_ATTEMPTS:
+                            stop_reason = "schema_invalid"
+                            error = "; ".join(problems)
+                            break
+                        continue
+                    output = value
                 break
             self._set_state(SessionState.EXECUTING)
             actions = self.executor.plan(tool_calls)
@@ -257,7 +290,16 @@ class AgentLoop:
             stop_reason=stop_reason,
             messages=turn_messages,
             error=error,
+            output=output,
         )
+
+    def _check_schema(self, response: dict) -> tuple[list[str], Any]:
+        """The ways the answer does not fit the schema, and the answer when it does."""
+        value, reason = schema.parse(text_of(response.get("content")))
+        if reason:
+            return [reason], None
+        errors = schema.validate(value, self.output_schema)
+        return errors, None if errors else value
 
     def _verify(self, rounds: int) -> tuple[str, bool]:
         """Run the commands that check the work.

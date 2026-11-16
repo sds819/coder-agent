@@ -1,5 +1,6 @@
 """Command line interface."""
 
+import json
 import os
 import shutil
 import sys
@@ -32,12 +33,37 @@ def main_impl(
     store: SessionStore | None = None,
     session: Session | None = None,
     permission_mode: str | None = None,
+    output_schema: dict | None = None,
 ) -> str:
     """Run one turn and render the result."""
     return render(
-        run_turn(task, config, cwd=cwd, model=model, store=store, session=session, permission_mode=permission_mode),
+        run_turn(
+            task,
+            config,
+            cwd=cwd,
+            model=model,
+            store=store,
+            session=session,
+            permission_mode=permission_mode,
+            output_schema=output_schema,
+        ),
         output_format,
     )
+
+
+def read_schema(path: Path | None) -> dict | None:
+    """The schema the answer has to fit, when the user gave one."""
+    if path is None:
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise typer.BadParameter(f"the schema file cannot be read: {error}") from error
+    except json.JSONDecodeError as error:
+        raise typer.BadParameter(f"the schema file is not valid JSON: {error}") from error
+    if not isinstance(data, dict):
+        raise typer.BadParameter("the schema file must hold a JSON object")
+    return data
 
 
 def pick_session(
@@ -114,6 +140,9 @@ def main(
     profile: str = typer.Option("", "-p", "--profile", help="Named preset of the configuration"),
     print_mode: bool = typer.Option(False, "--print", help="Non-interactive mode (the only mode in M0)"),
     output_format: str = typer.Option("text", "--output-format", help="text|json"),
+    output_schema: Path | None = typer.Option(
+        None, "--output-schema", help="JSON file with the schema the answer of the agent has to fit"
+    ),
     cwd: Path = typer.Option(Path("."), "--cwd", help="Working directory of the session"),
     permission_mode: str = typer.Option("", "--permission-mode", help="default|acceptEdits|plan|bypass|readonly"),
     resume: str = typer.Option("", "--resume", help="Continue the session with this id"),
@@ -145,7 +174,18 @@ def main(
         run_command(task, config, cwd, store, session, output_format)
         return
     _warn_pending(cwd)
-    typer.echo(main_impl(task, config, cwd, output_format, store=store, session=session, permission_mode=permission_mode or None))
+    typer.echo(
+        main_impl(
+            task,
+            config,
+            cwd,
+            output_format,
+            store=store,
+            session=session,
+            permission_mode=permission_mode or None,
+            output_schema=read_schema(output_schema),
+        )
+    )
 
 
 def _warn_pending(cwd: Path) -> None:

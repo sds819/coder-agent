@@ -146,6 +146,7 @@ def build_loop(
     bus: EventBus | None = None,
     approver=None,
     user_home: Path | None = None,
+    output_schema: dict | None = None,
 ) -> AgentLoop:
     store = store or SessionStore()
     session = session or store.create(cwd)
@@ -270,6 +271,7 @@ def build_loop(
         sandbox=environment,
         verify=config.verify,
         exporter=_exporter(config),
+        output_schema=output_schema,
     )
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())
     """A tool that runs long asks the loop whether the turn is still going on."""
@@ -365,8 +367,17 @@ def run_turn(
     store: SessionStore | None = None,
     session=None,
     permission_mode: str | None = None,
+    output_schema: dict | None = None,
 ) -> TurnResult:
-    loop = build_loop(config, cwd, model=model, store=store, session=session, permission_mode=permission_mode)
+    loop = build_loop(
+        config,
+        cwd,
+        model=model,
+        store=store,
+        session=session,
+        permission_mode=permission_mode,
+        output_schema=output_schema,
+    )
     result = loop.run_turn(task)
     """A session that ends is settled in the memory, the same way as in the interface."""
     if result.stop_reason not in ("error", "cost_exceeded"):

@@ -25,6 +25,7 @@ def render_json(result: TurnResult) -> str:
             "session_cost": result.session_cost,
             "stop_reason": result.stop_reason,
             "error": result.error,
+            "output": result.output,
         },
         ensure_ascii=False,
     )

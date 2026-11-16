@@ -75,6 +75,45 @@ def test_help_is_available():
     assert result.exit_code == 0
     assert "--output-format" in result.output
     assert "--profile" in result.output
+    assert "--output-schema" in result.output
+
+
+def test_the_answer_fits_the_schema(tmp_path, monkeypatch):
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel(
+        [{"role": "assistant", "content": '{"answer": "hi"}', "tool_calls": [], "extra": {"cost": 0.0}}]
+    )
+    payload = json.loads(
+        main_impl(
+            "hi",
+            config,
+            tmp_path,
+            "json",
+            model=model,
+            store=SessionStore(tmp_path),
+            output_schema={"type": "object", "properties": {"answer": {"type": "string"}}, "required": ["answer"]},
+        )
+    )
+    assert payload["output"] == {"answer": "hi"}
+    assert payload["stop_reason"] == "end_turn"
+
+
+def test_a_schema_file_that_is_not_json_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    schema = tmp_path / "schema.json"
+    schema.write_text("not json", encoding="utf-8")
+    result = CliRunner().invoke(app, ["--task", "hi", "--output-schema", str(schema), "--cwd", str(tmp_path)])
+    assert result.exit_code != 0
+    assert "not valid JSON" in result.output
+
+
+def test_a_schema_file_that_cannot_be_read_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(
+        app, ["--task", "hi", "--output-schema", str(tmp_path / "nope.json"), "--cwd", str(tmp_path)]
+    )
+    assert result.exit_code != 0
+    assert "cannot be read" in result.output
 
 
 def test_a_profile_that_does_not_exist_is_reported(tmp_path, monkeypatch):
