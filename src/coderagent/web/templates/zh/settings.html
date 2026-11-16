@@ -39,6 +39,17 @@
       </select>
       <small id="source-set_cache_control" class="source"></small>
     </label>
+    <label>思考预算
+      <select id="reasoning-effort">
+        <option value="" title="模型想多久是它自己的事。">模型的默认</option>
+        <option value="minimal">minimal</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select>
+      <small id="source-reasoning_effort" class="source"></small>
+      <small class="source">模型想多久。Anthropic 数 token，其它家数档位。</small>
+    </label>
     <label>路由
       <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
       <small class="source">一行一个用途：<code>用途: 模型</code></small>

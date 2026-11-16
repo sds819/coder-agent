@@ -290,3 +290,26 @@ def test_the_settings_page_offers_a_cache_control_mode_that_mini_accepts(make_cl
     assert 'value="default_end"' in page
     assert 'value="ephemeral"' not in page
     assert set_cache_control([], mode="default_end") == []
+
+
+def test_the_thinking_budget_is_written_and_read_back(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"reasoning_effort": "high"})
+
+    assert client.get("/api/config").json()["model"]["reasoning_effort"] == "high"
+    assert client.get("/api/config").json()["sources"]["reasoning_effort"] == "user"
+
+
+def test_a_thinking_budget_that_does_not_exist_is_refused(make_client):
+    response = make_client().put("/api/config/model", json={"reasoning_effort": "huge"})
+
+    assert response.status_code == 400
+    assert "unknown reasoning effort" in response.json()["detail"]
+
+
+def test_the_page_offers_the_levels_of_the_model(make_client):
+    page = make_client().get("/settings").text
+
+    assert 'value="minimal"' in page
+    assert 'value="high"' in page

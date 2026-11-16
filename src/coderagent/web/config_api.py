@@ -16,6 +16,7 @@ from litellm.utils import get_llm_provider
 
 from coderagent.config.loader import config_layers, load_config
 from coderagent.models.litellm_config import resolve as resolve_alias
+from coderagent.models.reasoning import EFFORTS
 from coderagent.paths import config_home
 from coderagent.tools.permissions import PermissionMode
 
@@ -31,7 +32,15 @@ PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs", "network")
 NETWORK_POLICIES = ("allow", "deny")
 """What the browser may choose for the network."""
 
-DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")
+DIRECT_FIELDS = (
+    "model_name",
+    "max_retries",
+    "set_cache_control",
+    "routing",
+    "routing_rules",
+    "litellm_config",
+    "reasoning_effort",
+)
 """The settings of the model that live directly under `model:`."""
 
 MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")
@@ -126,6 +135,8 @@ def model_view(cwd: Path) -> dict[str, Any]:
         "api_key_hint": hint(api_key),
         "max_retries": model.max_retries,
         "set_cache_control": model.set_cache_control or "",
+        "reasoning_effort": model.reasoning_effort,
+        "efforts": list(EFFORTS),
         "routing": model.routing,
         "routing_rules": [rule.model_dump() for rule in model.routing_rules],
         "model_kwargs": {key: value for key, value in kwargs.items() if not is_secret(key)},
@@ -257,6 +268,14 @@ def write_user_model(payload: dict) -> Path:
     cache = payload.get("set_cache_control")
     if cache is not None:
         model["set_cache_control"] = cache or None
+    effort = payload.get("reasoning_effort")
+    if isinstance(effort, str):
+        if effort.strip() and effort.strip() not in EFFORTS:
+            raise ValueError(f"unknown reasoning effort '{effort}'")
+        if effort.strip():
+            model["reasoning_effort"] = effort.strip()
+        else:
+            model.pop("reasoning_effort", None)
     routing = payload.get("routing")
     if isinstance(routing, dict):
         model["routing"] = {str(key): str(value) for key, value in routing.items()}
@@ -321,6 +340,7 @@ def effective_model(cwd: Path, overrides: dict) -> dict:
         "alias": name if resolved != name else "",
         "litellm_config": aliases,
         "model_kwargs": params | kwargs,
+        "reasoning_effort": config.model.reasoning_effort,
     }
 
 
@@ -417,7 +437,7 @@ def test_connection(effective: dict) -> dict[str, Any]:
         },
         "file": check_litellm_config(effective.get("litellm_config", ""), effective.get("requested", "")),
     }
-    backend = LiteLLMBackend(name, model_kwargs=kwargs)
+    backend = LiteLLMBackend(name, model_kwargs=kwargs, reasoning_effort=effective.get("reasoning_effort", ""))
     previous = os.environ.get("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT")
     os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = "1"
     """A wrong key should fail right away, not after ten tries."""

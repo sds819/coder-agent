@@ -137,9 +137,9 @@ CLI → `render(loop.run_turn(...))`）。界面不能跑轮时（`submit is Non
 
 ---
 
-### 3.3 没有 `reasoning_effort`（思考预算）
+### 3.3 没有 `reasoning_effort`（思考预算） ✅ 已修
 
-**现状**：`src/coderagent/config/schema.py` 的 `ModelConfig` 里**没有** `reasoning_effort`
+**原来**：`src/coderagent/config/schema.py` 的 `ModelConfig` 里**没有** `reasoning_effort`
 这个字段（grep 全仓为零）。传给 litellm 的是 `model_kwargs` 的其余部分，所以理论上
 用户可以自己在 `model_kwargs` 里塞 `reasoning_effort: high`——但**没有开关、没有校验、
 没有文档、没有界面**，而且**各个厂商对这个参数的叫法不一样**（OpenAI 是
@@ -149,8 +149,23 @@ CLI → `render(loop.run_turn(...))`）。界面不能跑轮时（`submit is Non
 `model.routing` 和 `model.routing_rules`（按用途选模型）能解决一部分，
 但「同一个模型、不同的思考量」这个维度是空的。
 
-**建议**：`ModelConfig` 加一个 `reasoning_effort: str = ""`，写进 `model_kwargs`
-之前先按厂商前缀翻译成对应的参数名。**工作量：小。**
+**已修：一个 `model.reasoning_effort` 字段**
+
+- 配置里写 `model.reasoning_effort: high`，取值是 `minimal` / `low` / `medium` / `high`，
+  留空 = 模型的默认。**写错在加载配置时就被拒**（pydantic 的字段校验器），
+  不用等到发请求才炸。
+- 翻译在**一处**做：`src/coderagent/models/reasoning.py` 的 `translate(model_name, effort)`。
+  OpenAI 这一家原样传 `reasoning_effort`；Anthropic 这一家换成
+  `thinking: {type: enabled, budget_tokens: N}`（N = 1024 / 2048 / 8192 / 16384，
+  Anthropic 至少要 1024 个 token，所以 `minimal` 就是 1024）。
+- 翻译发生在 **`LiteLLMBackend` 里面**，在别名解析**之后**——`litellm_config` 里的别名
+  指向的是哪个模型，就按那个模型的厂商来翻译。
+- 用户自己在 `model_kwargs` 里写的同一个参数**优先**（`setdefault`），
+  想手工调 token 数的人不受打扰。
+- 因为翻译在 backend 里，**每一处**建 backend 的地方都白拿：主模型、`model.routing`
+  的子模型、`/model` 换模型、网页版的连接测试、自定义命令。
+- 界面上也有：网页版设置页的模型表单里多了一个「思考预算」下拉框；
+  `/model` 会把当前的档位打印出来，换模型时**带着走**。
 
 ---
 
@@ -312,7 +327,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 1 | ~~**修 3.4 + 3.5 两个 bug**~~ ✅ | 都是几行的事，但一个白烧 token、一个静默吞配置 |
 | 2 | ~~**加网络开关（3.1 的第一步）**~~ ✅ | 一天内能做完，堵住最大的口子 |
 | 3 | ~~**`/review`（3.2）**~~ ✅ | 现有零件都齐了，性价比最高的功能缺口 |
-| 4 | **`reasoning_effort`（3.3）** | 便宜，且和 `model.routing` 是一套东西 |
+| 4 | ~~**`reasoning_effort`（3.3）**~~ ✅ | 便宜，且和 `model.routing` 是一套东西 |
 | 5 | **TUI 小件（4.2 / 4.5 / 4.7 / 4.8）** | 四个小改动合一个提交，都是「有了就顺手」 |
 | 6 | **死配置清理（5.1）** | 顺手做，别单开 |
 | 7 | **OS 级沙箱（3.1 的第二步）** | 最大的一件，做完前面再说 |

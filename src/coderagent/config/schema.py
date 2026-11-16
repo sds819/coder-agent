@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from coderagent.models.reasoning import EFFORTS
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a coding agent working in a code repository. "
@@ -48,6 +50,15 @@ class ModelConfig(BaseModel):
     """The model of a purpose: `main`, `cheap`, `summarize`, `reflect`, `strong`."""
     routing_rules: list[RoutingRuleConfig] = Field(default_factory=list)
     set_cache_control: str | None = None
+    reasoning_effort: str = ""
+    """How much the model thinks: minimal, low, medium, high. Empty is the default of the model."""
+
+    @field_validator("reasoning_effort")
+    @classmethod
+    def _known_effort(cls, value: str) -> str:
+        if value and value not in EFFORTS:
+            raise ValueError(f"unknown reasoning effort '{value}'. Use one of: {', '.join(EFFORTS)}.")
+        return value
 
 
 class AgentConfig(BaseModel):

@@ -30,6 +30,12 @@ def test_an_unknown_purpose_keeps_the_current_model():
     assert ModelRouter(_config()).resolve("reflect") == ""
 
 
+def test_the_model_of_a_purpose_thinks_as_much_as_the_main_one():
+    """The budget belongs to the session, not to one model."""
+    backend = ModelRouter(_config(reasoning_effort="high")).backend_for("cheap/model")
+    assert backend.model_kwargs["reasoning_effort"] == "high"
+
+
 def test_the_user_picks_the_model_and_nothing_else_matters():
     router = ModelRouter(_config())
     router.override = "my/model"

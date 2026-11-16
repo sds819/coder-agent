@@ -88,3 +88,14 @@ def test_the_default_prompt_is_the_one_of_the_schema_and_names_the_arguments(tmp
     prompt = load_config([], cwd=tmp_path).agent.system_prompt
     assert prompt == DEFAULT_SYSTEM_PROMPT
     assert "argument names of its schema" in prompt
+
+
+def test_the_thinking_budget_is_read_from_the_configuration(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    assert load_config(["model.reasoning_effort=high"], cwd=tmp_path).model.reasoning_effort == "high"
+
+
+def test_a_thinking_budget_that_does_not_exist_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    with pytest.raises(ValidationError, match="unknown reasoning effort"):
+        load_config(["model.reasoning_effort=huge"], cwd=tmp_path)

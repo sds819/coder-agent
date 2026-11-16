@@ -79,6 +79,7 @@ The model configuration, in a form:
 | API key | `model.model_kwargs.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
+| Reasoning effort | `model.reasoning_effort` — how much the model thinks: `minimal`, `low`, `medium`, `high`, or empty for the default of the model |
 | Routing | `model.routing` |
 | Routing rules | `model.routing_rules` |
 | Extra parameters | Everything else of `model.model_kwargs` |

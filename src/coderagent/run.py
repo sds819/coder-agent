@@ -55,6 +55,7 @@ def build_model(config: Config, model_name: str = "") -> ModelBackend:
         model_kwargs=config.model.model_kwargs,
         set_cache_control=config.model.set_cache_control,
         litellm_config=config.model.litellm_config,
+        reasoning_effort=config.model.reasoning_effort,
     )
 
 

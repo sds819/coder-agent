@@ -167,6 +167,16 @@ def test_the_model_the_user_picks_wins_over_the_routing(tmp_path):
     assert context.loop.router.resolve("main", {"tokens": 999999}) == "my/model"
 
 
+def test_the_thinking_budget_is_shown_and_survives_a_switch_of_the_model(tmp_path):
+    context, output = _context(tmp_path)
+    context.config.model.reasoning_effort = "high"
+
+    assert "effort: high" in _run(context, output, "/model")
+
+    _run(context, output, "/model other/model")
+    assert context.loop.model.backend.model_kwargs["reasoning_effort"] == "high"
+
+
 def test_the_todos_are_shown(tmp_path):
     context, output = _context(tmp_path)
     context.session.metadata["todos"] = [{"content": "write the code", "status": "in_progress"}]

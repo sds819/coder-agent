@@ -84,6 +84,9 @@ coder --list
 - **别名**——一个带模型列表的 litellm 配置文件。模型名可以是那个列表里的
   一条别名，端点的 key 就留在那个文件里。
 - **缓存标记**——`set_cache_control: default_end`，给支持它的厂商用。别的值会被拒。
+- **模型想多久**——`reasoning_effort`：`minimal`、`low`、`medium`、`high`，
+  留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
+  `reasoning_effort`，Anthropic 是一笔 token。
 - **重试**——`max_retries`，默认三次。
 - **按用途路由**——`main`、`cheap`、`summarize`、`reflect`、`strong` 可以
   各配一个模型。
@@ -109,6 +112,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
+  reasoning_effort: medium
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -142,6 +146,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 |---|---|---|
 | `LLM Provider NOT provided` | 模型名前面没有厂商。 | OpenAI 兼容的端点写 `openai/<名字>`，或者 `deepseek/<名字>`。 |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end`，也不是空的。 | 用 `default_end`，或者删掉这一行。 |
+| `unknown reasoning effort '{level}'` | `reasoning_effort` 不是 `minimal`、`low`、`medium`、`high` 里的一个。 | 用那四个里的一个，或者删掉这一行（用模型的默认）。 |
 | `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径，它是相对于工作目录的。 |
 | `the file is not valid YAML: {error}` | 别名文件解析不了。 | 修 YAML。 |
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |
@@ -943,7 +948,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 | 段 | 键 |
 |---|---|
-| `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control` |
+| `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit`、`subagent_max_turns`、`subagent_max_parallel` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs`、`network` |

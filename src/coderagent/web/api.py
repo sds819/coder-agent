@@ -322,7 +322,10 @@ def get_config(request: Request) -> dict[str, Any]:
 @router.put("/config/model")
 def put_config(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Write the model settings to the user level configuration file."""
-    path = config_api.write_user_model(body)
+    try:
+        path = config_api.write_user_model(body)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     return {"ok": True, "path": str(path), "model": config_api.model_view(request.app.state.cwd)}
 
 

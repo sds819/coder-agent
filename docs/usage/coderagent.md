@@ -220,6 +220,24 @@ The rules compare numbers only, they are parsed and not evaluated, so a
 configuration file cannot run code. The interface says in the event stream when
 the model changes and why. See [Model routing](coderagent_routing.md).
 
+#### How much the model thinks
+
+`model.reasoning_effort` says how long the model thinks: `minimal`, `low`,
+`medium` or `high`. Empty is the default of the model, which is what most of
+them are good at.
+
+```bash
+coder -c model.reasoning_effort=high --task "..."
+```
+
+The level is written in the words of the provider: OpenAI and the others want
+`reasoning_effort`, Anthropic wants a number of tokens to think with
+(`minimal` is 1024 tokens, `high` is 16384). A provider that does not know
+the parameter refuses the call, and the refusal is not retried.
+
+A level that does not exist is refused when the configuration is read, not in
+the middle of a turn.
+
 #### Other providers
 
 The model goes through [litellm](https://github.com/BerriAI/litellm), so every

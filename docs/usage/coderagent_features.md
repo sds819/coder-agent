@@ -89,6 +89,10 @@ so far.
   then be an alias of that list, and the key of the endpoint stays in the file.
 - **Cache control** — `set_cache_control: default_end` for the providers that
   support it. Any other value is refused.
+- **How much the model thinks** — `reasoning_effort`: `minimal`, `low`,
+  `medium` or `high`. Empty is the default of the model. The level is written
+  in the words of the provider: `reasoning_effort` for OpenAI and the others,
+  a number of tokens for Anthropic.
 - **Retries** — `max_retries`, three by default.
 - **Routing by purpose** — a different model for `main`, `cheap`, `summarize`,
   `reflect` and `strong`.
@@ -116,6 +120,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
+  reasoning_effort: medium
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -149,6 +154,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 |---|---|---|
 | `LLM Provider NOT provided` | The model name has no provider in front of it. | Write `openai/<name>` for an OpenAI compatible endpoint, or `deepseek/<name>`. |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor empty. | Use `default_end`, or remove the line. |
+| `unknown reasoning effort '{level}'` | `reasoning_effort` is not one of `minimal`, `low`, `medium`, `high`. | Use one of those four, or remove the line for the default of the model. |
 | `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; it is relative to the working directory. |
 | `the file is not valid YAML: {error}` | The alias file cannot be parsed. | Fix the YAML. |
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |
@@ -1012,7 +1018,7 @@ The sections and what they hold:
 
 | Section | The keys |
 |---|---|
-| `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control` |
+| `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort` |
 | `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit`, `subagent_max_turns`, `subagent_max_parallel` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs`, `network` |

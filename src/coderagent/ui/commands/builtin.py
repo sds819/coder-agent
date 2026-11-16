@@ -75,8 +75,10 @@ def _line(name: str, description: str, usage: str) -> str:
 def _model(context: CommandContext, argument: str) -> None:
     if not argument:
         routing = ", ".join(f"{name} -> {target}" for name, target in context.config.model.routing.items())
+        effort = context.config.model.reasoning_effort
         context.say(
             f"model: {context.config.model.model_name}"
+            f"\neffort: {effort or 'the default of the model'}"
             + (f"\nrouting: {routing}" if routing else "\n(no routing configured)")
         )
         return
@@ -85,6 +87,7 @@ def _model(context: CommandContext, argument: str) -> None:
         argument,
         model_kwargs=context.config.model.model_kwargs,
         litellm_config=context.config.model.litellm_config,
+        reasoning_effort=context.config.model.reasoning_effort,
     )
     if context.loop.router is not None:
         context.loop.router.override = argument

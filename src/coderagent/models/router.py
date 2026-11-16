@@ -107,6 +107,7 @@ class ModelRouter:
             name,
             model_kwargs=self.config.model_kwargs,
             litellm_config=self.config.litellm_config,
+            reasoning_effort=self.config.reasoning_effort,
         )
 
     def _purpose(self, purpose: str, context: dict) -> str:

@@ -40,6 +40,17 @@
       </select>
       <small id="source-set_cache_control" class="source"></small>
     </label>
+    <label>Reasoning effort
+      <select id="reasoning-effort">
+        <option value="" title="The model thinks as much as it wants.">the default of the model</option>
+        <option value="minimal">minimal</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select>
+      <small id="source-reasoning_effort" class="source"></small>
+      <small class="source">how much the model thinks. Anthropic counts tokens, the others count levels.</small>
+    </label>
     <label>Routing
       <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
       <small class="source">one purpose per line: <code>purpose: model</code></small>
