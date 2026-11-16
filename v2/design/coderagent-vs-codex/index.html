@@ -920,6 +920,8 @@
       
         
       
+        
+      
     
     
     
@@ -1090,6 +1092,34 @@
     
   
     Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    沙箱
   
 
     
@@ -3552,7 +3582,7 @@
   <a href="#31-os" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.1 没有 OS 级沙箱，网络也没有开关
+        3.1 没有 OS 级沙箱，网络也没有开关 ✅ 已修
       
     </span>
   </a>
@@ -4104,7 +4134,7 @@
   <a href="#31-os" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.1 没有 OS 级沙箱，网络也没有开关
+        3.1 没有 OS 级沙箱，网络也没有开关 ✅ 已修
       
     </span>
   </a>
@@ -4373,6 +4403,9 @@
 项目配置只能拿走能力不能给能力、事件日志是唯一事实来源、有一套能跑指纹对比的离线评测。</p>
 <p>所以这份清单里，<strong>真正该抄的是安全边界和输入通道</strong>（P0 的 1、3、4、5 和 P1 的 1、2），
 其余多半是「有了更好」而不是「缺了就危险」。</p>
+<p><strong>进度</strong>：§8 的第 1～7 步已经做完（两个 bug、网络开关、<code>/review</code>、<code>reasoning_effort</code>、
+TUI 小件、死配置清理、OS 级沙箱），剩下的是第 8 步：图片输入、中断粒度、Markdown。
+做完的条目在小节标题上标着「✅ 已修」，原样保留着原来的描述，好回头看差在哪。</p>
 <hr>
 <h2 id="2">2. 怎么读这份清单</h2>
 <table>
@@ -4400,7 +4433,7 @@
 <p>工作量的口径：一个「小」= 半天以内，一个「中」= 一到三天，一个「大」= 一周以上。</p>
 <hr>
 <h2 id="3-p0">3. P0：先做</h2>
-<h3 id="31-os">3.1 没有 OS 级沙箱，网络也没有开关</h3>
+<h3 id="31-os">3.1 没有 OS 级沙箱，网络也没有开关 ✅ 已修</h3>
 <p><strong>现状</strong>：<code>sandbox.type</code> 默认 <code>local</code>（<code>src/coderagent/config/defaults.yaml:62</code>），
 走 <code>build_environment()</code> → <code>CodingEnvironment</code>（<code>src/coderagent/core/sandbox.py:26-29</code>），
 命令用 <code>subprocess</code> <strong>以用户本人的身份</strong>跑。想隔离只能整个换环境：</p>
@@ -4435,22 +4468,21 @@
 <p>而且 <strong>Codex 默认断网</strong>，agent 想联网得显式开。</p>
 <p><strong>coderagent 现状</strong>：</p>
 <ul>
-<li>没有操作系统级的文件/进程约束，<code>local</code> 就是裸的 <code>subprocess</code>；</li>
+<li>~~没有操作系统级的文件/进程约束，<code>local</code> 就是裸的 <code>subprocess</code>；~~ ✅ 已修</li>
 <li><code>curl</code> / <code>wget</code> / <code>nc</code> 这些出网命令，在 <code>src/coderagent/tools/bash_policy.py:90-96</code>
   里被标成「危险」，但<strong>危险只意味着弹审批框，不意味着拦下来</strong>——
   <code>default</code> 模式下用户一路点「允许」就能把数据发出去；</li>
 <li>~~没有 <code>sandbox_policy.network_access</code> 这样的开关。~~ ✅ 已修（见下面「已修」）</li>
 </ul>
-<p><strong>影响</strong>：一个被 prompt injection 拐走的 agent，在 <code>local</code> 模式下能读 <code>~/.ssh</code>、
+<p><strong>影响</strong>：~~一个被 prompt injection 拐走的 agent，在 <code>local</code> 模式下能读 <code>~/.ssh</code>、
 能改 <code>~/.zshrc</code>、能把仓库内容 POST 到外面。<code>permissions.include_dirs</code> 只能<strong>加</strong>目录，
-没有「只允许写这些目录」的方向。</p>
+没有「只允许写这些目录」的方向。~~ ✅ 已修（网络开关 + OS 级沙箱）</p>
 <p><strong>建议</strong>：</p>
 <ol>
 <li>~~先做<strong>便宜的半个</strong>——加一个 <code>network: deny | allow</code> 开关，在 <code>bash_policy</code> 里把
    出网命令从「弹审批」升级成「直接拒绝」。~~ ✅ 已修（见下面）</li>
-<li>再做 <code>sandbox_mode</code> 三档，把 <code>local</code> 拆成 <code>read-only</code> / <code>workspace-write</code> /
-   <code>full-access</code>，其中 <code>workspace-write</code> 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。
-   这是「大」的工作，但这是 Codex 真正拉开差距的地方。</li>
+<li>~~再做 <code>sandbox_mode</code> 三档，把 <code>local</code> 拆成 <code>read-only</code> / <code>workspace-write</code> /
+   <code>full-access</code>，其中 <code>workspace-write</code> 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。~~ ✅ 已修（见下面）</li>
 </ol>
 <p><strong>已修：网络开关</strong>（<code>permissions.network</code>，默认 <code>allow</code>）</p>
 <ul>
@@ -4469,9 +4501,42 @@
   <code>tightened()</code> 把 <code>network</code> 留在配置里当且仅当它是 <code>deny</code>；<code>config/loader.py</code>
   里项目层说 <code>deny</code> 时，用户层不能把它重新打开）。</li>
 </ul>
+<p><strong>已修：OS 级沙箱</strong>（<code>sandbox.mode</code>，默认 <code>full-access</code>）</p>
+<ul>
+<li>新模块 <code>src/coderagent/core/os_sandbox.py</code>：三档 <code>read-only</code> / <code>workspace-write</code> /
+  <code>full-access</code>，由<strong>操作系统</strong>来执行——macOS 是 Seatbelt（<code>sandbox-exec</code>），
+  Linux 是 bubblewrap（<code>bwrap</code>）。越界的命令是被<strong>内核</strong>挡下来的，不是被文件里的
+  一条规则挡下来的；</li>
+<li>配置上就是 <code>sandbox.mode</code>，只对本地沙箱有意义：</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workspace-write</span>
+</code></pre></div>
+<ul>
+<li><strong>命令是被包起来送进沙箱的</strong>（<code>&lt;tool&gt; … /bin/sh -c '&lt;整条命令&gt;'</code>）：整条命令作为
+  <strong>一个参数</strong>进去，所以解析管道的那个 shell 也在沙箱里——否则管道会有一半漏在外面；</li>
+<li><strong>约束的是 agent，不是用户</strong>：围栏挂在 <code>ToolContext.sandbox</code> 上，只由 <code>bash</code> 工具
+  的命令用。校验命令是用户自己的命令，按用户的身份跑，在沙箱外面；</li>
+<li><strong><code>read-only</code> 连写文件的工具一起拒</strong>（<code>write</code>、<code>edit</code>、<code>multi_edit</code>）：它们写的是
+  用户机器上的文件，在沙箱外面，用户写的 <code>allow</code> 规则也放宽不了；</li>
+<li><strong>路径边界没有被绕开</strong>：<code>within_bounds()</code> 在所有模式下都生效，还是用户的 <code>allow</code>
+  规则放宽不了——这一点在原文里被点名过，实现时照做了；</li>
+<li><strong>闸和沙箱是两层，不是二选一</strong>：<code>bypass</code> 跳过的是审批提问，不是磁盘边界；</li>
+<li><strong>可写的目录</strong>：工作目录 + <code>permissions.include_dirs</code> + 系统的临时目录（构建总得
+  有地方放东西），<code>read-only</code> 只留临时目录；</li>
+<li><strong>网络在操作系统那一层也关着</strong>：<code>permissions.network: deny</code> 时，Seatbelt 加
+  <code>(deny network*)</code>，bubblewrap 加 <code>--unshare-net</code>；</li>
+<li><strong>信任边界照旧</strong>：项目里的配置<strong>只能关沙箱，不能开沙箱</strong>（<code>core/trust.py</code> 的
+  <code>tightened()</code> 只留下更紧的那两档；<code>config/loader.py</code> 里两档里更紧的算数，
+  用户层不能把项目关掉的沙箱重新打开）；</li>
+<li><strong>模型会被告知</strong>：一段 <code>&lt;sandbox mode="…"&gt;</code> 进上下文，每轮重算，不烤进 system prompt；</li>
+<li><strong>机器上缺那个程序，会话就起不来</strong>（<code>UnsupportedSandbox</code>）：承诺兑现不了，就不要许。</li>
+</ul>
 <p><strong>注意</strong>：<code>within_bounds()</code>（<code>src/coderagent/tools/permissions.py</code>）在<strong>所有</strong>模式下都生效，
 用户写的 <code>allow</code> 规则<strong>放宽不了</strong>这个边界——这是 coderagent 比 Codex 强的地方，
-做 OS 级沙箱时不要把它绕开。</p>
+做 OS 级沙箱时不要把它绕开——<strong>没有绕开</strong>：<code>sandbox.mode</code> 的每一档都跑在
+<code>within_bounds()</code> 后面，用户规则放宽不了它。</p>
 <hr>
 <h3 id="32-review">3.2 没有 <code>/review</code> ✅ 已修</h3>
 <p><strong>原来</strong>：coderagent 的命令注册表在 <code>src/coderagent/ui/commands/builtin.py</code>，
@@ -4860,7 +4925,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </tr>
 <tr>
 <td>7</td>
-<td><strong>OS 级沙箱（3.1 的第二步）</strong></td>
+<td>~~<strong>OS 级沙箱（3.1 的第二步）</strong>~~ ✅</td>
 <td>最大的一件，做完前面再说</td>
 </tr>
 <tr>

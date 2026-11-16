@@ -927,6 +927,8 @@
       
         
       
+        
+      
     
     
     
@@ -1097,6 +1099,34 @@
     
   
     Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    沙箱
   
 
     
@@ -1532,6 +1562,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-modes-of-the-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The modes of the sandbox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The modes of the sandbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-sandbox-needs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the sandbox needs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-the-interface-shows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1543,10 +1601,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-sandbox-has-no-policy-of-its-own" class="md-nav__link">
+  <a href="#the-environment-has-no-policy-of-its-own" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The sandbox has no policy of its own
+        The environment has no policy of its own
       
     </span>
   </a>
@@ -3864,6 +3922,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-modes-of-the-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The modes of the sandbox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The modes of the sandbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-sandbox-needs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the sandbox needs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-the-interface-shows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3875,10 +3961,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-sandbox-has-no-policy-of-its-own" class="md-nav__link">
+  <a href="#the-environment-has-no-policy-of-its-own" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The sandbox has no policy of its own
+        The environment has no policy of its own
       
     </span>
   </a>
@@ -3988,18 +4074,87 @@ directory of its own with the <code>cwd</code> option:</p>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.11</span>
 <span class="w">  </span><span class="nt">cwd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/workspace</span>
 </code></pre></div>
+<h2 id="the-modes-of-the-sandbox">The modes of the sandbox</h2>
+<p>The local sandbox has three modes. They say how much the commands of the agent
+may do on the machine of the user, and the <strong>operating system</strong> enforces them:
+macOS gets a Seatbelt profile, Linux gets a bubblewrap namespace. A command
+that goes too far is stopped by the kernel, not by a rule in a file.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workspace-write</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th><code>sandbox.mode</code></th>
+<th>What the commands may do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>full-access</code></td>
+<td>Everything the user may do. The default.</td>
+</tr>
+<tr>
+<td><code>workspace-write</code></td>
+<td>Read the disk, write inside the working directory</td>
+</tr>
+<tr>
+<td><code>read-only</code></td>
+<td>Read the disk, write nothing</td>
+</tr>
+</tbody>
+</table>
+<p>The mode is a second axis next to the permission mode. The permissions ask the
+user; the sandbox asks nobody. <code>bypass</code> skips the questions, it does not open
+the disk: the gate and the sandbox are two layers, not a choice.</p>
+<p>The <code>read-only</code> mode refuses the tools that write files (<code>write</code>, <code>edit</code>,
+<code>multi_edit</code>) as well: they write on the machine of the user, outside of the
+sandbox. A rule of the user cannot open that either.</p>
+<p>The directories the commands may write to are the working directory and the
+ones of <code>permissions.include_dirs</code>. The temporary directory of the system is
+always writable, because a build needs somewhere to put its files.</p>
+<p>The network is closed at the operating system too when <code>permissions.network</code> is
+<code>deny</code>: the sandbox has no way out.</p>
+<p>A project may close the sandbox, never open it. The tightest of the two modes
+wins, so a repository that asks for <code>read-only</code> keeps the agent from writing,
+whatever the user level says.</p>
+<h3 id="what-the-sandbox-needs">What the sandbox needs</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>What it uses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS</td>
+<td>Seatbelt (<code>sandbox-exec</code>), it comes with the system</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>bubblewrap (<code>bwrap</code>), it has to be installed</td>
+</tr>
+</tbody>
+</table>
+<p>Without the program the session does not start: the promise cannot be kept, so
+it is not made.</p>
+<p>The commands of the verification are yours, not the agent's: they run as you,
+outside the sandbox.</p>
 <h2 id="what-the-interface-shows">What the interface shows</h2>
 <p>The bar at the top of the interface names the sandbox when it is not the local
 one, and <code>/sandbox</code> shows the whole configuration:</p>
 <div class="highlight"><pre><span></span><code>type: swerex_docker
+mode: full-access
 image: python:3.11
 environment: swerex_docker
 </code></pre></div>
 <p>The options that are in effect are listed between the type and the environment.</p>
-<h2 id="the-sandbox-has-no-policy-of-its-own">The sandbox has no policy of its own</h2>
-<p>The sandbox is the environment of mini-swe-agent, so it has no network policy
-and no list of writable directories. A network policy is a property of the
-environment, and it is written there — with the options that the environment
+<h2 id="the-environment-has-no-policy-of-its-own">The environment has no policy of its own</h2>
+<p>The remote sandboxes are the environments of mini-swe-agent, so they have no
+network policy and no list of writable directories. A network policy is a
+property of the environment, and it is written there — with the options that the environment
 knows. The <code>docker</code> sandbox takes the arguments of the <code>docker</code> command:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker</span>
@@ -4010,16 +4165,19 @@ knows. The <code>docker</code> sandbox takes the arguments of the <code>docker</
 <code>deployment_extra_kwargs</code> for the deployment of SWE-ReX. The options that the
 environment does not know are ignored, so a <code>run_args</code> under <code>swerex_docker</code>
 is dropped without a word.</p>
-<p>The paths the agent may touch are a property of the agent, not of the sandbox.
+<p>The paths the agent may touch are a property of the agent, not of the container.
 They are bounded by the permission layer: <code>permissions.deny_paths</code> for the paths
 that are off limits and <code>permissions.include_dirs</code> for the ones outside the
-directory of the session that are allowed.</p>
+directory of the session that are allowed. The mode of the local sandbox tells
+the same thing to the operating system.</p>
 <p>A configuration that still has <code>sandbox.network</code> or <code>sandbox.writable_roots</code>
 keeps working: they are unknown options now, and unknown options are ignored.</p>
 <h2 id="what-is-still-local">What is still local</h2>
 <p>The tools that read and write files (<code>read</code>, <code>write</code>, <code>edit</code>, …) work on the
 files of the machine of the user, because the environment of mini-swe-agent
 only runs commands. Only the commands of the <code>bash</code> tool go into the sandbox.</p>
+<p>The <code>read-only</code> mode refuses the tools that write as well: they write on the
+machine of the user, outside of the sandbox.</p>
 <p>The magic of mini-swe-agent, where a command that prints
 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> ends the task, is switched off in the
 remote sandboxes as well: a turn of the coding agent ends when the model says

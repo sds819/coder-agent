@@ -927,6 +927,8 @@
       
         
       
+        
+      
     
     
     
@@ -1097,6 +1099,34 @@
     
   
     Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    沙箱
   
 
     
@@ -5090,7 +5120,16 @@ the environment does not know are ignored:</p>
 <span class="w">  </span><span class="nt">cwd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/workspace</span>
 </code></pre></div>
 <p>The sandbox has no policy of its own: the network policy belongs to the
-environment, the paths belong to the permission layer. See
+environment, the paths belong to the permission layer.</p>
+<p>The local sandbox has three modes. The operating system enforces them —
+Seatbelt on macOS, bubblewrap on Linux:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workspace-write</span>
+</code></pre></div>
+<p><code>full-access</code> is the default, <code>workspace-write</code> writes only inside the working
+directory, <code>read-only</code> writes nothing. The mode and the permission mode are two
+axes: the permissions ask the user, the sandbox asks nobody. See
 <a href="../coderagent_sandbox/">Sandbox</a>.</p>
 <h2 id="what-the-agent-reads">What the agent reads</h2>
 <p>The agent reads the instructions of the project before it starts. The files are

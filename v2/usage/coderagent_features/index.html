@@ -927,6 +927,8 @@
       
         
       
+        
+      
     
     
     
@@ -1097,6 +1099,34 @@
     
   
     Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    沙箱
   
 
     
@@ -6116,8 +6146,11 @@ the agent does not walk up the directories to find them.</p>
 <li><strong>Or in a container</strong> — <code>docker</code>, <code>singularity</code>, <code>bubblewrap</code>, <code>contree</code>,
   and the remote sandboxes of SWE-rex. The same environments as
   mini-swe-agent.</li>
+<li><strong>Three modes</strong> — <code>sandbox.mode</code> is <code>full-access</code> (the default),
+  <code>workspace-write</code> or <code>read-only</code>. The operating system enforces them:
+  Seatbelt on macOS, bubblewrap on Linux.</li>
 <li><strong>Only <code>bash</code> goes into the sandbox</strong> — the file tools stay in the working
-  directory.</li>
+  directory. In the <code>read-only</code> mode they are refused as well.</li>
 <li><strong><code>/sandbox</code></strong> — says where the commands run.</li>
 </ul>
 <h3 id="example_8">Example</h3>
@@ -6128,10 +6161,17 @@ the agent does not walk up the directories to find them.</p>
 <p>The seven types are <code>local</code>, <code>docker</code>, <code>singularity</code>, <code>bubblewrap</code>, <code>contree</code>,
 <code>swerex_docker</code> and <code>swerex_modal</code>. The options that the environment does not
 know are ignored, so one file can carry the settings of several of them.</p>
-<p><code>/sandbox</code> answers with the type, the options that are in effect and the
-environment that is in use:</p>
+<p>The mode belongs to the local sandbox, and it is a second axis next to the
+permission mode: the permissions ask the user, the sandbox asks nobody.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workspace-write</span>
+</code></pre></div>
+<p><code>/sandbox</code> answers with the type, the mode, the options that are in effect and
+the environment that is in use:</p>
 <div class="highlight"><pre><span></span><code>type: local
-environment: local
+mode: workspace-write
+environment: local/workspace-write
 </code></pre></div>
 <h3 id="when-something-goes-wrong_8">When something goes wrong</h3>
 <table>
@@ -6159,6 +6199,11 @@ environment: local
 <td>Install it, or use another type.</td>
 </tr>
 <tr>
+<td><code>UnsupportedSandbox: The read-only mode needs bubblewrap (bwrap), which this machine does not have.</code></td>
+<td>The machine has no program that builds the sandbox.</td>
+<td>Install bubblewrap, or use <code>full-access</code>.</td>
+</tr>
+<tr>
 <td>The file tools touch the files of the host</td>
 <td>Only <code>bash</code> goes into the sandbox.</td>
 <td>That is by design: <code>read</code>, <code>edit</code> and friends work on the working directory of the session.</td>
@@ -6170,8 +6215,9 @@ environment: local
 <li><strong>Off by default</strong> — nothing is checked unless <code>verify.commands</code> is set.</li>
 <li><strong>The agent has to make the check pass</strong> — when the model wants to stop, the
   commands run; if one of them fails, the agent gets the output and tries again.</li>
-<li><strong>The commands run in the session</strong> — in the sandbox when there is one, so the
-  check sees the same world the agent works in. They do not ask for approval.</li>
+<li><strong>The commands run in the session</strong> — they are your commands, not the agent's,
+  so they run as you and outside the sandbox of the operating system. They do
+  not ask for approval.</li>
 <li><strong>A bounded number of rounds</strong> — <code>verify.max_rounds</code> (3 by default). When the
   rounds are used up, the turn ends with <code>stop_reason: verify_failed</code>.</li>
 <li><strong>The result is in the log</strong> — an event of the type <code>verify</code> holds the commands
@@ -6599,7 +6645,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>sandbox</code></td>
-<td><code>type</code> and the options of the environment</td>
+<td><code>type</code>, <code>mode</code> and the options of the environment</td>
 </tr>
 <tr>
 <td><code>verify</code></td>

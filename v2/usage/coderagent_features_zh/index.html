@@ -929,6 +929,8 @@
       
         
       
+        
+      
     
     
     
@@ -1764,6 +1766,34 @@
     
   
     Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    沙箱
   
 
     
@@ -6067,7 +6097,9 @@ Commit everything with the message: $ARGUMENTS
 <li><strong>默认是本机</strong>——命令就在工作目录里跑。</li>
 <li><strong>也可以是容器</strong>——<code>docker</code>、<code>singularity</code>、<code>bubblewrap</code>、<code>contree</code>，
   还有 SWE-rex 的远程沙箱。和 mini-swe-agent 用的是同一批环境。</li>
-<li><strong>只有 <code>bash</code> 进沙箱</strong>——文件工具还在工作目录里。</li>
+<li><strong>三档</strong>——<code>sandbox.mode</code> 是 <code>full-access</code>（默认）、<code>workspace-write</code> 或者
+  <code>read-only</code>。由<strong>操作系统</strong>来执行：macOS 上是 Seatbelt，Linux 上是 bubblewrap。</li>
+<li><strong>只有 <code>bash</code> 进沙箱</strong>——文件工具还在工作目录里。<code>read-only</code> 那一档把它们也拒了。</li>
 <li><strong><code>/sandbox</code></strong>——告诉你命令在哪里跑。</li>
 </ul>
 <h3 id="_26">用法例子</h3>
@@ -6078,9 +6110,16 @@ Commit everything with the message: $ARGUMENTS
 <p>一共有七种：<code>local</code>、<code>docker</code>、<code>singularity</code>、<code>bubblewrap</code>、<code>contree</code>、
 <code>swerex_docker</code>、<code>swerex_modal</code>。环境不认识的选项会被忽略，所以一个文件里
 可以同时写好几种环境的设置。</p>
-<p><code>/sandbox</code> 回答类型、生效的选项和在用的环境：</p>
+<p>那一档属于本地的沙箱，和权限模式是<strong>两条正交的轴</strong>：权限那一层会问用户，
+沙箱这一层谁都不问。</p>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workspace-write</span>
+</code></pre></div>
+<p><code>/sandbox</code> 回答类型、那一档、生效的选项和在用的环境：</p>
 <div class="highlight"><pre><span></span><code>type: local
-environment: local
+mode: workspace-write
+environment: local/workspace-write
 </code></pre></div>
 <h3 id="_27">出错时怎么办</h3>
 <table>
@@ -6108,6 +6147,11 @@ environment: local
 <td>装上，或者换一个类型。</td>
 </tr>
 <tr>
+<td><code>UnsupportedSandbox: The read-only mode needs bubblewrap (bwrap), which this machine does not have.</code></td>
+<td>这台机器没有能建沙箱的程序。</td>
+<td>装上 bubblewrap，或者用 <code>full-access</code>。</td>
+</tr>
+<tr>
 <td>文件工具动到了宿主机的文件</td>
 <td>只有 <code>bash</code> 进沙箱。</td>
 <td>这是设计如此：<code>read</code>、<code>edit</code> 这些工具动的是会话的工作目录。</td>
@@ -6119,8 +6163,8 @@ environment: local
 <li><strong>默认不开</strong>——不配 <code>verify.commands</code> 就什么都不查。</li>
 <li><strong>agent 必须把检查跑通</strong>——模型想停下的时候命令会跑一遍；有一条没过，就把输出还给
   agent，让它接着改。</li>
-<li><strong>命令在会话的环境里跑</strong>——有沙箱就在沙箱里，所以检查看到的世界和 agent 干活的
-  世界是同一个。这些命令不ask要审批。</li>
+<li><strong>命令是你自己的，不是 agent 的</strong>——所以它们按你的身份跑，在操作系统的沙箱外面。
+  这些命令不要审批。</li>
 <li><strong>轮数有限</strong>——<code>verify.max_rounds</code>（默认 3）。轮数用完，这一轮就以
   <code>stop_reason: verify_failed</code> 结束。</li>
 <li><strong>结果进事件日志</strong>——一条 <code>verify</code> 事件记着命令和没过的那几条。</li>
@@ -6529,7 +6573,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>sandbox</code></td>
-<td><code>type</code> 和环境的那些选项</td>
+<td><code>type</code>、<code>mode</code> 和环境的那些选项</td>
 </tr>
 </tbody>
 </table>
@@ -6743,8 +6787,8 @@ mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span c
 <td>用途和规则</td>
 </tr>
 <tr>
-<td><a href="../coderagent_sandbox/">沙箱</a></td>
-<td>那些环境</td>
+<td><a href="../coderagent_sandbox_zh/">沙箱</a></td>
+<td>那些环境和那三档</td>
 </tr>
 <tr>
 <td><a href="../coderagent_export/">追踪导出</a></td>
