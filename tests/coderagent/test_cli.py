@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -244,3 +245,45 @@ def test_pushing_without_an_address_is_reported(tmp_path, monkeypatch):
     )
     assert result.exit_code == 1
     assert "No telemetry.otel_endpoint" in result.output
+
+
+def test_the_last_answer_is_written_to_a_file(tmp_path, monkeypatch):
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "the work is done", "tool_calls": [], "extra": {"cost": 0.0}}]
+    )
+    target = tmp_path / "answer.txt"
+    main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path), output_last_message=target)
+    assert target.read_text(encoding="utf-8") == "the work is done"
+
+
+def test_the_option_is_in_the_help():
+    result = CliRunner().invoke(app, ["--help"])
+    assert "--output-last-message" in result.output
+
+
+def test_the_program_of_the_user_is_told_that_the_turn_is_over(tmp_path, monkeypatch):
+    """The notifier of the command line gets the answer of the agent."""
+    config = _config(tmp_path, monkeypatch)
+    seen = tmp_path / "seen.txt"
+    script = tmp_path / "notifier.py"
+    script.write_text(
+        "import sys\n"
+        "from pathlib import Path\n"
+        "Path(sys.argv[1]).write_text(sys.argv[2] + '|' + sys.argv[3], encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    config.ui.notify_command = f"{sys.executable} {script} {seen}"
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "the work is done", "tool_calls": [], "extra": {"cost": 0.0}}]
+    )
+    main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path))
+    assert seen.read_text(encoding="utf-8") == "coder|the work is done"
+
+
+def test_without_a_notifier_nothing_is_run(tmp_path, monkeypatch):
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "the work is done", "tool_calls": [], "extra": {"cost": 0.0}}]
+    )
+    assert main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path))

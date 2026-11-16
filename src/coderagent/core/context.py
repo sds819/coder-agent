@@ -239,7 +239,7 @@ class ContextEngine:
         blocks = list(self.instruction_blocks)
         if self.reload_instructions:
             """The instruction files are read again, so a change of the project counts."""
-            blocks = load_instructions(self.cwd, self.user_home) + blocks
+            blocks = load_instructions(self.cwd, self.user_home, self.config.project_doc_max_bytes) + blocks
         if self.memory_config.enabled:
             blocks += load_project_memory(self.cwd, self.memory_config)
             user_memory = load_user_memory(self.memory_config, self.user_home)
@@ -430,7 +430,7 @@ class ContextEngine:
         if not target.is_absolute():
             target = self.cwd / target
         known = {block.path for block in self.instruction_blocks}
-        for block in subdirectory_instructions(target, self.cwd):
+        for block in subdirectory_instructions(target, self.cwd, self.config.project_doc_max_bytes):
             if block.path not in known:
                 self.instruction_blocks.append(block)
                 known.add(block.path)

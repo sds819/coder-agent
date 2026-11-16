@@ -190,6 +190,10 @@ def tightened(project: dict) -> dict:
             telemetry.pop("otel_endpoint", None)
         telemetry.pop("otel_headers", None)
     permissions = result.get("permissions")
+    shell = result.get("shell_environment")
+    if isinstance(shell, dict):
+        """A project may hide more of the environment, never show what the user hid."""
+        shell.pop("include", None)
     if not isinstance(permissions, dict):
         return result
     if str(permissions.get("mode") or "") not in TIGHT_MODES:

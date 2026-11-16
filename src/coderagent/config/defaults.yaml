@@ -6,6 +6,8 @@ model:
   routing_rules: []
   set_cache_control: null
   reasoning_effort: ""
+  verbosity: ""
+  review_model: ""
 
 agent:
   system_prompt: "You are a coding agent working in a code repository. Prefer the dedicated tools over shell commands: `read` to look at a file, `glob`/`grep`/`ls` to find code, `edit`/`multi_edit`/`apply_patch` to change files, and `bash` for builds, tests and pipelines. Call every tool with the argument names of its schema, exactly as they are written there (`path`), never a translated or renamed variant. Complete the task the user describes and summarize what you changed."
@@ -29,6 +31,12 @@ permissions:
   include_dirs: []
   network: allow
 
+shell_environment:
+  inherit: all
+  exclude: []
+  include: []
+  set: {}
+
 context:
   reserved_output: 8000
   compact_threshold: 0.8
@@ -38,6 +46,7 @@ context:
   auto_compact: true
   summarize_model: ""
   summary_chunk_tokens: 0
+  project_doc_max_bytes: 32768
 
 memory:
   project_path: ".coderagent/memory"
@@ -58,6 +67,7 @@ hooks:
 ui:
   approval_timeout: 0
   notifications: true
+  notify_command: ""
   markdown: true
 
 sandbox:

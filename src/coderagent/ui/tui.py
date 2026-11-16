@@ -24,7 +24,7 @@ from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.commands import CommandContext
 from coderagent.ui.commands import run as run_command
 from coderagent.ui.commands.resume import resume as resume_session
-from coderagent.ui.notify import TITLE, escape_sequence
+from coderagent.ui.notify import TITLE, escape_sequence, run_notifier
 from coderagent.ui.widgets import (
     ApprovalPrompt,
     FileTree,
@@ -372,14 +372,14 @@ class CoderApp(App):
         widget.value = self.history[self.history_index]
         widget.cursor_position = len(widget.value)
 
-    def _run_turn(self, text: str | list[dict]) -> None:
+    def _run_turn(self, text: str | list[dict], purpose: str = "") -> None:
         """The turn itself, in a thread."""
         self.interrupted.clear()
         self.turn_running.set()
         self.last_answer = ""
         self.loop.cancel = self.interrupted.is_set
         try:
-            result = self.loop.run_turn(text)
+            result = self.loop.run_turn(text, purpose)
         except Exception as e:
             self._ui(self._add_message, "error", f"{type(e).__name__}: {e}")
             self._notify_terminal(f"{type(e).__name__}: {e}")
@@ -395,12 +395,16 @@ class CoderApp(App):
 
     def _notify_terminal(self, body: str = "") -> None:
         """Tell the terminal that the turn is over, in the way a terminal understands."""
-        if not self.config.ui.notifications or self.is_headless:
+        if not self.config.ui.notifications:
             return
-        driver = getattr(self, "_driver", None)
-        if driver is None:
-            return
-        driver.write(self._notification(body))
+        body = body or self.last_answer or "The turn is over."
+        if not self.is_headless:
+            driver = getattr(self, "_driver", None)
+            if driver is not None:
+                driver.write(self._notification(body))
+        if self.config.ui.notify_command:
+            """The program of the user tells him too, in the way he wants it."""
+            run_notifier(self.config.ui.notify_command, TITLE, body)
 
     def _notification(self, body: str = "") -> str:
         """The sequence that tells the terminal that the turn is over."""
@@ -429,9 +433,9 @@ class CoderApp(App):
         )
         run_command(context, line)
 
-    def _submit_turn(self, text: str | list[dict]) -> None:
+    def _submit_turn(self, text: str | list[dict], purpose: str = "") -> None:
         """Run a turn for a command that needs the model."""
-        self.run_worker(lambda: self._run_turn(text), thread=True, exclusive=True)
+        self.run_worker(lambda: self._run_turn(text, purpose), thread=True, exclusive=True)
 
     # -- the keys ---------------------------------------------------------
 

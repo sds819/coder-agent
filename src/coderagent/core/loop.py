@@ -113,6 +113,8 @@ class AgentLoop:
         """How many events of the session the backend has seen."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
+        self.purpose = "main"
+        """Why the model is called. The router picks the model of the purpose."""
         self._warned_unpriced = False
         self.context = context or ContextEngine(
             session,
@@ -162,11 +164,14 @@ class AgentLoop:
         """Alias for `run_turn`; the caller drives the conversation."""
         return self.run_turn(user_input)
 
-    def run_turn(self, user_input: str | list[dict]) -> TurnResult:
+    def run_turn(self, user_input: str | list[dict], purpose: str = "") -> TurnResult:
         """Run one turn: query the model, execute its tool calls, repeat until it stops.
 
         The input is a string, or the parts of a message that carries images.
+        The purpose says which model answers the turn: `main` unless the caller
+        says otherwise, like `review`.
         """
+        self.purpose = purpose or "main"
         turn_messages: list[dict] = []
         prompt = user_input
         original = ""
@@ -231,7 +236,7 @@ class AgentLoop:
                 break
             n_calls += 1
             response.setdefault("extra", {}).update(
-                {"purpose": "main", "model": getattr(self.model.backend, "model_name", "")}
+                {"purpose": self.purpose, "model": getattr(self.model.backend, "model_name", "")}
             )
             self._warn_unpriced(response)
             self.context.append(response)
@@ -381,7 +386,7 @@ class AgentLoop:
         """Pick the model of this turn. A change is announced in the event stream."""
         if self.router is None:
             return
-        name = self.router.resolve("main", self._routing_context())
+        name = self.router.resolve(self.purpose, self._routing_context())
         if not name:
             return
         backend = self.router.backend_for(name)

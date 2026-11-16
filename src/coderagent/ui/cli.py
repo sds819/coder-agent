@@ -15,7 +15,7 @@ from coderagent.config.loader import load_config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.run import build_loop, run_turn
-from coderagent.ui.render import render
+from coderagent.ui.render import last_message, render
 
 # litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
 litellm.suppress_debug_info = True
@@ -34,21 +34,28 @@ def main_impl(
     session: Session | None = None,
     permission_mode: str | None = None,
     output_schema: dict | None = None,
+    output_last_message: Path | None = None,
 ) -> str:
     """Run one turn and render the result."""
-    return render(
-        run_turn(
-            task,
-            config,
-            cwd=cwd,
-            model=model,
-            store=store,
-            session=session,
-            permission_mode=permission_mode,
-            output_schema=output_schema,
-        ),
-        output_format,
+    result = run_turn(
+        task,
+        config,
+        cwd=cwd,
+        model=model,
+        store=store,
+        session=session,
+        permission_mode=permission_mode,
+        output_schema=output_schema,
     )
+    if output_last_message is not None:
+        """The last answer of the agent, in a file of its own."""
+        output_last_message.write_text(last_message(result), encoding="utf-8")
+    if config.ui.notify_command and config.ui.notifications:
+        """The program of the user tells him that the turn is over."""
+        from coderagent.ui.notify import TITLE, run_notifier
+
+        run_notifier(config.ui.notify_command, TITLE, last_message(result) or "The turn is over.")
+    return render(result, output_format)
 
 
 def read_schema(path: Path | None) -> dict | None:
@@ -98,7 +105,7 @@ def run_command(
         checkpoints=loop.checkpoints,
         mcp=loop.mcp,
         output=typer.echo,
-        submit=lambda text: typer.echo(render(loop.run_turn(text), output_format)),
+        submit=lambda text, purpose="": typer.echo(render(loop.run_turn(text, purpose), output_format)),
         quit=lambda: None,
     )
     run(context, task)
@@ -143,6 +150,9 @@ def main(
     output_schema: Path | None = typer.Option(
         None, "--output-schema", help="JSON file with the schema the answer of the agent has to fit"
     ),
+    output_last_message: Path | None = typer.Option(
+        None, "--output-last-message", help="Write the last answer of the agent to this file"
+    ),
     cwd: Path = typer.Option(Path("."), "--cwd", help="Working directory of the session"),
     permission_mode: str = typer.Option("", "--permission-mode", help="default|acceptEdits|plan|bypass|readonly"),
     resume: str = typer.Option("", "--resume", help="Continue the session with this id"),
@@ -184,6 +194,7 @@ def main(
             session=session,
             permission_mode=permission_mode or None,
             output_schema=read_schema(output_schema),
+            output_last_message=output_last_message,
         )
     )
 

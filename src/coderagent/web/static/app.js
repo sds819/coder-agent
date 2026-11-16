@@ -696,6 +696,8 @@ async function startSettings() {
   document.getElementById("max-retries").value = model.max_retries;
   document.getElementById("set-cache-control").value = model.set_cache_control || "";
   document.getElementById("reasoning-effort").value = model.reasoning_effort || "";
+  document.getElementById("verbosity").value = model.verbosity || "";
+  document.getElementById("review-model").value = model.review_model || "";
   document.getElementById("routing").value = formatKeyValues(model.routing);
   document.getElementById("routing-rules").value = (model.routing_rules || [])
     .map((rule) => `${rule.when}: ${rule.purpose}`)
@@ -755,6 +757,8 @@ async function startSettings() {
       max_retries: Number(document.getElementById("max-retries").value || 0),
       set_cache_control: document.getElementById("set-cache-control").value,
       reasoning_effort: document.getElementById("reasoning-effort").value,
+      verbosity: document.getElementById("verbosity").value,
+      review_model: document.getElementById("review-model").value.trim(),
       routing: parseKeyValues(document.getElementById("routing").value),
       routing_rules: Object.entries(parseKeyValues(document.getElementById("routing-rules").value)).map(
         ([when, purpose]) => ({ when, purpose })

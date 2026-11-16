@@ -3,8 +3,16 @@
 import json
 from typing import Any
 
-from coderagent.core.content import describe_message
+from coderagent.core.content import describe_message, text_of
 from coderagent.core.loop import TurnResult
+
+
+def last_message(result: TurnResult) -> str:
+    """The text of the last answer of the agent."""
+    for message in reversed(result.messages):
+        if message.get("role") == "assistant":
+            return text_of(message.get("content"))
+    return ""
 
 
 def render(result: TurnResult, output_format: str = "text") -> str:

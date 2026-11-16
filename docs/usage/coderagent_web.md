@@ -80,6 +80,8 @@ The model configuration, in a form:
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
 | Reasoning effort | `model.reasoning_effort` — how much the model thinks: `minimal`, `low`, `medium`, `high`, or empty for the default of the model |
+| Verbosity | `model.verbosity` — how much the model says: `low`, `medium`, `high`, or empty for the habit of the model |
+| Review model | `model.review_model` — the model that reviews the changes. Empty means: the model of the session |
 | Routing | `model.routing` |
 | Routing rules | `model.routing_rules` |
 | Extra parameters | Everything else of `model.model_kwargs` |

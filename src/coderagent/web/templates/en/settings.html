@@ -51,6 +51,21 @@
       <small id="source-reasoning_effort" class="source"></small>
       <small class="source">how much the model thinks. Anthropic counts tokens, the others count levels.</small>
     </label>
+    <label>Verbosity
+      <select id="verbosity">
+        <option value="" title="The model answers as much as it wants.">the habit of the model</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select>
+      <small id="source-verbosity" class="source"></small>
+      <small class="source">how much the model says. An instruction, so every provider understands it.</small>
+    </label>
+    <label>Review model
+      <input id="review-model" type="text" placeholder="anthropic/claude-sonnet-4-5">
+      <small id="source-review_model" class="source"></small>
+      <small class="source">the model that reviews the changes. Empty means: the model of the session.</small>
+    </label>
     <label>Routing
       <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
       <small class="source">one purpose per line: <code>purpose: model</code></small>

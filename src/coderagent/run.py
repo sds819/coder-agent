@@ -1,12 +1,13 @@
 """Assembly of the coding agent: config -> model -> environment -> session -> loop."""
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any
 
 from coderagent.config.schema import Config, ContextConfig
-from coderagent.core import os_sandbox
+from coderagent.core import os_sandbox, shell_env
 from coderagent.core.budget import context_window_for
 from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
 from coderagent.core.context import ContextEngine
@@ -35,6 +36,7 @@ from coderagent.extensions.reflect import (
     user_memory_path,
 )
 from coderagent.extensions.skills import load_skills, skill_index
+from coderagent.models import verbosity
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
@@ -49,6 +51,7 @@ from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rul
 from coderagent.tools.registry import estimate_tokens
 from coderagent.tools.rules import load_rules
 from coderagent.ui.commands import register as register_command
+from minisweagent.environments.local import LocalEnvironment
 
 logger = logging.getLogger("coderagent.run")
 
@@ -175,7 +178,19 @@ def build_loop(
     specs = load_subagents(cwd, user_home)
     skills = load_skills(cwd, user_home)
     environment = build_environment(config.sandbox, cwd)
+    if isinstance(environment, LocalEnvironment):
+        """The commands of the agent do not see the keys of the user, unless he says so."""
+        environment.env_override = shell_env.build(
+            config.shell_environment.inherit,
+            config.shell_environment.exclude,
+            config.shell_environment.include,
+            config.shell_environment.set,
+            os.environ,
+        )
     system_prompt = config.agent.system_prompt
+    if config.model.verbosity:
+        """How much the model says. It is an instruction, not a parameter of the provider."""
+        system_prompt = f"{system_prompt}\n\n{verbosity.note(config.model.verbosity)}"
     if skill_index(skills):
         system_prompt = f"{system_prompt}\n\n{skill_index(skills)}"
     if subagent_index(specs):

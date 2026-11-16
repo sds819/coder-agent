@@ -150,12 +150,12 @@ class SessionRuntime:
             return
         self._run_turn(text)
 
-    def _run_turn(self, text: str) -> None:
+    def _run_turn(self, text: str, purpose: str = "") -> None:
         loop = self.loop()
         self.cancel.clear()
         loop.cancel = self.cancel.is_set
         try:
-            result = loop.run_turn(text)
+            result = loop.run_turn(text, purpose)
         except Exception as error:
             self.emit({"kind": "error", "error": f"{type(error).__name__}: {error}"})
             self.emit({"kind": "turn_end", "stop_reason": "error", "cost": 0.0, "error": str(error)})

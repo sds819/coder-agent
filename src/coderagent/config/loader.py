@@ -19,6 +19,7 @@ ADDED_LISTS = (
     ("permissions", "rules"),
     ("permissions", "deny_paths"),
     ("tools", "disabled"),
+    ("shell_environment", "exclude"),
 )
 """The lists that every layer adds to, instead of replacing."""
 

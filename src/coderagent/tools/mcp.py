@@ -58,6 +58,10 @@ class MCPClient:
         self.config = config
         self.bus = bus
         self.timeout = timeout
+        self.startup_timeout = config.startup_timeout or timeout
+        """The seconds the server may take to start. The timeout of the section when it has none."""
+        self.tool_timeout = config.tool_timeout or timeout
+        """The seconds one call may take. The timeout of the section when it has none."""
         self._error = ""
         """Why the server is not available, when it is not."""
         self._session = None
@@ -80,7 +84,7 @@ class MCPClient:
         """Connect to the server and return its tools. Never raises."""
         self._thread = threading.Thread(target=self._run, daemon=True, name=f"mcp-{self.config.name}")
         self._thread.start()
-        self._ready.wait(self.timeout)
+        self._ready.wait(self.startup_timeout)
         if self._error:
             logger.warning("MCP server '%s' is not available: %s", self.config.name, self._error)
         return self._tools
@@ -117,13 +121,13 @@ class MCPClient:
         return ToolResult(content=_content_text(result), is_error=bool(getattr(result, "isError", False)))
 
     def _call_remote(self, name: str, arguments: dict):
-        return asyncio.run_coroutine_threadsafe(self._call(name, arguments), self._loop).result(self.timeout)
+        return asyncio.run_coroutine_threadsafe(self._call(name, arguments), self._loop).result(self.tool_timeout)
 
     def _restart(self) -> None:
         """Start over with a new connection."""
         self.stop()
         if self._thread is not None:
-            self._thread.join(timeout=self.timeout)
+            self._thread.join(timeout=self.startup_timeout)
         self._thread = None
         self._session = None
         self._tools = []

@@ -267,6 +267,44 @@ def test_the_tools_of_a_server_are_in_the_registry(tmp_path):
         manager.stop()
 
 
+def test_the_timeouts_of_the_server_win_over_the_section(tmp_path):
+    """One server may be slower than the others."""
+    client = MCPClient(_config(tmp_path, startup_timeout=5, tool_timeout=60), timeout=30)
+    assert client.startup_timeout == 5
+    assert client.tool_timeout == 60
+
+
+def test_without_a_timeout_of_the_server_the_section_counts(tmp_path):
+    client = MCPClient(_config(tmp_path), timeout=30)
+    assert client.startup_timeout == 30
+    assert client.tool_timeout == 30
+
+
+def test_a_tool_that_takes_too_long_fails(tmp_path):
+    """The call does not wait forever for a server that is stuck."""
+    server = tmp_path / "slow.py"
+    server.write_text(
+        "import time\n"
+        "from mcp.server.mcpserver import MCPServer\n"
+        "server = MCPServer('echo')\n"
+        "@server.tool()\n"
+        "def echo(text: str) -> str:\n"
+        "    'Echo the text back.'\n"
+        "    time.sleep(30)\n"
+        "    return f'echo: {text}'\n"
+        "server.run()\n",
+        encoding="utf-8",
+    )
+    client = MCPClient(MCPServerConfig(name="echo", command=f"{sys.executable} {server}", tool_timeout=2), timeout=30)
+    client.start()
+    try:
+        result = client.call("echo", {"text": "hi"})
+    finally:
+        client.stop()
+    assert result.is_error
+    assert "echo" in result.content
+
+
 def test_a_server_without_a_command_is_skipped(tmp_path):
     manager = MCPManager(MCPConfig(servers=[MCPServerConfig(name="empty")]))
     assert manager.start() == []

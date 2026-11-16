@@ -13,6 +13,8 @@ the end of each section.
 - **One turn with a shape** — `coder -t "..." --output-schema answer.json`. The
   answer is JSON that fits the schema, and the JSON of the turn has it in
   `output`.
+- **One turn into a file** — `coder -t "..." --output-last-message answer.md`.
+  The file holds the last answer of the agent, nothing else.
 - **The terminal interface** — `coder` without a task, or `coder --tui`. A
   full screen interface with a status bar, tool cards and approvals.
 - **The browser** — `coder web`. The same agent in a chat page, with a
@@ -35,6 +37,9 @@ coder -t "list the files of this directory" --output-format json
 
 # One turn, the answer as JSON that fits a schema.
 coder -t "list the files of this directory" --output-schema files.json
+
+# One turn, the answer in a file.
+coder -t "list the files of this directory" --output-last-message answer.md
 
 # The terminal interface.
 coder                      # with a terminal this is the TUI
@@ -131,10 +136,15 @@ is fine, and so is a sentence in front of it.
   `medium` or `high`. Empty is the default of the model. The level is written
   in the words of the provider: `reasoning_effort` for OpenAI and the others,
   a number of tokens for Anthropic.
+- **How much the model says** — `verbosity`: `low`, `medium` or `high`. Empty is
+  the habit of the model. The level is an instruction in the system prompt, so
+  every provider understands it.
+- **A separate model for the review** — `model.review_model`. `/review` runs on
+  that model when the routing has no `review` of its own.
 - **Retries** — `max_retries`, three by default, the same in the terminal and in
   the browser.
 - **Routing by purpose** — a different model for `main`, `cheap`, `summarize`,
-  `reflect` and `strong`.
+  `reflect`, `strong` and `review`.
 - **Routing by the state of the session** — a rule like `tokens > 50000`
   switches to another model, and the reason is in the event log.
 - **A separate model for the summary** — `context.summarize_model`, empty
@@ -160,6 +170,8 @@ model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
   reasoning_effort: medium
+  verbosity: low
+  review_model: anthropic/claude-sonnet-4-5
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -194,6 +206,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 | `LLM Provider NOT provided` | The model name has no provider in front of it. | Write `openai/<name>` for an OpenAI compatible endpoint, or `deepseek/<name>`. |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor empty. | Use `default_end`, or remove the line. |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` is not one of `minimal`, `low`, `medium`, `high`. | Use one of those four, or remove the line for the default of the model. |
+| `unknown verbosity '{level}'` | `verbosity` is not one of `low`, `medium`, `high`. | Use one of those three, or remove the line for the habit of the model. |
 | `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; it is relative to the working directory. |
 | `the file is not valid YAML: {error}` | The alias file cannot be parsed. | Fix the YAML. |
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |
@@ -242,6 +255,13 @@ The fourteen built-in tools:
   `bash` and `read` are never dropped.
 - **The tool set is configurable** — `tools.enabled` is the list of the tools
   the model may call, `tools.disabled` takes single ones away.
+- **Every result is cut to the budget** — `tools.max_output_tokens` (8000 by
+  default) is the size of one tool result. A long one keeps its head and its
+  tail, and says in the middle what was left out. The full result stays in the
+  log of the session.
+- **The commands do not see your keys** — the environment of the commands is
+  yours, but the names that look like a secret (`*_API_KEY`, `*_TOKEN`, …) are
+  left out. `shell_environment` says how much of it the agent sees.
 
 ### Example
 
@@ -607,6 +627,9 @@ memory of the session keeps what was learned before the failure.
 - **`/compact`** — compress on demand.
 - **The order of the messages** — system prompt, the instruction files, the
   todo list, the summary of the session, then the history.
+- **The instruction files are cut** — one file may take 32768 bytes
+  (`context.project_doc_max_bytes`). A longer file is cut short, and the agent
+  is told that it did not see all of it.
 
 ### Example
 
@@ -978,6 +1001,9 @@ $ python -m pytest -q
   path in the input.
 - **The terminal is told when a turn is over** — a notification with the answer
   of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
+- **A program of your own may say it** — `ui.notify_command` names a program that
+  is called with the title and the body of the notification, e.g. `notify-send`.
+  A program that fails is a warning, not a broken session.
 - **The answer is Markdown** — the code blocks, the tables and the lists look the
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; `ui.markdown: false` keeps it plain.
@@ -1133,8 +1159,8 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
   profile that is in effect, and the overrides of the command line
   (`-c key=value`). The later wins.
 - **The sections** — `model`, `agent`, `tools`, `permissions`, `context`,
-  `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox`, `verify` and
-  `telemetry`, plus `profiles` and `profile`.
+  `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox`, `verify`,
+  `telemetry` and `shell_environment`, plus `profiles` and `profile`.
 - **The paths** — `MSWEA_CODER_HOME` moves the user level files somewhere
   else.
 - **The settings page writes the user file only** — the project file is in
@@ -1204,16 +1230,17 @@ The sections and what they hold:
 
 | Section | The keys |
 |---|---|
-| `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort` |
+| `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort`, `verbosity`, `review_model` |
 | `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit`, `subagent_max_turns`, `subagent_max_parallel` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs`, `network` |
-| `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model`, `summary_chunk_tokens` |
+| `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model`, `summary_chunk_tokens`, `project_doc_max_bytes` |
 | `memory` | `project_path`, `user_path`, `enabled` |
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`, `notifications`, `markdown` |
+| `ui` | `approval_timeout`, `notifications`, `notify_command`, `markdown` |
+| `shell_environment` | `inherit`, `exclude`, `include`, `set` |
 | `sandbox` | `type`, `mode` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 | `telemetry` | `otel_endpoint`, `otel_headers`, `otel_timeout` |
@@ -1255,6 +1282,11 @@ than 60000 characters is cut, and the model is told to read the files itself.
 
 The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.
+
+The review may run on a model of its own: `model.review_model` names it, and
+`model.routing.review` wins over that. Without either one the review runs on
+the model of the session. The purpose of the turn is in the log, so it can be
+read back later.
 
 ### The files you mention
 

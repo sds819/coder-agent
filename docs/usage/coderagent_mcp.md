@@ -38,6 +38,8 @@ See [The code of a project](coderagent.md#the-code-of-a-project).
 | `headers` | The headers of the http transport |
 | `enabled_tools` | The tools of this server the agent may call. Empty means: all of them |
 | `disabled_tools` | The tools of this server the agent may not call |
+| `startup_timeout` | The seconds this server may take to start. Zero means: the timeout of `mcp` |
+| `tool_timeout` | The seconds one call of this server may take. Zero means: the timeout of `mcp` |
 
 The `timeout` is not a key of a server: it belongs to `mcp`, next to
 `servers`, and it is how long the agent waits for a server.
@@ -125,6 +127,31 @@ tools away:
 - `disabled_tools` with names: those tools are never there.
 - `*` in `enabled_tools`: every tool of the server is there.
 - `*` in `disabled_tools`: no tool of the server is there.
+
+## The timeouts of a server
+
+`mcp.timeout` is the timeout of every server. A server that needs more time
+says so itself, and one server cannot hold up the others:
+
+```yaml
+mcp:
+  timeout: 30
+  servers:
+    - name: quick
+      command: npx -y @modelcontextprotocol/server-filesystem .
+      startup_timeout: 5
+      tool_timeout: 10
+    - name: slow
+      command: npx -y @modelcontextprotocol/server-database
+      startup_timeout: 60
+      tool_timeout: 300
+```
+
+`startup_timeout` is how long the server may take to come up, `tool_timeout` how
+long one call may take. A call that takes longer fails with an error, and the
+model gets the error instead of a turn that never ends.
+
+Both are seconds. Zero — the default — means the timeout of `mcp`.
 
 ## The servers and the session
 

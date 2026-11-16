@@ -20,13 +20,19 @@ class LocalEnvironment:
     def __init__(self, *, config_class: type = LocalEnvironmentConfig, **kwargs):
         """This class executes bash commands directly on the local machine."""
         self.config = config_class(**kwargs)
+        self.env_override: dict[str, str] | None = None
+        """The environment of the commands. None means: the environment of the user."""
+
+    def environment(self) -> dict[str, str]:
+        """The environment that the commands run with."""
+        return self.env_override if self.env_override is not None else os.environ | self.config.env
 
     def execute(self, action: dict, cwd: str = "", *, timeout: int | None = None) -> dict[str, Any]:
         """Execute a command in the local environment and return the result as a dict."""
         command = action.get("command", "")
         cwd = cwd or self.config.cwd or os.getcwd()
         try:
-            result = _run(command, cwd, os.environ | self.config.env, timeout or self.config.timeout)
+            result = _run(command, cwd, self.environment(), timeout or self.config.timeout)
             output = {"output": result.stdout, "returncode": result.returncode, "exception_info": ""}
         except Exception as e:
             raw_output = getattr(e, "output", None)

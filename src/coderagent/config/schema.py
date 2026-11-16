@@ -5,7 +5,9 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from coderagent.core.os_sandbox import MODES
+from coderagent.core.shell_env import INHERITS
 from coderagent.models.reasoning import EFFORTS
+from coderagent.models.verbosity import VERBOSITIES
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a coding agent working in a code repository. "
@@ -54,12 +56,23 @@ class ModelConfig(BaseModel):
     set_cache_control: str | None = None
     reasoning_effort: str = ""
     """How much the model thinks: minimal, low, medium, high. Empty is the default of the model."""
+    verbosity: str = ""
+    """How much the model says: low, medium, high. Empty is the habit of the model."""
+    review_model: str = ""
+    """The model that reviews the changes. Empty means: the model of the session."""
 
     @field_validator("reasoning_effort")
     @classmethod
     def _known_effort(cls, value: str) -> str:
         if value and value not in EFFORTS:
             raise ValueError(f"unknown reasoning effort '{value}'. Use one of: {', '.join(EFFORTS)}.")
+        return value
+
+    @field_validator("verbosity")
+    @classmethod
+    def _known_verbosity(cls, value: str) -> str:
+        if value and value not in VERBOSITIES:
+            raise ValueError(f"unknown verbosity '{value}'. Use one of: {', '.join(VERBOSITIES)}.")
         return value
 
 
@@ -93,6 +106,24 @@ class ToolConfig(BaseModel):
     """The tokens the schemas of the tools may take. 0 means a tenth of the context window."""
 
 
+class ShellEnvironmentConfig(BaseModel):
+    inherit: str = "all"
+    """One of all, core, none. How much of the environment of the user the agent sees."""
+    exclude: list[str] = Field(default_factory=list)
+    """Patterns of the names of the variables that never reach the agent."""
+    include: list[str] = Field(default_factory=list)
+    """Patterns of the names that reach the agent even when they look like a secret."""
+    set: dict[str, str] = Field(default_factory=dict)
+    """The variables the agent always sees."""
+
+    @field_validator("inherit")
+    @classmethod
+    def _known_inherit(cls, value: str) -> str:
+        if value not in INHERITS:
+            raise ValueError(f"unknown inheritance '{value}'. Use one of: {', '.join(INHERITS)}.")
+        return value
+
+
 class PermissionConfig(BaseModel):
     mode: str = "default"
     """One of default, acceptEdits, plan, bypass, readonly."""
@@ -116,6 +147,8 @@ class ContextConfig(BaseModel):
     """Model used for summarization. Empty means the same model as the agent."""
     summary_chunk_tokens: int = 0
     """How many tokens one summarization prompt may take. Zero means: as much as the window allows."""
+    project_doc_max_bytes: int = 32768
+    """The bytes one instruction file may take. A longer file is cut short."""
 
 
 class MemoryConfig(BaseModel):
@@ -142,6 +175,10 @@ class MCPServerConfig(BaseModel):
     """The tools of this server that the agent may call. Empty means: all of them."""
     disabled_tools: list[str] = Field(default_factory=list)
     """The tools of this server that the agent may not call."""
+    startup_timeout: int = 0
+    """The seconds the server may take to start. Zero means: the timeout of the section."""
+    tool_timeout: int = 0
+    """The seconds one call of this server may take. Zero means: the timeout of the section."""
 
 
 class MCPConfig(BaseModel):
@@ -172,6 +209,8 @@ class UIConfig(BaseModel):
     """Seconds to wait for an approval. 0 waits forever."""
     notifications: bool = True
     """Tell the terminal when a turn is over. The terminal may not show it."""
+    notify_command: str = ""
+    """A program that tells the user that the turn is over. It gets the title and the body."""
     markdown: bool = True
     """Render the answer of the agent as Markdown. The text stays plain while it arrives."""
 
@@ -221,6 +260,7 @@ class Config(BaseModel):
     agent: AgentConfig = Field(default_factory=AgentConfig)
     tools: ToolConfig = Field(default_factory=ToolConfig)
     permissions: PermissionConfig = Field(default_factory=PermissionConfig)
+    shell_environment: ShellEnvironmentConfig = Field(default_factory=ShellEnvironmentConfig)
     context: ContextConfig = Field(default_factory=ContextConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     checkpoint: CheckpointConfig = Field(default_factory=CheckpointConfig)

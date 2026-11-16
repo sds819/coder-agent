@@ -35,10 +35,12 @@ class CommandContext:
     """The MCP manager, when one is running."""
     output: Callable[[str], None] = print
     """Where the answer goes."""
-    submit: Callable[[str | list[dict]], None] | None = None
+    submit: Callable[..., None] | None = None
     """Run a turn with this prompt. None when the interface cannot run one.
 
     The prompt is a string, or the parts of a message that carries images.
+    The second argument is the purpose of the turn: it says which model
+    answers it. It is empty for the main model.
     """
     quit: Callable[[], None] | None = None
     """How to leave the interface. None when there is nothing to leave."""

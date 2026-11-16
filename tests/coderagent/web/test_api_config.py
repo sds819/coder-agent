@@ -313,3 +313,36 @@ def test_the_page_offers_the_levels_of_the_model(make_client):
 
     assert 'value="minimal"' in page
     assert 'value="high"' in page
+
+
+def test_the_verbosity_is_written_and_read_back(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"verbosity": "low"})
+
+    assert client.get("/api/config").json()["model"]["verbosity"] == "low"
+    assert client.get("/api/config").json()["sources"]["verbosity"] == "user"
+
+
+def test_a_verbosity_that_does_not_exist_is_refused(make_client):
+    response = make_client().put("/api/config/model", json={"verbosity": "huge"})
+
+    assert response.status_code == 400
+    assert "unknown verbosity" in response.json()["detail"]
+
+
+def test_the_model_of_the_review_is_written_and_read_back(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"review_model": "anthropic/claude-sonnet-4-5"})
+
+    assert client.get("/api/config").json()["model"]["review_model"] == "anthropic/claude-sonnet-4-5"
+
+
+def test_an_empty_model_of_the_review_removes_it(make_client):
+    client = make_client()
+    client.put("/api/config/model", json={"review_model": "anthropic/claude-sonnet-4-5"})
+
+    client.put("/api/config/model", json={"review_model": ""})
+
+    assert client.get("/api/config").json()["model"]["review_model"] == ""

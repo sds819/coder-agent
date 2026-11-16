@@ -71,6 +71,10 @@ session: the answer stays in the conversation, and you can act on it right away
 ("fix the second one"). The agent is told not to change any file while it
 reviews.
 
+The review may run on a model of its own: `model.review_model` names it, and
+`model.routing.review` wins over that. Without either one the review runs on
+the model of the session.
+
 `/image` sends a picture to the model. The path is the first word, everything
 after it is the text that goes with the picture:
 

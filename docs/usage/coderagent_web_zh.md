@@ -86,6 +86,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 | Max retries | `model.max_retries` |
 | Cache control | `model.set_cache_control`（`default_end` 或空） |
 | Reasoning effort | `model.reasoning_effort`——模型想多久：`minimal`、`low`、`medium`、`high`，留空是模型的默认 |
+| Verbosity | `model.verbosity`——模型说多少：`low`、`medium`、`high`，留空是模型自己的习惯 |
+| Review model | `model.review_model`——审查改动用的模型。留空就是会话自己的模型 |
 | Routing | `model.routing`，一行一个 `用途: 模型` |
 | Routing rules | `model.routing_rules`，一行一个 `when: purpose` |
 | Extra parameters | `model.model_kwargs` 的其余部分（YAML，原样传给厂商） |

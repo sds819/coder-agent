@@ -75,9 +75,11 @@ def _model(context: CommandContext, argument: str) -> None:
     if not argument:
         routing = ", ".join(f"{name} -> {target}" for name, target in context.config.model.routing.items())
         effort = context.config.model.reasoning_effort
+        verbosity = context.config.model.verbosity
         context.say(
             f"model: {context.config.model.model_name}"
             f"\neffort: {effort or 'the default of the model'}"
+            f"\nverbosity: {verbosity or 'the habit of the model'}"
             + (f"\nrouting: {routing}" if routing else "\n(no routing configured)")
         )
         return
@@ -192,7 +194,8 @@ def _review(context: CommandContext, argument: str) -> None:
     if not diff and not untracked:
         context.say("No changes to review.")
         return
-    context.submit(prompt(diff, untracked, argument.strip()))
+    context.submit(prompt(diff, untracked, argument.strip()), "review")
+    """The review may run on a model of its own: `model.review_model`."""
 
 
 def _image(context: CommandContext, argument: str) -> None:

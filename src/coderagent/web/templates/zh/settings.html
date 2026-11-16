@@ -50,6 +50,21 @@
       <small id="source-reasoning_effort" class="source"></small>
       <small class="source">模型想多久。Anthropic 数 token，其它家数档位。</small>
     </label>
+    <label>啰嗦程度
+      <select id="verbosity">
+        <option value="" title="模型说多少是它自己的事。">模型自己的习惯</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select>
+      <small id="source-verbosity" class="source"></small>
+      <small class="source">模型说多少。这是一句提示词，所以哪家厂商都听得懂。</small>
+    </label>
+    <label>评审模型
+      <input id="review-model" type="text" placeholder="anthropic/claude-sonnet-4-5">
+      <small id="source-review_model" class="source"></small>
+      <small class="source">审查改动用的模型。留空就是会话自己的模型。</small>
+    </label>
     <label>路由
       <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
       <small class="source">一行一个用途：<code>用途: 模型</code></small>

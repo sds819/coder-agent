@@ -16,7 +16,7 @@ from coderagent.ui.commands import CommandContext, run
 from coderagent.ui.commands.review import MAX_DIFF, prompt
 
 
-def _context(tmp_path, cwd: Path) -> tuple[CommandContext, list[str], list[str]]:
+def _context(tmp_path, cwd: Path) -> tuple[CommandContext, list[str], list[str], list[str]]:
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)
     executor = build_executor(cwd)
@@ -31,6 +31,12 @@ def _context(tmp_path, cwd: Path) -> tuple[CommandContext, list[str], list[str]]
     )
     output: list[str] = []
     submitted: list[str] = []
+    purposes: list[str] = []
+
+    def submit(text, purpose: str = "") -> None:
+        submitted.append(text)
+        purposes.append(purpose)
+
     context = CommandContext(
         loop=loop,
         session=session,
@@ -40,9 +46,9 @@ def _context(tmp_path, cwd: Path) -> tuple[CommandContext, list[str], list[str]]
         config=Config(),
         policy=PermissionPolicy(PermissionMode.DEFAULT, [], cwd=cwd),
         output=output.append,
-        submit=submitted.append,
+        submit=submit,
     )
-    return context, output, submitted
+    return context, output, submitted, purposes
 
 
 def _git(cwd: Path, *args: str) -> None:
@@ -65,7 +71,7 @@ def _repo(tmp_path) -> Path:
 def test_the_diff_of_the_working_tree_goes_into_the_prompt(tmp_path):
     repo = _repo(tmp_path)
     (repo / "a.py").write_text("print('b')\n", encoding="utf-8")
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
 
     run(context, "/review")
 
@@ -79,7 +85,7 @@ def test_a_range_is_reviewed_instead_of_the_working_tree(tmp_path):
     (repo / "a.py").write_text("print('b')\n", encoding="utf-8")
     _git(repo, "commit", "-am", "second")
     (repo / "a.py").write_text("print('c')\n", encoding="utf-8")
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
 
     run(context, "/review HEAD~1..HEAD")
 
@@ -91,16 +97,26 @@ def test_a_range_is_reviewed_instead_of_the_working_tree(tmp_path):
 def test_the_new_files_are_named_even_when_they_are_not_in_the_diff(tmp_path):
     repo = _repo(tmp_path)
     (repo / "b.py").write_text("print('b')\n", encoding="utf-8")
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
 
     run(context, "/review")
 
     assert "b.py" in submitted[0]
 
 
+def test_the_review_asks_for_the_review_purpose(tmp_path):
+    repo = _repo(tmp_path)
+    (repo / "a.py").write_text("print('b')\n", encoding="utf-8")
+    context, output, submitted, purposes = _context(tmp_path, repo)
+
+    run(context, "/review")
+
+    assert purposes == ["review"]
+
+
 def test_nothing_to_review_says_so(tmp_path):
     repo = _repo(tmp_path)
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
 
     run(context, "/review")
 
@@ -109,7 +125,7 @@ def test_nothing_to_review_says_so(tmp_path):
 
 
 def test_a_directory_that_is_not_a_repository_says_so(tmp_path):
-    context, output, submitted = _context(tmp_path, tmp_path)
+    context, output, submitted, purposes = _context(tmp_path, tmp_path)
 
     run(context, "/review")
 
@@ -119,7 +135,7 @@ def test_a_directory_that_is_not_a_repository_says_so(tmp_path):
 
 def test_a_range_that_git_does_not_know_says_so(tmp_path):
     repo = _repo(tmp_path)
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
 
     run(context, "/review nope..nope")
 
@@ -130,7 +146,7 @@ def test_a_range_that_git_does_not_know_says_so(tmp_path):
 def test_an_interface_that_cannot_run_a_turn_says_so(tmp_path):
     repo = _repo(tmp_path)
     (repo / "a.py").write_text("print('b')\n", encoding="utf-8")
-    context, output, submitted = _context(tmp_path, repo)
+    context, output, submitted, purposes = _context(tmp_path, repo)
     context.submit = None
 
     run(context, "/review")

@@ -47,6 +47,7 @@ The name of the model is `model.model_name` in the configuration, or
 | `--permission-mode` | `default`, `acceptEdits`, `plan`, `bypass` or `readonly` |
 | `--output-format` | `text` (the default) or `json` |
 | `--output-schema` | A file with the JSON schema the answer has to fit |
+| `--output-last-message` | Write the last answer of the agent to this file |
 | `--resume <id>` | Continue the session with this id |
 | `--continue` | Continue the last session of this directory |
 | `--fork <id>` | Copy the session with this id and continue in the copy |
@@ -94,6 +95,14 @@ coder --task "..." --output-format json
 `output` is the answer when a schema was asked for with `--output-schema`, and
 `null` when it was not.
 
+The answer itself goes into a file with `--output-last-message`:
+
+```bash
+coder --task "..." --output-last-message answer.md
+```
+
+The file holds the text of the last answer of the agent, nothing else.
+
 ### The trace of a session
 
 ```bash
@@ -137,6 +146,18 @@ answer, and `enter` confirms it.
 The answer of the agent is rendered as Markdown: the code blocks, the tables
 and the lists look the way they look in the README of a project. The text is
 plain while it arrives, and rendered when it is complete.
+
+When the turn is over the terminal shows a notification. A program of your own
+may say it in the way you want it:
+
+```yaml
+ui:
+  notify_command: notify-send
+```
+
+The program is called with the title and the body of the notification:
+`notify-send coder "the work is done"`. A program that fails is a warning, not
+a broken session. `ui.notifications: false` turns the notifications off.
 
 A picture goes to the model with `/image`:
 
@@ -231,6 +252,11 @@ provider as it is. `model.routing` maps a purpose to a model:
 | `summarize` | The summary of a compacted context |
 | `reflect` | What the session writes into the memory |
 | `strong` | A stronger model, when the routing rules ask for it |
+| `review` | The review of the changes (`/review`) |
+
+`model.review_model` names the model of the `review` purpose when the routing
+has no `review` of its own. Without it the review runs on the model of the
+session. `model.routing` wins over `model.review_model`.
 
 `model.routing_rules` are conditions on the state of the session:
 
@@ -264,6 +290,24 @@ the parameter refuses the call, and the refusal is not retried.
 
 A level that does not exist is refused when the configuration is read, not in
 the middle of a turn.
+
+#### How much the model says
+
+`model.verbosity` says how much the model says: `low`, `medium` or `high`.
+Empty is the habit of the model, which is what most of them are good at.
+
+```bash
+coder -c model.verbosity=low --task "..."
+```
+
+`reasoning_effort` is how long the model thinks, `verbosity` is how much it
+says. The two are independent: a model may think long and answer short.
+
+The level is an instruction, not a parameter of the provider: it goes into the
+system prompt of the session. Every provider understands it, and none of them
+is asked for a parameter it may not know.
+
+A level that does not exist is refused when the configuration is read.
 
 #### Other providers
 
@@ -369,6 +413,47 @@ The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 
 `tools.enabled` is the list of the tools the model may call, `tools.disabled`
 takes some of them away. The tools of the MCP servers are always there.
+
+Every tool result is cut to the budget of the context before the model sees it:
+a command that prints a hundred thousand lines does not blow up the window. The
+full result stays in the log of the session.
+
+### The environment of the commands
+
+The commands of the agent do not see everything you see. The key of the
+provider is in the process of the agent, not in its shell:
+
+```bash
+echo [$OPENAI_API_KEY]   # [] — the agent does not see your key
+```
+
+The environment of the commands is yours by default (`shell_environment.inherit:
+all`), except for the names that look like a secret. `*_API_KEY`, `*_KEY`,
+`*_TOKEN`, `*_SECRET`, `*_PASSWORD`, `*_PASSWD`, `*_CREDENTIALS` and
+`*_ACCESS_KEY` are always left out.
+
+| Option | What it does |
+|---|---|
+| `inherit` | `all` (everything but the secrets), `core` (only what a command needs), `none` (nothing) |
+| `exclude` | Names that are left out, `*` works as a wildcard |
+| `include` | Names that are kept, even when they look like a secret |
+| `set` | Names that are set, no matter what |
+
+```yaml
+shell_environment:
+  inherit: core
+  exclude: ["MY_*"]
+  include: ["MY_TOKEN"]
+  set:
+    CI: "1"
+```
+
+`core` keeps only `PATH`, `HOME`, the locale, the shell and the temporary
+directories — what a command needs to run at all. `include` is the way to open
+a secret again, one name at a time.
+
+The project may hide more of the environment, never show what you hid: a
+project that adds an `include` is ignored.
 
 ### The permissions
 
@@ -488,6 +573,7 @@ they are in the summary.
 | `compact_every_turns` | Compact after that many turns, even when the window is free. |
 | `reserved_output` | The room that is kept for the answer of the model. |
 | `auto_compact` | Whether the agent compacts on its own. |
+| `project_doc_max_bytes` | The bytes one instruction file may take. A longer file is cut short. |
 
 `/compact` compacts now.
 
@@ -573,6 +659,10 @@ asked. It does nothing when the file already exists.
 
 The user file `~/.coderagent/CLAUDE.md` comes first, then the project. An
 `AGENTS.md` in a subdirectory is read when the agent touches something in it.
+
+One instruction file may take 32768 bytes (`context.project_doc_max_bytes`).
+A longer file is cut short, and the agent is told that it did not see all of
+it — a huge `AGENTS.md` does not eat the whole window.
 
 ## What the agent can delegate
 

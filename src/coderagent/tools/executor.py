@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from coderagent.core.events import Event, EventType
 from coderagent.core.redact import redact
 from coderagent.core.session import SessionState
+from coderagent.core.tokens import trim_text
 from coderagent.tools.base import ToolContext, ToolResult
 from coderagent.tools.permissions import (
     WRITE_TOOLS,
@@ -170,7 +171,8 @@ class ToolExecutor:
         self._publish(action, result, ctx)
         if result.metadata.get("truncated"):
             ctx.session.metadata.setdefault("truncated_outputs", []).append(result.metadata["truncated"])
-        content = redact(result.content)
+        content = trim_text(redact(result.content), ctx.config.max_output_tokens)[0]
+        """Every tool result is cut to the budget of the context, not only the output of bash."""
         if self.hooks:
             hook = self.hooks.apply(
                 "PostToolUse", {"tool": action["tool"], "params": action["args"], "result": content}

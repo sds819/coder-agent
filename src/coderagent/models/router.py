@@ -84,6 +84,9 @@ class ModelRouter:
         name = self.config.routing.get(target, "")
         if not name and target == "main":
             return self.main_model
+        if not name and target == "review":
+            """The review may run on a model of its own."""
+            return self.config.review_model
         return name
 
     def explain(self, context: dict) -> str:

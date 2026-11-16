@@ -135,6 +135,41 @@ def test_the_loop_switches_the_model_and_says_so(tmp_path):
     assert changes[0].payload["reason"]
 
 
+def test_the_review_runs_on_the_model_of_the_review():
+    assert ModelRouter(_config(review_model="review/model")).resolve("review") == "review/model"
+
+
+def test_the_routing_wins_over_the_model_of_the_review():
+    config = _config(review_model="review/model", routing={"review": "routed/model"})
+    assert ModelRouter(config).resolve("review") == "routed/model"
+
+
+def test_without_a_model_of_the_review_the_review_stays_where_it_is():
+    assert ModelRouter(_config()).resolve("review") == ""
+
+
+def test_the_turn_says_which_purpose_it_answers(tmp_path):
+    """The purpose is in the log of the session, so that it can be read back later."""
+    store = SessionStore(tmp_path)
+    session = store.create(tmp_path)
+    gateway = ModelGateway(ScriptedModel([{"role": "assistant", "content": "ok"}]))
+    executor = build_executor(tmp_path)
+    loop = AgentLoop(
+        gateway,
+        executor,
+        session,
+        store,
+        EventBus(),
+        tools=executor.registry.schemas(),
+        router=ModelRouter(_config(), gateway),
+    )
+    loop.run_turn("hello", "review")
+    answers = [
+        event.payload["message"] for event in store.events(session.id) if event.type == EventType.ASSISTANT_MESSAGE
+    ]
+    assert answers[0]["extra"]["purpose"] == "review"
+
+
 def _alias_file(tmp_path, alias: str, model: str) -> str:
     path = tmp_path / "litellm_config.yaml"
     path.write_text(

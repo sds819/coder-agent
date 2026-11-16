@@ -41,7 +41,7 @@ def _context(tmp_path: Path) -> tuple[CommandContext, list[str], list]:
         config=Config(),
         policy=PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path),
         output=output.append,
-        submit=submitted.append,
+        submit=lambda text, purpose="": submitted.append(text),
     )
     return context, output, submitted
 

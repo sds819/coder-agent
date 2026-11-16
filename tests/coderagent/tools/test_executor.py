@@ -141,3 +141,14 @@ def test_a_tool_does_not_run_when_the_turn_was_interrupted(tmp_path):
     observations = executor.execute(executor.plan([_call("bash", {"command": "touch marker.txt"})]))
     assert "interrupted" in observations[0]["content"]
     assert not (tmp_path / "marker.txt").exists()
+
+
+def test_the_output_of_every_tool_is_cut_to_the_budget(tmp_path):
+    """Not only the output of bash: a file that is read may be long too."""
+    from coderagent.config.schema import ToolConfig
+
+    (tmp_path / "big.txt").write_text("x" * 200000, encoding="utf-8")
+    executor = build_executor(tmp_path, config=ToolConfig(max_output_tokens=100))
+    observations = executor.execute(executor.plan([_call("read", {"path": "big.txt"})]))
+    assert "tokens elided" in observations[0]["content"]
+    assert len(observations[0]["content"]) < 2000

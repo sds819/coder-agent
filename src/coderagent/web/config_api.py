@@ -17,6 +17,7 @@ from litellm.utils import get_llm_provider
 from coderagent.config.loader import config_layers, load_config
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import EFFORTS
+from coderagent.models.verbosity import VERBOSITIES
 from coderagent.paths import config_home
 from coderagent.tools.permissions import PermissionMode
 
@@ -40,6 +41,8 @@ DIRECT_FIELDS = (
     "routing_rules",
     "litellm_config",
     "reasoning_effort",
+    "verbosity",
+    "review_model",
 )
 """The settings of the model that live directly under `model:`."""
 
@@ -137,6 +140,9 @@ def model_view(cwd: Path) -> dict[str, Any]:
         "set_cache_control": model.set_cache_control or "",
         "reasoning_effort": model.reasoning_effort,
         "efforts": list(EFFORTS),
+        "verbosity": model.verbosity,
+        "verbosities": list(VERBOSITIES),
+        "review_model": model.review_model,
         "routing": model.routing,
         "routing_rules": [rule.model_dump() for rule in model.routing_rules],
         "model_kwargs": {key: value for key, value in kwargs.items() if not is_secret(key)},
@@ -276,6 +282,20 @@ def write_user_model(payload: dict) -> Path:
             model["reasoning_effort"] = effort.strip()
         else:
             model.pop("reasoning_effort", None)
+    verbosity = payload.get("verbosity")
+    if isinstance(verbosity, str):
+        if verbosity.strip() and verbosity.strip() not in VERBOSITIES:
+            raise ValueError(f"unknown verbosity '{verbosity}'")
+        if verbosity.strip():
+            model["verbosity"] = verbosity.strip()
+        else:
+            model.pop("verbosity", None)
+    review = payload.get("review_model")
+    if isinstance(review, str):
+        if review.strip():
+            model["review_model"] = review.strip()
+        else:
+            model.pop("review_model", None)
     routing = payload.get("routing")
     if isinstance(routing, dict):
         model["routing"] = {str(key): str(value) for key, value in routing.items()}

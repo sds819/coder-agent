@@ -55,14 +55,14 @@ def test_a_path_outside_the_project_has_no_instructions(tmp_path):
     assert subdirectory_instructions(Path("/etc/hosts"), tmp_path) == []
 
 
-def _engine(tmp_path):
+def _engine(tmp_path, config: ContextConfig | None = None):
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)
     return ContextEngine(
         session,
         store,
         EventBus(),
-        ContextConfig(),
+        config or ContextConfig(),
         None,
         cwd=tmp_path,
         user_home=tmp_path / "home",
@@ -124,3 +124,22 @@ def test_the_instructions_of_the_caller_are_not_read_again(tmp_path):
     text = engine._instruction_text()
     assert "the given rules" in text
     assert "the project rules" not in text
+
+
+def test_a_file_that_is_too_long_is_cut_short(tmp_path):
+    """The instructions of the project may not take the whole context."""
+    (tmp_path / "AGENTS.md").write_text("x" * 5000, encoding="utf-8")
+    block = load_instructions(tmp_path, tmp_path / "home", 1000)[0]
+    assert len(block.content) < 1200
+    assert "the rest of it is not shown" in block.content
+
+
+def test_a_file_that_fits_is_not_cut(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("the rules", encoding="utf-8")
+    assert load_instructions(tmp_path, tmp_path / "home", 1000)[0].content == "the rules"
+
+
+def test_the_limit_of_the_configuration_holds(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("x" * 5000, encoding="utf-8")
+    engine = _engine(tmp_path, ContextConfig(project_doc_max_bytes=1000))
+    assert "the rest of it is not shown" in engine._instruction_text()

@@ -539,9 +539,10 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 8 | ~~**图片输入（4.1）、中断粒度（4.4）、Markdown（4.3）**~~ ✅ | 三件事都在消息这一层，一起做 |
 | 9 | ~~**`apply_patch`（4.9）、TUI 文件树（4.6）、P2 清理一批（5.2～5.5、5.7）**~~ ✅ | 一块改文件的东西，一块看文件的东西，剩下的都是收尾 |
 | 10 | ~~**OTel exporter（5.6）+ 第二轮对照的差距（§9）**~~ ✅ | 先把追踪发出去，再把 Codex 的清单整个重读一遍，找剩下的差距 |
+| 11 | ~~**第三轮的差距（§9.6）**~~ ✅ | 两个安全向的先做（环境变量、工具输出上限），再把小的补齐 |
 
-第 10 步之后又剩一批差距，**记在 §9.6，还没排期**。真要动手，先挑
-`[shell_environment_policy]` 和 `tool_output_token_limit`（见 9.6 的理由）。
+第 11 步做掉了 §9.6 里六个小的和两个中的。剩下的还记在 §9.6：
+`file_opener`、`supports_parallel_tool_calls`，以及大的那三组。
 
 ---
 
@@ -620,6 +621,9 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**没有马上做**——
 它们要么是锦上添花，要么该等第 10 步的提交落地之后再挑。这节只作记录。
 
+> 第 11 步之后，这一节里**六个小的和两个中的都做掉了**（见 §9.7），
+> 表里打 ✅ 的就是它们。
+
 **已经有的、不用再抄的**（对过命令表和配置 schema）：`/diff`、`/init`、`/status`、
 `/fork`、`/compact`、`/permissions`、`/skills`、`/mcp`、`/export`、`/hooks`、
 `/agents`、`/todos`、`/cost`、`/context`、`/sandbox`、`/plan`、`/mode`、
@@ -630,19 +634,19 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**�
 
 | 差距 | Codex 有 | coderagent 现在的样子 | 备注 |
 |---|---|---|---|
-| `model_verbosity`（回答的啰嗦程度） | `low \| medium \| high` | 只有 `reasoning_effort`（**想**多少），没有「**答**多少」 | 和 3.3 是同一套东西，翻译逻辑照抄那一段 |
-| `review_model` | `/review` 可以用另一个模型 | `/review` 用主模型 | 多一个模型槽位 |
-| `project_doc_max_bytes` | AGENTS.md 塞进上下文有字节上限（默认 32768） | 整份塞 | 指令文件很大时会直接吃掉预算 |
-| `--output-last-message` / `-o 文件` | 最后一条回答写进文件 | 只有 stdout 的 JSON | 和 9.2 的 schema 常常一起用 |
-| 外部通知程序 | `notify = ["notify-send", ...]` | OSC 777 终端通知（4.8） | 是补充，不是替代 |
-| MCP 每服务器超时 | `startup_timeout_sec` / `tool_timeout_sec` | 只有一个全局 `mcp.timeout`（30 秒） | 一个慢的服务器能拖死全部 |
+| `model_verbosity`（回答的啰嗦程度） ✅ | `low \| medium \| high` | `model.verbosity`，同一套三档 | 和 3.3 是同一套东西，翻译逻辑照抄那一段 |
+| `review_model` ✅ | `/review` 可以用另一个模型 | `model.review_model`，`model.routing.review` 压过它 | 多一个模型槽位 |
+| `project_doc_max_bytes` ✅ | AGENTS.md 塞进上下文有字节上限（默认 32768） | `context.project_doc_max_bytes`，默认一样 | 指令文件很大时会直接吃掉预算 |
+| `--output-last-message` / `-o 文件` ✅ | 最后一条回答写进文件 | `--output-last-message` | 和 9.2 的 schema 常常一起用 |
+| 外部通知程序 ✅ | `notify = ["notify-send", ...]` | `ui.notify_command`，还是 OSC 777 终端通知（4.8） | 是补充，不是替代 |
+| MCP 每服务器超时 ✅ | `startup_timeout_sec` / `tool_timeout_sec` | `startup_timeout` / `tool_timeout`，不写就是全局的 30 秒 | 一个慢的服务器能拖死全部 |
 
 **中的**：
 
 | 差距 | Codex 有 | coderagent 现在的样子 | 备注 |
 |---|---|---|---|
-| `[shell_environment_policy]` | 控制哪些环境变量进子进程 | **全继承**——`API_KEY` 会直接漏给 agent 的 bash | **安全向，值得早点做** |
-| `tool_output_token_limit` | 单个工具输出有 token 上限 | 只有压缩的时候才裁剪 | 一条十万字符的输出会当场顶爆预算 |
+| `[shell_environment_policy]` ✅ | 控制哪些环境变量进子进程 | `shell_environment`：`inherit` / `exclude` / `include` / `set`，像秘密的名字**一定**被去掉 | **安全向，值得早点做** |
+| `tool_output_token_limit` ✅ | 单个工具输出有 token 上限 | `tools.max_output_tokens`（默认 8000），**每一个**工具的结果都裁 | 一条十万字符的输出会当场顶爆预算 |
 | `file_opener` | 文件引用点开 vscode / cursor / windsurf | 纯文本 | 纯终端的友好度 |
 | `supports_parallel_tool_calls` | 按 MCP 服务器放开并行调用 | 全部串行 | 慢 |
 
@@ -656,6 +660,31 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**�
 
 **挑的时候**：先 `[shell_environment_policy]`（安全）和 `tool_output_token_limit`
 （会炸预算），这两个的代价和收益都比别的高。
+
+### 9.7 第 11 步：做掉的那些 ✅ 已修
+
+**怎么做的**：
+
+- **`model.verbosity`**（`low` / `medium` / `high`）：**一句写进系统提示词的话**，
+  不是厂商参数——所以哪家都听得懂。跟 `reasoning_effort` 是两回事：一个管想多久，
+  一个管说多少。写错档位在**读配置时**就拒。
+- **`model.review_model`**：`/review` 的那一轮带一个**用途**（`purpose="review"`），
+  路由器按用途挑模型：`model.routing.review` 压过 `model.review_model`，
+  两个都没有就还是会话自己的模型。用途写在事件日志的 `extra.purpose` 里。
+- **`context.project_doc_max_bytes`**（默认 32768）：一个指令文件超了就被**截短**，
+  而且**告诉模型**它没看全——不然模型会以为规则就那么长。
+- **`--output-last-message`**：最后一条回答写进文件，就那一段文字。
+- **`ui.notify_command`**：一个外部程序，拿到通知的**标题和正文**两个参数。
+  跑不起来只是记一条警告。终端通知（OSC 777）还在，两者是补充关系。
+- **MCP 每服务器超时**：`startup_timeout` 和 `tool_timeout`，不写就用全局的。
+  一个慢的服务器拖不住别的了。
+- **`shell_environment`**（**安全向**）：命令的环境里**像秘密的名字一定被去掉**
+  （`*_API_KEY`、`*_KEY`、`*_TOKEN`、`*_SECRET`、`*_PASSWORD`、`*_PASSWD`、
+  `*_CREDENTIALS`、`*_ACCESS_KEY`），除非用户用 `include` 一个一个地放回来。
+  三个档位：`all`（除了秘密）、`core`（只有命令要的那些）、`none`（什么都没有）。
+  **项目只能藏更多，不能把用户藏的放出来**（`core/trust.py` 丢掉项目的 `include`）。
+- **`tools.max_output_tokens`**（默认 8000）：**每一个**工具的结果都裁，不只是 bash。
+  裁的时候留头和尾，中间写明裁掉了什么；**完整的结果还留在事件日志里**。
 
 ---
 
@@ -677,6 +706,7 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**�
 
 > **第三轮**（§9.6）第 10 步落地之后又拉了一份全量清单，对完源码，
 > 剩下的差距**只记录、没做**——这一节就是那份记录。
+> 第 11 步做掉了其中**八个**（六个小的 + 两个中的），见 §9.7。
 
 > 本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
 > 也都修了：3.4 让一个文件只出一段（`core/instructions.py` 的 `once_per_file()`），

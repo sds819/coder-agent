@@ -11,6 +11,8 @@
   加 `--output-format json` 就是 JSON。
 - **跑一轮，答案有形状**——`coder -t "..." --output-schema answer.json`。
   答案是对得上那个 schema 的 JSON，一轮的 JSON 里放在 `output` 字段。
+- **跑一轮，答案进文件**——`coder -t "..." --output-last-message answer.md`。
+  文件里只有 agent 最后那句回答，别的东西都没有。
 - **终端界面**——不给任务就是 `coder`，也可以 `coder --tui`。全屏界面，
   有状态栏、工具卡片和审批。
 - **浏览器里**——`coder web`。同一个 agent，一个聊天页，一个设置模型配置
@@ -32,6 +34,9 @@ coder -t "列一下这个目录里的文件" --output-format json
 
 # 跑一轮，答案是对得上 schema 的 JSON。
 coder -t "列一下这个目录里的文件" --output-schema files.json
+
+# 跑一轮，答案写进文件。
+coder -t "列一下这个目录里的文件" --output-last-message answer.md
 
 # 终端界面。
 coder                      # 在终端里这就是 TUI
@@ -121,9 +126,13 @@ coder --list
 - **模型想多久**——`reasoning_effort`：`minimal`、`low`、`medium`、`high`，
   留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
   `reasoning_effort`，Anthropic 是一笔 token。
+- **模型说多少**——`verbosity`：`low`、`medium`、`high`，留空是模型自己的
+  习惯。这个档位是一句写进系统提示词的话，所以哪家厂商都听得懂。
+- **评审用别的模型**——`model.review_model`。路由里没有 `review` 时，
+  `/review` 就跑在那个模型上。
 - **重试**——`max_retries`，默认三次，终端和浏览器一样。
-- **按用途路由**——`main`、`cheap`、`summarize`、`reflect`、`strong` 可以
-  各配一个模型。
+- **按用途路由**——`main`、`cheap`、`summarize`、`reflect`、`strong`、`review`
+  可以各配一个模型。
 - **按会话状态路由**——像 `tokens > 50000` 这样的规则会换模型，理由写在
   事件日志里。
 - **摘要用别的模型**——`context.summarize_model`，留空就是 agent 自己那个。
@@ -147,6 +156,8 @@ model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
   reasoning_effort: medium
+  verbosity: low
+  review_model: anthropic/claude-sonnet-4-5
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -181,6 +192,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `LLM Provider NOT provided` | 模型名前面没有厂商。 | OpenAI 兼容的端点写 `openai/<名字>`，或者 `deepseek/<名字>`。 |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end`，也不是空的。 | 用 `default_end`，或者删掉这一行。 |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` 不是 `minimal`、`low`、`medium`、`high` 里的一个。 | 用那四个里的一个，或者删掉这一行（用模型的默认）。 |
+| `unknown verbosity '{level}'` | `verbosity` 不是 `low`、`medium`、`high` 里的一个。 | 用那三个里的一个，或者删掉这一行（用模型自己的习惯）。 |
 | `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径，它是相对于工作目录的。 |
 | `the file is not valid YAML: {error}` | 别名文件解析不了。 | 修 YAML。 |
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |
@@ -223,6 +235,12 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
   `bash` 和 `read` 永远不裁。
 - **工具集可以配**——`tools.enabled` 是模型能调的工具清单，`tools.disabled`
   是单独拿掉几个。
+- **每个结果都按预算裁**——`tools.max_output_tokens`（默认 8000）是一条工具
+  结果的大小上限。太长的留下头和尾，中间写明裁掉了什么。完整的结果还留在会话
+  日志里。
+- **命令看不见你的 key**——命令的环境本来是你的，但名字像秘密的那些
+  （`*_API_KEY`、`*_TOKEN`……）会被去掉。`shell_environment` 决定 agent 能看见
+  多少。
 
 ### 用法例子
 
@@ -556,6 +574,8 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 - **留什么**——最近几轮，或者最近 40 % 的 token，哪个多留哪个。
 - **`/compact`**——随时手动压缩。
 - **消息的顺序**——系统提示词、指令文件、todo、会话摘要，然后是历史。
+- **指令文件会裁**——一个文件最多 32768 字节（`context.project_doc_max_bytes`）。
+  太长的裁短，而且告诉 agent 它没看全。
 
 ### 用法例子
 
@@ -905,6 +925,9 @@ $ python -m pytest -q
   填进输入框。
 - **一轮结束时通知终端**——通知里带着 agent 的回答，长的一轮不会错过。
   `ui.notifications: false` 可以关掉。
+- **也可以用你自己的程序通知**——`ui.notify_command` 写一个程序名，它会拿到
+  通知的标题和正文两个参数（比如 `notify-send`）。程序跑不起来只是记一条警告，
+  不会弄坏会话。
 - **答案是 Markdown**——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；`ui.markdown: false` 可以让它一直是纯文本。
 - **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。
@@ -1046,8 +1069,8 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
   `~/.coderagent/config.yaml`、生效的 profile、命令行的覆盖（`-c key=value`）。
   后面的赢。
 - **有哪些段**——`model`、`agent`、`tools`、`permissions`、`context`、
-  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`、`telemetry`，
-  还有 `profiles` 和 `profile`。
+  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`、`telemetry`、
+  `shell_environment`，还有 `profiles` 和 `profile`。
 - **路径**——`MSWEA_CODER_HOME` 可以把用户级文件挪到别处。
 - **设置页只写用户级文件**——项目级那份在仓库里，永远不写。
 
@@ -1112,16 +1135,17 @@ profile: fast
 
 | 段 | 键 |
 |---|---|
-| `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort` |
+| `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort`、`verbosity`、`review_model` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit`、`subagent_max_turns`、`subagent_max_parallel` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs`、`network` |
-| `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model`、`summary_chunk_tokens` |
+| `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model`、`summary_chunk_tokens`、`project_doc_max_bytes` |
 | `memory` | `project_path`、`user_path`、`enabled` |
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`、`notifications`、`markdown` |
+| `ui` | `approval_timeout`、`notifications`、`notify_command`、`markdown` |
+| `shell_environment` | `inherit`、`exclude`、`include`、`set` |
 | `sandbox` | `type`、`mode` 和环境的那些选项 |
 | `verify` | `commands`、`max_rounds`、`timeout` |
 | `telemetry` | `otel_endpoint`、`otel_headers`、`otel_timeout` |
@@ -1162,6 +1186,9 @@ profile: fast
 
 审查是当前会话里的一轮，用的是它自己的提示词，提示词里明写不改任何文件。
 结果留在对话里。
+
+审查可以跑在另一个模型上：`model.review_model` 写它的名字，`model.routing.review`
+压过它。两个都没写就还是会话自己的模型。这一轮的用途写在日志里，以后能翻出来。
 
 ### 你提到的文件
 
