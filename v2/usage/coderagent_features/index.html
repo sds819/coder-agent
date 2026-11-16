@@ -5194,7 +5194,8 @@ so far.</p>
   <code>medium</code> or <code>high</code>. Empty is the default of the model. The level is written
   in the words of the provider: <code>reasoning_effort</code> for OpenAI and the others,
   a number of tokens for Anthropic.</li>
-<li><strong>Retries</strong> — <code>max_retries</code>, three by default.</li>
+<li><strong>Retries</strong> — <code>max_retries</code>, three by default, the same in the terminal and in
+  the browser.</li>
 <li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
   <code>reflect</code> and <code>strong</code>.</li>
 <li><strong>Routing by the state of the session</strong> — a rule like <code>tokens &gt; 50000</code>
@@ -5304,10 +5305,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </table>
 <p>Retries are a separate thing from the errors above: a rate limit or a timeout
 is retried, a bad request is not. The number of attempts comes from
-<code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> and is <strong>10</strong> by default.
-<code>coder web</code> sets that variable from <code>model.max_retries</code> (3 by default), so in
-the browser the number of attempts follows the configuration, while in the
-terminal it does not.</p>
+<code>model.max_retries</code> (3 by default) in every interface — the terminal and the
+browser alike. The environment variable <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>
+overrides it, which is handy when a test should not wait.</p>
 <h2 id="the-tools">The tools</h2>
 <p>The thirteen built-in tools:</p>
 <table>
@@ -6595,7 +6595,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>theme</code>, <code>show_reasoning</code>, <code>approval_timeout</code>, <code>notifications</code></td>
+<td><code>approval_timeout</code>, <code>notifications</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6641,11 +6641,6 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <td>The model is not the one in the file</td>
 <td>A layer above the file wins.</td>
 <td>Remember the order; <code>--list</code> of the layers is on the settings page.</td>
-</tr>
-<tr>
-<td><code>ui.show_reasoning</code> has no effect</td>
-<td>The key exists, but nothing reads it yet.</td>
-<td>The reasoning of the model is always shown in the terminal.</td>
 </tr>
 </tbody>
 </table>

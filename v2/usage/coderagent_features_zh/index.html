@@ -5190,7 +5190,7 @@ coder<span class="w"> </span>--list
 <li><strong>模型想多久</strong>——<code>reasoning_effort</code>：<code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code>，
   留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
   <code>reasoning_effort</code>，Anthropic 是一笔 token。</li>
-<li><strong>重试</strong>——<code>max_retries</code>，默认三次。</li>
+<li><strong>重试</strong>——<code>max_retries</code>，默认三次，终端和浏览器一样。</li>
 <li><strong>按用途路由</strong>——<code>main</code>、<code>cheap</code>、<code>summarize</code>、<code>reflect</code>、<code>strong</code> 可以
   各配一个模型。</li>
 <li><strong>按会话状态路由</strong>——像 <code>tokens &gt; 50000</code> 这样的规则会换模型，理由写在
@@ -5297,9 +5297,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tbody>
 </table>
 <p>重试和上面的错误是两回事：限流和超时才重试，坏请求不重试。重试次数来自
-<code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>，默认是 <strong>10</strong>。<code>coder web</code> 会用
-<code>model.max_retries</code>（默认 3）去设这个变量，所以在浏览器里重试次数跟着配置
-走，在终端里不跟。</p>
+<code>model.max_retries</code>（默认 3），终端和浏览器都一样。环境变量
+<code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> 能盖过它——测试不想等的时候好用。</p>
 <h2 id="_7">工具</h2>
 <p>十三个内置工具：</p>
 <table>
@@ -6526,7 +6525,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>theme</code>、<code>show_reasoning</code>、<code>approval_timeout</code>、<code>notifications</code></td>
+<td><code>approval_timeout</code>、<code>notifications</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6568,11 +6567,6 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td>模型不是文件里写的那一个</td>
 <td>上面的一层赢了。</td>
 <td>记住顺序；设置页上有各层的列表。</td>
-</tr>
-<tr>
-<td><code>ui.show_reasoning</code> 没有效果</td>
-<td>这个键存在，但还没有人读它。</td>
-<td>终端里模型的思考过程一直都是显示的。</td>
 </tr>
 </tbody>
 </table>
