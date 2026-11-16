@@ -217,6 +217,19 @@ def _image(context: CommandContext, argument: str) -> None:
     context.submit(parts(text.strip(), [url]))
 
 
+def _mention(context: CommandContext, argument: str) -> None:
+    """Send a file to the model, with the text that goes with it."""
+    if context.submit is None:
+        context.say("This interface cannot run a turn, so it cannot send a file.")
+        return
+    path_text, _, text = argument.strip().partition(" ")
+    if not path_text:
+        context.say("Which file? Try /mention <path> [what to do with it].")
+        return
+    mention = f"@{path_text}"
+    context.submit(f"{text.strip()}\n\n{mention}" if text.strip() else mention)
+
+
 def _init(context: CommandContext, argument: str) -> None:
     target = context.cwd / "AGENTS.md"
     if target.exists():
@@ -503,6 +516,14 @@ register(
         description="Review the changes, or the changes of a range",
         handler=_review,
         usage="[main..HEAD]",
+    )
+)
+register(
+    Command(
+        name="mention",
+        description="Send a file to the agent, with its content",
+        handler=_mention,
+        usage="<path> [what to do with it]",
     )
 )
 register(Command(name="init", description="Write an AGENTS.md for this project", handler=_init))

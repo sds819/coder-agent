@@ -37,6 +37,7 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | `/diff` | Show the changes in the working tree | |
 | `/review` | Review the changes, or the changes of a range | `[main..HEAD]` |
 | `/image` | Send an image to the agent | `<path> [what to do with it]` |
+| `/mention` | Send a file to the agent, with its content | `<path> [what to do with it]` |
 | `/init` | Write an `AGENTS.md` for this project | |
 | `/cost` | The tokens and the money spent | |
 | `/todos` | The task list of the agent | |
@@ -82,6 +83,21 @@ provider takes, and a file that is bigger than 5 MB is refused instead of being
 sent. The picture costs tokens like a text does, so the size of the context grows
 by the size of the image. The answer of the model stays in the conversation, like
 the answer of any other turn.
+
+`/mention` sends a **file** to the model, with its content in the message, so
+that the model does not have to read it again with a tool call:
+
+```bash
+/mention src/app.py what does this do?
+```
+
+The same happens when the question names the file itself: `look at @src/app.py`
+puts the content of the file in the message. A name that is not a file stays as
+it is, so an address or a decorator is not opened.
+
+The bounds of the permissions hold here too: a file outside the working
+directory, or one that a rule denies, does not go into the message. The message
+says that the agent may not read it.
 
 `/exit` closes the terminal interface, the same way `ctrl+q` does. In the
 browser there is nothing to close, so it says that the server keeps running:

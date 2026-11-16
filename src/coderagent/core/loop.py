@@ -11,6 +11,7 @@ from coderagent.core import schema
 from coderagent.core.content import text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
+from coderagent.core.mentions import expand as expand_mentions
 from coderagent.core.otel import build_trace
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
@@ -188,6 +189,8 @@ class AgentLoop:
                 original = text_of(user_input)
             if hook.additional_context:
                 prompt = with_text(prompt, f"{text_of(prompt)}\n\n[hook] {hook.additional_context}")
+        prompt = with_text(prompt, expand_mentions(text_of(prompt), self.session.cwd, self.policy))
+        """The files the user mentions go into the message, with their content."""
         self.context.append({"role": "user", "content": prompt}, original=original)
         turn_messages.append({"role": "user", "content": prompt})
         self.session.turn_count += 1
