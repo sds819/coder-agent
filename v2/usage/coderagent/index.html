@@ -1350,6 +1350,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#how-much-the-model-says" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much the model says
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1381,6 +1392,17 @@
     <span class="md-ellipsis">
       
         The tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-environment-of-the-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The environment of the commands
       
     </span>
   </a>
@@ -4267,6 +4289,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#how-much-the-model-says" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much the model says
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4298,6 +4331,17 @@
     <span class="md-ellipsis">
       
         The tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-environment-of-the-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The environment of the commands
       
     </span>
   </a>
@@ -4572,6 +4616,10 @@ The name of the model is <code>model.model_name</code> in the configuration, or
 <td>A file with the JSON schema the answer has to fit</td>
 </tr>
 <tr>
+<td><code>--output-last-message</code></td>
+<td>Write the last answer of the agent to this file</td>
+</tr>
+<tr>
 <td><code>--resume &lt;id&gt;</code></td>
 <td>Continue the session with this id</td>
 </tr>
@@ -4620,6 +4668,10 @@ The json output has the same numbers in fields:</p>
 <code>schema_invalid</code>, <code>interrupted</code> or <code>error</code>. <code>error</code> is empty unless the turn failed.
 <code>output</code> is the answer when a schema was asked for with <code>--output-schema</code>, and
 <code>null</code> when it was not.</p>
+<p>The answer itself goes into a file with <code>--output-last-message</code>:</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>--output-last-message<span class="w"> </span>answer.md
+</code></pre></div>
+<p>The file holds the text of the last answer of the agent, nothing else.</p>
 <h3 id="the-trace-of-a-session">The trace of a session</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>trace.json
 coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>otel<span class="w"> </span>--out<span class="w"> </span>trace.otlp
@@ -4675,6 +4727,14 @@ answer, and <code>enter</code> confirms it.</p>
 <p>The answer of the agent is rendered as Markdown: the code blocks, the tables
 and the lists look the way they look in the README of a project. The text is
 plain while it arrives, and rendered when it is complete.</p>
+<p>When the turn is over the terminal shows a notification. A program of your own
+may say it in the way you want it:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">ui</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">notify_command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">notify-send</span>
+</code></pre></div>
+<p>The program is called with the title and the body of the notification:
+<code>notify-send coder "the work is done"</code>. A program that fails is a warning, not
+a broken session. <code>ui.notifications: false</code> turns the notifications off.</p>
 <p>A picture goes to the model with <code>/image</code>:</p>
 <div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>what<span class="w"> </span>is<span class="w"> </span>wrong<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>layout?
 </code></pre></div>
@@ -4772,8 +4832,15 @@ provider as it is. <code>model.routing</code> maps a purpose to a model:</p>
 <td><code>strong</code></td>
 <td>A stronger model, when the routing rules ask for it</td>
 </tr>
+<tr>
+<td><code>review</code></td>
+<td>The review of the changes (<code>/review</code>)</td>
+</tr>
 </tbody>
 </table>
+<p><code>model.review_model</code> names the model of the <code>review</code> purpose when the routing
+has no <code>review</code> of its own. Without it the review runs on the model of the
+session. <code>model.routing</code> wins over <code>model.review_model</code>.</p>
 <p><code>model.routing_rules</code> are conditions on the state of the session:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
@@ -4797,6 +4864,17 @@ them are good at.</p>
 the parameter refuses the call, and the refusal is not retried.</p>
 <p>A level that does not exist is refused when the configuration is read, not in
 the middle of a turn.</p>
+<h4 id="how-much-the-model-says">How much the model says</h4>
+<p><code>model.verbosity</code> says how much the model says: <code>low</code>, <code>medium</code> or <code>high</code>.
+Empty is the habit of the model, which is what most of them are good at.</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-c<span class="w"> </span>model.verbosity<span class="o">=</span>low<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span>
+</code></pre></div>
+<p><code>reasoning_effort</code> is how long the model thinks, <code>verbosity</code> is how much it
+says. The two are independent: a model may think long and answer short.</p>
+<p>The level is an instruction, not a parameter of the provider: it goes into the
+system prompt of the session. Every provider understands it, and none of them
+is asked for a parameter it may not know.</p>
+<p>A level that does not exist is refused when the configuration is read.</p>
 <h4 id="other-providers">Other providers</h4>
 <p>The model goes through <a href="https://github.com/BerriAI/litellm">litellm</a>, so every
 model litellm knows works. The name carries the provider in front of it, and
@@ -4969,6 +5047,56 @@ agent. The settings of <code>model.model_kwargs</code> win over the ones of the 
 </table>
 <p><code>tools.enabled</code> is the list of the tools the model may call, <code>tools.disabled</code>
 takes some of them away. The tools of the MCP servers are always there.</p>
+<p>Every tool result is cut to the budget of the context before the model sees it:
+a command that prints a hundred thousand lines does not blow up the window. The
+full result stays in the log of the session.</p>
+<h3 id="the-environment-of-the-commands">The environment of the commands</h3>
+<p>The commands of the agent do not see everything you see. The key of the
+provider is in the process of the agent, not in its shell:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="o">[</span><span class="nv">$OPENAI_API_KEY</span><span class="o">]</span><span class="w">   </span><span class="c1"># [] — the agent does not see your key</span>
+</code></pre></div>
+<p>The environment of the commands is yours by default (<code>shell_environment.inherit:
+all</code>), except for the names that look like a secret. <code>*_API_KEY</code>, <code>*_KEY</code>,
+<code>*_TOKEN</code>, <code>*_SECRET</code>, <code>*_PASSWORD</code>, <code>*_PASSWD</code>, <code>*_CREDENTIALS</code> and
+<code>*_ACCESS_KEY</code> are always left out.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>inherit</code></td>
+<td><code>all</code> (everything but the secrets), <code>core</code> (only what a command needs), <code>none</code> (nothing)</td>
+</tr>
+<tr>
+<td><code>exclude</code></td>
+<td>Names that are left out, <code>*</code> works as a wildcard</td>
+</tr>
+<tr>
+<td><code>include</code></td>
+<td>Names that are kept, even when they look like a secret</td>
+</tr>
+<tr>
+<td><code>set</code></td>
+<td>Names that are set, no matter what</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="nt">shell_environment</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core</span>
+<span class="w">  </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"MY_*"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"MY_TOKEN"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">set</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">CI</span><span class="p">:</span><span class="w"> </span><span class="s">"1"</span>
+</code></pre></div>
+<p><code>core</code> keeps only <code>PATH</code>, <code>HOME</code>, the locale, the shell and the temporary
+directories — what a command needs to run at all. <code>include</code> is the way to open
+a secret again, one name at a time.</p>
+<p>The project may hide more of the environment, never show what you hid: a
+project that adds an <code>include</code> is ignored.</p>
 <h3 id="the-permissions">The permissions</h3>
 <p>The mode decides what the agent may do without asking:</p>
 <table>
@@ -5113,6 +5241,10 @@ they are in the summary.</p>
 <td><code>auto_compact</code></td>
 <td>Whether the agent compacts on its own.</td>
 </tr>
+<tr>
+<td><code>project_doc_max_bytes</code></td>
+<td>The bytes one instruction file may take. A longer file is cut short.</td>
+</tr>
 </tbody>
 </table>
 <p><code>/compact</code> compacts now.</p>
@@ -5171,6 +5303,9 @@ axes: the permissions ask the user, the sandbox asks nobody. See
 asked. It does nothing when the file already exists.</p>
 <p>The user file <code>~/.coderagent/CLAUDE.md</code> comes first, then the project. An
 <code>AGENTS.md</code> in a subdirectory is read when the agent touches something in it.</p>
+<p>One instruction file may take 32768 bytes (<code>context.project_doc_max_bytes</code>).
+A longer file is cut short, and the agent is told that it did not see all of
+it — a huge <code>AGENTS.md</code> does not eat the whole window.</p>
 <h2 id="what-the-agent-can-delegate">What the agent can delegate</h2>
 <h3 id="the-sub-agents">The sub agents</h3>
 <p>A sub agent works in its own context and returns a conclusion, so the main

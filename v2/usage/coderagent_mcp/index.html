@@ -1500,6 +1500,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-timeouts-of-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The timeouts of a server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3916,6 +3927,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-timeouts-of-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The timeouts of a server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4013,6 +4035,14 @@ See <a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p
 <td><code>disabled_tools</code></td>
 <td>The tools of this server the agent may not call</td>
 </tr>
+<tr>
+<td><code>startup_timeout</code></td>
+<td>The seconds this server may take to start. Zero means: the timeout of <code>mcp</code></td>
+</tr>
+<tr>
+<td><code>tool_timeout</code></td>
+<td>The seconds one call of this server may take. Zero means: the timeout of <code>mcp</code></td>
+</tr>
 </tbody>
 </table>
 <p>The <code>timeout</code> is not a key of a server: it belongs to <code>mcp</code>, next to
@@ -4081,6 +4111,25 @@ tools away:</p>
 <li><code>*</code> in <code>enabled_tools</code>: every tool of the server is there.</li>
 <li><code>*</code> in <code>disabled_tools</code>: no tool of the server is there.</li>
 </ul>
+<h2 id="the-timeouts-of-a-server">The timeouts of a server</h2>
+<p><code>mcp.timeout</code> is the timeout of every server. A server that needs more time
+says so itself, and one server cannot hold up the others:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">  </span><span class="nt">servers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quick</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-filesystem .</span>
+<span class="w">      </span><span class="nt">startup_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">      </span><span class="nt">tool_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">slow</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-database</span>
+<span class="w">      </span><span class="nt">startup_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<span class="w">      </span><span class="nt">tool_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+</code></pre></div>
+<p><code>startup_timeout</code> is how long the server may take to come up, <code>tool_timeout</code> how
+long one call may take. A call that takes longer fails with an error, and the
+model gets the error instead of a turn that never ends.</p>
+<p>Both are seconds. Zero — the default — means the timeout of <code>mcp</code>.</p>
 <h2 id="the-servers-and-the-session">The servers and the session</h2>
 <p>The servers are started when the session starts, one thread each. A server
 that does not start is skipped, the reason is in the log and <code>/mcp</code> shows it.

@@ -5202,6 +5202,8 @@
   加 <code>--output-format json</code> 就是 JSON。</li>
 <li><strong>跑一轮，答案有形状</strong>——<code>coder -t "..." --output-schema answer.json</code>。
   答案是对得上那个 schema 的 JSON，一轮的 JSON 里放在 <code>output</code> 字段。</li>
+<li><strong>跑一轮，答案进文件</strong>——<code>coder -t "..." --output-last-message answer.md</code>。
+  文件里只有 agent 最后那句回答，别的东西都没有。</li>
 <li><strong>终端界面</strong>——不给任务就是 <code>coder</code>，也可以 <code>coder --tui</code>。全屏界面，
   有状态栏、工具卡片和审批。</li>
 <li><strong>浏览器里</strong>——<code>coder web</code>。同一个 agent，一个聊天页，一个设置模型配置
@@ -5221,6 +5223,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"列一�
 
 <span class="c1"># 跑一轮，答案是对得上 schema 的 JSON。</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"列一下这个目录里的文件"</span><span class="w"> </span>--output-schema<span class="w"> </span>files.json
+
+<span class="c1"># 跑一轮，答案写进文件。</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"列一下这个目录里的文件"</span><span class="w"> </span>--output-last-message<span class="w"> </span>answer.md
 
 <span class="c1"># 终端界面。</span>
 coder<span class="w">                      </span><span class="c1"># 在终端里这就是 TUI</span>
@@ -5347,9 +5352,13 @@ coder<span class="w"> </span>--list
 <li><strong>模型想多久</strong>——<code>reasoning_effort</code>：<code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code>，
   留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
   <code>reasoning_effort</code>，Anthropic 是一笔 token。</li>
+<li><strong>模型说多少</strong>——<code>verbosity</code>：<code>low</code>、<code>medium</code>、<code>high</code>，留空是模型自己的
+  习惯。这个档位是一句写进系统提示词的话，所以哪家厂商都听得懂。</li>
+<li><strong>评审用别的模型</strong>——<code>model.review_model</code>。路由里没有 <code>review</code> 时，
+  <code>/review</code> 就跑在那个模型上。</li>
 <li><strong>重试</strong>——<code>max_retries</code>，默认三次，终端和浏览器一样。</li>
-<li><strong>按用途路由</strong>——<code>main</code>、<code>cheap</code>、<code>summarize</code>、<code>reflect</code>、<code>strong</code> 可以
-  各配一个模型。</li>
+<li><strong>按用途路由</strong>——<code>main</code>、<code>cheap</code>、<code>summarize</code>、<code>reflect</code>、<code>strong</code>、<code>review</code>
+  可以各配一个模型。</li>
 <li><strong>按会话状态路由</strong>——像 <code>tokens &gt; 50000</code> 这样的规则会换模型，理由写在
   事件日志里。</li>
 <li><strong>摘要用别的模型</strong>——<code>context.summarize_model</code>，留空就是 agent 自己那个。</li>
@@ -5369,6 +5378,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
 <span class="w">  </span><span class="nt">reasoning_effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
+<span class="w">  </span><span class="nt">verbosity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">low</span>
+<span class="w">  </span><span class="nt">review_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">anthropic/claude-sonnet-4-5</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
 <span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -5415,6 +5426,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td><code>unknown reasoning effort '{level}'</code></td>
 <td><code>reasoning_effort</code> 不是 <code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code> 里的一个。</td>
 <td>用那四个里的一个，或者删掉这一行（用模型的默认）。</td>
+</tr>
+<tr>
+<td><code>unknown verbosity '{level}'</code></td>
+<td><code>verbosity</code> 不是 <code>low</code>、<code>medium</code>、<code>high</code> 里的一个。</td>
+<td>用那三个里的一个，或者删掉这一行（用模型自己的习惯）。</td>
 </tr>
 <tr>
 <td><code>the file does not exist</code></td>
@@ -5534,6 +5550,12 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
   <code>bash</code> 和 <code>read</code> 永远不裁。</li>
 <li><strong>工具集可以配</strong>——<code>tools.enabled</code> 是模型能调的工具清单，<code>tools.disabled</code>
   是单独拿掉几个。</li>
+<li><strong>每个结果都按预算裁</strong>——<code>tools.max_output_tokens</code>（默认 8000）是一条工具
+  结果的大小上限。太长的留下头和尾，中间写明裁掉了什么。完整的结果还留在会话
+  日志里。</li>
+<li><strong>命令看不见你的 key</strong>——命令的环境本来是你的，但名字像秘密的那些
+  （<code>*_API_KEY</code>、<code>*_TOKEN</code>……）会被去掉。<code>shell_environment</code> 决定 agent 能看见
+  多少。</li>
 </ul>
 <h3 id="_9">用法例子</h3>
 <p>模型会调这些工具，你也可以自己调来试：</p>
@@ -6014,6 +6036,8 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 <li><strong>留什么</strong>——最近几轮，或者最近 40 % 的 token，哪个多留哪个。</li>
 <li><strong><code>/compact</code></strong>——随时手动压缩。</li>
 <li><strong>消息的顺序</strong>——系统提示词、指令文件、todo、会话摘要，然后是历史。</li>
+<li><strong>指令文件会裁</strong>——一个文件最多 32768 字节（<code>context.project_doc_max_bytes</code>）。
+  太长的裁短，而且告诉 agent 它没看全。</li>
 </ul>
 <h3 id="_19">用法例子</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
@@ -6437,6 +6461,9 @@ $ python -m pytest -q
   填进输入框。</li>
 <li><strong>一轮结束时通知终端</strong>——通知里带着 agent 的回答，长的一轮不会错过。
   <code>ui.notifications: false</code> 可以关掉。</li>
+<li><strong>也可以用你自己的程序通知</strong>——<code>ui.notify_command</code> 写一个程序名，它会拿到
+  通知的标题和正文两个参数（比如 <code>notify-send</code>）。程序跑不起来只是记一条警告，
+  不会弄坏会话。</li>
 <li><strong>答案是 Markdown</strong>——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；<code>ui.markdown: false</code> 可以让它一直是纯文本。</li>
 <li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。</li>
@@ -6719,8 +6746,8 @@ $ python -m pytest -q
   <code>~/.coderagent/config.yaml</code>、生效的 profile、命令行的覆盖（<code>-c key=value</code>）。
   后面的赢。</li>
 <li><strong>有哪些段</strong>——<code>model</code>、<code>agent</code>、<code>tools</code>、<code>permissions</code>、<code>context</code>、
-  <code>memory</code>、<code>checkpoint</code>、<code>mcp</code>、<code>hooks</code>、<code>ui</code>、<code>sandbox</code>、<code>verify</code>、<code>telemetry</code>，
-  还有 <code>profiles</code> 和 <code>profile</code>。</li>
+  <code>memory</code>、<code>checkpoint</code>、<code>mcp</code>、<code>hooks</code>、<code>ui</code>、<code>sandbox</code>、<code>verify</code>、<code>telemetry</code>、
+  <code>shell_environment</code>，还有 <code>profiles</code> 和 <code>profile</code>。</li>
 <li><strong>路径</strong>——<code>MSWEA_CODER_HOME</code> 可以把用户级文件挪到别处。</li>
 <li><strong>设置页只写用户级文件</strong>——项目级那份在仓库里，永远不写。</li>
 </ul>
@@ -6777,7 +6804,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code>、<code>reasoning_effort</code></td>
+<td><code>model_name</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code>、<code>reasoning_effort</code>、<code>verbosity</code>、<code>review_model</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>
@@ -6793,7 +6820,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>context_window</code>、<code>reserved_output</code>、<code>compact_threshold</code>、<code>keep_recent_turns</code>、<code>keep_recent_token_ratio</code>、<code>compact_every_turns</code>、<code>auto_compact</code>、<code>summarize_model</code>、<code>summary_chunk_tokens</code></td>
+<td><code>context_window</code>、<code>reserved_output</code>、<code>compact_threshold</code>、<code>keep_recent_turns</code>、<code>keep_recent_token_ratio</code>、<code>compact_every_turns</code>、<code>auto_compact</code>、<code>summarize_model</code>、<code>summary_chunk_tokens</code>、<code>project_doc_max_bytes</code></td>
 </tr>
 <tr>
 <td><code>memory</code></td>
@@ -6813,7 +6840,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>、<code>notifications</code>、<code>markdown</code></td>
+<td><code>approval_timeout</code>、<code>notifications</code>、<code>notify_command</code>、<code>markdown</code></td>
+</tr>
+<tr>
+<td><code>shell_environment</code></td>
+<td><code>inherit</code>、<code>exclude</code>、<code>include</code>、<code>set</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6896,6 +6927,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 告诉模型自己读文件。</p>
 <p>审查是当前会话里的一轮，用的是它自己的提示词，提示词里明写不改任何文件。
 结果留在对话里。</p>
+<p>审查可以跑在另一个模型上：<code>model.review_model</code> 写它的名字，<code>model.routing.review</code>
+压过它。两个都没写就还是会话自己的模型。这一轮的用途写在日志里，以后能翻出来。</p>
 <h3 id="_44">你提到的文件</h3>
 <p>提问里点名的文件会<strong>带着内容</strong>进消息，模型不用再花一次工具调用去读它：</p>
 <div class="highlight"><pre><span></span><code>看看 @src/app.py 做了什么

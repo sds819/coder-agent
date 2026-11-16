@@ -4113,6 +4113,8 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 带范围时（<code>/review main..HEAD</code>）审的是那个范围。新加的、还没进版本库的文件
 会被单独点名，模型觉得重要就自己去读。审查是当前会话里的一轮：结果留在对话里，
 你可以接着说「把第二条改掉」。审查的时候模型被要求不改任何文件。</p>
+<p>审查可以跑在另一个模型上：<code>model.review_model</code> 写它的名字，<code>model.routing.review</code>
+压过它。两个都没写就还是会话自己的模型。</p>
 <p><code>/image</code> 把一张图片发给模型。路径是第一个词，后面都是跟图片一起的话：</p>
 <div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>这个布局哪里不对？
 </code></pre></div>

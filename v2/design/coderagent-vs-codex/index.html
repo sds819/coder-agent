@@ -3893,6 +3893,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#97-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.7 第 11 步：做掉的那些 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4544,6 +4555,17 @@
     <span class="md-ellipsis">
       
         9.6 第三轮：还有一批差距，先记下来
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#97-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.7 第 11 步：做掉的那些 ✅ 已修
       
     </span>
   </a>
@@ -5294,10 +5316,15 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <td>~~<strong>OTel exporter（5.6）+ 第二轮对照的差距（§9）</strong>~~ ✅</td>
 <td>先把追踪发出去，再把 Codex 的清单整个重读一遍，找剩下的差距</td>
 </tr>
+<tr>
+<td>11</td>
+<td>~~<strong>第三轮的差距（§9.6）</strong>~~ ✅</td>
+<td>两个安全向的先做（环境变量、工具输出上限），再把小的补齐</td>
+</tr>
 </tbody>
 </table>
-<p>第 10 步之后又剩一批差距，<strong>记在 §9.6，还没排期</strong>。真要动手，先挑
-<code>[shell_environment_policy]</code> 和 <code>tool_output_token_limit</code>（见 9.6 的理由）。</p>
+<p>第 11 步做掉了 §9.6 里六个小的和两个中的。剩下的还记在 §9.6：
+<code>file_opener</code>、<code>supports_parallel_tool_calls</code>，以及大的那三组。</p>
 <hr>
 <h2 id="9">9. 第二轮对照：又找到的差距</h2>
 <p>第一轮读的是 Codex 文档里最显眼的几页（沙箱、审批、命令集、多模态）。
@@ -5420,6 +5447,10 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <p>第 10 步做完之后，又拉了一份 Codex 的<strong>全量清单</strong>（全部配置键、slash 命令、子命令、
 CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<strong>没有马上做</strong>——
 它们要么是锦上添花，要么该等第 10 步的提交落地之后再挑。这节只作记录。</p>
+<blockquote>
+<p>第 11 步之后，这一节里<strong>六个小的和两个中的都做掉了</strong>（见 §9.7），
+表里打 ✅ 的就是它们。</p>
+</blockquote>
 <p><strong>已经有的、不用再抄的</strong>（对过命令表和配置 schema）：<code>/diff</code>、<code>/init</code>、<code>/status</code>、
 <code>/fork</code>、<code>/compact</code>、<code>/permissions</code>、<code>/skills</code>、<code>/mcp</code>、<code>/export</code>、<code>/hooks</code>、
 <code>/agents</code>、<code>/todos</code>、<code>/cost</code>、<code>/context</code>、<code>/sandbox</code>、<code>/plan</code>、<code>/mode</code>、
@@ -5437,39 +5468,39 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 </thead>
 <tbody>
 <tr>
-<td><code>model_verbosity</code>（回答的啰嗦程度）</td>
+<td><code>model_verbosity</code>（回答的啰嗦程度） ✅</td>
 <td><code>low \| medium \| high</code></td>
-<td>只有 <code>reasoning_effort</code>（<strong>想</strong>多少），没有「<strong>答</strong>多少」</td>
+<td><code>model.verbosity</code>，同一套三档</td>
 <td>和 3.3 是同一套东西，翻译逻辑照抄那一段</td>
 </tr>
 <tr>
-<td><code>review_model</code></td>
+<td><code>review_model</code> ✅</td>
 <td><code>/review</code> 可以用另一个模型</td>
-<td><code>/review</code> 用主模型</td>
+<td><code>model.review_model</code>，<code>model.routing.review</code> 压过它</td>
 <td>多一个模型槽位</td>
 </tr>
 <tr>
-<td><code>project_doc_max_bytes</code></td>
+<td><code>project_doc_max_bytes</code> ✅</td>
 <td>AGENTS.md 塞进上下文有字节上限（默认 32768）</td>
-<td>整份塞</td>
+<td><code>context.project_doc_max_bytes</code>，默认一样</td>
 <td>指令文件很大时会直接吃掉预算</td>
 </tr>
 <tr>
-<td><code>--output-last-message</code> / <code>-o 文件</code></td>
+<td><code>--output-last-message</code> / <code>-o 文件</code> ✅</td>
 <td>最后一条回答写进文件</td>
-<td>只有 stdout 的 JSON</td>
+<td><code>--output-last-message</code></td>
 <td>和 9.2 的 schema 常常一起用</td>
 </tr>
 <tr>
-<td>外部通知程序</td>
+<td>外部通知程序 ✅</td>
 <td><code>notify = ["notify-send", ...]</code></td>
-<td>OSC 777 终端通知（4.8）</td>
+<td><code>ui.notify_command</code>，还是 OSC 777 终端通知（4.8）</td>
 <td>是补充，不是替代</td>
 </tr>
 <tr>
-<td>MCP 每服务器超时</td>
+<td>MCP 每服务器超时 ✅</td>
 <td><code>startup_timeout_sec</code> / <code>tool_timeout_sec</code></td>
-<td>只有一个全局 <code>mcp.timeout</code>（30 秒）</td>
+<td><code>startup_timeout</code> / <code>tool_timeout</code>，不写就是全局的 30 秒</td>
 <td>一个慢的服务器能拖死全部</td>
 </tr>
 </tbody>
@@ -5486,15 +5517,15 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 </thead>
 <tbody>
 <tr>
-<td><code>[shell_environment_policy]</code></td>
+<td><code>[shell_environment_policy]</code> ✅</td>
 <td>控制哪些环境变量进子进程</td>
-<td><strong>全继承</strong>——<code>API_KEY</code> 会直接漏给 agent 的 bash</td>
+<td><code>shell_environment</code>：<code>inherit</code> / <code>exclude</code> / <code>include</code> / <code>set</code>，像秘密的名字<strong>一定</strong>被去掉</td>
 <td><strong>安全向，值得早点做</strong></td>
 </tr>
 <tr>
-<td><code>tool_output_token_limit</code></td>
+<td><code>tool_output_token_limit</code> ✅</td>
 <td>单个工具输出有 token 上限</td>
-<td>只有压缩的时候才裁剪</td>
+<td><code>tools.max_output_tokens</code>（默认 8000），<strong>每一个</strong>工具的结果都裁</td>
 <td>一条十万字符的输出会当场顶爆预算</td>
 </tr>
 <tr>
@@ -5544,6 +5575,30 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 </table>
 <p><strong>挑的时候</strong>：先 <code>[shell_environment_policy]</code>（安全）和 <code>tool_output_token_limit</code>
 （会炸预算），这两个的代价和收益都比别的高。</p>
+<h3 id="97-11">9.7 第 11 步：做掉的那些 ✅ 已修</h3>
+<p><strong>怎么做的</strong>：</p>
+<ul>
+<li><strong><code>model.verbosity</code></strong>（<code>low</code> / <code>medium</code> / <code>high</code>）：<strong>一句写进系统提示词的话</strong>，
+  不是厂商参数——所以哪家都听得懂。跟 <code>reasoning_effort</code> 是两回事：一个管想多久，
+  一个管说多少。写错档位在<strong>读配置时</strong>就拒。</li>
+<li><strong><code>model.review_model</code></strong>：<code>/review</code> 的那一轮带一个<strong>用途</strong>（<code>purpose="review"</code>），
+  路由器按用途挑模型：<code>model.routing.review</code> 压过 <code>model.review_model</code>，
+  两个都没有就还是会话自己的模型。用途写在事件日志的 <code>extra.purpose</code> 里。</li>
+<li><strong><code>context.project_doc_max_bytes</code></strong>（默认 32768）：一个指令文件超了就被<strong>截短</strong>，
+  而且<strong>告诉模型</strong>它没看全——不然模型会以为规则就那么长。</li>
+<li><strong><code>--output-last-message</code></strong>：最后一条回答写进文件，就那一段文字。</li>
+<li><strong><code>ui.notify_command</code></strong>：一个外部程序，拿到通知的<strong>标题和正文</strong>两个参数。
+  跑不起来只是记一条警告。终端通知（OSC 777）还在，两者是补充关系。</li>
+<li><strong>MCP 每服务器超时</strong>：<code>startup_timeout</code> 和 <code>tool_timeout</code>，不写就用全局的。
+  一个慢的服务器拖不住别的了。</li>
+<li><strong><code>shell_environment</code></strong>（<strong>安全向</strong>）：命令的环境里<strong>像秘密的名字一定被去掉</strong>
+  （<code>*_API_KEY</code>、<code>*_KEY</code>、<code>*_TOKEN</code>、<code>*_SECRET</code>、<code>*_PASSWORD</code>、<code>*_PASSWD</code>、
+  <code>*_CREDENTIALS</code>、<code>*_ACCESS_KEY</code>），除非用户用 <code>include</code> 一个一个地放回来。
+  三个档位：<code>all</code>（除了秘密）、<code>core</code>（只有命令要的那些）、<code>none</code>（什么都没有）。
+  <strong>项目只能藏更多，不能把用户藏的放出来</strong>（<code>core/trust.py</code> 丢掉项目的 <code>include</code>）。</li>
+<li><strong><code>tools.max_output_tokens</code></strong>（默认 8000）：<strong>每一个</strong>工具的结果都裁，不只是 bash。
+  裁的时候留头和尾，中间写明裁掉了什么；<strong>完整的结果还留在事件日志里</strong>。</li>
+</ul>
 <hr>
 <h2 id="_1">附录：这份清单是怎么来的</h2>
 <ol>
@@ -5562,7 +5617,8 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 会话与历史、web search、skills/subagents/profiles/memory、UI 与周边），
 再逐条对 coderagent 的源码。第一轮读的是最显眼的几页，第二轮读的是全部。</p>
 <p><strong>第三轮</strong>（§9.6）第 10 步落地之后又拉了一份全量清单，对完源码，
-剩下的差距<strong>只记录、没做</strong>——这一节就是那份记录。</p>
+剩下的差距<strong>只记录、没做</strong>——这一节就是那份记录。
+第 11 步做掉了其中<strong>八个</strong>（六个小的 + 两个中的），见 §9.7。</p>
 <p>本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
 也都修了：3.4 让一个文件只出一段（<code>core/instructions.py</code> 的 <code>once_per_file()</code>），
 3.5 把 http 传输和 <code>headers</code> 实现了（<code>tools/mcp.py</code>）。两条都有回归测试。</p>

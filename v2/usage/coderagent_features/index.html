@@ -5202,6 +5202,8 @@ the end of each section.</p>
 <li><strong>One turn with a shape</strong> — <code>coder -t "..." --output-schema answer.json</code>. The
   answer is JSON that fits the schema, and the JSON of the turn has it in
   <code>output</code>.</li>
+<li><strong>One turn into a file</strong> — <code>coder -t "..." --output-last-message answer.md</code>.
+  The file holds the last answer of the agent, nothing else.</li>
 <li><strong>The terminal interface</strong> — <code>coder</code> without a task, or <code>coder --tui</code>. A
   full screen interface with a status bar, tool cards and approvals.</li>
 <li><strong>The browser</strong> — <code>coder web</code>. The same agent in a chat page, with a
@@ -5222,6 +5224,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list th
 
 <span class="c1"># One turn, the answer as JSON that fits a schema.</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list the files of this directory"</span><span class="w"> </span>--output-schema<span class="w"> </span>files.json
+
+<span class="c1"># One turn, the answer in a file.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list the files of this directory"</span><span class="w"> </span>--output-last-message<span class="w"> </span>answer.md
 
 <span class="c1"># The terminal interface.</span>
 coder<span class="w">                      </span><span class="c1"># with a terminal this is the TUI</span>
@@ -5355,10 +5360,15 @@ is fine, and so is a sentence in front of it.</p>
   <code>medium</code> or <code>high</code>. Empty is the default of the model. The level is written
   in the words of the provider: <code>reasoning_effort</code> for OpenAI and the others,
   a number of tokens for Anthropic.</li>
+<li><strong>How much the model says</strong> — <code>verbosity</code>: <code>low</code>, <code>medium</code> or <code>high</code>. Empty is
+  the habit of the model. The level is an instruction in the system prompt, so
+  every provider understands it.</li>
+<li><strong>A separate model for the review</strong> — <code>model.review_model</code>. <code>/review</code> runs on
+  that model when the routing has no <code>review</code> of its own.</li>
 <li><strong>Retries</strong> — <code>max_retries</code>, three by default, the same in the terminal and in
   the browser.</li>
 <li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
-  <code>reflect</code> and <code>strong</code>.</li>
+  <code>reflect</code>, <code>strong</code> and <code>review</code>.</li>
 <li><strong>Routing by the state of the session</strong> — a rule like <code>tokens &gt; 50000</code>
   switches to another model, and the reason is in the event log.</li>
 <li><strong>A separate model for the summary</strong> — <code>context.summarize_model</code>, empty
@@ -5380,6 +5390,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
 <span class="w">  </span><span class="nt">reasoning_effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
+<span class="w">  </span><span class="nt">verbosity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">low</span>
+<span class="w">  </span><span class="nt">review_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">anthropic/claude-sonnet-4-5</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
 <span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -5426,6 +5438,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td><code>unknown reasoning effort '{level}'</code></td>
 <td><code>reasoning_effort</code> is not one of <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>high</code>.</td>
 <td>Use one of those four, or remove the line for the default of the model.</td>
+</tr>
+<tr>
+<td><code>unknown verbosity '{level}'</code></td>
+<td><code>verbosity</code> is not one of <code>low</code>, <code>medium</code>, <code>high</code>.</td>
+<td>Use one of those three, or remove the line for the habit of the model.</td>
 </tr>
 <tr>
 <td><code>the file does not exist</code></td>
@@ -5551,6 +5568,13 @@ overrides it, which is handy when a test should not wait.</p>
   <code>bash</code> and <code>read</code> are never dropped.</li>
 <li><strong>The tool set is configurable</strong> — <code>tools.enabled</code> is the list of the tools
   the model may call, <code>tools.disabled</code> takes single ones away.</li>
+<li><strong>Every result is cut to the budget</strong> — <code>tools.max_output_tokens</code> (8000 by
+  default) is the size of one tool result. A long one keeps its head and its
+  tail, and says in the middle what was left out. The full result stays in the
+  log of the session.</li>
+<li><strong>The commands do not see your keys</strong> — the environment of the commands is
+  yours, but the names that look like a secret (<code>*_API_KEY</code>, <code>*_TOKEN</code>, …) are
+  left out. <code>shell_environment</code> says how much of it the agent sees.</li>
 </ul>
 <h3 id="example_2">Example</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># The model calls these, but you can call them yourself to try them out.</span>
@@ -6062,6 +6086,9 @@ memory of the session keeps what was learned before the failure.</p>
 <li><strong><code>/compact</code></strong> — compress on demand.</li>
 <li><strong>The order of the messages</strong> — system prompt, the instruction files, the
   todo list, the summary of the session, then the history.</li>
+<li><strong>The instruction files are cut</strong> — one file may take 32768 bytes
+  (<code>context.project_doc_max_bytes</code>). A longer file is cut short, and the agent
+  is told that it did not see all of it.</li>
 </ul>
 <h3 id="example_5">Example</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
@@ -6507,6 +6534,9 @@ $ python -m pytest -q
   path in the input.</li>
 <li><strong>The terminal is told when a turn is over</strong> — a notification with the answer
   of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
+<li><strong>A program of your own may say it</strong> — <code>ui.notify_command</code> names a program that
+  is called with the title and the body of the notification, e.g. <code>notify-send</code>.
+  A program that fails is a warning, not a broken session.</li>
 <li><strong>The answer is Markdown</strong> — the code blocks, the tables and the lists look the
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; <code>ui.markdown: false</code> keeps it plain.</li>
@@ -6803,8 +6833,8 @@ server warns:</p>
   profile that is in effect, and the overrides of the command line
   (<code>-c key=value</code>). The later wins.</li>
 <li><strong>The sections</strong> — <code>model</code>, <code>agent</code>, <code>tools</code>, <code>permissions</code>, <code>context</code>,
-  <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code>, <code>verify</code> and
-  <code>telemetry</code>, plus <code>profiles</code> and <code>profile</code>.</li>
+  <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code>, <code>verify</code>,
+  <code>telemetry</code> and <code>shell_environment</code>, plus <code>profiles</code> and <code>profile</code>.</li>
 <li><strong>The paths</strong> — <code>MSWEA_CODER_HOME</code> moves the user level files somewhere
   else.</li>
 <li><strong>The settings page writes the user file only</strong> — the project file is in
@@ -6866,7 +6896,7 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code></td>
+<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code>, <code>verbosity</code>, <code>review_model</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>
@@ -6882,7 +6912,7 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>context_window</code>, <code>reserved_output</code>, <code>compact_threshold</code>, <code>keep_recent_turns</code>, <code>keep_recent_token_ratio</code>, <code>compact_every_turns</code>, <code>auto_compact</code>, <code>summarize_model</code>, <code>summary_chunk_tokens</code></td>
+<td><code>context_window</code>, <code>reserved_output</code>, <code>compact_threshold</code>, <code>keep_recent_turns</code>, <code>keep_recent_token_ratio</code>, <code>compact_every_turns</code>, <code>auto_compact</code>, <code>summarize_model</code>, <code>summary_chunk_tokens</code>, <code>project_doc_max_bytes</code></td>
 </tr>
 <tr>
 <td><code>memory</code></td>
@@ -6902,7 +6932,11 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>, <code>notifications</code>, <code>markdown</code></td>
+<td><code>approval_timeout</code>, <code>notifications</code>, <code>notify_command</code>, <code>markdown</code></td>
+</tr>
+<tr>
+<td><code>shell_environment</code></td>
+<td><code>inherit</code>, <code>exclude</code>, <code>include</code>, <code>set</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6986,6 +7020,10 @@ the prompt, so the model reads them when they matter. A diff that is longer
 than 60000 characters is cut, and the model is told to read the files itself.</p>
 <p>The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.</p>
+<p>The review may run on a model of its own: <code>model.review_model</code> names it, and
+<code>model.routing.review</code> wins over that. Without either one the review runs on
+the model of the session. The purpose of the turn is in the log, so it can be
+read back later.</p>
 <h3 id="the-files-you-mention">The files you mention</h3>
 <p>A file that is named in the question goes into the message <strong>with its
 content</strong>, so that the model does not have to spend a tool call on reading it

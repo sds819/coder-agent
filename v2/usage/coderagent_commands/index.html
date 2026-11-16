@@ -4117,6 +4117,9 @@ the agent reads them when they matter. The review is a turn of the current
 session: the answer stays in the conversation, and you can act on it right away
 ("fix the second one"). The agent is told not to change any file while it
 reviews.</p>
+<p>The review may run on a model of its own: <code>model.review_model</code> names it, and
+<code>model.routing.review</code> wins over that. Without either one the review runs on
+the model of the session.</p>
 <p><code>/image</code> sends a picture to the model. The path is the first word, everything
 after it is the text that goes with the picture:</p>
 <div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>what<span class="w"> </span>is<span class="w"> </span>wrong<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>layout?
