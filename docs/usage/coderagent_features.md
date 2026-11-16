@@ -735,7 +735,7 @@ Commit everything with the message: $ARGUMENTS
 | `Error: the hook blocked 'bash'. the command writes a secret` | A `PreToolUse` hook refused the call. | Fix the command, or fix the hook. |
 | `Hook 'check_secrets.sh' timed out, ignoring it` | The hook took longer than its timeout. The call goes through. | Raise the `timeout`, or make the hook faster. |
 | `Hook 'check_secrets.sh' failed with RuntimeError: ...` | The hook crashed. The call goes through. | Fix the hook. With `strict: true` the call is blocked instead. |
-| `Error: the MCP server 'echo' is not connected.` | The server is not running. | Check the `command` of the server; `/mcp` says `not connected` or `failed: <error>`. |
+| `Error: the MCP server 'echo' is not connected.` | The server is not running. | Check the `command` or the `url` of the server; `/mcp` says `connected`, `failed: <error>` or `no command and no url`. |
 | `Error: the MCP tool 'echo' failed: RuntimeError: ...` | The server answered with an error. The name in the message is the one of the server. | The message of the server is in the answer. |
 
 The custom commands are looked up in `<cwd>/.coderagent/commands/*.md` only —

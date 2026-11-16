@@ -11,12 +11,22 @@ import shlex
 import threading
 from contextlib import AsyncExitStack
 from typing import Any
+from urllib.parse import urlparse
 
 from coderagent.config.schema import MCPServerConfig
 from coderagent.core.events import EventBus
 from coderagent.tools.base import ToolContext, ToolResult
 
 logger = logging.getLogger("coderagent.mcp")
+
+TIMEOUT = 30.0
+"""Seconds for a normal request of a server on an address."""
+
+READ_TIMEOUT = 300.0
+"""Seconds for a stream that stays open. The defaults of the MCP SDK."""
+
+LOCAL_HOSTS = ("localhost", "127.0.0.1", "::1")
+"""The addresses that are on this machine."""
 
 
 def tool_name(server: str, tool: str) -> str:
@@ -139,16 +149,43 @@ class MCPClient:
         from mcp.client.stdio import stdio_client
 
         self._loop = asyncio.get_running_loop()
-        command, args = _split_command(self.config.command)
-        params = StdioServerParameters(command=command, args=args, env=self.config.env or None)
+        if self.config.url and self.config.command:
+            raise ValueError("the MCP server has both a command and a url")
         async with AsyncExitStack() as stack:
-            read, write = await stack.enter_async_context(stdio_client(params))
+            if self.config.url:
+                read, write = await self._http_streams(stack)
+            else:
+                command, args = _split_command(self.config.command)
+                params = StdioServerParameters(command=command, args=args, env=self.config.env or None)
+                read, write = await stack.enter_async_context(stdio_client(params))
             self._session = await stack.enter_async_context(ClientSession(read, write))
             await self._session.initialize()
             self._tools = self._make_tools(await self._session.list_tools())
             self._ready.set()
             while not self._stop.is_set():
                 await asyncio.sleep(0.05)
+
+    async def _http_streams(self, stack: AsyncExitStack):
+        """The streams of a server that listens on an address."""
+        from mcp.client.streamable_http import streamable_http_client
+
+        client = await stack.enter_async_context(self._http_client())
+        streams = await stack.enter_async_context(streamable_http_client(self.config.url, http_client=client))
+        return streams[0], streams[1]
+
+    def _http_client(self):
+        """The http client of the server.
+
+        A server on this machine is not asked through the proxy of the system:
+        that proxy is there for the other hosts.
+        """
+        import httpx2
+
+        return httpx2.AsyncClient(
+            headers=self.config.headers or None,
+            timeout=httpx2.Timeout(TIMEOUT, read=READ_TIMEOUT),
+            trust_env=not _is_local(self.config.url),
+        )
 
     def _make_tools(self, listed) -> list[MCPTool]:
         tools = []
@@ -179,7 +216,7 @@ class MCPManager:
         """Connect to every server and return the tools that work."""
         tools: list[MCPTool] = []
         for server in self.config.servers:
-            if not server.enabled or not server.command:
+            if not server.enabled or not (server.command or server.url):
                 continue
             client = MCPClient(server, self.bus, self.config.timeout)
             self.clients.append(client)
@@ -188,9 +225,12 @@ class MCPManager:
 
     def status(self) -> dict[str, str]:
         """The state of every server, by name."""
-        return {
+        state = {
             client.config.name: f"failed: {client.error}" if client.error else "connected" for client in self.clients
         }
+        for server in self.config.servers:
+            state.setdefault(server.name, "no command and no url" if server.enabled else "disabled")
+        return state
 
     def stop(self) -> None:
         for client in self.clients:
@@ -209,6 +249,11 @@ def _split_command(command: str) -> tuple[str, list[str]]:
     if not parts:
         raise ValueError("the MCP server has no command")
     return parts[0], parts[1:]
+
+
+def _is_local(url: str) -> bool:
+    """Whether the address of a server is on this machine."""
+    return (urlparse(url).hostname or "") in LOCAL_HOSTS
 
 
 def _content_text(result) -> str:

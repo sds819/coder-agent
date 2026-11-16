@@ -687,7 +687,7 @@ Commit everything with the message: $ARGUMENTS
 | `Error: the hook blocked 'bash'. the command writes a secret` | `PreToolUse` 的 hook 拒绝了这次调用。 | 改命令，或者改 hook。 |
 | `Hook 'check_secrets.sh' timed out, ignoring it` | hook 跑得比它的超时久。调用放行。 | 调大 `timeout`，或者让 hook 快点。 |
 | `Hook 'check_secrets.sh' failed with RuntimeError: ...` | hook 崩了。调用放行。 | 修 hook。加 `strict: true` 就会挡住调用。 |
-| `Error: the MCP server 'echo' is not connected.` | 服务器没跑起来。 | 检查服务器的 `command`；`/mcp` 里会写 `not connected` 或者 `failed: <错误>`。 |
+| `Error: the MCP server 'echo' is not connected.` | 服务器没跑起来。 | 检查服务器的 `command` 或者 `url`；`/mcp` 里会写 `connected`、`failed: <错误>` 或者 `no command and no url`。 |
 | `Error: the MCP tool 'echo' failed: RuntimeError: ...` | 服务器回的错。消息里的名字是服务器那边的名字。 | 服务器的消息就在答案里。 |
 
 自己的命令只在 `<cwd>/.coderagent/commands/*.md` 里找——agent **不会**一层层

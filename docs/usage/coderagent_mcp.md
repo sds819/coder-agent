@@ -34,16 +34,28 @@ See [The code of a project](coderagent.md#the-code-of-a-project).
 | `command` | The command that starts the server, over the standard input and output |
 | `env` | The environment of the server |
 | `enabled` | `false` skips the server |
-| `url` | The address of the server, for the http transport. Ignored today |
-| `headers` | The headers of the http transport. Ignored today |
+| `url` | The address of the server, for the http transport |
+| `headers` | The headers of the http transport |
 
 The `timeout` is not a key of a server: it belongs to `mcp`, next to
 `servers`, and it is how long the agent waits for a server.
 
-Only the standard input and output transport works today. A server with a
-`url` and no `command` is skipped: the http transport is not implemented yet.
-`url` and `headers` are accepted by the configuration but have no effect —
-nothing reads them.
+A server has either a `command` or a `url`, not both. With a `command` the
+server is started over the standard input and output; with a `url` the agent
+talks to it over http (the streamable http transport), and the `headers` go
+with every request:
+
+```yaml
+mcp:
+  servers:
+    - name: remote
+      url: https://mcp.example.com/mcp
+      headers:
+        Authorization: Bearer the-token-of-the-user
+```
+
+A server on this machine is not asked through the proxy of the system: the
+proxy is there for the other hosts.
 
 The `env` of a server is **added** to the environment it inherits, it does not
 replace it: the server keeps `PATH`, `HOME` and the rest of the variables the
@@ -95,13 +107,14 @@ The other servers keep working.
 
 ```
 filesystem       connected
-remote           not connected
+remote           connected
 broken           failed: MCPError: Connection closed
+empty            no command and no url
 ```
 
-`not connected` is a server that was never started: it has no `command`, so
-the http transport would be needed and it is not implemented yet. `failed` is
-a server that was started and did not come up.
+`failed` is a server that was started and did not come up. `no command and no
+url` is a server that says nothing about how it should be reached — it is
+skipped, and it says so instead of being silent.
 
 When a call breaks the connection, the agent reconnects and tries the call one
 more time. When it fails again, the error goes back to the model.

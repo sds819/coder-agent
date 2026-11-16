@@ -121,9 +121,9 @@ sandbox:
 
 ---
 
-### 3.4 真 bug：`~/.coderagent/CLAUDE.md` 被加载了两次
+### 3.4 真 bug：`~/.coderagent/CLAUDE.md` 被加载了两次 ✅ 已修
 
-**现状**：
+**原来**：
 
 - `src/coderagent/core/instructions.py:39` — `load_instructions()` 读
   `home / USER_FILE`，`USER_FILE = "CLAUDE.md"`（`instructions.py:13`），
@@ -137,15 +137,15 @@ sandbox:
 更要紧的是，如果用户在这份文件里写了「每次回答都要先说 X」这类自我约束，
 模型看到的是两遍，可能误以为那是强调。
 
-**建议**：二选一——要么把用户级指令文件从「指令」和「记忆」里择一，
-要么让 `load_user_memory()` 跳过已经被 `load_instructions()` 读过的那个路径。
-**工作量：极小（改一处 + 一个回归测试）。**
+**怎么修的**：`core/instructions.py` 加了 `once_per_file()`，组消息的时候
+**一个文件只出一段**，后读的盖住先读的。记忆那份赢——它每轮重读，
+所以 `/memory confirm` 写下的偏好在**下一轮**就生效，不用等下一个会话。
 
 ---
 
-### 3.5 真 bug：MCP 的 `url` 和 `headers` 配了但不生效
+### 3.5 真 bug：MCP 的 `url` 和 `headers` 配了但不生效 ✅ 已修
 
-**现状**：`src/coderagent/config/schema.py:117-124` 的 `MCPServerConfig` 里有
+**原来**：`src/coderagent/config/schema.py:117-124` 的 `MCPServerConfig` 里有
 `url`（http 传输的地址）和 `headers` 两个字段，文档里也写着它们能用。但是
 `src/coderagent/tools/mcp.py` 里**从头到尾没有出现过 `url` 或 `headers`**——
 `MCPManager.start()` 在 `mcp.py:182` 只认 `server.command`：
@@ -158,9 +158,10 @@ if not server.enabled or not server.command:
 **影响**：配了 `url:` 的 MCP server **被静默跳过**——不启动、不报错、不出现在
 `/mcp` 的状态里。用户看 `/mcp` 只看到「没有连上的 server」，根本猜不到是配置字段没用。
 
-**建议**：要么实现 http 传输（`streamable_http`），要么在 schema 上**拒收** `url`/`headers`
-并给出明确报错（`extra="forbid"` + 迁移提示）。**静默忽略是最糟的一种。**
-**工作量：小（先做「拒收 + 报错」，实现 http 另算）。**
+**怎么修的**：http 传输**实现了**（`streamable_http`），`headers` 跟着每个请求发出去；
+`command` 和 `url` 同时给会报错；两样都没有的 server 不再沉默，`/mcp` 里写
+`no command and no url`。另外：**本机上的 server 不走系统代理**（代理是给别的主机用的），
+不然 macOS 上开着代理的机器连 `127.0.0.1` 的 server 会被代理挡回来。
 
 ---
 
@@ -275,7 +276,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 
 | 顺序 | 做什么 | 为什么排这个位置 |
 |---|---|---|
-| 1 | **修 3.4 + 3.5 两个 bug** | 都是几行的事，但一个白烧 token、一个静默吞配置 |
+| 1 | ~~**修 3.4 + 3.5 两个 bug**~~ ✅ | 都是几行的事，但一个白烧 token、一个静默吞配置 |
 | 2 | **加网络开关（3.1 的第一步）** | 一天内能做完，堵住最大的口子 |
 | 3 | **`/review`（3.2）** | 现有零件都齐了，性价比最高的功能缺口 |
 | 4 | **`reasoning_effort`（3.3）** | 便宜，且和 `model.routing` 是一套东西 |
@@ -298,4 +299,5 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
    核对时请按函数名找。
 
 > 本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
-> 尚未修复。修复时请补上回归测试。
+> 也都修了：3.4 让一个文件只出一段（`core/instructions.py` 的 `once_per_file()`），
+> 3.5 把 http 传输和 `headers` 实现了（`tools/mcp.py`）。两条都有回归测试。
