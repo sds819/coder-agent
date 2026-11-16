@@ -24,10 +24,9 @@ Codex 赢在**工程化的外壳**：OS 级沙箱、网络开关、四十多条 
 所以这份清单里，**真正该抄的是安全边界和输入通道**（P0 的 1、3、4、5 和 P1 的 1、2），
 其余多半是「有了更好」而不是「缺了就危险」。
 
-**进度**：§8 的第 1～8 步都做完了（两个 bug、网络开关、`/review`、`reasoning_effort`、
-**进度**：§8 的第 1～9 步都做完了（两个 bug、网络开关、`/review`、`reasoning_effort`、
+**进度**：§8 的第 1～10 步都做完了（两个 bug、网络开关、`/review`、`reasoning_effort`、
 TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Markdown、
-`apply_patch` + TUI 文件树 + P2 清理一批）。
+`apply_patch` + TUI 文件树 + P2 清理一批、OTel exporter + 第二轮对照的差距）。
 做完的条目在小节标题上标着「✅ 已修」，原样保留着原来的描述，好回头看差在哪。
 
 ---
@@ -455,10 +454,39 @@ Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 
   **用户的规则也放宽不了它**——`evaluate()` 第一步就查它。
   没写出来的工具就是没有；`bash` 的每一段命令都要对得上那个模式。
 
-### 5.6 OTel 只是本地 JSON
+### 5.6 OTel 只是本地 JSON ✅ 已修
 
-`src/coderagent/core/telemetry.py:119` 的 `otel()` 返回一份 OTLP/JSON 的 **dict**，
-没有 exporter，不往任何地方发。要接真正的 OTel 后端，还差一个 exporter。
+**原来**：`src/coderagent/core/telemetry.py` 的 `otel()` 返回一份 OTLP/JSON 的 **dict**，
+没有 exporter，不往任何地方发。
+
+**怎么做的**：新模块 `src/coderagent/core/otel.py`，两件事分开做——
+**把事件算成合法的 OTLP**，和**把它发出去**。
+
+**一、span 算对了**
+
+- **span 是平的**：原来把子 span 塞在父 span 的 `"spans"` 字段里，
+  那**不是 OTLP 的形状**（OTLP 没有「span 里面再套 span」这回事），
+  后端读不懂。现在一轮一个 span、一次模型调用一个 span、一次工具调用一个 span，
+  子 span 用 `parentSpanId` 挂在父 span 上，全部平铺在 `scopeSpans[].spans` 里。
+- **span 有长度**：原来每个 span 的起止时间都是同一个时间戳（长度为零），
+  现在一轮从提问到结束、一次工具调用从调用到结果。
+- **钱在 span 上**：`turn.cost`、`cost`、`tokens.in`、`tokens.out`；
+  失败的工具是 `status.code = 2`；一轮的 `stop_reason` 也是属性。
+- **一轮之前的事情不算一轮**：会话刚建好时那些状态事件不产生 span。
+
+**二、真的发出去**
+
+- `OtlpExporter` 走 **OTLP/HTTP**（JSON），发到 `telemetry.otel_endpoint`；
+  `telemetry.otel_headers` 是给那些要 key 的后端用的。
+- **每轮结束发一次**：发的是这一轮的新 span，**每个 span 只发一次**；
+  `switch_to` 换了会话就重新开始。
+- **后端不在只是警告**：会话照常往下走，追踪下一轮再发（失败的那轮也会补发）。
+- **事件日志仍然是唯一的事实**：追踪是从日志算出来的，日志照写不误。
+- **手动发**：`coder export --format otel --push` 把一个会话推到配置的地址上。
+- **信任边界**：追踪里是 agent 读过的东西，**项目不能把它送到自己的地址**
+  （`core/trust.py` 的 `tightened()` 只留下「关掉」那一种，项目带的 header 也丢掉）；
+  **用户也不能把项目关掉的追踪重新打开**（`config/loader.py`）。
+  「追踪发到哪里」是用户的决定，不是克隆下来的仓库的决定。
 
 ### 5.7 其它零碎 ✅ 已修（一条改代码，一条写文档）
 
@@ -510,6 +538,124 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 7 | ~~**OS 级沙箱（3.1 的第二步）**~~ ✅ | 最大的一件，做完前面再说 |
 | 8 | ~~**图片输入（4.1）、中断粒度（4.4）、Markdown（4.3）**~~ ✅ | 三件事都在消息这一层，一起做 |
 | 9 | ~~**`apply_patch`（4.9）、TUI 文件树（4.6）、P2 清理一批（5.2～5.5、5.7）**~~ ✅ | 一块改文件的东西，一块看文件的东西，剩下的都是收尾 |
+| 10 | ~~**OTel exporter（5.6）+ 第二轮对照的差距（§9）**~~ ✅ | 先把追踪发出去，再把 Codex 的清单整个重读一遍，找剩下的差距 |
+
+第 10 步之后又剩一批差距，**记在 §9.6，还没排期**。真要动手，先挑
+`[shell_environment_policy]` 和 `tool_output_token_limit`（见 9.6 的理由）。
+
+---
+
+## 9. 第二轮对照：又找到的差距
+
+第一轮读的是 Codex 文档里最显眼的几页（沙箱、审批、命令集、多模态）。
+第二轮把 Codex 的**全部**配置键、命令、开关、子命令和周边产品摊开重读了一遍，
+再逐条对 coderagent 的源码。这一轮找到的差距不多，但有四条是真的：
+
+| # | 差距 | Codex 有 | coderagent 当时的样子 | 工作量 |
+|---|---|---|---|---|
+| 9.1 | **没有命名 profile** | `[profiles.<name>]` + `codex -p <name>` | 只有 `-c key=value` 的一次性覆盖，每次都要把一串键抄一遍 | 小 |
+| 9.2 | **输出不能约束成结构化的** | `codex exec --output-schema schema.json` | `--output-format json` 的形状是写死的，脚本只能自己再解一遍 | 中 |
+| 9.3 | **MCP 服务器的工具不能挑着露出** | 每个服务器有 `enabled_tools` / `disabled_tools` | 服务器给什么就全给什么，想藏一个工具就得关掉整个服务器 | 小 |
+| 9.4 | **`@文件` 只剩下一个路径** | `/mention <file>`（终端）和 `@` 引用（IDE）把**内容**带进消息 | TUI 会补全路径，但模型只看见 `@src/app.py` 这几个字，内容得它自己再读一遍 | 中 |
+
+### 9.1 命名 profile ✅ 已修
+
+**怎么做的**：
+
+- 配置里多了一张表：`profiles: {名字: {一截配置}}`，选中哪个由 `profile:` 说了算，
+  命令行上也可以 `--profile`（短写 `-p`）。
+- **profile 压在用户配置上面**，和 `-c` 一样是「临时的覆盖」；
+  **项目的收紧仍然压在最上面**——profile 不能把项目关掉的沙箱和网络再打开。
+- **项目不许定义 profile，也不许选 profile**：`core/trust.py` 把项目层里的
+  `profile` 和 `profiles` 丢掉。理由和 5.6 一样——**选哪套权限是用户的决定**，
+  克隆下来的仓库不能替用户挑一套宽松的。
+
+### 9.2 结构化输出 ✅ 已修
+
+**怎么做的**：
+
+- `--output-schema <文件>`：最后一条回答**必须是符合这个 schema 的 JSON**。
+  合上的答案放在这一轮 JSON 的 `output` 字段里。
+- **schema 也给模型看**：系统提示词后面附上一段 `<output_schema>`，说清「只答 JSON，不要散文」。
+- **不合格就再来一次**：回答不是合法 JSON、或者对不上 schema，
+  把**错在哪儿**写回去让模型改，最多两次（第二次还不对就以 `schema_invalid` 停下）。
+- **不引依赖**：仓库里没有 `jsonschema`，所以校验器是自己写的
+  （`core/schema.py`，认 `type` / `properties` / `required` / `additionalProperties` /
+  `items` / `enum` / `nullable` 这几样）。这是刻意的：为了一个功能装一个包不划算。
+- **Codex 是靠模型服务端约束的**，coderagent 走的是 litellm，好几个 provider 不认那个参数，
+  所以这边是「提示 + 校验 + 重试」。**慢一点，但每个 provider 都一样。**
+
+### 9.3 MCP 服务器的工具过滤 ✅ 已修
+
+**怎么做的**：`enabled_tools`（只露这些）和 `disabled_tools`（这些不露），
+两个都能按名字筛一个服务器的工具，`*` 表示全部。
+**过滤只减不增**：`enabled_tools` 空着就是全给，`disabled_tools` 里的名字一定不露。
+
+### 9.4 `@文件` 的内容进消息 ✅ 已修
+
+**怎么做的**：
+
+- 提问里的 `@路径`（终端界面和命令行里都直接写）和 `/mention <文件>` 都会把
+  **文件的内容**带进消息，模型不用自己再花一次工具调用去读。
+- **不是文件的名字就当没写**：`@` 还有别的用处（邮箱、装饰器），
+  所以只有真的存在的文件才会被打开（`core/mentions.py`）。
+- **守路径边界**：工作目录外面的文件、被 `deny_paths` 挡住的文件**不带**，
+  消息里写明「这个文件不让看」，而不是把内容偷偷塞进去。
+- **只带文本**：不是文本的文件只被点名；图片走 `/image`，不在这里重复一套。
+  超过 20000 字符的文件会截断，并且说明截断了。
+
+### 9.5 这一轮看懂了但不抄的
+
+| Codex 的做法 | 为什么不抄 |
+|---|---|
+| `--search` / `web_search` 的四档（cached / indexed / live / disabled） | web 搜索是**模型服务端**的工具。coderagent 走 litellm，十来家 provider 里只有一部分有，**做不出「一个开关全都行」**。要做就得按 provider 分叉，那是另一个项目 |
+| `codex cloud` / GitHub Action / 桌面应用 | 那是**云**。coderagent 的评测要能离线跑，事件日志在本地，这是它最值钱的地方（见 §6） |
+| MCP 的 resources 和 prompts | Codex 自己也只是「部分支持」——**不值得为一个半吊子的对标去实现** |
+| `tui.keymap`（自定义键位） | textual 自己有一套键位，配置化的收益不如上面那四条 |
+| `personality`（`friendly` / `pragmatic`） | 那是一段塞给模型的话。coderagent 的 `agent.system_prompt` 就是它，一样的东西换个名字 |
+
+### 9.6 第三轮：还有一批差距，先记下来
+
+第 10 步做完之后，又拉了一份 Codex 的**全量清单**（全部配置键、slash 命令、子命令、
+CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**没有马上做**——
+它们要么是锦上添花，要么该等第 10 步的提交落地之后再挑。这节只作记录。
+
+**已经有的、不用再抄的**（对过命令表和配置 schema）：`/diff`、`/init`、`/status`、
+`/fork`、`/compact`、`/permissions`、`/skills`、`/mcp`、`/export`、`/hooks`、
+`/agents`、`/todos`、`/cost`、`/context`、`/sandbox`、`/plan`、`/mode`、
+`--profile`、`--output-schema`、OTel、`/review`、`reasoning_effort`、图片、Markdown、
+`apply_patch`、沙箱三档。
+
+**小的**（一个配置键 / 一个选项的事）：
+
+| 差距 | Codex 有 | coderagent 现在的样子 | 备注 |
+|---|---|---|---|
+| `model_verbosity`（回答的啰嗦程度） | `low \| medium \| high` | 只有 `reasoning_effort`（**想**多少），没有「**答**多少」 | 和 3.3 是同一套东西，翻译逻辑照抄那一段 |
+| `review_model` | `/review` 可以用另一个模型 | `/review` 用主模型 | 多一个模型槽位 |
+| `project_doc_max_bytes` | AGENTS.md 塞进上下文有字节上限（默认 32768） | 整份塞 | 指令文件很大时会直接吃掉预算 |
+| `--output-last-message` / `-o 文件` | 最后一条回答写进文件 | 只有 stdout 的 JSON | 和 9.2 的 schema 常常一起用 |
+| 外部通知程序 | `notify = ["notify-send", ...]` | OSC 777 终端通知（4.8） | 是补充，不是替代 |
+| MCP 每服务器超时 | `startup_timeout_sec` / `tool_timeout_sec` | 只有一个全局 `mcp.timeout`（30 秒） | 一个慢的服务器能拖死全部 |
+
+**中的**：
+
+| 差距 | Codex 有 | coderagent 现在的样子 | 备注 |
+|---|---|---|---|
+| `[shell_environment_policy]` | 控制哪些环境变量进子进程 | **全继承**——`API_KEY` 会直接漏给 agent 的 bash | **安全向，值得早点做** |
+| `tool_output_token_limit` | 单个工具输出有 token 上限 | 只有压缩的时候才裁剪 | 一条十万字符的输出会当场顶爆预算 |
+| `file_opener` | 文件引用点开 vscode / cursor / windsurf | 纯文本 | 纯终端的友好度 |
+| `supports_parallel_tool_calls` | 按 MCP 服务器放开并行调用 | 全部串行 | 慢 |
+
+**大的**：
+
+| 差距 | Codex 有 | coderagent 现在的样子 | 备注 |
+|---|---|---|---|
+| `/side`（临时岔开聊）、`/recap`（只总结不压缩） | 有 | 没有 | 要新的会话形态，不是加一条命令 |
+| `/rename` / `/archive` / `/delete` | 会话生命周期 | 只有新建 / 恢复 / 分叉 | 要动会话存储 |
+| `history.persistence` / `max_bytes` | 历史保留策略 | 一直留着 | 长期跑会一直涨 |
+
+**挑的时候**：先 `[shell_environment_policy]`（安全）和 `tool_output_token_limit`
+（会炸预算），这两个的代价和收益都比别的高。
 
 ---
 
@@ -523,6 +669,14 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
    `models/backends.py`、`config/schema.py`、`core/telemetry.py`。
 3. 每一条结论都指到了文件；**行号会漂**，本文里的 `file:NN` 只在写下的那天成立——
    核对时请按函数名找。
+
+> **第二轮**（§9）把 Codex 的**全部**配置键、slash 命令、开关、子命令摊开重读了一遍
+> （config.toml、命令集、CLI reference、sandboxing、approvals、MCP、多模态、
+> 会话与历史、web search、skills/subagents/profiles/memory、UI 与周边），
+> 再逐条对 coderagent 的源码。第一轮读的是最显眼的几页，第二轮读的是全部。
+
+> **第三轮**（§9.6）第 10 步落地之后又拉了一份全量清单，对完源码，
+> 剩下的差距**只记录、没做**——这一节就是那份记录。
 
 > 本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
 > 也都修了：3.4 让一个文件只出一段（`core/instructions.py` 的 `once_per_file()`），

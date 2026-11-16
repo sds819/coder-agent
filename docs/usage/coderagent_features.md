@@ -10,6 +10,9 @@ the end of each section.
 
 - **One turn from the terminal** — `coder -t "fix the failing test"`. The
   answer is printed as text, or as JSON with `--output-format json`.
+- **One turn with a shape** — `coder -t "..." --output-schema answer.json`. The
+  answer is JSON that fits the schema, and the JSON of the turn has it in
+  `output`.
 - **The terminal interface** — `coder` without a task, or `coder --tui`. A
   full screen interface with a status bar, tool cards and approvals.
 - **The browser** — `coder web`. The same agent in a chat page, with a
@@ -30,6 +33,9 @@ coder -t "add a docstring to src/app.py"
 # One turn, the answer as JSON (for a script).
 coder -t "list the files of this directory" --output-format json
 
+# One turn, the answer as JSON that fits a schema.
+coder -t "list the files of this directory" --output-schema files.json
+
 # The terminal interface.
 coder                      # with a terminal this is the TUI
 coder --tui                # the same, said explicitly
@@ -42,7 +48,7 @@ coder --list
 ```
 
 The JSON of one turn has the fields `session_id`, `messages`, `cost`,
-`session_cost`, `stop_reason` and `error`:
+`session_cost`, `stop_reason`, `error` and `output`:
 
 ```json
 {
@@ -51,15 +57,44 @@ The JSON of one turn has the fields `session_id`, `messages`, `cost`,
   "cost": 0.0012,
   "session_cost": 0.0143,
   "stop_reason": "end_turn",
-  "error": ""
+  "error": "",
+  "output": null
 }
 ```
 
 `cost` is what the turn cost, `session_cost` what the whole session has cost
-so far.
+so far. `output` is the answer when a schema was asked for, and `null` when it
+was not.
 
 `stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `verify_failed`,
-`error` and `interrupted`.
+`schema_invalid`, `error` and `interrupted`.
+
+### The shape of the answer
+
+`--output-schema` takes a file with a JSON schema. The answer of the agent has
+to fit it, and the schema is checked here, in the agent, not by the provider:
+
+```json
+{
+  "type": "object",
+  "properties": {"files": {"type": "array", "items": {"type": "string"}}},
+  "required": ["files"],
+  "additionalProperties": false
+}
+```
+
+The keywords that are understood are `type` (a name or a list of names),
+`properties`, `required`, `additionalProperties`, `items`, `enum` and
+`nullable`. A schema that uses anything else is not checked, not refused: the
+answer is simply not validated against that part.
+
+The model is told the schema before it starts, and an answer that does not fit
+is **given back to it** with the errors, so that it can try again. It gets two
+answers; when the second one does not fit either, the turn stops with
+`stop_reason` `schema_invalid` and the errors are in `error`.
+
+The answer is read out of the text of the model: a code fence around the JSON
+is fine, and so is a sentence in front of it.
 
 ### When something goes wrong
 
@@ -70,6 +105,9 @@ so far.
 | `Unknown command '/foo'. Try /help.` | The line started with `/` but no command has that name. | Check the spelling, or `/help` for the list. |
 | `ValueError: 'bogus' is not a valid PermissionMode` | `--permission-mode bogus` — the flag is checked when the policy is built, and the exception is not caught. | Use one of `default`, `acceptEdits`, `plan`, `readonly`, `bypass`. |
 | `ValueError: Unknown output format: xml` | `--output-format` accepts only `text` and `json`. | Use `text` or `json`. |
+| `Invalid value: the schema file is not valid JSON: ...` | The file of `--output-schema` does not hold JSON. | Fix the file, or drop the flag. |
+| `Invalid value: the schema file cannot be read: ...` | The file of `--output-schema` is not there. | Check the path. |
+| `stop_reason` is `schema_invalid` | The model did not answer with JSON that fits the schema, twice. | The errors are in `error`; the messages of the turn say what the model was told. |
 | `Unknown format 'xml'. Use json or otel.` | `coder export --format` accepts only `json` and `otel`. | Use `json` or `otel`. |
 | `no sessions yet` | `--list` found no session in this directory. | Nothing to do; run a turn first. |
 | `coder web: cannot listen on 127.0.0.1:8765 (Address already in use).` on stderr, exit code 1 | The port is taken. The server checks this itself before it starts, because uvicorn's own error does not say what to do. | Use another port: `coder web --port 8766`. |
@@ -193,6 +231,10 @@ The fourteen built-in tools:
 
 - **Tools of MCP servers** — `mcp__<server>__<tool>`, from every server that
   is configured.
+- **The tools of an MCP server can be picked** — `enabled_tools` (only these)
+  and `disabled_tools` (not these) choose the tools of one server by name, and
+  `*` means all of them. A tool that is not shown is not in the list of tools
+  at all, so the model does not see it.
 - **Tools of plugins** — a plugin can add tools, commands and hooks.
 - **The schemas are trimmed to the budget** — the schemas of the tools may
   take a tenth of the context window; `tools.schema_budget_tokens` sets
@@ -480,6 +522,33 @@ cat /etc/passwd              # refused
 - **The trace** — `coder export --format json|otel` writes the session out,
   for a dashboard or for OpenTelemetry.
 
+### The trace of a session
+
+The trace is the event log with the metrics of the session. `coder export`
+writes it to a file, and `telemetry.otel_endpoint` sends it to a collector:
+
+```yaml
+telemetry:
+  otel_endpoint: "http://localhost:4318/v1/traces"
+  otel_headers:
+    authorization: "Bearer …"
+```
+
+- **One span per turn, one per model call, one per tool call** — the calls of
+  a turn are the children of that turn;
+- **The money is on the spans** — `turn.cost`, `cost`, `tokens.in` and
+  `tokens.out`;
+- **Every span is sent once**, when the turn ends;
+- **A backend that is down is a warning** — the session goes on, and the trace
+  is sent again with the next turn;
+- **The event log stays the truth** — the trace is built from it, and the log
+  is written whether the backend is there or not;
+- **A project may not send the trace somewhere** — it may close the trace
+  (`otel_endpoint: ""`), never point it at an address of its own.
+
+`coder export --format otel --push` sends one session by hand. See
+[Trace export](coderagent_export.md).
+
 ### Example
 
 ```bash
@@ -518,6 +587,7 @@ the snapshot.
 | A turn ends with `stop_reason: token_limit` | The turn used more tokens than `agent.token_limit`. `0` means no limit. This is the budget of a model that has no price, where the money never moves. | Raise `agent.token_limit`. |
 | A turn ends with `stop_reason: error` | The model call failed after the retries. The text of the error is in `error`. | Look at `error`; it is the message of the provider. |
 | A turn ends with `stop_reason: interrupted` | Somebody pressed `ctrl+c`. | The session is saved; continue it with `--resume`. |
+| The trace does not arrive at the backend | The backend refused it or is not there. The reason is in the log of the agent. | Check `telemetry.otel_endpoint` and the headers. |
 
 A turn that ended with `cost_exceeded` or `error` is **not** reflected on: the
 memory of the session keeps what was learned before the failure.
@@ -1058,11 +1128,13 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
 
 ## The configuration
 
-- **Four layers** — the defaults of the package, the project file
-  `.coderagent/config.yaml`, the user file `~/.coderagent/config.yaml`, and
-  the overrides of the command line (`-c key=value`). The later wins.
+- **Five layers** — the defaults of the package, the project file
+  `.coderagent/config.yaml`, the user file `~/.coderagent/config.yaml`, the
+  profile that is in effect, and the overrides of the command line
+  (`-c key=value`). The later wins.
 - **The sections** — `model`, `agent`, `tools`, `permissions`, `context`,
-  `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox` and `verify`.
+  `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox`, `verify` and
+  `telemetry`, plus `profiles` and `profile`.
 - **The paths** — `MSWEA_CODER_HOME` moves the user level files somewhere
   else.
 - **The settings page writes the user file only** — the project file is in
@@ -1082,11 +1154,51 @@ The layers, from the lowest to the highest priority:
 1. the defaults of the package (`src/coderagent/config/defaults.yaml`),
 2. `.coderagent/config.yaml` of the project,
 3. `~/.coderagent/config.yaml` of the user,
-4. the `-c` of the command line.
+4. the profile that is in effect,
+5. the `-c` of the command line.
 
 The model name is looked up in this order: the `-c` of the command line, the
 project file, the user file, `$MSWEA_MODEL_NAME`, and at the end
 `anthropic/claude-sonnet-4-5`.
+
+### The profiles
+
+A profile is a named piece of configuration. It is chosen with `--profile` (or
+`-p`), and it sits above the user file and below the `-c` of the command line:
+
+```yaml
+# ~/.coderagent/config.yaml
+profiles:
+  fast:
+    model:
+      model_name: deepseek/deepseek-chat
+    agent:
+      max_turns: 20
+  careful:
+    permissions:
+      mode: plan
+    verify:
+      commands: ["pytest -q"]
+```
+
+```bash
+coder -t "..." --profile fast
+coder -t "..." -p careful
+```
+
+The name of the profile can also stand in the configuration itself:
+
+```yaml
+profile: fast
+```
+
+A **project** may neither define a profile nor choose one: the profiles of a
+project are dropped, like every other piece of code that comes with a
+repository. Choosing a set of permissions is the decision of the user.
+
+The tightening of the project still wins: a project that closes the sandbox
+(`sandbox.mode: read-only`) keeps it closed, even when the profile says
+`full-access`.
 
 The sections and what they hold:
 
@@ -1104,6 +1216,9 @@ The sections and what they hold:
 | `ui` | `approval_timeout`, `notifications`, `markdown` |
 | `sandbox` | `type`, `mode` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
+| `telemetry` | `otel_endpoint`, `otel_headers`, `otel_timeout` |
+| `profiles` | The named pieces of configuration. `--profile` picks one of them |
+| `profile` | The name of the profile that is in effect |
 
 ### When something goes wrong
 
@@ -1114,12 +1229,13 @@ The sections and what they hold:
 | `pydantic_core.ValidationError` | A value has the wrong type — a string where a number belongs. | The message names the field. |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | `-c myconf.yml` was given, but the file that is looked for is `myconf.yaml`. | Use the name with `.yaml`, or give the full path. |
 | The model is not the one in the file | A layer above the file wins. | Remember the order; `--list` of the layers is on the settings page. |
+| `ValueError: unknown profile 'slow'. Use one of: fast, careful.` | The name of the profile is not one of the `profiles` of the configuration. | Check the spelling, or add the profile to the file. |
 
 ## The commands
 
-Twenty-eight built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+Twenty-nine built-in commands: `/help`, `/model`, `/mode`, `/plan`,
 `/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/review`,
-`/image`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
+`/image`, `/mention`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
 `/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
 `/context` and `/exit` (also `/quit`).
 
@@ -1139,6 +1255,34 @@ than 60000 characters is cut, and the model is told to read the files itself.
 
 The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.
+
+### The files you mention
+
+A file that is named in the question goes into the message **with its
+content**, so that the model does not have to spend a tool call on reading it
+again:
+
+```
+look at @src/app.py and tell me what it does
+```
+
+The mention works in the terminal interface and in the command line alike.
+`/mention` does the same thing with an explicit path:
+
+```
+/mention src/app.py what does this do
+```
+
+The file that is not there is left alone: `@` is used for other things too, in
+an address or in a decorator, so only a name that is a file is opened.
+
+The **bounds still hold**: a file outside the working directory, or one that
+the rules of the permissions deny, does not go into the message. The message
+says that the agent may not read it, instead of smuggling the content in.
+
+Only text goes in: a file that is not text is named and left alone, and an
+image goes with `/image`. A file that is longer than 20000 characters is cut,
+and the cut is said.
 
 ### Example
 

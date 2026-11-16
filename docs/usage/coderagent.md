@@ -42,9 +42,11 @@ The name of the model is `model.model_name` in the configuration, or
 | `--task`, `-t` | The task. Without it, the interface opens when the terminal is interactive. |
 | `--model`, `-m` | The model of this run |
 | `--config`, `-c` | A configuration file, or `key=value` overrides |
+| `--profile`, `-p` | A named piece of the configuration |
 | `--cwd` | The directory of the session |
 | `--permission-mode` | `default`, `acceptEdits`, `plan`, `bypass` or `readonly` |
 | `--output-format` | `text` (the default) or `json` |
+| `--output-schema` | A file with the JSON schema the answer has to fit |
 | `--resume <id>` | Continue the session with this id |
 | `--continue` | Continue the last session of this directory |
 | `--fork <id>` | Copy the session with this id and continue in the copy |
@@ -82,22 +84,27 @@ coder --task "..." --output-format json
   "cost": 0.0016,
   "session_cost": 0.0019,
   "stop_reason": "end_turn",
-  "error": ""
+  "error": "",
+  "output": null
 }
 ```
 
 `stop_reason` is `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `verify_failed`,
-`interrupted` or `error`. `error` is empty unless the turn failed.
+`schema_invalid`, `interrupted` or `error`. `error` is empty unless the turn failed.
+`output` is the answer when a schema was asked for with `--output-schema`, and
+`null` when it was not.
 
 ### The trace of a session
 
 ```bash
 coder export --session 20261106-a1b2c3 --format json --out trace.json
 coder export --session 20261106-a1b2c3 --format otel --out trace.otlp
+coder export --session 20261106-a1b2c3 --format otel --push
 ```
 
-The trace is the event log of the session with the metrics of the session. See
-[Trace export](coderagent_export.md).
+The trace is the event log of the session with the metrics of the session. With
+`telemetry.otel_endpoint` in the configuration, the trace of every turn also
+goes to that OpenTelemetry collector. See [Trace export](coderagent_export.md).
 
 ## The terminal interface
 
@@ -135,6 +142,13 @@ A picture goes to the model with `/image`:
 
 ```bash
 /image screenshot.png what is wrong with this layout?
+```
+
+A file goes to the model with its content in the message, with `/mention` or by
+naming it in the question:
+
+```bash
+/mention src/app.py what does this do?
 ```
 
 ## The web interface

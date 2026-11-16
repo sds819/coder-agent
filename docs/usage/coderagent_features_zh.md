@@ -9,6 +9,8 @@
 
 - **终端里跑一轮**——`coder -t "把失败的测试修好"`。结果按文本打印，
   加 `--output-format json` 就是 JSON。
+- **跑一轮，答案有形状**——`coder -t "..." --output-schema answer.json`。
+  答案是对得上那个 schema 的 JSON，一轮的 JSON 里放在 `output` 字段。
 - **终端界面**——不给任务就是 `coder`，也可以 `coder --tui`。全屏界面，
   有状态栏、工具卡片和审批。
 - **浏览器里**——`coder web`。同一个 agent，一个聊天页，一个设置模型配置
@@ -28,6 +30,9 @@ coder -t "给 src/app.py 加个 docstring"
 # 跑一轮，答案是 JSON（给脚本用）。
 coder -t "列一下这个目录里的文件" --output-format json
 
+# 跑一轮，答案是对得上 schema 的 JSON。
+coder -t "列一下这个目录里的文件" --output-schema files.json
+
 # 终端界面。
 coder                      # 在终端里这就是 TUI
 coder --tui                # 明确写出来
@@ -40,7 +45,7 @@ coder --list
 ```
 
 一轮的 JSON 有这些字段：`session_id`、`messages`、`cost`、`session_cost`、
-`stop_reason`、`error`。
+`stop_reason`、`error`、`output`。
 
 ```json
 {
@@ -49,14 +54,40 @@ coder --list
   "cost": 0.0012,
   "session_cost": 0.0143,
   "stop_reason": "end_turn",
-  "error": ""
+  "error": "",
+  "output": null
 }
 ```
 
 `cost` 是这一轮花了多少，`session_cost` 是整个会话到目前为止花了多少。
+`output` 是给了 schema 时的答案，没给 schema 时是 `null`。
 
-`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`verify_failed`、`error`、
-`interrupted` 之一。
+`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`verify_failed`、
+`schema_invalid`、`error`、`interrupted` 之一。
+
+### 答案是有形状的
+
+`--output-schema` 接一个装着 JSON schema 的文件。agent 的答案必须对得上它，
+而且这个检查是 agent 自己做的，不是模型服务端做的：
+
+```json
+{
+  "type": "object",
+  "properties": {"files": {"type": "array", "items": {"type": "string"}}},
+  "required": ["files"],
+  "additionalProperties": false
+}
+```
+
+认的关键字是 `type`（一个名字或者一串名字）、`properties`、`required`、
+`additionalProperties`、`items`、`enum`、`nullable`。用了别的关键字不报错，
+只是那部分不检查。
+
+模型一开始就知道这个 schema；对不上的答案会**连着错在哪儿一起退回去**，
+让它改一次。它有两次机会；第二次还是对不上，这一轮就以 `stop_reason`
+`schema_invalid` 停下，错在 `error` 里。
+
+答案从模型的文本里读出来：JSON 外面包一层代码围栏也行，前面有一句话也行。
 
 ### 出错时怎么办
 
@@ -67,6 +98,9 @@ coder --list
 | `Unknown command '/foo'. Try /help.` | 这一行以 `/` 开头，但没有这个命令。 | 检查拼写，或者 `/help` 看列表。 |
 | `ValueError: 'bogus' is not a valid PermissionMode` | `--permission-mode bogus`——这个值在建立权限策略时才检查，异常没有被捕获。 | 用 `default`、`acceptEdits`、`plan`、`readonly`、`bypass` 之一。 |
 | `ValueError: Unknown output format: xml` | `--output-format` 只认 `text` 和 `json`。 | 用 `text` 或 `json`。 |
+| `Invalid value: the schema file is not valid JSON: ...` | `--output-schema` 指的那个文件里不是 JSON。 | 把文件改对，或者去掉这个标志。 |
+| `Invalid value: the schema file cannot be read: ...` | `--output-schema` 指的那个文件不在。 | 检查路径。 |
+| `stop_reason` 是 `schema_invalid` | 模型两次都没给出对得上 schema 的 JSON。 | 错在 `error` 里，这一轮的消息里写了模型被告知了什么。 |
 | `Unknown format 'xml'. Use json or otel.` | `coder export --format` 只认 `json` 和 `otel`。 | 用 `json` 或 `otel`。 |
 | `no sessions yet` | `--list` 在这个目录里没找到会话。 | 不用管，先跑一轮。 |
 | stderr 上的 `coder web: cannot listen on 127.0.0.1:8765 (Address already in use).`，退出码 1 | 端口被占。服务启动前自己先探一下，因为 uvicorn 自己的报错不告诉你该怎么办。 | 换一个端口：`coder web --port 8766`。 |
@@ -181,6 +215,9 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `skill` | 载入一个技能的说明 |
 
 - **MCP 服务器的工具**——`mcp__<服务器>__<工具>`，配了的服务器都有。
+- **MCP 服务器的工具可以挑**——`enabled_tools`（只露这些）和 `disabled_tools`
+  （这些不露）能按名字筛一个服务器的工具，`*` 表示全部。没露出来的工具模型根本
+  看不见。
 - **插件的工具**——插件可以加工具、命令和 hook。
 - **工具的 schema 会按预算裁剪**——工具的 schema 最多占上下文的十分之一（`tools.schema_budget_tokens` 可以另设预算）；塞不下时最不重要的先走。
   `bash` 和 `read` 永远不裁。
@@ -443,6 +480,30 @@ cat /etc/passwd              # 拒绝
 - **追踪**——`coder export --format json|otel` 把会话导出来，给看板或者
   OpenTelemetry 用。
 
+### 会话的追踪
+
+追踪就是事件日志加上这个会话的指标。`coder export` 把它写成文件，
+`telemetry.otel_endpoint` 把它送给采集器：
+
+```yaml
+telemetry:
+  otel_endpoint: "http://localhost:4318/v1/traces"
+  otel_headers:
+    authorization: "Bearer …"
+```
+
+- **一轮一个 span，一次模型调用一个 span，一次工具调用一个 span**——一轮里
+  的那些调用是这一轮的子 span；
+- **钱在 span 上**——`turn.cost`、`cost`、`tokens.in`、`tokens.out`；
+- **每个 span 只发一次**，在这一轮结束的时候发；
+- **后端不在只是句警告**——会话照常往下走，追踪下一轮再发一次；
+- **事件日志仍然是唯一的事实**——追踪是从它算出来的，后端在不在，日志都写；
+- **项目不能把追踪送到别处**——它只能关掉追踪（`otel_endpoint: ""`），
+  不能指着自己的地址。
+
+`coder export --format otel --push` 手动发一个会话。见
+[追踪导出](coderagent_export.md)。
+
 ### 用法例子
 
 ```bash
@@ -480,6 +541,7 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 | 一轮以 `stop_reason: token_limit` 结束 | 这一轮用的 token 超过了 `agent.token_limit`。`0` 是没有上限。模型没有价格时钱不动，token 就是预算。 | 调大 `agent.token_limit`。 |
 | 一轮以 `stop_reason: error` 结束 | 模型调用重试完了还是失败。错误文本在 `error` 里。 | 看 `error`，那是厂商的消息。 |
 | 一轮以 `stop_reason: interrupted` 结束 | 有人按了 `ctrl+c`。 | 会话已经存下来了，用 `--resume` 接着来。 |
+| 追踪没有到后端 | 后端拒收了它，或者压根不在。原因在 agent 的日志里。 | 查一下 `telemetry.otel_endpoint` 和那几行头。 |
 
 以 `cost_exceeded` 或 `error` 结束的一轮**不会**被沉淀成记忆：记忆里只留
 失败之前学到的东西。
@@ -980,10 +1042,12 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
 
 ## 配置
 
-- **四层**——包里的默认值、项目文件 `.coderagent/config.yaml`、用户文件
-  `~/.coderagent/config.yaml`、命令行的覆盖（`-c key=value`）。后面的赢。
+- **五层**——包里的默认值、项目文件 `.coderagent/config.yaml`、用户文件
+  `~/.coderagent/config.yaml`、生效的 profile、命令行的覆盖（`-c key=value`）。
+  后面的赢。
 - **有哪些段**——`model`、`agent`、`tools`、`permissions`、`context`、
-  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`。
+  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`、`telemetry`，
+  还有 `profiles` 和 `profile`。
 - **路径**——`MSWEA_CODER_HOME` 可以把用户级文件挪到别处。
 - **设置页只写用户级文件**——项目级那份在仓库里，永远不写。
 
@@ -996,15 +1060,53 @@ coder -t "..." -c myconf.yaml
 coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 ```
 
-四层，从低到高：
+五层，从低到高：
 
 1. 包里的默认值（`src/coderagent/config/defaults.yaml`），
 2. 项目的 `.coderagent/config.yaml`，
 3. 用户的 `~/.coderagent/config.yaml`，
-4. 命令行的 `-c`。
+4. 生效的 profile，
+5. 命令行的 `-c`。
 
 模型名按这个顺序找：命令行的 `-c`、项目文件、用户文件、
 `$MSWEA_MODEL_NAME`，最后是 `anthropic/claude-sonnet-4-5`。
+
+### profile（命名配置）
+
+profile 是一段有名字的配置，用 `--profile`（短写 `-p`）选它。它压在用户文件
+上面，在命令行的 `-c` 下面：
+
+```yaml
+# ~/.coderagent/config.yaml
+profiles:
+  fast:
+    model:
+      model_name: deepseek/deepseek-chat
+    agent:
+      max_turns: 20
+  careful:
+    permissions:
+      mode: plan
+    verify:
+      commands: ["pytest -q"]
+```
+
+```bash
+coder -t "..." --profile fast
+coder -t "..." -p careful
+```
+
+profile 的名字也可以写在配置里：
+
+```yaml
+profile: fast
+```
+
+**项目**既不许定义 profile，也不许选 profile：项目的 profile 会被丢掉，
+跟仓库里带来的其它代码一样。选哪套权限是用户的决定。
+
+项目的收紧仍然最要紧：项目把沙箱关上了（`sandbox.mode: read-only`），
+那它就是关着的，profile 写 `full-access` 也一样。
 
 各段和它们的键：
 
@@ -1021,6 +1123,10 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `hooks` | `events` |
 | `ui` | `approval_timeout`、`notifications`、`markdown` |
 | `sandbox` | `type`、`mode` 和环境的那些选项 |
+| `verify` | `commands`、`max_rounds`、`timeout` |
+| `telemetry` | `otel_endpoint`、`otel_headers`、`otel_timeout` |
+| `profiles` | 有名字的几段配置，`--profile` 从里面挑一个 |
+| `profile` | 生效的那个 profile 的名字 |
 
 ### 出错时怎么办
 
@@ -1031,11 +1137,12 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `pydantic_core.ValidationError` | 值的类型不对——该是数字的地方写了字符串。 | 消息里说了是哪个字段。 |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | 给了 `-c myconf.yml`，但找的是 `myconf.yaml`。 | 用带 `.yaml` 的名字，或者给全路径。 |
 | 模型不是文件里写的那一个 | 上面的一层赢了。 | 记住顺序；设置页上有各层的列表。 |
+| `ValueError: unknown profile 'slow'. Use one of: fast, careful.` | profile 的名字不在配置的 `profiles` 里。 | 检查拼写，或者把 profile 加进文件。 |
 
 ## 命令
 
-二十八个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
-`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/image`、`/init`、
+二十九个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/image`、`/mention`、`/init`、
 `/cost`、`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。
@@ -1055,6 +1162,29 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 审查是当前会话里的一轮，用的是它自己的提示词，提示词里明写不改任何文件。
 结果留在对话里。
+
+### 你提到的文件
+
+提问里点名的文件会**带着内容**进消息，模型不用再花一次工具调用去读它：
+
+```
+看看 @src/app.py 做了什么
+```
+
+终端界面和命令行里都一样。`/mention` 是同一个意思，只是把路径写全：
+
+```
+/mention src/app.py 这个文件做什么
+```
+
+不存在的文件就当没写：`@` 还有别的用处（邮箱、装饰器），所以只有真的存在的
+文件才会被打开。
+
+**边界照样管着**：工作目录外面的文件、权限规则拒绝的文件，都不进消息。
+消息里写的是「agent 读不了这个文件」，而不是把内容偷偷塞进去。
+
+只带文本：不是文本的文件只会被点名，不会进去；图片走 `/image`。超过 20000
+字符的文件会被截断，并且说明截断了。
 
 ### 用法例子
 
