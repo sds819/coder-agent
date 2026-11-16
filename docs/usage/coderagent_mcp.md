@@ -36,6 +36,8 @@ See [The code of a project](coderagent.md#the-code-of-a-project).
 | `enabled` | `false` skips the server |
 | `url` | The address of the server, for the http transport |
 | `headers` | The headers of the http transport |
+| `enabled_tools` | The tools of this server the agent may call. Empty means: all of them |
+| `disabled_tools` | The tools of this server the agent may not call |
 
 The `timeout` is not a key of a server: it belongs to `mcp`, next to
 `servers`, and it is how long the agent waits for a server.
@@ -94,6 +96,35 @@ rules:
 
 The name of the tool is the whole name, with the server in it. The `pattern`
 is `*` or the same name: a glob does not work here.
+
+## Picking the tools of a server
+
+A server often has more tools than the task needs. `enabled_tools` and
+`disabled_tools` choose which of them the agent sees:
+
+```yaml
+mcp:
+  servers:
+    - name: filesystem
+      command: npx -y @modelcontextprotocol/server-filesystem .
+      enabled_tools: ["read_file", "list_directory"]
+    - name: database
+      command: npx -y @modelcontextprotocol/server-postgres
+      disabled_tools: ["drop_table"]
+```
+
+The tools that are not on the list are **not in the list of tools at all**: the
+model does not see them, so it cannot ask for them. The names are the names of
+the server, without the `mcp__<server>__` in front of them.
+
+`enabled_tools` comes first, `disabled_tools` after it, and both only take
+tools away:
+
+- `enabled_tools` empty: every tool of the server is there.
+- `enabled_tools` with names: only those tools are there.
+- `disabled_tools` with names: those tools are never there.
+- `*` in `enabled_tools`: every tool of the server is there.
+- `*` in `disabled_tools`: no tool of the server is there.
 
 ## The servers and the session
 

@@ -138,6 +138,10 @@ class MCPServerConfig(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
     enabled: bool = True
+    enabled_tools: list[str] = Field(default_factory=list)
+    """The tools of this server that the agent may call. Empty means: all of them."""
+    disabled_tools: list[str] = Field(default_factory=list)
+    """The tools of this server that the agent may not call."""
 
 
 class MCPConfig(BaseModel):

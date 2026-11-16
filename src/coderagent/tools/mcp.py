@@ -190,6 +190,9 @@ class MCPClient:
     def _make_tools(self, listed) -> list[MCPTool]:
         tools = []
         for tool in listed.tools:
+            if not _wanted(self.config, tool.name):
+                """The user hides some tools of this server. The model does not see them."""
+                continue
             schema = getattr(tool, "input_schema", None) or getattr(tool, "inputSchema", None)
             schema = schema or {"type": "object", "properties": {}}
             tools.append(
@@ -235,6 +238,19 @@ class MCPManager:
     def stop(self) -> None:
         for client in self.clients:
             client.stop()
+
+
+def _wanted(config: MCPServerConfig, name: str) -> bool:
+    """Whether the agent may call this tool of this server.
+
+    The list of the tools that are allowed comes first, the list of the tools
+    that are not comes after it. Both only take tools away.
+    """
+    enabled = config.enabled_tools
+    disabled = config.disabled_tools
+    if enabled and "*" not in enabled and name not in enabled:
+        return False
+    return name not in disabled and "*" not in disabled
 
 
 def _describe(error: BaseException) -> str:

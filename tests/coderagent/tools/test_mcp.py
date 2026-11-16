@@ -44,6 +44,27 @@ def echo(text: str) -> str:
 server.run(transport="streamable-http", host="127.0.0.1", port={port})
 """
 
+TWO_TOOLS = """
+from mcp.server.mcpserver import MCPServer
+
+server = MCPServer("echo")
+
+
+@server.tool()
+def echo(text: str) -> str:
+    "Echo the text back."
+    return f"echo: {text}"
+
+
+@server.tool()
+def shout(text: str) -> str:
+    "Shout the text."
+    return text.upper()
+
+
+server.run()
+"""
+
 RECORDER = """
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -83,6 +104,13 @@ def _config(tmp_path, **kwargs) -> MCPServerConfig:
     return MCPServerConfig(name="echo", command=_server(tmp_path), **kwargs)
 
 
+def _two_tools(tmp_path, **kwargs) -> MCPServerConfig:
+    """A server with two tools: one of them may be hidden."""
+    path = tmp_path / "two.py"
+    path.write_text(TWO_TOOLS, encoding="utf-8")
+    return MCPServerConfig(name="echo", command=f"{sys.executable} {path}", **kwargs)
+
+
 def _free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -106,6 +134,34 @@ def test_the_tools_of_the_server_are_named_after_the_server(tmp_path):
     client.stop()
     assert [tool.name for tool in tools] == ["mcp__echo__echo"]
     assert tool_name("echo", "echo") == "mcp__echo__echo"
+
+
+def test_only_the_tools_that_are_allowed_are_seen(tmp_path):
+    client = MCPClient(_two_tools(tmp_path, enabled_tools=["echo"]))
+    tools = client.start()
+    client.stop()
+    assert [tool.name for tool in tools] == ["mcp__echo__echo"]
+
+
+def test_a_tool_that_is_forbidden_is_not_seen(tmp_path):
+    client = MCPClient(_two_tools(tmp_path, disabled_tools=["shout"]))
+    tools = client.start()
+    client.stop()
+    assert [tool.name for tool in tools] == ["mcp__echo__echo"]
+
+
+def test_a_star_means_every_tool(tmp_path):
+    client = MCPClient(_two_tools(tmp_path, enabled_tools=["*"], disabled_tools=["shout"]))
+    tools = client.start()
+    client.stop()
+    assert [tool.name for tool in tools] == ["mcp__echo__echo"]
+
+
+def test_every_tool_of_the_server_can_be_hidden(tmp_path):
+    client = MCPClient(_two_tools(tmp_path, disabled_tools=["*"]))
+    tools = client.start()
+    client.stop()
+    assert tools == []
 
 
 def test_the_schema_of_the_tool_is_the_one_of_the_server(tmp_path):
