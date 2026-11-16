@@ -4533,7 +4533,7 @@ coder<span class="w"> </span>web
 <p><code>plan</code> 和 <code>readonly</code> 会拒掉所有会改东西的工具（<code>bash</code> 也算），而且模型会被告知这件事，
 所以它会说出看到的东西，而不是动手去改。</p>
 <h3 id="_3">设置页</h3>
-<p>表单里有模式、禁止访问的路径、额外的目录，写到和模型同一个用户级文件
+<p>表单里有模式、禁止访问的路径、额外的目录和网络开关，写到和模型同一个用户级文件
 <code>~/.coderagent/config.yaml</code>（或者 <code>$MSWEA_CODER_HOME/config.yaml</code>）。项目级的文件永远不写，
 <code>permissions.rules</code> 里的规则也不动——那些是审批卡片上 <code>Always allow</code> 按钮的事。</p>
 <p>和模型一样，<strong>对新会话生效</strong>：跑着的会话还是它原来的模式。</p>

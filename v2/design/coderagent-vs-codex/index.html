@@ -4405,19 +4405,36 @@
 <li><code>curl</code> / <code>wget</code> / <code>nc</code> 这些出网命令，在 <code>src/coderagent/tools/bash_policy.py:90-96</code>
   里被标成「危险」，但<strong>危险只意味着弹审批框，不意味着拦下来</strong>——
   <code>default</code> 模式下用户一路点「允许」就能把数据发出去；</li>
-<li>没有 <code>sandbox_policy.network_access</code> 这样的开关。</li>
+<li>~~没有 <code>sandbox_policy.network_access</code> 这样的开关。~~ ✅ 已修（见下面「已修」）</li>
 </ul>
 <p><strong>影响</strong>：一个被 prompt injection 拐走的 agent，在 <code>local</code> 模式下能读 <code>~/.ssh</code>、
 能改 <code>~/.zshrc</code>、能把仓库内容 POST 到外面。<code>permissions.include_dirs</code> 只能<strong>加</strong>目录，
 没有「只允许写这些目录」的方向。</p>
 <p><strong>建议</strong>：</p>
 <ol>
-<li>先做<strong>便宜的半个</strong>——加一个 <code>network: deny | allow</code> 开关，在 <code>bash_policy</code> 里把
-   出网命令从「弹审批」升级成「直接拒绝」（<code>bypass</code> 模式除外）。一天内能做完，收益最大。</li>
+<li>~~先做<strong>便宜的半个</strong>——加一个 <code>network: deny | allow</code> 开关，在 <code>bash_policy</code> 里把
+   出网命令从「弹审批」升级成「直接拒绝」。~~ ✅ 已修（见下面）</li>
 <li>再做 <code>sandbox_mode</code> 三档，把 <code>local</code> 拆成 <code>read-only</code> / <code>workspace-write</code> /
    <code>full-access</code>，其中 <code>workspace-write</code> 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。
    这是「大」的工作，但这是 Codex 真正拉开差距的地方。</li>
 </ol>
+<p><strong>已修：网络开关</strong>（<code>permissions.network</code>，默认 <code>allow</code>）</p>
+<ul>
+<li><code>bash_policy.py</code> 里加了一张出网命令的表（<code>NETWORK_COMMANDS</code>）和 <code>git</code> 的出网子命令
+  （<code>NETWORK_SUBCOMMANDS</code>），另有一个 <code>needs_network()</code> 判断某一段命令要不要出网；</li>
+<li><code>PermissionPolicy</code> 多了一个 <code>network</code> 参数：<code>deny</code> 时，出网的命令<strong>直接拒绝</strong>，
+  不是弹审批框；</li>
+<li><strong>拒绝在所有模式下都成立，<code>bypass</code> 也不例外</strong>——这一点和原文写的
+  「（<code>bypass</code> 模式除外）」不同：磁盘边界（<code>within_bounds()</code>）本来就在 <code>bypass</code>
+  下成立，Codex 的 <code>network_access</code> 也和 <code>approval_policy</code> 是两个正交的轴，
+  所以让网络边界跟磁盘边界一个口径；</li>
+<li>用户写的 <code>allow</code> 规则<strong>放宽不了</strong>它，和路径边界一个待遇；</li>
+<li>模型会被告知：一段 <code>&lt;permission_network policy="deny"&gt;</code> 进上下文，和
+  <code>&lt;permission_mode ...&gt;</code> 一样，每轮重算，不烤进 system prompt；</li>
+<li>信任边界照旧：项目里的配置<strong>只能关网络，不能开网络</strong>（<code>core/trust.py</code> 的
+  <code>tightened()</code> 把 <code>network</code> 留在配置里当且仅当它是 <code>deny</code>；<code>config/loader.py</code>
+  里项目层说 <code>deny</code> 时，用户层不能把它重新打开）。</li>
+</ul>
 <p><strong>注意</strong>：<code>within_bounds()</code>（<code>src/coderagent/tools/permissions.py</code>）在<strong>所有</strong>模式下都生效，
 用户写的 <code>allow</code> 规则<strong>放宽不了</strong>这个边界——这是 coderagent 比 Codex 强的地方，
 做 OS 级沙箱时不要把它绕开。</p>
@@ -4711,7 +4728,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </tr>
 <tr>
 <td>2</td>
-<td><strong>加网络开关（3.1 的第一步）</strong></td>
+<td>~~<strong>加网络开关（3.1 的第一步）</strong>~~ ✅</td>
 <td>一天内能做完，堵住最大的口子</td>
 </tr>
 <tr>

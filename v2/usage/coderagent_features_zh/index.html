@@ -5490,6 +5490,9 @@ checkpoint 时会被去掉密钥，<code>/rewind</code> 也不会把它恢复回
 <li><strong>禁止的路径</strong>——<code>permissions.deny_paths</code>，agent 不许碰的路径。</li>
 <li><strong>额外的目录</strong>——<code>permissions.include_dirs</code>，工作目录以外、agent 仍然
   可以碰的目录。</li>
+<li><strong>网络开关</strong>——<code>permissions.network</code> 默认是 <code>allow</code>（出网的命令先问一次），
+  <code>deny</code> 则<strong>直接拒绝</strong>。拒绝在<strong>所有模式</strong>下都成立，<code>bypass</code> 也不例外，
+  用户级的规则也放宽不了它。项目里的配置<strong>只能关网络，不能开网络</strong>。</li>
 <li><strong>三个答案</strong>——允许、拒绝、永久允许。没人回答就是拒绝：浏览器里等
   <code>ui.approval_timeout</code> 秒（默认五分钟），终端里一直等，因为那儿坐着人。</li>
 <li><strong>终端里用方向键选答案</strong>，浏览器里点卡片上的按钮；没有终端时一律拒绝。</li>
@@ -6461,7 +6464,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>permissions</code></td>
-<td><code>mode</code>、<code>rules</code>、<code>deny_paths</code>、<code>include_dirs</code></td>
+<td><code>mode</code>、<code>rules</code>、<code>deny_paths</code>、<code>include_dirs</code>、<code>network</code></td>
 </tr>
 <tr>
 <td><code>context</code></td>

@@ -4948,6 +4948,18 @@ destroy something or send it out (<code>rm</code>, <code>curl</code>, <code>git 
 outside the working directory is refused in every mode. The paths of a command
 are the ones it names, variables and all, and a substitution runs a command
 too: <code>cat $HOME/.ssh/id_rsa</code> is refused, and <code>echo $(rm -rf ~)</code> asks.</p>
+<p>The network has a switch of its own: <code>permissions.network</code> is <code>allow</code> by
+default, <code>deny</code> closes it.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">permissions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deny</span>
+</code></pre></div>
+<p>When the network is closed, the commands that reach it are <strong>refused</strong> instead
+of asked for: <code>curl</code>, <code>wget</code>, <code>pip install</code>, <code>git push</code> and the like. The
+refusal holds in every mode, <code>bypass</code> included, and a rule of the user cannot
+open the network again — the same way the boundaries of the disk hold. The
+model is told about it: a <code>&lt;permission_network policy="deny"&gt;</code> block goes into
+the conversation, next to the one of the mode. The project may close the
+network, never open it.</p>
 <p><code>/permissions</code> shows the mode and the rules that are in effect.</p>
 <p>Without a terminal nobody can be asked, so a call that needs approval is
 refused and the model is told that the user refused it. In a script, use

@@ -5506,6 +5506,10 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
 <li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
 <li><strong>Extra directories</strong> — <code>permissions.include_dirs</code>, directories outside the
   working directory the agent may still touch.</li>
+<li><strong>A switch for the network</strong> — <code>permissions.network</code> is <code>allow</code> by default
+  (the commands that reach the network ask) and <code>deny</code> <strong>refuses</strong> them. The
+  refusal holds in <strong>every</strong> mode, <code>bypass</code> included, and a rule of the user
+  cannot widen it. The project may close the network, never open it.</li>
 <li><strong>Three answers</strong> — allow, deny, always allow. Nobody answers, the call is
   denied: in the browser after <code>ui.approval_timeout</code> seconds (five minutes by
   default), in the terminal after no limit at all, because somebody is there.</li>
@@ -6526,7 +6530,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>permissions</code></td>
-<td><code>mode</code>, <code>rules</code>, <code>deny_paths</code>, <code>include_dirs</code></td>
+<td><code>mode</code>, <code>rules</code>, <code>deny_paths</code>, <code>include_dirs</code>, <code>network</code></td>
 </tr>
 <tr>
 <td><code>context</code></td>
