@@ -123,3 +123,64 @@ def test_the_tools_are_given_back_afterwards(tmp_path):
     before = context.loop.executor.registry.names()
     run(context, "/commit a.py")
     assert context.loop.executor.registry.names() == before
+
+
+def test_the_commands_of_the_user_are_found(tmp_path):
+    home = tmp_path / "home"
+    (home / "commands").mkdir(parents=True)
+    (home / "commands" / "hello.md").write_text(COMMAND, encoding="utf-8")
+    assert [command.name for command in load_custom_commands(tmp_path, home)] == ["hello"]
+
+
+def test_the_command_of_the_project_wins_over_the_one_of_the_user(tmp_path):
+    home = tmp_path / "home"
+    (home / "commands").mkdir(parents=True)
+    (home / "commands" / "commit.md").write_text(COMMAND, encoding="utf-8")
+    _write(tmp_path)
+    commands = load_custom_commands(tmp_path, home)
+    assert [command.name for command in commands] == ["commit"]
+    assert commands[0].description == "Generate a commit message"
+
+
+def test_the_pattern_of_a_tool_limits_what_the_command_may_do(tmp_path):
+    """`bash(git diff:*)` means: the command may run git diff and nothing else."""
+    _write(tmp_path)
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=Path(tmp_path))
+    policy.restriction = find_custom(tmp_path, "commit").tool_rules()
+    assert policy.evaluate("bash", {"command": "git diff"}).decision == "allow"
+    assert policy.evaluate("bash", {"command": "git diff --stat"}).decision == "allow"
+    assert policy.evaluate("bash", {"command": "rm -rf x"}).decision == "deny"
+    assert policy.evaluate("write", {"path": "a.py"}).decision == "deny"
+
+
+def test_a_custom_command_may_only_run_what_it_may(tmp_path):
+    _write(tmp_path)
+    context, output = _context(
+        tmp_path,
+        responses=[
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {"name": "bash", "arguments": '{"command": "rm -rf x"}'},
+                    }
+                ],
+            },
+            {"role": "assistant", "content": "done"},
+        ],
+    )
+    run(context, "/commit a.py")
+    observations = [
+        message["content"] for message in context.loop.context.history.messages if message["role"] == "tool"
+    ]
+    assert any("may only run 'git diff'" in str(content) for content in observations)
+
+
+def test_the_restriction_is_given_back_afterwards(tmp_path):
+    _write(tmp_path)
+    context, output = _context(tmp_path)
+    run(context, "/commit a.py")
+    assert context.loop.executor.policy.restriction == {}

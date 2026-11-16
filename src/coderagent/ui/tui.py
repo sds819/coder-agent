@@ -12,7 +12,7 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
-from textual.widgets import Input
+from textual.widgets import Input, Tree
 
 from coderagent.config.schema import Config
 from coderagent.core.content import describe_message
@@ -27,6 +27,7 @@ from coderagent.ui.commands.resume import resume as resume_session
 from coderagent.ui.notify import TITLE, escape_sequence
 from coderagent.ui.widgets import (
     ApprovalPrompt,
+    FileTree,
     MarkdownMessage,
     MessageBlock,
     StatusBar,
@@ -37,7 +38,7 @@ from coderagent.ui.widgets.diff_view import prospective_diff
 from coderagent.ui.widgets.path_suggester import PathSuggester
 from coderagent.ui.widgets.session_picker import SessionPicker
 
-WRITE_TOOLS = {"write", "edit", "multi_edit"}
+WRITE_TOOLS = {"write", "edit", "multi_edit", "apply_patch"}
 logger = logging.getLogger("coderagent.ui")
 
 
@@ -89,11 +90,19 @@ class CoderApp(App):
     #todos {
         dock: bottom;
     }
+    #files {
+        dock: left;
+        width: 34;
+        height: 1fr;
+        border: round $panel;
+        background: $panel;
+    }
     """
     BINDINGS = [
         ("ctrl+c", "interrupt", "Interrupt"),
         ("ctrl+q", "quit", "Quit"),
         ("ctrl+o", "sessions", "Sessions"),
+        ("ctrl+t", "files", "Files"),
     ]
 
     def __init__(
@@ -135,6 +144,7 @@ class CoderApp(App):
         """The last thing the agent said; the notification tells that much."""
 
     def compose(self) -> ComposeResult:
+        yield FileTree(self.cwd, id="files")
         yield StatusBar(id="status")
         yield VerticalScroll(id="conversation")
         yield TodoPanel(id="todos")
@@ -380,6 +390,7 @@ class CoderApp(App):
             self._ui(self._add_message, "error", "interrupted")
         elif result.error:
             self._ui(self._add_message, "error", result.error)
+        self._ui(self._refresh_files)
         self._notify_terminal()
 
     def _notify_terminal(self, body: str = "") -> None:
@@ -474,6 +485,28 @@ class CoderApp(App):
             self._add_message("error", "interrupting…")
         else:
             self.exit()
+
+    def action_files(self) -> None:
+        """Show or hide the tree of the files of the working directory."""
+        tree = self.query_one("#files", FileTree)
+        tree.display = not tree.display
+        if tree.display:
+            tree.reload()
+
+    def _refresh_files(self) -> None:
+        """Read the directory again, so that the tree tells the truth."""
+        tree = self.query_one("#files", FileTree)
+        if tree.display:
+            tree.reload()
+
+    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+        """Put the file that was picked into the input, so it can be asked about."""
+        path = event.node.data
+        if not path:
+            return
+        widget = self.query_one("#input", Input)
+        widget.value = path
+        widget.focus()
 
     def action_sessions(self) -> None:
         """Show the sessions of this directory, so that another one can be continued."""

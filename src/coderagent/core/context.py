@@ -93,6 +93,7 @@ class ContextEngine:
         cwd: Path | None = None,
         user_home: Path | None = None,
         policy: PermissionPolicy | None = None,
+        hooks=None,
     ) -> None:
         self.session = session
         self.store = store
@@ -105,11 +106,18 @@ class ContextEngine:
         self.user_home = user_home
         self.policy = policy
         """The permission policy. It is shared, so the mode can change under us."""
+        self.hooks = hooks
+        """The hook runner, when the session has hooks."""
         self.history = History()
         self.summaries: list[Summary] = []
-        self.instruction_blocks: list[InstructionBlock] = (
-            instructions if instructions is not None else load_instructions(self.cwd, user_home)
-        )
+        self.instruction_blocks: list[InstructionBlock] = list(instructions or [])
+        """The instructions of the subdirectories, and the ones the caller gave."""
+        self.reload_instructions = instructions is None
+        """Whether the instruction files are read again every round.
+
+        The project may change its AGENTS.md while the session runs, and then the
+        model has to see the new one.
+        """
         self.memory_config = memory_config or MemoryConfig()
         self.guard = BudgetGuard(
             context_window=config.context_window,
@@ -229,6 +237,9 @@ class ContextEngine:
         twice and shown once. The memory wins: it is read again every round.
         """
         blocks = list(self.instruction_blocks)
+        if self.reload_instructions:
+            """The instruction files are read again, so a change of the project counts."""
+            blocks = load_instructions(self.cwd, self.user_home) + blocks
         if self.memory_config.enabled:
             blocks += load_project_memory(self.cwd, self.memory_config)
             user_memory = load_user_memory(self.memory_config, self.user_home)
@@ -276,6 +287,9 @@ class ContextEngine:
         if cut <= 0:
             return False
         compacted = self.history.messages[:cut]
+        if self.hooks:
+            """The hooks see what is about to be compressed, and then the summary."""
+            self.hooks.apply("PreCompact", {"messages": compacted, "turn": self.session.turn_count})
         before = getattr(self.summary_model, "total_cost", 0.0)
         summary = self._summarize(compacted)
         cost = getattr(self.summary_model, "total_cost", 0.0) - before
@@ -287,6 +301,16 @@ class ContextEngine:
         self.last_compact_turn = self.session.turn_count
         source_tokens = estimate_tokens(compacted)
         summary_tokens = estimate_tokens([{"role": "user", "content": summary.render()}])
+        if self.hooks:
+            self.hooks.apply(
+                "PostCompact",
+                {
+                    "summary": summary.render(),
+                    "messages": cut,
+                    "tokens": source_tokens,
+                    "summary_tokens": summary_tokens,
+                },
+            )
         event = Event(
             type=EventType.COMPACTION,
             session_id=self.session.id,
@@ -415,7 +439,7 @@ class ContextEngine:
 def _writes(messages: list[dict]) -> bool:
     """Whether the messages contain a call that changed a file."""
     return any(
-        call.get("function", {}).get("name") in ("write", "edit", "multi_edit")
+        call.get("function", {}).get("name") in ("write", "edit", "multi_edit", "apply_patch")
         for message in messages
         for call in message.get("tool_calls") or []
     )

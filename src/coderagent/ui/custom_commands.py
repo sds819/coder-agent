@@ -1,5 +1,8 @@
 """Custom commands: a markdown file per command in `.coderagent/commands`.
 
+The commands of the user live in `commands` of the home of the coder agent,
+`~/.coderagent/commands`.
+
 The file starts with front matter, the way Claude Code does it:
 
     ---
@@ -18,9 +21,11 @@ from typing import Any
 
 import yaml
 
+from coderagent.paths import config_home
 from coderagent.tools.registry import ToolRegistry
 
 COMMANDS_DIR = Path(".coderagent") / "commands"
+"""The commands of the project. The ones of the user are in `commands` of the home."""
 
 
 @dataclass
@@ -50,18 +55,39 @@ class CustomCommand:
         """The names of the tools the command may use."""
         return [spec.split("(")[0].strip() for spec in self.allowed_tools]
 
+    def tool_rules(self) -> dict[str, str]:
+        """The tools the command may use and the pattern each one is limited to.
 
-def load_custom_commands(cwd: Path) -> list[CustomCommand]:
-    """The custom commands of this project."""
-    directory = Path(cwd) / COMMANDS_DIR
-    if not directory.is_dir():
-        return []
-    commands = []
-    for path in sorted(directory.glob("*.md")):
-        command = parse_custom_command(path)
-        if command is not None:
-            commands.append(command)
-    return commands
+        `allowed-tools: bash(git diff:*)` means: the command may run `git diff`,
+        and nothing else.
+        """
+        rules = {}
+        for spec in self.allowed_tools:
+            name, _, pattern = spec.partition("(")
+            pattern = pattern.rstrip(")").strip()
+            if pattern.endswith(":*"):
+                """The `:*` says that the command may start with this."""
+                pattern = pattern[:-2].strip()
+            rules[name.strip()] = pattern or "*"
+        return rules
+
+
+def load_custom_commands(cwd: Path, home: Path | None = None) -> list[CustomCommand]:
+    """The custom commands of this project and of the user.
+
+    The command of the project wins when both have the same name: it is the one
+    that belongs to the work at hand.
+    """
+    directories = [Path(cwd) / COMMANDS_DIR, (Path(home) if home else config_home()) / "commands"]
+    commands: dict[str, CustomCommand] = {}
+    for directory in directories:
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.glob("*.md")):
+            command = parse_custom_command(path)
+            if command is not None:
+                commands.setdefault(command.name, command)
+    return list(commands.values())
 
 
 def parse_custom_command(path: Path) -> CustomCommand | None:
@@ -99,10 +125,10 @@ def _split_tools(value: Any) -> list[str]:
     return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
-def find_custom(cwd: Path, name: str) -> CustomCommand | None:
+def find_custom(cwd: Path, name: str, home: Path | None = None) -> CustomCommand | None:
     """The custom command with this name."""
     name = name.lstrip("/").lower()
-    return next((command for command in load_custom_commands(cwd) if command.name.lower() == name), None)
+    return next((command for command in load_custom_commands(cwd, home) if command.name.lower() == name), None)
 
 
 def restricted_registry(registry: ToolRegistry, allowed: list[str]) -> ToolRegistry:
@@ -119,10 +145,14 @@ def run_custom(context, command: CustomCommand, arguments: str) -> None:
     original_registry = loop.executor.registry
     original_tools = loop.tools
     original_backend = loop.model.backend
+    policy = loop.executor.policy
+    original_restriction = policy.restriction
     try:
         if command.allowed_tools:
             loop.executor.registry = restricted_registry(original_registry, command.allowed_tools)
             loop.tools = loop.executor.registry.schemas(loop.schema_budget)
+            policy.restriction = command.tool_rules()
+            """The pattern of a tool is a limit too: `bash(git diff:*)` runs git diff only."""
         if command.model:
             loop.model.backend = LiteLLMBackend(
                 command.model,
@@ -133,6 +163,7 @@ def run_custom(context, command: CustomCommand, arguments: str) -> None:
             )
         result = loop.run_turn(command.render(arguments))
     finally:
+        policy.restriction = original_restriction
         loop.executor.registry = original_registry
         loop.tools = original_tools
         loop.model.backend = original_backend

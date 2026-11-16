@@ -9,7 +9,6 @@ from pathlib import Path
 
 from coderagent.paths import config_home
 
-PROJECT_FILES = ("AGENTS.md", "CLAUDE.md")
 USER_FILE = "CLAUDE.md"
 
 

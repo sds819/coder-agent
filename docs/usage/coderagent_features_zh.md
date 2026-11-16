@@ -161,7 +161,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 
 ## 工具
 
-十三个内置工具：
+十四个内置工具：
 
 | 工具 | 干什么 |
 |---|---|
@@ -169,6 +169,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `write` | 写文件，没有就建 |
 | `edit` | 替换文件里一处完全一样的字符串 |
 | `multi_edit` | 一个文件里多处改动——要么全成，要么全不成 |
+| `apply_patch` | 打一个带上下文的补丁——一次改多个文件，也能建和删 |
 | `glob` | 按模式找文件（`*` 在一段里，`**` 跨目录） |
 | `grep` | 用正则搜内容，可以要匹配的行、文件名或者计数 |
 | `ls` | 列目录；`depth: -1` 是整棵树 |
@@ -210,6 +211,26 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 ]}}
 ```
 
+`apply_patch` 收一个带上下文的补丁，Codex 就是这么写的。一次能改好几个文件，
+而且是**要么全成要么全不成**：有一处对不上，一个文件都不动。
+
+```
+*** Begin Patch
+*** Update File: src/app.py
+@@ def main():
+ def main(argv=None):
+-    run()
++    run(argv)
+*** Add File: notes.md
++the notes of the change
+*** Delete File: old.py
+*** End Patch
+```
+
+行首是空格的是留下的行，`-` 开头的删掉，`+` 开头的加上。`@@` 后面那段是
+「这块大概在哪儿」的提示，真正要对上的是那一段上下文。补丁也能删文件，
+最后一行是 `*** End Patch`。
+
 `grep` 有三种模式：`content`（默认）、`files_with_matches`、`count`。
 它最多返回 100 条匹配，`glob` 最多 200 个文件。
 
@@ -229,6 +250,11 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `edit` | `Error: old_string not found in {path}. Use \`read\` to see the exact content, then retry with more context.` |
 | `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Include more surrounding context to make it unique, or set replace_all=true.` |
 | `multi_edit` | `Error: Edit #1 failed, no changes were written. {inner}`——文件一个字节都没动。 |
+| `apply_patch` | `Error: the patch must start with '*** Begin Patch'` / `Error: the patch must end with '*** End Patch'`——这压根不是个补丁。 |
+| `apply_patch` | `Error: the context of the hunk does not match {path}: '{line}' is not where the patch says it is. Read the file again and use the lines that are really there.` |
+| `apply_patch` | `Error: the file {path} exists already.`——要新建的文件已经有了。 |
+| `apply_patch` | `Error: file not found: {path}.`——要改或者要删的文件不在。 |
+| `apply_patch` | `Error: '{path}' is outside the working directory {cwd}.`——补丁跑到会话的目录外面去了。 |
 | `grep` | `Error: invalid regular expression '{pattern}': {error}` |
 | `grep` | `Error: \`output_mode\` must be one of content, files_with_matches, count (got '{mode}').` |
 | `glob`/`grep`/`ls` | `Error: path not found: {path}.` / `Error: not a directory: {path}.` |
@@ -582,11 +608,15 @@ memory:
   模板。合适的时候 agent 自己会载入。
 - **插件**——`.coderagent/plugins`：一个 Python 模块，能加工具、命令和
   hook。第一次用要信任一次。
-- **hook**——六个时机：`SessionStart`、`UserPromptSubmit`、`PreToolUse`、
-  `PostToolUse`、`Stop`、`SessionEnd`。hook 是一条命令，读 JSON 答 JSON：
+- **hook**——九个时机：`SessionStart`、`UserPromptSubmit`、`PreToolUse`、
+  `PostToolUse`、`Stop`、`SessionEnd`、`PreCompact`、`PostCompact` 和
+  `SubagentStop`。hook 是一条命令，读 JSON 答 JSON：
   允许、拒绝、拦下来，带理由、带额外上下文，或者带改写过的参数。
-- **自己的命令**——`.coderagent/commands/*.md`：一个 slash 命令，带说明、
-  参数提示、能用的工具，还有自己的模型。
+- **自己的命令**——`.coderagent/commands/*.md` 和
+  `~/.coderagent/commands/*.md`：一个 slash 命令，带说明、
+  参数提示、能用的工具，还有自己的模型。同名时项目里的那个算数。
+- **命令的工具可以再收窄**——`allowed-tools: bash(git diff:*), read` 的意思是：
+  这条命令能读、能跑 `git diff`，别的干不了。这个限制在哪种权限模式下都在。
 - **MCP 服务器**——stdio。它们的工具和别的工具一样，工具名是
   `mcp__<服务器>__<工具>`，一样要审批，断了会自己重连。
 - **项目里的代码要等一个决定**——项目定义的 MCP 服务器、hook 和验证命令都是
@@ -676,12 +706,16 @@ hook 从 stdin 读 JSON，往 stdout 写 JSON：
 ---
 description: Make a commit of the changes
 argument-hint: [message]
-allowed-tools: bash, read
+allowed-tools: bash(git diff:*), read
 model: cheap
 ---
 
 Commit everything with the message: $ARGUMENTS
 ```
+
+工具后面的模式也是一道限制：`bash(git diff:*)` 是说这条命令只能跑
+`git diff`，别的命令都跑不了，用户的规则也不能把它放宽。没写出来的工具
+就是没有。
 
 ### 出错时怎么办
 
@@ -697,8 +731,8 @@ Commit everything with the message: $ARGUMENTS
 | `Error: the MCP server 'echo' is not connected.` | 服务器没跑起来。 | 检查服务器的 `command` 或者 `url`；`/mcp` 里会写 `connected`、`failed: <错误>` 或者 `no command and no url`。 |
 | `Error: the MCP tool 'echo' failed: RuntimeError: ...` | 服务器回的错。消息里的名字是服务器那边的名字。 | 服务器的消息就在答案里。 |
 
-自己的命令只在 `<cwd>/.coderagent/commands/*.md` 里找——agent **不会**一层层
-往上找。
+自己的命令在 `<cwd>/.coderagent/commands/*.md` 和 `~/.coderagent/commands/*.md`
+里找——agent **不会**一层层往上找。同名时项目里的那个算数。
 
 ## 沙箱
 
@@ -804,6 +838,9 @@ $ python -m pytest -q
 - **用 `@` 提文件**——敲 `@src/app` 会把文件的路径补全，`→` 收下这个补全。
 - **会话面板**——`ctrl+o` 列出这个目录的会话，`enter` 接着选中的那个继续，
   `escape` 关掉面板。
+- **文件树**——`ctrl+t` 在左边打开：工作目录里的文件，三层深，改过的有标记
+  （`+` 新增、`●` 改过、`-` 删了、`?` 新文件）。点一个文件就把它的路径
+  填进输入框。
 - **一轮结束时通知终端**——通知里带着 agent 的回答，长的一轮不会错过。
   `ui.notifications: false` 可以关掉。
 - **答案是 Markdown**——代码块、表格、列表长得跟项目 README 里一样。文字流出来
@@ -830,7 +867,7 @@ deepseek/deepseek-flash | 1.5k/64k | $0.0000 | ~/work/project | default
 
 `←`/`→` 移动光标，`↑`/`↓` 也一样，数字键直接跳到那一行，空格切换多选，
 `enter` 确认，`y`、`n`、`a` 直接回答。`ctrl+c` 打断这一轮，`ctrl+q` 收尾
-会话并退出，`ctrl+o` 打开会话面板。
+会话并退出，`ctrl+o` 打开会话面板，`ctrl+t` 打开文件树。
 
 todo 面板用 `◉`（完成）、`◐`（进行中）、`○`（待办）标记任务状态。
 
@@ -1003,7 +1040,8 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。
 
-自己的命令放在 `.coderagent/commands/*.md`，和它们一起用。
+自己的命令放在 `.coderagent/commands/*.md` 和 `~/.coderagent/commands/*.md`，
+和它们一起用。
 
 `/help` 会说每个命令收什么——`/mode` 的那几个模式、`/trust` 的编号、自己命令的
 参数——不用记。
@@ -1092,7 +1130,7 @@ mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \
 | [网页版](coderagent_web_zh.md) | 聊天页、设置页、API |
 | [子 agent](coderagent_subagents_zh.md) | 怎么写一个子 agent |
 | [技能](coderagent_skills.md) | 怎么写一个技能 |
-| [hook](coderagent_hooks_zh.md) | 六个时机和 hook 的回答 |
+| [hook](coderagent_hooks_zh.md) | 九个时机和 hook 的回答 |
 | [插件](coderagent_plugins.md) | 怎么写一个插件 |
 | [MCP 服务器](coderagent_mcp.md) | 服务器怎么配 |
 | [记忆](coderagent_memory.md) | 那些文件和确认 |

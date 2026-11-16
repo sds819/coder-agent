@@ -108,6 +108,8 @@ class AgentLoop:
             policy=self.policy,
         )
         self.context.system_prompt = system_prompt or self.context.system_prompt
+        self.context.hooks = self.hooks
+        """The context needs the hooks too: it is the one that compresses."""
         self.context.restore()
         self._session_start()
 
@@ -130,6 +132,7 @@ class AgentLoop:
             cwd=session.cwd,
             policy=self.policy,
         )
+        self.context.hooks = self.hooks
         self.context.restore()
         self._session_start()
 

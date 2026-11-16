@@ -166,10 +166,27 @@ class SubAgentRunner:
     def run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         """Run the sub agent and return the structured result."""
         if self._slots is None:
-            return self._run(spec, description, prompt)
-        with self._slots:
-            """Only a few sub agents at a time, so the provider is not flooded."""
-            return self._run(spec, description, prompt)
+            result = self._run(spec, description, prompt)
+        else:
+            with self._slots:
+                """Only a few sub agents at a time, so the provider is not flooded."""
+                result = self._run(spec, description, prompt)
+        self._stop(spec, result)
+        return result
+
+    def _stop(self, spec: SubagentSpec, result: dict) -> None:
+        """Tell the hooks that the sub agent is done."""
+        if not self.hooks:
+            return
+        self.hooks.apply(
+            "SubagentStop",
+            {
+                "agent": spec.name,
+                "status": result["status"],
+                "summary": result["summary"],
+                "files_touched": result["files_touched"],
+            },
+        )
 
     def _run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         registry = self._restricted(spec)

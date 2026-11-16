@@ -348,6 +348,24 @@ def test_the_sub_agent_takes_a_checkpoint_before_it_writes(tmp_path):
     assert taken == [("write", {"path": "a.py", "content": "x"})]
 
 
+def test_the_sub_agent_tells_the_hooks_that_it_is_done(tmp_path):
+    """The hook hears what the sub agent found and which files it changed."""
+    seen: list[dict] = []
+
+    class Watcher(HookRunner):
+        def apply(self, hook_name, payload):
+            seen.append({"event": hook_name, **payload})
+            return super().apply(hook_name, payload)
+
+    model = ScriptedModel([{"role": "assistant", "content": "Found it."}])
+    _runner(model, tmp_path, hooks=Watcher(HookConfig(), tmp_path)).run(_spec(), "Find", "Look")
+    assert seen[0]["event"] == "SubagentStop"
+    assert seen[0]["agent"] == "finder"
+    assert seen[0]["status"] == "completed"
+    assert seen[0]["summary"] == "Found it."
+    assert seen[0]["files_touched"] == []
+
+
 def test_the_result_of_a_tool_of_the_sub_agent_is_in_the_log(tmp_path):
     store = SessionStore(tmp_path / "sessions")
     model = ScriptedModel(

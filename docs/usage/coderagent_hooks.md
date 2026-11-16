@@ -57,6 +57,9 @@ logged and matches nothing.
 | `PostToolUse` | After the tool ran | Add context, or block the result |
 | `Stop` | The agent wants to stop | Send it back to work |
 | `SessionEnd` | The turn ends | Nothing. It is a notification |
+| `PreCompact` | Before the history is compacted | Nothing. It is a notification |
+| `PostCompact` | After the history was compacted | Nothing. It is a notification |
+| `SubagentStop` | After a sub agent is done | Nothing. It is a notification |
 
 `SessionEnd` runs at the end of every turn, not only when the whole session
 is over.
@@ -71,6 +74,14 @@ Each event has its own payload:
 | `PostToolUse` | `tool`, `params`, `result` |
 | `Stop` | `last_message` |
 | `SessionEnd` | `session_id`, `turns`, `cost` |
+| `PreCompact` | `messages` (the ones that are about to be compacted), `turn` |
+| `PostCompact` | `summary`, `messages` (how many), `tokens`, `summary_tokens` |
+| `SubagentStop` | `agent`, `status`, `summary`, `files_touched` |
+
+The three new events are **notifications**: they cannot change what happens.
+`PreCompact` and `PostCompact` are the place to measure the quality of the
+summaries — the first one sees the messages that go away, the second one sees
+the summary that comes and how many tokens it took.
 
 ## What a hook answers
 

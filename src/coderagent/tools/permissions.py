@@ -10,7 +10,7 @@ from coderagent.core.os_sandbox import FULL_ACCESS, READ_ONLY
 from coderagent.tools import bash_policy
 
 READ_TOOLS = {"read", "glob", "grep", "ls"}
-WRITE_TOOLS = {"write", "edit", "multi_edit"}
+WRITE_TOOLS = {"write", "edit", "multi_edit", "apply_patch"}
 INFO_TOOLS = {"todo_write", "bash_output", "bash_kill"}
 """Tools that only touch the agent's own bookkeeping, so they never need approval."""
 PATH_TOOLS = READ_TOOLS | WRITE_TOOLS
@@ -156,6 +156,12 @@ class PermissionPolicy:
         """Whether the commands may reach the network. `deny` refuses them."""
         self.sandbox_mode = sandbox_mode
         """The mode of the operating system sandbox. `read-only` takes the write tools away."""
+        self.restriction: dict[str, str] = {}
+        """The tools a command may use, and the pattern each one is limited to.
+
+        A custom command may say `allowed-tools: bash(git diff:*)`. Then that command
+        may run `git diff` and nothing else. A rule of the user cannot widen this.
+        """
 
     def check(self, tool: str, params: dict) -> str:
         """Return `allow`, `ask` or `deny`."""
@@ -163,6 +169,10 @@ class PermissionPolicy:
 
     def evaluate(self, tool: str, params: dict) -> Decision:
         """Like `check`, but also reports which rule was hit and why."""
+        reason = self._restriction_reason(tool, params)
+        if reason:
+            """The command may only use some tools. That holds in every mode."""
+            return Decision("deny", None, reason)
         if tool == "bash":
             return self._evaluate_bash(str(params.get("command", "")))
         decision = self._default_decision(tool)
@@ -217,6 +227,29 @@ class PermissionPolicy:
             elif kind == "unknown":
                 decision = _strictest(decision, "ask")
         return Decision(decision, matched, reason)
+
+    def _restriction_reason(self, tool: str, params: dict) -> str:
+        """Why this call is not one of the calls the command may make."""
+        if not self.restriction:
+            return ""
+        if tool not in self.restriction:
+            return f"the command may only use {', '.join(sorted(self.restriction))}"
+        pattern = self.restriction[tool]
+        if pattern == "*":
+            return ""
+        if tool == "bash":
+            for segment in bash_policy.segments(str(params.get("command", ""))):
+                if not _matches_bash(pattern, segment):
+                    return f"the command may only run '{pattern}'"
+            return ""
+        if tool in PATH_TOOLS:
+            path = str(params.get("path", ""))
+            if not path:
+                return ""
+            if glob_to_regex(pattern).match(self._relative(path)):
+                return ""
+            return f"the command may only touch '{pattern}'"
+        return "" if pattern in ("*", tool) else f"the command may only use '{pattern}'"
 
     def _bash_rule(self, segment: str) -> Rule | None:
         """The last rule that matches a part of the command."""

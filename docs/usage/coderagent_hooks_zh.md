@@ -40,7 +40,7 @@ hooks:
 它是**搜出来的正则，不是从头对上的**：工具名 `multi_edit` 会被 `edit|write` 匹配上；大小写敏感，
 所以 `Bash` 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。
 
-## 六个时刻
+## 九个时刻
 
 | Hook | 什么时候 | 能做什么 |
 |---|---|---|
@@ -50,6 +50,9 @@ hooks:
 | `PostToolUse` | 工具跑完之后 | 补上下文，或者把结果拦下来 |
 | `Stop` | agent 想停下来 | 让它回去接着干 |
 | `SessionEnd` | 这一轮结束 | 什么也不做，是个通知 |
+| `PreCompact` | 压缩历史之前 | 什么也不做，是个通知 |
+| `PostCompact` | 压缩历史之后 | 什么也不做，是个通知 |
+| `SubagentStop` | 子 agent 干完之后 | 什么也不做，是个通知 |
 
 `SessionEnd` 是每一轮结束时都跑，不是只在整个会话结束时。
 
@@ -63,6 +66,13 @@ hooks:
 | `PostToolUse` | `tool`、`params`、`result` |
 | `Stop` | `last_message` |
 | `SessionEnd` | `session_id`、`turns`、`cost` |
+| `PreCompact` | `messages`（马上要压掉的那几条）、`turn` |
+| `PostCompact` | `summary`、`messages`（压掉了几条）、`tokens`、`summary_tokens` |
+| `SubagentStop` | `agent`、`status`、`summary`、`files_touched` |
+
+后这三个是**通知**：它们改不了什么。`PreCompact` 和 `PostCompact` 是量摘要
+质量的地方——前一个看得见马上要走的消息，后一个看得见换回来的摘要和它花了
+多少 token。
 
 ## hook 怎么回答
 

@@ -32,6 +32,10 @@ def diff_of_file(path: Path, before: str) -> str:
 
 def prospective_diff(tool: str, params: dict, cwd: Path) -> str:
     """The diff a tool is about to make, before it makes it."""
+    if tool == "apply_patch":
+        from coderagent.tools.builtin.patch import preview
+
+        return preview(str(params.get("patch", "")), cwd)
     path = params.get("path")
     if not isinstance(path, str) or not path:
         return ""

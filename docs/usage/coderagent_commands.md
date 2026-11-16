@@ -108,10 +108,10 @@ Everything else: $ARGUMENTS
   session are back when the command is done.
 - `model` picks another model for this command.
 
-Only the **name** of the tool is read. The part in parentheses is thrown away,
-so `bash(git diff:*)` allows the `bash` tool for **every** command it runs —
-there is no way to restrict a tool to a pattern. Write `bash` and remember
-that the command may run anything.
+The part in parentheses is a **pattern of its own**: `bash(git diff:*)` lets
+the command run `git diff` and nothing else, and a tool that is not named is
+not there at all. The limit holds in every permission mode, and a rule of the
+user cannot widen it.
 
 The command above is used like this:
 
@@ -120,5 +120,6 @@ The command above is used like this:
 ```
 
 A file without a front matter is ignored. The commands are looked up in
-`<cwd>/.coderagent/commands/*.md` — the agent does not walk up the directories
-to find them.
+`<cwd>/.coderagent/commands/*.md` and in `~/.coderagent/commands/*.md` — the
+agent does not walk up the directories to find them. The command of the
+project wins when both have the same name.

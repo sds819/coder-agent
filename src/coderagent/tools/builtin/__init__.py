@@ -2,6 +2,7 @@
 
 from coderagent.tools.base import Tool
 from coderagent.tools.builtin.fs import EditTool, MultiEditTool, ReadTool, WriteTool
+from coderagent.tools.builtin.patch import ApplyPatchTool
 from coderagent.tools.builtin.search import GlobTool, GrepTool, LsTool
 from coderagent.tools.builtin.shell import BashKillTool, BashOutputTool, BashTool
 from coderagent.tools.builtin.todo import TodoWriteTool
@@ -12,6 +13,7 @@ ALL_TOOLS: list[Tool] = [
     WriteTool(),
     EditTool(),
     MultiEditTool(),
+    ApplyPatchTool(),
     GlobTool(),
     GrepTool(),
     LsTool(),

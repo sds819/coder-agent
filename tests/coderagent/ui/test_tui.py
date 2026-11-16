@@ -21,7 +21,7 @@ pytest.importorskip("textual")
 from textual.widgets import Input  # noqa: E402
 
 from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
-from coderagent.ui.widgets import MarkdownMessage, MessageBlock, ToolCard  # noqa: E402
+from coderagent.ui.widgets import FileTree, MarkdownMessage, MessageBlock, ToolCard  # noqa: E402
 
 
 def _app(tmp_path, responses=None, mode="default", markdown=True):
@@ -568,3 +568,20 @@ def test_a_file_is_completed_in_the_input(tmp_path):
 
     asyncio.run(go())
     assert suggestions[0] == "look at @README.md"
+
+
+def test_the_tree_of_the_files_can_be_shown(tmp_path):
+    """`ctrl+t` shows the files of the working directory beside the conversation."""
+    (tmp_path / "a.py").write_text("one\n", encoding="utf-8")
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            tree = app.query_one("#files", FileTree)
+            assert not tree.display
+            await pilot.press("ctrl+t")
+            await pilot.pause()
+            assert tree.display
+            assert "a.py" in [str(node.label) for node in tree.root.children]
+
+    asyncio.run(go())

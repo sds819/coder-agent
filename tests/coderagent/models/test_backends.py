@@ -1,6 +1,9 @@
 """The response is normalized into the message shape the loop expects."""
 
-from coderagent.models.backends import LiteLLMBackend
+import litellm
+import pytest
+
+from coderagent.models.backends import LiteLLMBackend, is_auth_error
 from coderagent.models.streaming import ModelEvent, message_from_events
 
 
@@ -94,3 +97,23 @@ def test_a_model_without_a_price_is_complained_about_once(caplog):
         _warn_about_the_price("openai/SomeModel", "no price")
     assert len(caplog.records) == 1
     assert "openai/SomeModel" in caplog.records[0].getMessage()
+
+
+def test_the_text_of_an_error_says_whether_the_key_is_the_problem():
+    assert is_auth_error(Exception("Invalid token: no api key given"))
+    assert is_auth_error(Exception("Authentication failed"))
+    assert not is_auth_error(Exception("the server is busy"))
+
+
+def test_a_wrong_key_fails_at_once_and_does_not_wait_for_the_retries(monkeypatch):
+    """A relay station without a key answers with a 500. Waiting does not make the key good."""
+    calls: list[dict] = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        raise litellm.exceptions.InternalServerError("Invalid token: no api key", "openai", "test/model")
+
+    monkeypatch.setattr(litellm, "completion", completion)
+    with pytest.raises(litellm.exceptions.AuthenticationError):
+        LiteLLMBackend("test/model")._open_stream([{"role": "user", "content": "hi"}], {})
+    assert len(calls) == 1

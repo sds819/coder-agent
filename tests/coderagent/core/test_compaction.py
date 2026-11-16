@@ -1,15 +1,17 @@
 """Compaction replaces the older part of the history with a summary."""
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-from coderagent.config.schema import ContextConfig
+from coderagent.config.schema import ContextConfig, HookCommand, HookConfig, HookMatcher
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus, EventType
 from coderagent.core.session import SessionStore
 from coderagent.core.summarize import Summary
+from coderagent.extensions.hooks import HookRunner
 
 
 class FakeModel:
@@ -294,3 +296,35 @@ def test_the_previous_summary_is_part_of_the_merge(tmp_path):
     engine.compact()
     merge = model.prompts[-1]
     assert "the old finding" in merge
+
+
+def _recorder(tmp_path: Path, name: str) -> str:
+    """A hook command that writes the payload it gets into a file."""
+    path = tmp_path / f"{name}.py"
+    path.write_text(f"import sys\nopen({name + '.json'!r}, 'w').write(sys.stdin.read())\n", encoding="utf-8")
+    return f"{sys.executable} {path}"
+
+
+def test_the_hooks_see_the_compaction_and_its_result(tmp_path):
+    """One hook sees the messages that go away, the other the summary that comes."""
+    hooks = HookRunner(
+        HookConfig(
+            events={
+                "PreCompact": [HookMatcher(hooks=[HookCommand(command=_recorder(tmp_path, "pre"))])],
+                "PostCompact": [HookMatcher(hooks=[HookCommand(command=_recorder(tmp_path, "post"))])],
+            }
+        ),
+        tmp_path,
+    )
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0)
+    engine = make_engine(tmp_path, config=config, hooks=hooks)
+    fill(engine, 4)
+    assert engine.compact()
+    pre = json.loads((tmp_path / "pre.json").read_text(encoding="utf-8"))
+    post = json.loads((tmp_path / "post.json").read_text(encoding="utf-8"))
+    assert len(pre["messages"]) == 6
+    assert pre["messages"][0]["content"] == "question 0"
+    assert pre["turn"] == engine.session.turn_count
+    assert post["summary"]
+    assert post["messages"] == len(pre["messages"])
+    assert post["tokens"] > 0 and post["summary_tokens"] > 0

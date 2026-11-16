@@ -57,7 +57,8 @@ def _apply_edit(content: str, path: str, old_string: str, new_string: str, repla
     )
 
 
-def _unified_diff(old: str, new: str, path: str) -> str:
+def unified_diff(old: str, new: str, path: str) -> str:
+    """The difference between two versions of a file."""
     return "\n".join(
         difflib.unified_diff(old.splitlines(), new.splitlines(), fromfile=f"a/{path}", tofile=f"b/{path}", lineterm="")
     )
@@ -205,7 +206,7 @@ class EditTool:
         _write_text(target, new_content)
         return ToolResult(
             f"Replaced {replacements} occurrence(s) in {path}",
-            metadata={"path": str(target), "diff": _unified_diff(content, new_content, path), "old_content": content},
+            metadata={"path": str(target), "diff": unified_diff(content, new_content, path), "old_content": content},
         )
 
 
@@ -265,5 +266,5 @@ class MultiEditTool:
         _write_text(target, updated)
         return ToolResult(
             f"Applied {len(edits)} edit(s) to {path}",
-            metadata={"path": str(target), "diff": _unified_diff(content, updated, path), "old_content": content},
+            metadata={"path": str(target), "diff": unified_diff(content, updated, path), "old_content": content},
         )

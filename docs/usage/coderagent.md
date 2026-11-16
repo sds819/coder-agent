@@ -342,6 +342,7 @@ The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 | `write` | Write a file from scratch. |
 | `edit` | Replace a piece of text in a file. |
 | `multi_edit` | Several edits in one file, in order. |
+| `apply_patch` | Apply a patch of blocks: change, add and delete files in one call. |
 | `glob` | The files that match a pattern, e.g. `**/*.py`. |
 | `grep` | Search for a regular expression. `glob` limits the files. |
 | `ls` | List a directory. `depth: -1` lists everything below it. |
@@ -401,6 +402,11 @@ The pattern is a glob for the tools that touch a path (`read`, `write`,
 The decision is `allow`, `ask` or `deny`. For the path tools the last rule that
 matches wins. A command is judged part by part and the strictest part wins, so
 an allowed `pytest` does not carry a `rm` along with it.
+
+`apply_patch` has no path of its own — it changes several files at once — so a
+rule about it is about the whole call. Every file it touches is checked against
+the bounds of the session anyway: a patch that reaches outside the working
+directory is refused.
 
 The rules of the project live in `.coderagent/rules.yaml`, the rules of the
 user in `~/.coderagent/rules.yaml`. Both are read, in that order, so a rule of
@@ -751,6 +757,7 @@ the `session_cost` of the command line.
 | `~/.coderagent/rules.yaml` | The permission rules of the user |
 | `~/.coderagent/CLAUDE.md` | The instructions and the preferences of the user |
 | `~/.coderagent/agents/`, `~/.coderagent/skills/`, `~/.coderagent/plugins/` | The extensions of the user |
+| `~/.coderagent/commands/` | The commands of the user |
 | `~/.coderagent/trusted-plugins.json` | The plugins the user trusts |
 | `~/.coderagent/sessions/` | The event log of the sessions |
 | `~/.coderagent/checkpoints/` | The checkpoints of the sessions |

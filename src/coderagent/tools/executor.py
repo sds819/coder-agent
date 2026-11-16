@@ -17,7 +17,7 @@ from coderagent.tools.permissions import (
 )
 from coderagent.tools.registry import ToolRegistry
 
-SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}
+SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit", "apply_patch"}
 
 
 class ToolExecutor:
@@ -155,11 +155,12 @@ class ToolExecutor:
                 action["tool_call_id"], "Error: the turn was interrupted, so the tool did not run."
             )
         tool = self.registry.get(action["tool"])
-        path = action["args"].get("path")
-        if path and self.on_path:
-            self.on_path(str(path))
+        for path in self._paths_of(action):
+            if self.on_path:
+                self.on_path(path)
         if action["tool"] in WRITE_TOOLS and self.before_write:
-            self.before_write(action["tool"], action["args"])
+            for path in self._paths_of(action):
+                self.before_write(action["tool"], {**action["args"], "path": path})
         try:
             result: ToolResult = tool.run(action["args"], ctx)
         except Exception as e:
@@ -182,6 +183,18 @@ class ToolExecutor:
 
     def _observation(self, tool_call_id: str, content: str) -> dict:
         return {"role": "tool", "tool_call_id": tool_call_id, "content": content}
+
+    def _paths_of(self, action: dict) -> list[str]:
+        """The files a tool is about to touch.
+
+        A tool that changes several files at once, like `apply_patch`, says which ones.
+        """
+        path = action["args"].get("path")
+        if path:
+            return [str(path)]
+        tool = self.registry.get(action["tool"])
+        getter = getattr(tool, "touched_paths", None)
+        return list(getter(action["args"])) if getter else []
 
     def _publish(self, action: dict, result: ToolResult, ctx: ToolContext) -> None:
         event = Event(

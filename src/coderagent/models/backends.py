@@ -15,6 +15,19 @@ from minisweagent.models.utils.retry import retry
 
 logger = logging.getLogger("coderagent.backend")
 
+AUTH_HINTS = ("api key", "apikey", "invalid token", "unauthorized", "authentication", "no api key")
+"""What a provider says when the key is the problem and not the server."""
+
+
+def is_auth_error(error: Exception) -> bool:
+    """Whether the error says that the key is wrong.
+
+    A relay station without a key answers with a 500, and a 500 is worth
+    retrying. This one is not: the key will not become good by waiting.
+    """
+    text = str(error).lower()
+    return any(hint in text for hint in AUTH_HINTS)
+
 
 @cache
 def _warn_about_the_price(model: str, message: str) -> None:
@@ -84,7 +97,15 @@ class LiteLLMBackend:
     def _open_stream(self, messages: list[dict], call_kwargs: dict):
         for attempt in retry(logger=logger, abort_exceptions=self.abort_exceptions, attempts=self.max_retries):
             with attempt:
-                return litellm.completion(model=self.model_name, messages=messages, **call_kwargs)
+                try:
+                    return litellm.completion(model=self.model_name, messages=messages, **call_kwargs)
+                except litellm.exceptions.InternalServerError as e:
+                    if is_auth_error(e):
+                        """The key is wrong. Retrying only makes the user wait longer."""
+                        raise litellm.exceptions.AuthenticationError(
+                            str(e), getattr(e, "llm_provider", "") or "", self.model_name
+                        ) from e
+                    raise
         raise RuntimeError("the retry loop ended without a response")
 
     def _events(self, response) -> Iterator[ModelEvent]:

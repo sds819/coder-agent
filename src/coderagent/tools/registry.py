@@ -15,6 +15,7 @@ TRIM_ORDER = [
     "bash_output",
     "bash_kill",
     "multi_edit",
+    "apply_patch",
     "write",
     "edit",
     "ls",

@@ -172,7 +172,7 @@ overrides it, which is handy when a test should not wait.
 
 ## The tools
 
-The thirteen built-in tools:
+The fourteen built-in tools:
 
 | Tool | What it does |
 |---|---|
@@ -180,6 +180,7 @@ The thirteen built-in tools:
 | `write` | Write a file, creating it if needed |
 | `edit` | Replace one exact string in a file |
 | `multi_edit` | Several edits in one file — all of them, or none |
+| `apply_patch` | Apply a patch of blocks: change, add and delete files in one call |
 | `glob` | Find files by pattern (`*` in one segment, `**` across directories) |
 | `grep` | Search the contents with a regular expression, by lines, by file or by count |
 | `ls` | List a directory; `depth: -1` walks the whole tree |
@@ -226,6 +227,28 @@ The thirteen built-in tools:
 ]}}
 ```
 
+`apply_patch` takes a patch with context, the way Codex writes one. It changes
+several files in one call, and it is **all or nothing**: when a hunk does not
+fit, no file is changed.
+
+```
+*** Begin Patch
+*** Update File: src/app.py
+@@ def main():
+ def main(argv=None):
+-    run()
++    run(argv)
+*** Add File: notes.md
++the notes of the change
+*** Delete File: old.py
+*** End Patch
+```
+
+A line that starts with a space stays, a line with `-` goes, a line with `+`
+comes. The text after `@@` is a hint about where the hunk belongs; the block
+itself is what has to match. The patch may also delete a file, and it ends
+with `*** End Patch`.
+
 `grep` has three modes: `content` (the default), `files_with_matches` and
 `count`. It returns at most 100 matches, `glob` at most 200 files.
 
@@ -246,6 +269,11 @@ sees the message and can correct itself. The messages are:
 | `edit` | `Error: old_string not found in {path}. Use \`read\` to see the exact content, then retry with more context.` |
 | `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Include more surrounding context to make it unique, or set replace_all=true.` |
 | `multi_edit` | `Error: Edit #1 failed, no changes were written. {inner}` — the file is untouched. |
+| `apply_patch` | `Error: the patch must start with '*** Begin Patch'` / `Error: the patch must end with '*** End Patch'` — the patch is not a patch. |
+| `apply_patch` | `Error: the context of the hunk does not match {path}: '{line}' is not where the patch says it is. Read the file again and use the lines that are really there.` |
+| `apply_patch` | `Error: the file {path} exists already.` — a file to add is there. |
+| `apply_patch` | `Error: file not found: {path}.` — the file to change or to delete is not there. |
+| `apply_patch` | `Error: '{path}' is outside the working directory {cwd}.` — the patch leaves the directory of the session. |
 | `grep` | `Error: invalid regular expression '{pattern}': {error}` |
 | `grep` | `Error: \`output_mode\` must be one of content, files_with_matches, count (got '{mode}').` |
 | `glob`/`grep`/`ls` | `Error: path not found: {path}.` / `Error: not a directory: {path}.` |
@@ -628,12 +656,17 @@ memory:
   scripts and templates for a kind of task. The agent loads one when it fits.
 - **Plugins** — `.coderagent/plugins`: a Python module that adds tools,
   commands and hooks. A plugin has to be trusted once.
-- **Hooks** — six moments: `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
-  `PostToolUse`, `Stop` and `SessionEnd`. A hook is a command that reads
-  JSON and answers JSON: allow, deny or block, with a reason, with extra
-  context or with rewritten arguments.
-- **Your own commands** — `.coderagent/commands/*.md`: a slash command with a
-  description, an argument hint, the tools it may use and its own model.
+- **Hooks** — nine moments: `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+  `PostToolUse`, `Stop`, `SessionEnd`, `PreCompact`, `PostCompact` and
+  `SubagentStop`. A hook is a command that reads JSON and answers JSON: allow,
+  deny or block, with a reason, with extra context or with rewritten arguments.
+- **Your own commands** — `.coderagent/commands/*.md` and
+  `~/.coderagent/commands/*.md`: a slash command with a description, an
+  argument hint, the tools it may use and its own model. The command of the
+  project wins when both have the same name.
+- **The tools of a command may be limited** — `allowed-tools: bash(git diff:*),
+  read` means: the command may read and it may run `git diff`, and nothing
+  else. The limit holds in every permission mode.
 - **MCP servers** — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.
@@ -727,12 +760,16 @@ A custom command, `.coderagent/commands/commit.md`:
 ---
 description: Make a commit of the changes
 argument-hint: [message]
-allowed-tools: bash, read
+allowed-tools: bash(git diff:*), read
 model: cheap
 ---
 
 Commit everything with the message: $ARGUMENTS
 ```
+
+The pattern of a tool is a limit of its own: `bash(git diff:*)` lets the
+command run `git diff` and nothing else, and a rule of the user cannot widen
+it. A tool that is not named is not there at all.
 
 ### When something goes wrong
 
@@ -748,8 +785,9 @@ Commit everything with the message: $ARGUMENTS
 | `Error: the MCP server 'echo' is not connected.` | The server is not running. | Check the `command` or the `url` of the server; `/mcp` says `connected`, `failed: <error>` or `no command and no url`. |
 | `Error: the MCP tool 'echo' failed: RuntimeError: ...` | The server answered with an error. The name in the message is the one of the server. | The message of the server is in the answer. |
 
-The custom commands are looked up in `<cwd>/.coderagent/commands/*.md` only —
-the agent does not walk up the directories to find them.
+The custom commands are looked up in `<cwd>/.coderagent/commands/*.md` and in
+`~/.coderagent/commands/*.md` — the agent does not walk up the directories to
+find them. The command of the project wins when both have the same name.
 
 ## The sandbox
 
@@ -864,6 +902,10 @@ $ python -m pytest -q
   completed; `→` takes the completion.
 - **A panel of the sessions** — `ctrl+o` lists the sessions of this directory;
   `enter` continues the one that is picked, `escape` closes the panel.
+- **A tree of the files** — `ctrl+t` opens it on the left: the files of the
+  working directory, three levels deep, with the ones that changed marked
+  (`+` added, `●` changed, `-` deleted, `?` new). Picking a file puts its
+  path in the input.
 - **The terminal is told when a turn is over** — a notification with the answer
   of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
 - **The answer is Markdown** — the code blocks, the tables and the lists look the
@@ -893,7 +935,7 @@ An approval is a numbered list, and the selected one is marked:
 `←`/`→` move the cursor, `↑`/`↓` do the same, the digits jump to a line, the
 space toggles a multiple choice, `enter` confirms, and `y`, `n` and `a` answer
 directly. `ctrl+c` interrupts the turn, `ctrl+q` settles the session and quits,
-`ctrl+o` opens the panel of the sessions.
+`ctrl+o` opens the panel of the sessions, `ctrl+t` opens the tree of the files.
 
 The todo panel marks the state of a task with `◉` (completed), `◐` (in progress)
 and `○` (pending).
@@ -1081,7 +1123,8 @@ Twenty-eight built-in commands: `/help`, `/model`, `/mode`, `/plan`,
 `/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
 `/context` and `/exit` (also `/quit`).
 
-Your own commands live in `.coderagent/commands/*.md` and join them.
+Your own commands live in `.coderagent/commands/*.md` and in
+`~/.coderagent/commands/*.md` and join them.
 
 `/help` says what every command takes — the modes of `/mode`, the number of
 `/trust`, the arguments of your own commands — so nothing has to be remembered.
@@ -1174,7 +1217,7 @@ the cost of every step; `inspector` reads it.
 | [The web interface](coderagent_web.md) | The chat page, the settings page, the API |
 | [Sub agents](coderagent_subagents.md) | Writing a sub agent |
 | [Skills](coderagent_skills.md) | Writing a skill |
-| [Hooks](coderagent_hooks.md) | The six moments and what a hook answers |
+| [Hooks](coderagent_hooks.md) | The nine moments and what a hook answers |
 | [Plugins](coderagent_plugins.md) | Writing a plugin |
 | [MCP servers](coderagent_mcp.md) | The configuration of a server |
 | [The memory](coderagent_memory.md) | The files and the confirmation |

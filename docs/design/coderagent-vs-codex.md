@@ -25,7 +25,9 @@ Codex 赢在**工程化的外壳**：OS 级沙箱、网络开关、四十多条 
 其余多半是「有了更好」而不是「缺了就危险」。
 
 **进度**：§8 的第 1～8 步都做完了（两个 bug、网络开关、`/review`、`reasoning_effort`、
-TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Markdown）。
+**进度**：§8 的第 1～9 步都做完了（两个 bug、网络开关、`/review`、`reasoning_effort`、
+TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Markdown、
+`apply_patch` + TUI 文件树 + P2 清理一批）。
 做完的条目在小节标题上标着「✅ 已修」，原样保留着原来的描述，好回头看差在哪。
 
 ---
@@ -259,10 +261,10 @@ if not server.enabled or not server.command:
 | 4.3 | **回答不渲染 Markdown** ✅ | TUI 直接把原文塞进 `Static`（`tui.py:197`），代码块、表格、标题都是平的 | 富渲染 | 中 |
 | 4.4 | **中断的粒度是「轮」** ✅ | `loop.cancel` 只在**每轮模型调用之前**检查（`src/coderagent/core/loop.py:179-181`），`tools/executor.py` 里没有取消检查——**一条跑着的 `bash` 停不下来**，只能等它自己结束 | 能中断正在跑的工具 | 中 |
 | 4.5 | **没有 @ 提及文件** ✅ | 输入框里 `@foo.py` 不会被展开成路径 | `@` 补全文件 | 小 |
-| 4.6 | **TUI 没有文件树** | 文件树只在网页版左栏（`src/coderagent/web/`）；终端里只能靠 `ls` 工具 | 侧栏文件树 | 中 |
+| 4.6 | **TUI 没有文件树** ✅ | 文件树只在网页版左栏（`src/coderagent/web/`）；终端里只能靠 `ls` 工具 | 侧栏文件树 | 中 |
 | 4.7 | **TUI 没有会话切换器** ✅ | 终端里切会话要 `/resume`（`builtin.py:437`），是一个列表文本 | 会话切换面板 | 小 |
 | 4.8 | **没有终端通知** ✅ | 跑完一轮没有任何通知；长任务跑完时人不在屏幕前就不知道 | OSC 777 通知（可配） | 小 |
-| 4.9 | **没有 `apply_patch` 工具** | 改文件用 `write` / `edit` / `multi_edit`（`src/coderagent/tools/builtin/fs.py`），是整串替换 | `apply_patch`（带上下文的块补丁） | 中 |
+| 4.9 | **没有 `apply_patch` 工具** ✅ | 改文件用 `write` / `edit` / `multi_edit`（`src/coderagent/tools/builtin/fs.py`），是整串替换 | `apply_patch`（带上下文的块补丁） | 中 |
 
 关于 4.9 要说句公道话：`edit` 的 `old_string` 匹配逻辑（`fs.py:36-58`）已经处理了
 CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的真正价值是模型侧更省 token**
@@ -324,6 +326,33 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
     那是**你的**命令，不是 agent 的。
   - **远端沙箱里停不掉**：命令跑在容器里的时候，只能等它跑完，这一轮再停。
 
+### 4.6 / 4.9 文件树与 `apply_patch` ✅ 已修
+
+这两件凑在一起做，因为它们都在**「改文件」这件事的边上**：一个让模型改得更省，
+一个让人看得见改了什么。
+
+- **`apply_patch`（4.9）**：新工具 `src/coderagent/tools/builtin/patch.py`，
+  补丁格式跟 Codex 一样——`*** Begin Patch` / `*** Update File:` / `@@` 块 /
+  `*** Add File:` / `*** Delete File:` / `*** End Patch`。
+  - **块是靠内容定位的**，不是靠行号：`@@` 后面那段只是「大概在哪儿」的提示，
+    真正要对上的是那一段上下文（先精确匹配，再退一步容忍行尾空格）。
+    定位时会往后找，优先落在上一块后面，所以同一文件里连着几块也不会互相踩。
+  - **要么全成要么全不成**：先把所有文件都算出来，任何一块对不上就一个文件
+    都不动。`multi_edit` 是这个性质，这里也是。
+  - **它没有绕过任何一道闸**：它是写工具（要审批、只读沙箱里被拒）、
+    是串行工具（不能并发跑）、每个碰到的路径都要过 `within_bounds()`——
+    它的参数里没有 `path`，策略自己看不见，所以工具自己查。
+  - **检查点**：一个补丁能改好几个文件，所以工具多了一个 `touched_paths(params)`，
+    执行器按路径逐个 `before_write`，每个改动的文件都有检查点。
+  - 审批卡片上显示的是补丁的 diff（`ui/widgets/diff_view.py` 的 `prospective_diff`）。
+- **TUI 文件树（4.6）**：`src/coderagent/ui/widgets/file_tree.py`，
+  textual 的 `Tree`，`ctrl+t` 在左边打开，三层深。
+  - **改过的文件有标记**：`git status --porcelain` 的结果映射成
+    `+`（新增）、`●`（改过）、`-`（删了）、`?`（新文件）。
+    不是 git 仓库时就没有标记，树照样能看。
+  - **点一下就把路径填进输入框**——接着 `@` 那套补全用。
+  - 每轮跑完刷新一次，文件树跟工作目录同步。
+
 ---
 
 ## 5. P2：清理与锦上添花
@@ -353,7 +382,7 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 - **顺带**：终端的重试次数从 **10** 变成 **3**（配置的默认值），
   和浏览器一样了；这也算 §5.2 那条 complaint 的一半。
 
-### 5.2 认证失败要重试十分钟
+### 5.2 认证失败要重试十分钟 ✅ 已修
 
 `src/coderagent/models/backends.py:31-39` 的 `abort_exceptions` 里**没有**
 `litellm.exceptions.InternalServerError`。中转站在**完全没有 key** 的时候返的是 500，
@@ -366,7 +395,13 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 所以「完全没有 key」的那种失败现在等的是三次而不是十次（约半分钟，不是两分钟）。
 根子上的问题还在：500 和「key 不对」走的路不一样。
 
-### 5.3 `AGENTS.md` 会话中途改了不生效
+**怎么做的**：500 不一刀切地不重试——**有的 500 值得等**（服务端真的抖了）。
+所以改成**看错误文本**：`models/backends.py` 的 `is_auth_error()` 认
+`api key` / `invalid token` / `unauthorized` / `authentication` 这些说法，
+命中就把 500 换成 `AuthenticationError`——它在 `abort_exceptions` 里，重试立刻停。
+没命中就照旧重试。**key 不会因为等一会儿变好，等待只是让用户多等。**
+
+### 5.3 `AGENTS.md` 会话中途改了不生效 ✅ 已修
 
 `src/coderagent/core/context.py:109-110` 在 `ContextEngine` 构造时读一次指令文件，
 之后只追加**子目录**的指令（`context.py:392-395`）。项目根目录的 `AGENTS.md`
@@ -375,7 +410,13 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 Codex 的做法是每次会话开始、每次 compact 之后重读。**工作量：小**（把「读指令」
 挪到和记忆同一层的「每轮重算」里）。
 
-### 5.4 hook 事件只有 6 个
+**怎么做的**：`ContextEngine` 多了一个 `reload_instructions` 标志——
+**没显式给指令**的时候（`instructions=None`）每轮重读 `AGENTS.md` / `CLAUDE.md`，
+**显式给了**的就以给的为准，不再重读（那是调用方的意思，不是项目的）。
+重读发生在 `_instruction_text()` 里，也就是**每轮组消息的时候**，
+所以项目中途改了规则，下一轮模型就看见了。
+
+### 5.4 hook 事件只有 6 个 ✅ 已修
 
 现在有：`PreToolUse`、`PostToolUse`、`UserPromptSubmit`、`Stop`、`SessionStart`、`SessionEnd`
 （`src/coderagent/tools/executor.py:104,169`、`src/coderagent/core/loop.py:145,364,372,376`）。
@@ -384,21 +425,45 @@ Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 
 压缩是 coderagent 的核心机制之一（见[上下文专题](coderagent-context.md)），
 压缩前后的钩子是天然的「记录摘要质量」的地方。
 
-### 5.5 自定义命令只有项目级，`allowed-tools` 太粗
+**怎么做的**：加了三个事件，都是**通知**（改不了什么）：
+
+| 事件 | 什么时候 | 读到什么 |
+|---|---|---|
+| `PreCompact` | 压缩之前 | `messages`（马上要走的那几条）、`turn` |
+| `PostCompact` | 压缩之后 | `summary`、`messages`（压掉几条）、`tokens`、`summary_tokens` |
+| `SubagentStop` | 子 agent 结束 | `agent`、`status`、`summary`、`files_touched` |
+
+`PreCompact` / `PostCompact` 挂在 `ContextEngine.compact()` 上（它拿得到
+`self.hooks`），`SubagentStop` 挂在 `SubAgentRunner.run()` 的收尾上。
+后两个 token 数就是评测报告里那个 `summary_ratio` 的原料——
+**摘要质量从此可以被 hook 量出来**。
+
+### 5.5 自定义命令只有项目级，`allowed-tools` 太粗 ✅ 已修
 
 `src/coderagent/ui/custom_commands.py:54` 只从 `<cwd>/.coderagent/commands` 读，
 没有用户级目录——**用户没法给自己装一套全局命令**。
 `allowed-tools` 在 `custom_commands.py:51` 被 `_split_tools` 按 `spec.split("(")[0]`
 截断，所以 `bash(git diff:*)` 里的**参数模式整个丢掉**，只剩工具名。
 
+**怎么做的**：
+
+- **用户级目录**：`~/.coderagent/commands/*.md`（和子 agent、技能一个位置）。
+  **同名时项目里的那个算数**——它是属于眼前这份活的。
+- **`allowed-tools` 的模式成了真的限制**：`CustomCommand.tool_rules()` 把
+  `bash(git diff:*)` 变成 `{"bash": "git diff"}`，交给权限策略的
+  `restriction`。这个限制**在每种模式下都在**（连 `bypass` 也一样），
+  **用户的规则也放宽不了它**——`evaluate()` 第一步就查它。
+  没写出来的工具就是没有；`bash` 的每一段命令都要对得上那个模式。
+
 ### 5.6 OTel 只是本地 JSON
 
 `src/coderagent/core/telemetry.py:119` 的 `otel()` 返回一份 OTLP/JSON 的 **dict**，
 没有 exporter，不往任何地方发。要接真正的 OTel 后端，还差一个 exporter。
 
-### 5.7 其它零碎
+### 5.7 其它零碎 ✅ 已修（一条改代码，一条写文档）
 
 - `src/coderagent/core/instructions.py:12` 的 `PROJECT_FILES` 常量定义了但**没人用**（死代码）。
+  —— **删了**。
 - 网页版的改动列表来自会话的检查点（`api.py:175` 的 `/changes`），
   没有检查点的改动不会出现在列表里（这条已经写进 `docs/usage/coderagent_web.md` 的「已知差距」）。
 
@@ -444,6 +509,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 6 | ~~**死配置清理（5.1）**~~ ✅ | 顺手做，别单开 |
 | 7 | ~~**OS 级沙箱（3.1 的第二步）**~~ ✅ | 最大的一件，做完前面再说 |
 | 8 | ~~**图片输入（4.1）、中断粒度（4.4）、Markdown（4.3）**~~ ✅ | 三件事都在消息这一层，一起做 |
+| 9 | ~~**`apply_patch`（4.9）、TUI 文件树（4.6）、P2 清理一批（5.2～5.5、5.7）**~~ ✅ | 一块改文件的东西，一块看文件的东西，剩下的都是收尾 |
 
 ---
 

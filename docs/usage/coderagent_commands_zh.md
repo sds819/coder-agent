@@ -97,9 +97,9 @@ Everything else: $ARGUMENTS
 - `allowed-tools` 限定这个命令能用的工具。命令干完，session 的工具就回来了。
 - `model` 给这个命令换一个模型。
 
-只读工具的**名字**。括号里那一段会被丢掉，所以 `bash(git diff:*)` 放行的是
-`bash` 这个工具的**全部**命令——没有办法把一个工具限定到某个写法上。写 `bash` 就得
-记着：这个命令能跑任何东西。
+括号里那一段**本身就是一道限制**：`bash(git diff:*)` 是说这个命令只能跑
+`git diff`，别的都跑不了；没写出来的工具就是没有。这个限制在哪种权限模式下
+都在，用户的规则也不能把它放宽。
 
 上面那个命令这么用：
 
@@ -107,5 +107,6 @@ Everything else: $ARGUMENTS
 /commit src/coderagent/core/loop.py
 ```
 
-没有 front matter 的文件会被忽略。命令只在 `<cwd>/.coderagent/commands/*.md`
-里找——agent 不会一层层往上找。
+没有 front matter 的文件会被忽略。命令在 `<cwd>/.coderagent/commands/*.md`
+和 `~/.coderagent/commands/*.md` 里找——agent 不会一层层往上找。同名时项目
+里的那个算数。

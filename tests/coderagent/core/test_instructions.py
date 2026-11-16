@@ -93,3 +93,34 @@ def test_a_relative_path_is_resolved_against_the_project(tmp_path):
     engine = _engine(tmp_path)
     engine.note_path("src/module.py")
     assert "the src rules" in engine._instruction_text()
+
+
+def test_the_instruction_files_are_read_again_when_they_change(tmp_path):
+    """The rules of the project may change while the session runs."""
+    (tmp_path / "AGENTS.md").write_text("the first rules", encoding="utf-8")
+    engine = _engine(tmp_path)
+    assert "the first rules" in engine._instruction_text()
+    (tmp_path / "AGENTS.md").write_text("the second rules", encoding="utf-8")
+    assert "the second rules" in engine._instruction_text()
+
+
+def test_the_instructions_of_the_caller_are_not_read_again(tmp_path):
+    """The instructions that were given explicitly stay the ones that were given."""
+    from coderagent.core.instructions import InstructionBlock
+
+    (tmp_path / "AGENTS.md").write_text("the project rules", encoding="utf-8")
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    engine = ContextEngine(
+        session,
+        store,
+        EventBus(),
+        ContextConfig(),
+        None,
+        cwd=tmp_path,
+        user_home=tmp_path / "home",
+        instructions=[InstructionBlock(source="given.md", content="the given rules", path=tmp_path / "given.md")],
+    )
+    text = engine._instruction_text()
+    assert "the given rules" in text
+    assert "the project rules" not in text
