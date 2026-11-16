@@ -99,3 +99,18 @@ def test_a_thinking_budget_that_does_not_exist_is_refused(tmp_path, monkeypatch)
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     with pytest.raises(ValidationError, match="unknown reasoning effort"):
         load_config(["model.reasoning_effort=huge"], cwd=tmp_path)
+
+
+def test_the_keys_that_nobody_reads_are_gone():
+    """The settings that nothing reads are not settings any more."""
+    assert not hasattr(Config().ui, "theme")
+    assert not hasattr(Config().ui, "show_reasoning")
+
+
+def test_a_file_with_the_keys_that_are_gone_still_loads(tmp_path, monkeypatch):
+    """A key that does not exist is ignored, so an old file is not a broken file."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    project = tmp_path / ".coderagent" / "config.yaml"
+    project.parent.mkdir(parents=True)
+    project.write_text("ui:\n  theme: dark\n  show_reasoning: false\n", encoding="utf-8")
+    assert load_config([], cwd=tmp_path).ui.approval_timeout == 0

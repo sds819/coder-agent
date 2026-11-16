@@ -162,8 +162,6 @@ class HookConfig(BaseModel):
 
 
 class UIConfig(BaseModel):
-    theme: str = "auto"
-    show_reasoning: bool = True
     approval_timeout: int = 0
     """Seconds to wait for an approval. 0 waits forever."""
     notifications: bool = True

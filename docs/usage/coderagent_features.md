@@ -93,7 +93,8 @@ so far.
   `medium` or `high`. Empty is the default of the model. The level is written
   in the words of the provider: `reasoning_effort` for OpenAI and the others,
   a number of tokens for Anthropic.
-- **Retries** — `max_retries`, three by default.
+- **Retries** — `max_retries`, three by default, the same in the terminal and in
+  the browser.
 - **Routing by purpose** — a different model for `main`, `cheap`, `summarize`,
   `reflect` and `strong`.
 - **Routing by the state of the session** — a rule like `tokens > 50000`
@@ -165,10 +166,9 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 
 Retries are a separate thing from the errors above: a rate limit or a timeout
 is retried, a bad request is not. The number of attempts comes from
-`MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT` and is **10** by default.
-`coder web` sets that variable from `model.max_retries` (3 by default), so in
-the browser the number of attempts follows the configuration, while in the
-terminal it does not.
+`model.max_retries` (3 by default) in every interface — the terminal and the
+browser alike. The environment variable `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
+overrides it, which is handy when a test should not wait.
 
 ## The tools
 
@@ -1036,7 +1036,7 @@ The sections and what they hold:
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
-| `ui` | `theme`, `show_reasoning`, `approval_timeout`, `notifications` |
+| `ui` | `approval_timeout`, `notifications` |
 | `sandbox` | `type` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 
@@ -1049,7 +1049,6 @@ The sections and what they hold:
 | `pydantic_core.ValidationError` | A value has the wrong type — a string where a number belongs. | The message names the field. |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | `-c myconf.yml` was given, but the file that is looked for is `myconf.yaml`. | Use the name with `.yaml`, or give the full path. |
 | The model is not the one in the file | A layer above the file wins. | Remember the order; `--list` of the layers is on the settings page. |
-| `ui.show_reasoning` has no effect | The key exists, but nothing reads it yet. | The reasoning of the model is always shown in the terminal. |
 
 ## The commands
 

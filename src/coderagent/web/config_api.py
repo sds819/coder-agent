@@ -437,9 +437,12 @@ def test_connection(effective: dict) -> dict[str, Any]:
         },
         "file": check_litellm_config(effective.get("litellm_config", ""), effective.get("requested", "")),
     }
-    backend = LiteLLMBackend(name, model_kwargs=kwargs, reasoning_effort=effective.get("reasoning_effort", ""))
-    previous = os.environ.get("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT")
-    os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = "1"
+    backend = LiteLLMBackend(
+        name,
+        model_kwargs=kwargs,
+        reasoning_effort=effective.get("reasoning_effort", ""),
+        max_retries=1,
+    )
     """A wrong key should fail right away, not after ten tries."""
     started = time.time()
     try:
@@ -447,11 +450,6 @@ def test_connection(effective: dict) -> dict[str, Any]:
     except Exception as error:
         report["error"] = f"{type(error).__name__}: {error}"
         return report
-    finally:
-        if previous is None:
-            os.environ.pop("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT", None)
-        else:
-            os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = previous
     extra = message.get("extra") or {}
     report.update(
         {

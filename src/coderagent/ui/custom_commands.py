@@ -129,6 +129,7 @@ def run_custom(context, command: CustomCommand, arguments: str) -> None:
                 model_kwargs=context.config.model.model_kwargs,
                 litellm_config=context.config.model.litellm_config,
                 reasoning_effort=context.config.model.reasoning_effort,
+                max_retries=context.config.model.max_retries,
             )
         result = loop.run_turn(command.render(arguments))
     finally:

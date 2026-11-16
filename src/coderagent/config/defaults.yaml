@@ -56,8 +56,6 @@ hooks:
   events: {}
 
 ui:
-  theme: auto
-  show_reasoning: true
   approval_timeout: 0
   notifications: true
 

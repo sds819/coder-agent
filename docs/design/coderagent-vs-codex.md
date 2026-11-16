@@ -256,15 +256,30 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 
 ## 5. P2：清理与锦上添花
 
-### 5.1 死配置
+### 5.1 死配置 ✅ 已修
 
-| 配置项 | 位置 | 现状 |
-|---|---|---|
-| `ui.theme` | `config/schema.py:152`、`config/defaults.yaml:57` | **全仓没有任何地方读它** |
-| `ui.show_reasoning` | `config/schema.py:153`、`config/defaults.yaml:58` | **全仓没有任何地方读它** |
-| `model.max_retries` | `config/schema.py:44` | 只有网页版服务器用（`web/server.py:56` 把它写进环境变量），**终端里配了不生效** |
+| 配置项 | 位置 | 原来 | 现在 |
+|---|---|---|---|
+| `ui.theme` | `config/schema.py`、`config/defaults.yaml` | **全仓没有任何地方读它** | **删了** |
+| `ui.show_reasoning` | `config/schema.py`、`config/defaults.yaml` | **全仓没有任何地方读它** | **删了** |
+| `model.max_retries` | `config/schema.py` | 只有网页版服务器用（`web/server.py` 把它写进环境变量），**终端里配了不生效** | **每个界面都生效** |
 
-`ui.approval_timeout`（`schema.py:154`）是好的——网页版在用。
+**怎么做的**
+
+- 两个没人读的键直接删掉。不存在的键本来就被静默忽略（文档里写着），
+  所以旧配置文件不会报错。
+- `model.max_retries` 改成**从配置走到 backend**：
+  `LiteLLMBackend` 多一个 `max_retries`，重试的时候交给它
+  （`minisweagent/models/utils/retry.py` 的 `retry()` 多一个 `attempts` 参数）。
+  主模型、`model.routing` 的子模型、`/model` 换模型、自定义命令、网页版的
+  连接测试——**每一处**建 backend 的地方都带上这个数。
+- 网页版的两处「环境变量 hack」删了：服务器不再设
+  `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`，连接测试也不再临时改它，
+  改成 backend 上的 `max_retries=1`。
+- **优先级**：`MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`（环境变量）›
+  `model.max_retries`（配置）› 10（默认）。环境变量留着当测试的开关。
+- **顺带**：终端的重试次数从 **10** 变成 **3**（配置的默认值），
+  和浏览器一样了；这也算 §5.2 那条 complaint 的一半。
 
 ### 5.2 认证失败要重试十分钟
 
@@ -274,6 +289,10 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 在列表里，立即失败。**同一个错，两种体验。**
 
 建议把 `InternalServerError` 加进 `abort_exceptions`，或者只在「明确是配额/限流」时重试。
+
+**顺带变了**：重试次数现在跟着 `model.max_retries` 走（默认 **3**，见 §5.1），
+所以「完全没有 key」的那种失败现在等的是三次而不是十次（约半分钟，不是两分钟）。
+根子上的问题还在：500 和「key 不对」走的路不一样。
 
 ### 5.3 `AGENTS.md` 会话中途改了不生效
 
@@ -350,7 +369,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 3 | ~~**`/review`（3.2）**~~ ✅ | 现有零件都齐了，性价比最高的功能缺口 |
 | 4 | ~~**`reasoning_effort`（3.3）**~~ ✅ | 便宜，且和 `model.routing` 是一套东西 |
 | 5 | ~~**TUI 小件（4.2 / 4.5 / 4.7 / 4.8）**~~ ✅ | 四个小改动合一个提交，都是「有了就顺手」 |
-| 6 | **死配置清理（5.1）** | 顺手做，别单开 |
+| 6 | ~~**死配置清理（5.1）**~~ ✅ | 顺手做，别单开 |
 | 7 | **OS 级沙箱（3.1 的第二步）** | 最大的一件，做完前面再说 |
 | 8 | 图片输入（4.1）、中断粒度（4.4）、Markdown（4.3） | 需要设计，不适合顺手做 |
 

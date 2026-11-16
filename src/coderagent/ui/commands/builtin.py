@@ -88,6 +88,7 @@ def _model(context: CommandContext, argument: str) -> None:
         model_kwargs=context.config.model.model_kwargs,
         litellm_config=context.config.model.litellm_config,
         reasoning_effort=context.config.model.reasoning_effort,
+        max_retries=context.config.model.max_retries,
     )
     if context.loop.router is not None:
         context.loop.router.override = argument

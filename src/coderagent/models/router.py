@@ -108,6 +108,7 @@ class ModelRouter:
             model_kwargs=self.config.model_kwargs,
             litellm_config=self.config.litellm_config,
             reasoning_effort=self.config.reasoning_effort,
+            max_retries=self.config.max_retries,
         )
 
     def _purpose(self, purpose: str, context: dict) -> str:

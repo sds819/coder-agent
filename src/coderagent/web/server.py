@@ -1,7 +1,6 @@
 """The uvicorn entry point of the web interface."""
 
 import logging
-import os
 import socket
 import sys
 from pathlib import Path
@@ -53,8 +52,6 @@ def serve(
     litellm.suppress_debug_info = True
     """litellm prints banners to stdout, which would break the event stream."""
     config = load_config(config_spec or [], cwd=cwd)
-    os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = str(config.model.max_retries)
-    """The retries of the model come from the environment, not from the configuration."""
     app = create_app(
         config,
         cwd,

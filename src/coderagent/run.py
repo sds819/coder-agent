@@ -56,6 +56,7 @@ def build_model(config: Config, model_name: str = "") -> ModelBackend:
         set_cache_control=config.model.set_cache_control,
         litellm_config=config.model.litellm_config,
         reasoning_effort=config.model.reasoning_effort,
+        max_retries=config.model.max_retries,
     )
 
 

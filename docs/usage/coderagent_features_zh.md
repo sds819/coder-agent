@@ -87,7 +87,7 @@ coder --list
 - **模型想多久**——`reasoning_effort`：`minimal`、`low`、`medium`、`high`，
   留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
   `reasoning_effort`，Anthropic 是一笔 token。
-- **重试**——`max_retries`，默认三次。
+- **重试**——`max_retries`，默认三次，终端和浏览器一样。
 - **按用途路由**——`main`、`cheap`、`summarize`、`reflect`、`strong` 可以
   各配一个模型。
 - **按会话状态路由**——像 `tokens > 50000` 这样的规则会换模型，理由写在
@@ -156,9 +156,8 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `ContextWindowExceededError` | 请求比模型的窗口大。 | 调小 `context.context_window`，或者换一个窗口更大的模型。 |
 
 重试和上面的错误是两回事：限流和超时才重试，坏请求不重试。重试次数来自
-`MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`，默认是 **10**。`coder web` 会用
-`model.max_retries`（默认 3）去设这个变量，所以在浏览器里重试次数跟着配置
-走，在终端里不跟。
+`model.max_retries`（默认 3），终端和浏览器都一样。环境变量
+`MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT` 能盖过它——测试不想等的时候好用。
 
 ## 工具
 
@@ -964,7 +963,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
-| `ui` | `theme`、`show_reasoning`、`approval_timeout`、`notifications` |
+| `ui` | `approval_timeout`、`notifications` |
 | `sandbox` | `type` 和环境的那些选项 |
 
 ### 出错时怎么办
@@ -976,7 +975,6 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `pydantic_core.ValidationError` | 值的类型不对——该是数字的地方写了字符串。 | 消息里说了是哪个字段。 |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | 给了 `-c myconf.yml`，但找的是 `myconf.yaml`。 | 用带 `.yaml` 的名字，或者给全路径。 |
 | 模型不是文件里写的那一个 | 上面的一层赢了。 | 记住顺序；设置页上有各层的列表。 |
-| `ui.show_reasoning` 没有效果 | 这个键存在，但还没有人读它。 | 终端里模型的思考过程一直都是显示的。 |
 
 ## 命令
 

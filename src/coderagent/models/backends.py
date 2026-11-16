@@ -47,6 +47,7 @@ class LiteLLMBackend:
         set_cache_control: str | None = None,
         litellm_config: str = "",
         reasoning_effort: str = "",
+        max_retries: int = 0,
     ) -> None:
         """The name may be an alias of the model list of a litellm config file."""
         name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
@@ -58,6 +59,8 @@ class LiteLLMBackend:
                 self.model_kwargs.setdefault(key, value)
                 """What the user wrote in `model_kwargs` wins over the level."""
         self.set_cache_control = set_cache_control
+        self.max_retries = max_retries
+        """How many times a call is tried at most. 0 lets the retry decide."""
 
     def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:
         return message_from_events(self.query_stream(messages, tools=tools, **kwargs))
@@ -79,7 +82,7 @@ class LiteLLMBackend:
         return {"model_name": self.model_name, **self.model_kwargs}
 
     def _open_stream(self, messages: list[dict], call_kwargs: dict):
-        for attempt in retry(logger=logger, abort_exceptions=self.abort_exceptions):
+        for attempt in retry(logger=logger, abort_exceptions=self.abort_exceptions, attempts=self.max_retries):
             with attempt:
                 return litellm.completion(model=self.model_name, messages=messages, **call_kwargs)
         raise RuntimeError("the retry loop ended without a response")
