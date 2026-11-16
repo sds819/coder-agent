@@ -15,14 +15,13 @@ conversation, in this order:
 | `AGENTS.md` | The instructions of the project |
 | `CLAUDE.md` | The instructions of the project |
 | `.coderagent/memory/*.md` | What the agent learned about the project |
-| `~/.coderagent/CLAUDE.md` | The preferences of the user |
 
 An `AGENTS.md` in a subdirectory is read when the agent touches something in
 it, and not before.
 
-The file of the user is read twice: once as the instructions of the user, and
-once as the memory of the user. The preferences that `/memory confirm` writes
-are therefore read at the start of the next session.
+The file of the user is read once: it is the instructions of the user and the
+memory of the user at the same time. It is read again in every round, so the
+preferences that `/memory confirm` writes are known right away.
 
 The project memory is every markdown file of `.coderagent/memory/`, so you
 may write `conventions.md` or `architecture.md` next to the file the agent

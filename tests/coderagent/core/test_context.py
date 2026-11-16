@@ -131,6 +131,23 @@ def test_the_memory_can_be_switched_off(tmp_path):
     assert "the project memory" not in engine._instruction_text()
 
 
+def test_the_file_of_the_user_is_shown_once(tmp_path):
+    """The file of the user is an instruction and a memory, and it is shown once."""
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / "CLAUDE.md").write_text("always answer in German", encoding="utf-8")
+    engine = make_engine(tmp_path, memory_config=MemoryConfig())
+    assert engine._instruction_text().count("always answer in German") == 1
+
+
+def test_the_file_of_the_user_is_still_an_instruction_when_the_memory_is_off(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / "CLAUDE.md").write_text("always answer in German", encoding="utf-8")
+    engine = make_engine(tmp_path, memory_config=MemoryConfig(enabled=False))
+    assert "always answer in German" in engine._instruction_text()
+
+
 def test_restore_rebuilds_the_history_from_the_events(tmp_path):
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)

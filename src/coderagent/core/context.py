@@ -16,7 +16,7 @@ from coderagent.config.schema import ContextConfig, MemoryConfig
 from coderagent.core.budget import BudgetGuard, context_window_for
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.history import History
-from coderagent.core.instructions import InstructionBlock, load_instructions, subdirectory_instructions
+from coderagent.core.instructions import InstructionBlock, load_instructions, once_per_file, subdirectory_instructions
 from coderagent.core.memory import load_project_memory, load_user_memory
 from coderagent.core.session import Session, SessionStore
 from coderagent.core.summarize import (
@@ -212,6 +212,11 @@ class ContextEngine:
         return estimate_tokens(self.build_messages(tools=tools), tools)
 
     def _instruction_text(self) -> str:
+        """The instructions and the memory, one block per file.
+
+        The file of the user is both an instruction and a memory, so it is read
+        twice and shown once. The memory wins: it is read again every round.
+        """
         blocks = list(self.instruction_blocks)
         if self.memory_config.enabled:
             blocks += load_project_memory(self.cwd, self.memory_config)
@@ -219,7 +224,7 @@ class ContextEngine:
             if user_memory:
                 blocks.append(user_memory)
         todos = self.session.metadata.get("todos") or []
-        parts = [block.render() for block in blocks]
+        parts = [block.render() for block in once_per_file(blocks)]
         if todos:
             lines = [
                 f"- [{'x' if todo.get('status') == 'completed' else ' '}] {todo.get('content', '')}" for todo in todos

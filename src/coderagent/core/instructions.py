@@ -32,6 +32,18 @@ def read_block(path: Path) -> InstructionBlock | None:
     return InstructionBlock(source=path.name, content=content, path=path)
 
 
+def once_per_file(blocks: list[InstructionBlock]) -> list[InstructionBlock]:
+    """The blocks, one per file. The last one of a file wins.
+
+    A file can be an instruction and a memory at the same time, and then it is
+    read twice but shown once.
+    """
+    by_path: dict[Path, InstructionBlock] = {}
+    for block in blocks:
+        by_path[block.path] = block
+    return list(by_path.values())
+
+
 def load_instructions(cwd: Path, user_home: Path | None = None) -> list[InstructionBlock]:
     """The user level and the project level instructions, in that order."""
     blocks = []
