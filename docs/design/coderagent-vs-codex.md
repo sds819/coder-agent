@@ -24,6 +24,10 @@ Codex 赢在**工程化的外壳**：OS 级沙箱、网络开关、四十多条 
 所以这份清单里，**真正该抄的是安全边界和输入通道**（P0 的 1、3、4、5 和 P1 的 1、2），
 其余多半是「有了更好」而不是「缺了就危险」。
 
+**进度**：§8 的第 1～7 步已经做完（两个 bug、网络开关、`/review`、`reasoning_effort`、
+TUI 小件、死配置清理、OS 级沙箱），剩下的是第 8 步：图片输入、中断粒度、Markdown。
+做完的条目在小节标题上标着「✅ 已修」，原样保留着原来的描述，好回头看差在哪。
+
 ---
 
 ## 2. 怎么读这份清单
@@ -40,7 +44,7 @@ Codex 赢在**工程化的外壳**：OS 级沙箱、网络开关、四十多条 
 
 ## 3. P0：先做
 
-### 3.1 没有 OS 级沙箱，网络也没有开关
+### 3.1 没有 OS 级沙箱，网络也没有开关 ✅ 已修
 
 **现状**：`sandbox.type` 默认 `local`（`src/coderagent/config/defaults.yaml:62`），
 走 `build_environment()` → `CodingEnvironment`（`src/coderagent/core/sandbox.py:26-29`），
@@ -65,23 +69,22 @@ sandbox:
 
 **coderagent 现状**：
 
-- 没有操作系统级的文件/进程约束，`local` 就是裸的 `subprocess`；
+- ~~没有操作系统级的文件/进程约束，`local` 就是裸的 `subprocess`；~~ ✅ 已修
 - `curl` / `wget` / `nc` 这些出网命令，在 `src/coderagent/tools/bash_policy.py:90-96`
   里被标成「危险」，但**危险只意味着弹审批框，不意味着拦下来**——
   `default` 模式下用户一路点「允许」就能把数据发出去；
 - ~~没有 `sandbox_policy.network_access` 这样的开关。~~ ✅ 已修（见下面「已修」）
 
-**影响**：一个被 prompt injection 拐走的 agent，在 `local` 模式下能读 `~/.ssh`、
+**影响**：~~一个被 prompt injection 拐走的 agent，在 `local` 模式下能读 `~/.ssh`、
 能改 `~/.zshrc`、能把仓库内容 POST 到外面。`permissions.include_dirs` 只能**加**目录，
-没有「只允许写这些目录」的方向。
+没有「只允许写这些目录」的方向。~~ ✅ 已修（网络开关 + OS 级沙箱）
 
 **建议**：
 
 1. ~~先做**便宜的半个**——加一个 `network: deny | allow` 开关，在 `bash_policy` 里把
    出网命令从「弹审批」升级成「直接拒绝」。~~ ✅ 已修（见下面）
-2. 再做 `sandbox_mode` 三档，把 `local` 拆成 `read-only` / `workspace-write` /
-   `full-access`，其中 `workspace-write` 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。
-   这是「大」的工作，但这是 Codex 真正拉开差距的地方。
+2. ~~再做 `sandbox_mode` 三档，把 `local` 拆成 `read-only` / `workspace-write` /
+   `full-access`，其中 `workspace-write` 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。~~ ✅ 已修（见下面）
 
 **已修：网络开关**（`permissions.network`，默认 `allow`）
 
@@ -100,9 +103,43 @@ sandbox:
   `tightened()` 把 `network` 留在配置里当且仅当它是 `deny`；`config/loader.py`
   里项目层说 `deny` 时，用户层不能把它重新打开）。
 
+**已修：OS 级沙箱**（`sandbox.mode`，默认 `full-access`）
+
+- 新模块 `src/coderagent/core/os_sandbox.py`：三档 `read-only` / `workspace-write` /
+  `full-access`，由**操作系统**来执行——macOS 是 Seatbelt（`sandbox-exec`），
+  Linux 是 bubblewrap（`bwrap`）。越界的命令是被**内核**挡下来的，不是被文件里的
+  一条规则挡下来的；
+- 配置上就是 `sandbox.mode`，只对本地沙箱有意义：
+
+  ```yaml
+  sandbox:
+    type: local
+    mode: workspace-write
+  ```
+
+- **命令是被包起来送进沙箱的**（`<tool> … /bin/sh -c '<整条命令>'`）：整条命令作为
+  **一个参数**进去，所以解析管道的那个 shell 也在沙箱里——否则管道会有一半漏在外面；
+- **约束的是 agent，不是用户**：围栏挂在 `ToolContext.sandbox` 上，只由 `bash` 工具
+  的命令用。校验命令是用户自己的命令，按用户的身份跑，在沙箱外面；
+- **`read-only` 连写文件的工具一起拒**（`write`、`edit`、`multi_edit`）：它们写的是
+  用户机器上的文件，在沙箱外面，用户写的 `allow` 规则也放宽不了；
+- **路径边界没有被绕开**：`within_bounds()` 在所有模式下都生效，还是用户的 `allow`
+  规则放宽不了——这一点在原文里被点名过，实现时照做了；
+- **闸和沙箱是两层，不是二选一**：`bypass` 跳过的是审批提问，不是磁盘边界；
+- **可写的目录**：工作目录 + `permissions.include_dirs` + 系统的临时目录（构建总得
+  有地方放东西），`read-only` 只留临时目录；
+- **网络在操作系统那一层也关着**：`permissions.network: deny` 时，Seatbelt 加
+  `(deny network*)`，bubblewrap 加 `--unshare-net`；
+- **信任边界照旧**：项目里的配置**只能关沙箱，不能开沙箱**（`core/trust.py` 的
+  `tightened()` 只留下更紧的那两档；`config/loader.py` 里两档里更紧的算数，
+  用户层不能把项目关掉的沙箱重新打开）；
+- **模型会被告知**：一段 `<sandbox mode="…">` 进上下文，每轮重算，不烤进 system prompt；
+- **机器上缺那个程序，会话就起不来**（`UnsupportedSandbox`）：承诺兑现不了，就不要许。
+
 **注意**：`within_bounds()`（`src/coderagent/tools/permissions.py`）在**所有**模式下都生效，
 用户写的 `allow` 规则**放宽不了**这个边界——这是 coderagent 比 Codex 强的地方，
-做 OS 级沙箱时不要把它绕开。
+做 OS 级沙箱时不要把它绕开——**没有绕开**：`sandbox.mode` 的每一档都跑在
+`within_bounds()` 后面，用户规则放宽不了它。
 
 ---
 
@@ -370,7 +407,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 4 | ~~**`reasoning_effort`（3.3）**~~ ✅ | 便宜，且和 `model.routing` 是一套东西 |
 | 5 | ~~**TUI 小件（4.2 / 4.5 / 4.7 / 4.8）**~~ ✅ | 四个小改动合一个提交，都是「有了就顺手」 |
 | 6 | ~~**死配置清理（5.1）**~~ ✅ | 顺手做，别单开 |
-| 7 | **OS 级沙箱（3.1 的第二步）** | 最大的一件，做完前面再说 |
+| 7 | ~~**OS 级沙箱（3.1 的第二步）**~~ ✅ | 最大的一件，做完前面再说 |
 | 8 | 图片输入（4.1）、中断粒度（4.4）、Markdown（4.3） | 需要设计，不适合顺手做 |
 
 ---

@@ -1,10 +1,12 @@
 """Protocols for the pluggable parts of the coding agent."""
 
 from collections.abc import Iterator
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from coderagent.models.streaming import ModelEvent
-from coderagent.tools.permissions import PermissionPolicy
+
+if TYPE_CHECKING:
+    from coderagent.tools.permissions import PermissionPolicy
 
 
 class ModelBackend(Protocol):
@@ -24,7 +26,7 @@ class ModelBackend(Protocol):
 class ToolExecutor(Protocol):
     """Turns model tool calls into normalized actions and observations."""
 
-    policy: PermissionPolicy
+    policy: "PermissionPolicy"
     """The permission policy of the session. It changes while the session runs."""
 
     def plan(self, actions: list[dict]) -> list[dict]:

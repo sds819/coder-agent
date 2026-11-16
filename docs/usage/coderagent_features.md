@@ -757,8 +757,11 @@ the agent does not walk up the directories to find them.
 - **Or in a container** — `docker`, `singularity`, `bubblewrap`, `contree`,
   and the remote sandboxes of SWE-rex. The same environments as
   mini-swe-agent.
+- **Three modes** — `sandbox.mode` is `full-access` (the default),
+  `workspace-write` or `read-only`. The operating system enforces them:
+  Seatbelt on macOS, bubblewrap on Linux.
 - **Only `bash` goes into the sandbox** — the file tools stay in the working
-  directory.
+  directory. In the `read-only` mode they are refused as well.
 - **`/sandbox`** — says where the commands run.
 
 ### Example
@@ -773,12 +776,22 @@ The seven types are `local`, `docker`, `singularity`, `bubblewrap`, `contree`,
 `swerex_docker` and `swerex_modal`. The options that the environment does not
 know are ignored, so one file can carry the settings of several of them.
 
-`/sandbox` answers with the type, the options that are in effect and the
-environment that is in use:
+The mode belongs to the local sandbox, and it is a second axis next to the
+permission mode: the permissions ask the user, the sandbox asks nobody.
+
+```yaml
+sandbox:
+  type: local
+  mode: workspace-write
+```
+
+`/sandbox` answers with the type, the mode, the options that are in effect and
+the environment that is in use:
 
 ```
 type: local
-environment: local
+mode: workspace-write
+environment: local/workspace-write
 ```
 
 ### When something goes wrong
@@ -788,6 +801,7 @@ environment: local
 | `ValueError: Unknown environment type: nope (resolved to nope, available: {...})` | The type is not one of the seven. | Use one of the names above. |
 | `CalledProcessError: Command '[...]' returned non-zero exit status 1.` | The container could not be started, or the image could not be pulled. | Check the image name and that docker runs. |
 | `FileNotFoundError: [Errno 2] No such file or directory: 'singularity'` | The binary of the environment is not installed. | Install it, or use another type. |
+| `UnsupportedSandbox: The read-only mode needs bubblewrap (bwrap), which this machine does not have.` | The machine has no program that builds the sandbox. | Install bubblewrap, or use `full-access`. |
 | The file tools touch the files of the host | Only `bash` goes into the sandbox. | That is by design: `read`, `edit` and friends work on the working directory of the session. |
 
 ## The verification
@@ -795,8 +809,9 @@ environment: local
 - **Off by default** — nothing is checked unless `verify.commands` is set.
 - **The agent has to make the check pass** — when the model wants to stop, the
   commands run; if one of them fails, the agent gets the output and tries again.
-- **The commands run in the session** — in the sandbox when there is one, so the
-  check sees the same world the agent works in. They do not ask for approval.
+- **The commands run in the session** — they are your commands, not the agent's,
+  so they run as you and outside the sandbox of the operating system. They do
+  not ask for approval.
 - **A bounded number of rounds** — `verify.max_rounds` (3 by default). When the
   rounds are used up, the turn ends with `stop_reason: verify_failed`.
 - **The result is in the log** — an event of the type `verify` holds the commands
@@ -1037,7 +1052,7 @@ The sections and what they hold:
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
 | `ui` | `approval_timeout`, `notifications` |
-| `sandbox` | `type` and the options of the environment |
+| `sandbox` | `type`, `mode` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 
 ### When something goes wrong

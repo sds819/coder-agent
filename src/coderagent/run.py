@@ -3,13 +3,16 @@
 import logging
 import time
 from pathlib import Path
+from typing import Any
 
 from coderagent.config.schema import Config, ContextConfig
+from coderagent.core import os_sandbox
 from coderagent.core.budget import context_window_for
 from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop, TurnResult
+from coderagent.core.os_sandbox import Confinement
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
@@ -76,6 +79,7 @@ def build_policy(config: Config, cwd: Path, permission_mode: str | None = None) 
         include_dirs=config.permissions.include_dirs,
         bounded=config.sandbox.type == "local",
         network=config.permissions.network,
+        sandbox_mode=config.sandbox.mode,
     )
 
 
@@ -104,6 +108,19 @@ def schema_budget(config: Config, context_window: int) -> int:
     if config.tools.schema_budget_tokens:
         return config.tools.schema_budget_tokens
     return max(context_window // 10, estimate_tokens(build_registry().schemas()))
+
+
+def _confinement(config: Config, environment: Any, cwd: Path) -> Confinement | None:
+    """The boundary of the operating system around the commands of the agent.
+
+    A container is its own boundary, so the mode only reaches the commands
+    that run on the machine of the user.
+    """
+    from minisweagent.environments.local import LocalEnvironment
+
+    if not isinstance(environment, LocalEnvironment):
+        return None
+    return os_sandbox.build(config.sandbox.mode, cwd, config.permissions.include_dirs, config.permissions.network)
 
 
 def build_loop(
@@ -167,7 +184,15 @@ def build_loop(
         else purpose_gateway(config, gateway, "summarize"),
         policy=policy,
     )
-    ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools, env=environment)
+    ctx = ToolContext(
+        cwd=cwd,
+        session=session,
+        bus=bus,
+        policy=policy,
+        config=config.tools,
+        env=environment,
+        sandbox=_confinement(config, environment, cwd),
+    )
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
 

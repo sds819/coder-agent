@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 from coderagent.config.schema import Config
+from coderagent.core.os_sandbox import FULL_ACCESS, MODES
 from coderagent.core.trust import tightened, waiting, without_untrusted
 from coderagent.paths import config_home
 from minisweagent.config import get_config_from_spec
@@ -72,9 +73,24 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
         if isinstance(project_permissions, dict) and project_permissions.get("network") == "deny":
             """A project may close the network: the user does not open it again."""
             merged.setdefault("permissions", {})["network"] = "deny"
+        _tighten_sandbox(merged, project)
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)
+
+
+def _tighten_sandbox(merged: dict, project: dict) -> None:
+    """A project may close the sandbox, and the user does not open it again.
+
+    The tightest of the two wins: a project that says `read-only` keeps the
+    agent from writing, whatever the user level says.
+    """
+    mode = str((project.get("sandbox") or {}).get("mode") or "")
+    current = str((merged.get("sandbox") or {}).get("mode") or FULL_ACCESS)
+    if current not in MODES:
+        current = FULL_ACCESS
+    if mode in MODES and MODES.index(mode) < MODES.index(current):
+        merged.setdefault("sandbox", {})["mode"] = mode
 
 
 def _items(layer: dict, path: tuple[str, ...]) -> list:

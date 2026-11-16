@@ -12,12 +12,18 @@ sandbox:
 ```
 
 The options that the environment does not know are ignored.
+
+The `sandbox.mode` says how much the commands may do on this machine:
+`read-only`, `workspace-write` or `full-access`. The modes are enforced by
+the operating system (see `coderagent.core.os_sandbox`), so they hold even
+when the permission layer lets everything through.
 """
 
 from pathlib import Path
 from typing import Any
 
 from coderagent.config.schema import SandboxConfig
+from coderagent.core.os_sandbox import FULL_ACCESS
 from coderagent.tools.builtin.shell import CodingEnvironment
 
 LOCAL = "local"
@@ -41,13 +47,17 @@ def build_environment(config: SandboxConfig, cwd: Path) -> Any:
     return environment
 
 
-def describe(environment: Any, kind: str = "") -> str:
+def describe(environment: Any, kind: str = "", mode: str = "") -> str:
     """The name of the environment, for the interface."""
-    if kind:
+    if kind and kind != LOCAL:
         return kind
-    if environment is None or isinstance(environment, CodingEnvironment):
-        return LOCAL
-    return type(environment).__name__
+    if not kind:
+        kind = (
+            LOCAL if environment is None or isinstance(environment, CodingEnvironment) else type(environment).__name__
+        )
+    if mode and mode != FULL_ACCESS and kind == LOCAL:
+        return f"{LOCAL}/{mode}"
+    return kind
 
 
 __all__ = ["LOCAL", "build_environment", "describe"]

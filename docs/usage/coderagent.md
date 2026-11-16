@@ -513,7 +513,20 @@ sandbox:
 ```
 
 The sandbox has no policy of its own: the network policy belongs to the
-environment, the paths belong to the permission layer. See
+environment, the paths belong to the permission layer.
+
+The local sandbox has three modes. The operating system enforces them —
+Seatbelt on macOS, bubblewrap on Linux:
+
+```yaml
+sandbox:
+  type: local
+  mode: workspace-write
+```
+
+`full-access` is the default, `workspace-write` writes only inside the working
+directory, `read-only` writes nothing. The mode and the permission mode are two
+axes: the permissions ask the user, the sandbox asks nobody. See
 [Sandbox](coderagent_sandbox.md).
 
 ## What the agent reads

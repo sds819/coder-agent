@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from coderagent.core.os_sandbox import MODES
 from coderagent.models.reasoning import EFFORTS
 
 DEFAULT_SYSTEM_PROMPT = (
@@ -174,6 +175,20 @@ class SandboxConfig(BaseModel):
 
     type: str = "local"
     """The kind of environment. `local` or one of the environments of mini-swe-agent."""
+    mode: str = "full-access"
+    """How much the commands of the agent may do on this machine.
+
+    One of `read-only`, `workspace-write` or `full-access`. The modes are
+    enforced by the operating system, so they hold whatever the permission
+    layer says.
+    """
+
+    @field_validator("mode")
+    @classmethod
+    def _known_mode(cls, value: str) -> str:
+        if value not in MODES:
+            raise ValueError(f"unknown sandbox mode '{value}'. Use one of: {', '.join(MODES)}.")
+        return value
 
 
 class VerifyConfig(BaseModel):

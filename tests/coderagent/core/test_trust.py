@@ -113,6 +113,39 @@ def test_the_user_may_not_open_a_network_the_project_closed(tmp_path, monkeypatc
     assert load_config([], cwd=tmp_path).permissions.network == "deny"
 
 
+def test_the_project_may_close_the_sandbox(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"sandbox": {"mode": "read-only"}})
+    assert load_config([], cwd=tmp_path).sandbox.mode == "read-only"
+
+
+def test_the_project_may_not_open_the_sandbox(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"sandbox": {"mode": "read-only"}}), encoding="utf-8")
+    _project(tmp_path, {"sandbox": {"mode": "full-access"}})
+    assert load_config([], cwd=tmp_path).sandbox.mode == "read-only"
+
+
+def test_the_user_may_not_open_a_sandbox_the_project_closed(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"sandbox": {"mode": "full-access"}}), encoding="utf-8")
+    _project(tmp_path, {"sandbox": {"mode": "workspace-write"}})
+    assert load_config([], cwd=tmp_path).sandbox.mode == "workspace-write"
+
+
+def test_the_tighter_of_the_two_sandbox_modes_wins(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"sandbox": {"mode": "read-only"}}), encoding="utf-8")
+    _project(tmp_path, {"sandbox": {"mode": "workspace-write"}})
+    assert load_config([], cwd=tmp_path).sandbox.mode == "read-only"
+
+
 def test_the_project_may_not_allow_itself(tmp_path, monkeypatch):
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     _project(

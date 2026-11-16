@@ -24,6 +24,7 @@ from pathlib import Path
 import yaml
 
 from coderagent.core.events import EventBus
+from coderagent.core.os_sandbox import sandbox_block
 from coderagent.paths import config_home
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.permissions import mode_block, network_block
@@ -185,7 +186,15 @@ class SubAgentRunner:
         gateway = self._gateway(spec)
         before = (gateway.total_cost, gateway.total_tokens_in, gateway.total_tokens_out)
         system = spec.system_prompt or spec.description
-        block = "\n\n".join(text for text in (mode_block(self.policy.mode), network_block(self.policy.network)) if text)
+        block = "\n\n".join(
+            text
+            for text in (
+                mode_block(self.policy.mode),
+                network_block(self.policy.network),
+                sandbox_block(self.policy.sandbox_mode),
+            )
+            if text
+        )
         if block:
             """The sub agent shares the permission mode, so it has to know about it too."""
             system = f"{system}\n\n{block}"

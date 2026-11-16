@@ -278,7 +278,7 @@ class CoderApp(App):
             cwd=str(self.cwd),
             mode=self.loop.executor.policy.mode.value,
             state=state,
-            sandbox=describe(self.loop.sandbox, self.config.sandbox.type),
+            sandbox=describe(self.loop.sandbox, self.config.sandbox.type, self.config.sandbox.mode),
         )
 
     def _ui(self, callback, *args) -> None:

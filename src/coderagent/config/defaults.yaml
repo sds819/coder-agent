@@ -61,6 +61,7 @@ ui:
 
 sandbox:
   type: local
+  mode: full-access
 
 verify:
   commands: []

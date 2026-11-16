@@ -401,7 +401,7 @@ def _status(context: CommandContext, argument: str) -> None:
         f"cost: ${session.total_cost:.4f}\n"
         f"cwd: {session.cwd}\n"
         f"mode: {context.policy.mode.value}\n"
-        f"sandbox: {context.config.sandbox.type}"
+        f"sandbox: {context.config.sandbox.type} ({context.config.sandbox.mode})"
     )
 
 
@@ -410,9 +410,9 @@ def _sandbox(context: CommandContext, argument: str) -> None:
     from coderagent.core.sandbox import describe
 
     sandbox = context.config.sandbox
-    lines = [f"type: {sandbox.type}"]
+    lines = [f"type: {sandbox.type}", f"mode: {sandbox.mode}"]
     lines += [f"{key}: {value}" for key, value in (sandbox.model_extra or {}).items()]
-    lines.append(f"environment: {describe(context.loop.sandbox, sandbox.type)}")
+    lines.append(f"environment: {describe(context.loop.sandbox, sandbox.type, sandbox.mode)}")
     context.say("\n".join(lines))
 
 

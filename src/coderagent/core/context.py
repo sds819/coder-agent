@@ -18,6 +18,7 @@ from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.history import History
 from coderagent.core.instructions import InstructionBlock, load_instructions, once_per_file, subdirectory_instructions
 from coderagent.core.memory import load_project_memory, load_user_memory
+from coderagent.core.os_sandbox import sandbox_block
 from coderagent.core.session import Session, SessionStore
 from coderagent.core.summarize import (
     Summary,
@@ -207,7 +208,15 @@ class ContextEngine:
         """
         if self.policy is None:
             return ""
-        return "\n\n".join(text for text in (mode_block(self.policy.mode), network_block(self.policy.network)) if text)
+        return "\n\n".join(
+            text
+            for text in (
+                mode_block(self.policy.mode),
+                network_block(self.policy.network),
+                sandbox_block(self.policy.sandbox_mode),
+            )
+            if text
+        )
 
     def estimated_tokens(self, tools: list[dict] | None = None) -> int:
         """The size of the whole context. This is what the budget is checked against."""

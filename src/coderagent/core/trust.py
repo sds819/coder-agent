@@ -22,6 +22,8 @@ TRUSTED = "trusted"
 DENIED = "denied"
 TIGHT_MODES = ("plan", "readonly")
 """The modes a project may set: they take tools away, they never give them."""
+TIGHT_SANDBOX_MODES = ("read-only", "workspace-write")
+"""The sandbox modes a project may set: they close the sandbox, they never open it."""
 
 
 def trust_path(user_home: Path | None = None) -> Path:
@@ -171,6 +173,10 @@ def tightened(project: dict) -> dict:
     the rules it brings may only deny.
     """
     result = copy.deepcopy(project)
+    sandbox = result.get("sandbox")
+    if isinstance(sandbox, dict) and str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
+        """A project may close the sandbox, never open it."""
+        sandbox.pop("mode", None)
     permissions = result.get("permissions")
     if not isinstance(permissions, dict):
         return result
@@ -215,6 +221,7 @@ def _hooks(project: dict) -> list[dict]:
 __all__ = [
     "DENIED",
     "TIGHT_MODES",
+    "TIGHT_SANDBOX_MODES",
     "TRUSTED",
     "TRUST_FILE",
     "decision",

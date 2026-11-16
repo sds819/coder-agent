@@ -705,7 +705,9 @@ Commit everything with the message: $ARGUMENTS
 - **默认是本机**——命令就在工作目录里跑。
 - **也可以是容器**——`docker`、`singularity`、`bubblewrap`、`contree`，
   还有 SWE-rex 的远程沙箱。和 mini-swe-agent 用的是同一批环境。
-- **只有 `bash` 进沙箱**——文件工具还在工作目录里。
+- **三档**——`sandbox.mode` 是 `full-access`（默认）、`workspace-write` 或者
+  `read-only`。由**操作系统**来执行：macOS 上是 Seatbelt，Linux 上是 bubblewrap。
+- **只有 `bash` 进沙箱**——文件工具还在工作目录里。`read-only` 那一档把它们也拒了。
 - **`/sandbox`**——告诉你命令在哪里跑。
 
 ### 用法例子
@@ -720,11 +722,21 @@ sandbox:
 `swerex_docker`、`swerex_modal`。环境不认识的选项会被忽略，所以一个文件里
 可以同时写好几种环境的设置。
 
-`/sandbox` 回答类型、生效的选项和在用的环境：
+那一档属于本地的沙箱，和权限模式是**两条正交的轴**：权限那一层会问用户，
+沙箱这一层谁都不问。
+
+```yaml
+sandbox:
+  type: local
+  mode: workspace-write
+```
+
+`/sandbox` 回答类型、那一档、生效的选项和在用的环境：
 
 ```
 type: local
-environment: local
+mode: workspace-write
+environment: local/workspace-write
 ```
 
 ### 出错时怎么办
@@ -734,6 +746,7 @@ environment: local
 | `ValueError: Unknown environment type: nope (resolved to nope, available: {...})` | 类型不是那七种之一。 | 用上面列出的名字。 |
 | `CalledProcessError: Command '[...]' returned non-zero exit status 1.` | 容器起不来，或者镜像拉不下来。 | 检查镜像名字，以及 docker 是不是在跑。 |
 | `FileNotFoundError: [Errno 2] No such file or directory: 'singularity'` | 这个环境的二进制没装。 | 装上，或者换一个类型。 |
+| `UnsupportedSandbox: The read-only mode needs bubblewrap (bwrap), which this machine does not have.` | 这台机器没有能建沙箱的程序。 | 装上 bubblewrap，或者用 `full-access`。 |
 | 文件工具动到了宿主机的文件 | 只有 `bash` 进沙箱。 | 这是设计如此：`read`、`edit` 这些工具动的是会话的工作目录。 |
 
 ## 校验
@@ -741,8 +754,8 @@ environment: local
 - **默认不开**——不配 `verify.commands` 就什么都不查。
 - **agent 必须把检查跑通**——模型想停下的时候命令会跑一遍；有一条没过，就把输出还给
   agent，让它接着改。
-- **命令在会话的环境里跑**——有沙箱就在沙箱里，所以检查看到的世界和 agent 干活的
-  世界是同一个。这些命令不ask要审批。
+- **命令是你自己的，不是 agent 的**——所以它们按你的身份跑，在操作系统的沙箱外面。
+  这些命令不要审批。
 - **轮数有限**——`verify.max_rounds`（默认 3）。轮数用完，这一轮就以
   `stop_reason: verify_failed` 结束。
 - **结果进事件日志**——一条 `verify` 事件记着命令和没过的那几条。
@@ -964,7 +977,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
 | `ui` | `approval_timeout`、`notifications` |
-| `sandbox` | `type` 和环境的那些选项 |
+| `sandbox` | `type`、`mode` 和环境的那些选项 |
 
 ### 出错时怎么办
 
@@ -1078,6 +1091,6 @@ mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \
 | [MCP 服务器](coderagent_mcp.md) | 服务器怎么配 |
 | [记忆](coderagent_memory.md) | 那些文件和确认 |
 | [模型路由](coderagent_routing.md) | 用途和规则 |
-| [沙箱](coderagent_sandbox.md) | 那些环境 |
+| [沙箱](coderagent_sandbox_zh.md) | 那些环境和那三档 |
 | [追踪导出](coderagent_export.md) | 一个会话的追踪 |
 | [快速开始](coderagent_quickstart.md) | 头十分钟 |

@@ -32,6 +32,17 @@ def trim_output(text: str, max_output_tokens: int) -> str:
     return trim_text(text, max_output_tokens)[0]
 
 
+def _confined(command: str, ctx: ToolContext) -> str:
+    """The command with the sandbox of the operating system in front of it.
+
+    The permission layer has already had its say on the command itself, so the
+    sandbox only gets to hold the line where the disk and the network are.
+    """
+    if ctx.sandbox is None:
+        return command
+    return ctx.sandbox.wrap(command)
+
+
 class BashTool:
     name = "bash"
     description = (
@@ -62,7 +73,7 @@ class BashTool:
         env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
         """A remote sandbox has its own working directory, the path of the host means nothing there."""
         cwd = str(ctx.cwd) if isinstance(env, LocalEnvironment) else ""
-        result = env.execute({"command": command}, cwd=cwd, timeout=timeout)
+        result = env.execute({"command": _confined(command, ctx)}, cwd=cwd, timeout=timeout)
         output = str(result.get("output", ""))
         content = trim_output(output, ctx.config.max_output_tokens)
         returncode = result.get("returncode", 0)
@@ -78,7 +89,7 @@ class BashTool:
         log_path = directory / "output.log"
         handle = log_path.open("w", encoding="utf-8")
         process = subprocess.Popen(  # noqa: S602
-            command,
+            _confined(command, ctx),
             shell=True,
             text=True,
             cwd=str(ctx.cwd),

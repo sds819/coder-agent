@@ -6,6 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Protocol
 
+from coderagent.core.os_sandbox import FULL_ACCESS, READ_ONLY
 from coderagent.tools import bash_policy
 
 READ_TOOLS = {"read", "glob", "grep", "ls"}
@@ -141,6 +142,7 @@ class PermissionPolicy:
         include_dirs: list[str] | None = None,
         bounded: bool = True,
         network: str = "allow",
+        sandbox_mode: str = FULL_ACCESS,
     ) -> None:
         self.mode = PermissionMode(mode)
         self.rules = list(rules or [])
@@ -152,6 +154,8 @@ class PermissionPolicy:
             raise ValueError(f"unknown network policy '{network}'")
         self.network = network
         """Whether the commands may reach the network. `deny` refuses them."""
+        self.sandbox_mode = sandbox_mode
+        """The mode of the operating system sandbox. `read-only` takes the write tools away."""
 
     def check(self, tool: str, params: dict) -> str:
         """Return `allow`, `ask` or `deny`."""
@@ -172,6 +176,9 @@ class PermissionPolicy:
             if path and not self.within_bounds(path):
                 """A rule cannot open the disk: the bounds hold in every mode."""
                 return Decision("deny", matched, self._outside_reason(path))
+            if self.sandbox_mode == READ_ONLY and tool in WRITE_TOOLS:
+                """The sandbox is read only: a rule cannot open it either."""
+                return Decision("deny", matched, "the sandbox is read only")
         return Decision(decision, matched, matched.reason if matched else "")
 
     def _evaluate_bash(self, command: str) -> Decision:

@@ -6,6 +6,7 @@ from typing import Any, Protocol
 
 from coderagent.config.schema import ToolConfig
 from coderagent.core.events import EventBus
+from coderagent.core.os_sandbox import Confinement
 from coderagent.core.session import Session
 from coderagent.tools.permissions import PermissionPolicy
 
@@ -26,6 +27,8 @@ class ToolContext:
     config: ToolConfig
     env: Any = None
     """Execution environment for tools that need to run commands."""
+    sandbox: Confinement | None = None
+    """The boundary of the operating system around the commands of the agent."""
     background: dict[str, Any] = field(default_factory=dict)
     """Background shell tasks, keyed by task id."""
 
