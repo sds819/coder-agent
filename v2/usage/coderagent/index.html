@@ -1309,6 +1309,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#how-much-the-model-thinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much the model thinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4215,6 +4226,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#how-much-the-model-thinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How much the model thinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4698,6 +4720,18 @@ provider as it is. <code>model.routing</code> maps a purpose to a model:</p>
 <p>The rules compare numbers only, they are parsed and not evaluated, so a
 configuration file cannot run code. The interface says in the event stream when
 the model changes and why. See <a href="../coderagent_routing/">Model routing</a>.</p>
+<h4 id="how-much-the-model-thinks">How much the model thinks</h4>
+<p><code>model.reasoning_effort</code> says how long the model thinks: <code>minimal</code>, <code>low</code>,
+<code>medium</code> or <code>high</code>. Empty is the default of the model, which is what most of
+them are good at.</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-c<span class="w"> </span>model.reasoning_effort<span class="o">=</span>high<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span>
+</code></pre></div>
+<p>The level is written in the words of the provider: OpenAI and the others want
+<code>reasoning_effort</code>, Anthropic wants a number of tokens to think with
+(<code>minimal</code> is 1024 tokens, <code>high</code> is 16384). A provider that does not know
+the parameter refuses the call, and the refusal is not retried.</p>
+<p>A level that does not exist is refused when the configuration is read, not in
+the middle of a turn.</p>
 <h4 id="other-providers">Other providers</h4>
 <p>The model goes through <a href="https://github.com/BerriAI/litellm">litellm</a>, so every
 model litellm knows works. The name carries the provider in front of it, and

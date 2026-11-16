@@ -3574,7 +3574,7 @@
   <a href="#33-reasoning_effort" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.3 没有 reasoning_effort（思考预算）
+        3.3 没有 reasoning_effort（思考预算） ✅ 已修
       
     </span>
   </a>
@@ -4109,7 +4109,7 @@
   <a href="#33-reasoning_effort" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.3 没有 reasoning_effort（思考预算）
+        3.3 没有 reasoning_effort（思考预算） ✅ 已修
       
     </span>
   </a>
@@ -4464,8 +4464,8 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 「This interface cannot run a turn, so it cannot review.」就完了。
 <strong>没有</strong>另起一个子 agent：审查留在对话里，用户能直接接着用结论。</p>
 <hr>
-<h3 id="33-reasoning_effort">3.3 没有 <code>reasoning_effort</code>（思考预算）</h3>
-<p><strong>现状</strong>：<code>src/coderagent/config/schema.py</code> 的 <code>ModelConfig</code> 里<strong>没有</strong> <code>reasoning_effort</code>
+<h3 id="33-reasoning_effort">3.3 没有 <code>reasoning_effort</code>（思考预算） ✅ 已修</h3>
+<p><strong>原来</strong>：<code>src/coderagent/config/schema.py</code> 的 <code>ModelConfig</code> 里<strong>没有</strong> <code>reasoning_effort</code>
 这个字段（grep 全仓为零）。传给 litellm 的是 <code>model_kwargs</code> 的其余部分，所以理论上
 用户可以自己在 <code>model_kwargs</code> 里塞 <code>reasoning_effort: high</code>——但<strong>没有开关、没有校验、
 没有文档、没有界面</strong>，而且<strong>各个厂商对这个参数的叫法不一样</strong>（OpenAI 是
@@ -4473,8 +4473,24 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 <p><strong>影响</strong>：想省钱的用户没法「这个任务认真想」，想快点的用户也没法「别想了」。
 <code>model.routing</code> 和 <code>model.routing_rules</code>（按用途选模型）能解决一部分，
 但「同一个模型、不同的思考量」这个维度是空的。</p>
-<p><strong>建议</strong>：<code>ModelConfig</code> 加一个 <code>reasoning_effort: str = ""</code>，写进 <code>model_kwargs</code>
-之前先按厂商前缀翻译成对应的参数名。<strong>工作量：小。</strong></p>
+<p><strong>已修：一个 <code>model.reasoning_effort</code> 字段</strong></p>
+<ul>
+<li>配置里写 <code>model.reasoning_effort: high</code>，取值是 <code>minimal</code> / <code>low</code> / <code>medium</code> / <code>high</code>，
+  留空 = 模型的默认。<strong>写错在加载配置时就被拒</strong>（pydantic 的字段校验器），
+  不用等到发请求才炸。</li>
+<li>翻译在<strong>一处</strong>做：<code>src/coderagent/models/reasoning.py</code> 的 <code>translate(model_name, effort)</code>。
+  OpenAI 这一家原样传 <code>reasoning_effort</code>；Anthropic 这一家换成
+  <code>thinking: {type: enabled, budget_tokens: N}</code>（N = 1024 / 2048 / 8192 / 16384，
+  Anthropic 至少要 1024 个 token，所以 <code>minimal</code> 就是 1024）。</li>
+<li>翻译发生在 <strong><code>LiteLLMBackend</code> 里面</strong>，在别名解析<strong>之后</strong>——<code>litellm_config</code> 里的别名
+  指向的是哪个模型，就按那个模型的厂商来翻译。</li>
+<li>用户自己在 <code>model_kwargs</code> 里写的同一个参数<strong>优先</strong>（<code>setdefault</code>），
+  想手工调 token 数的人不受打扰。</li>
+<li>因为翻译在 backend 里，<strong>每一处</strong>建 backend 的地方都白拿：主模型、<code>model.routing</code>
+  的子模型、<code>/model</code> 换模型、网页版的连接测试、自定义命令。</li>
+<li>界面上也有：网页版设置页的模型表单里多了一个「思考预算」下拉框；
+  <code>/model</code> 会把当前的档位打印出来，换模型时<strong>带着走</strong>。</li>
+</ul>
 <hr>
 <h3 id="34-bugcoderagentclaudemd">3.4 真 bug：<code>~/.coderagent/CLAUDE.md</code> 被加载了两次 ✅ 已修</h3>
 <p><strong>原来</strong>：</p>
@@ -4753,7 +4769,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </tr>
 <tr>
 <td>4</td>
-<td><strong><code>reasoning_effort</code>（3.3）</strong></td>
+<td>~~<strong><code>reasoning_effort</code>（3.3）</strong>~~ ✅</td>
 <td>便宜，且和 <code>model.routing</code> 是一套东西</td>
 </tr>
 <tr>

@@ -5190,6 +5190,10 @@ so far.</p>
   then be an alias of that list, and the key of the endpoint stays in the file.</li>
 <li><strong>Cache control</strong> — <code>set_cache_control: default_end</code> for the providers that
   support it. Any other value is refused.</li>
+<li><strong>How much the model thinks</strong> — <code>reasoning_effort</code>: <code>minimal</code>, <code>low</code>,
+  <code>medium</code> or <code>high</code>. Empty is the default of the model. The level is written
+  in the words of the provider: <code>reasoning_effort</code> for OpenAI and the others,
+  a number of tokens for Anthropic.</li>
 <li><strong>Retries</strong> — <code>max_retries</code>, three by default.</li>
 <li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
   <code>reflect</code> and <code>strong</code>.</li>
@@ -5213,6 +5217,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
+<span class="w">  </span><span class="nt">reasoning_effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
 <span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -5254,6 +5259,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td><code>ValueError: Invalid mode: {mode}</code></td>
 <td><code>set_cache_control</code> is neither <code>default_end</code> nor empty.</td>
 <td>Use <code>default_end</code>, or remove the line.</td>
+</tr>
+<tr>
+<td><code>unknown reasoning effort '{level}'</code></td>
+<td><code>reasoning_effort</code> is not one of <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>high</code>.</td>
+<td>Use one of those four, or remove the line for the default of the model.</td>
 </tr>
 <tr>
 <td><code>the file does not exist</code></td>
@@ -6540,7 +6550,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code></td>
+<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>

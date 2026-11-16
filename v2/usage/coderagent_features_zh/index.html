@@ -5187,6 +5187,9 @@ coder<span class="w"> </span>--list
 <li><strong>别名</strong>——一个带模型列表的 litellm 配置文件。模型名可以是那个列表里的
   一条别名，端点的 key 就留在那个文件里。</li>
 <li><strong>缓存标记</strong>——<code>set_cache_control: default_end</code>，给支持它的厂商用。别的值会被拒。</li>
+<li><strong>模型想多久</strong>——<code>reasoning_effort</code>：<code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code>，
+  留空就是模型的默认。这个档位会翻译成厂商认识的说法：OpenAI 那些是
+  <code>reasoning_effort</code>，Anthropic 是一笔 token。</li>
 <li><strong>重试</strong>——<code>max_retries</code>，默认三次。</li>
 <li><strong>按用途路由</strong>——<code>main</code>、<code>cheap</code>、<code>summarize</code>、<code>reflect</code>、<code>strong</code> 可以
   各配一个模型。</li>
@@ -5208,6 +5211,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
+<span class="w">  </span><span class="nt">reasoning_effort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">medium</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
 <span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -5249,6 +5253,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td><code>ValueError: Invalid mode: {mode}</code></td>
 <td><code>set_cache_control</code> 既不是 <code>default_end</code>，也不是空的。</td>
 <td>用 <code>default_end</code>，或者删掉这一行。</td>
+</tr>
+<tr>
+<td><code>unknown reasoning effort '{level}'</code></td>
+<td><code>reasoning_effort</code> 不是 <code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code> 里的一个。</td>
+<td>用那四个里的一个，或者删掉这一行（用模型的默认）。</td>
 </tr>
 <tr>
 <td><code>the file does not exist</code></td>
@@ -6474,7 +6483,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code></td>
+<td><code>model_name</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code>、<code>reasoning_effort</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>
