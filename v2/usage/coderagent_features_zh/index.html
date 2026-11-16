@@ -5330,7 +5330,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <code>model.max_retries</code>（默认 3），终端和浏览器都一样。环境变量
 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> 能盖过它——测试不想等的时候好用。</p>
 <h2 id="_7">工具</h2>
-<p>十三个内置工具：</p>
+<p>十四个内置工具：</p>
 <table>
 <thead>
 <tr>
@@ -5354,6 +5354,10 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tr>
 <td><code>multi_edit</code></td>
 <td>一个文件里多处改动——要么全成，要么全不成</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td>打一个带上下文的补丁——一次改多个文件，也能建和删</td>
 </tr>
 <tr>
 <td><code>glob</code></td>
@@ -5418,6 +5422,22 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="w">  </span><span class="p">{</span><span class="nt">"old_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main():"</span><span class="p">,</span><span class="w"> </span><span class="nt">"new_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main(argv=None):"</span><span class="p">}</span>
 <span class="p">]}}</span>
 </code></pre></div>
+<p><code>apply_patch</code> 收一个带上下文的补丁，Codex 就是这么写的。一次能改好几个文件，
+而且是<strong>要么全成要么全不成</strong>：有一处对不上，一个文件都不动。</p>
+<div class="highlight"><pre><span></span><code>*** Begin Patch
+*** Update File: src/app.py
+@@ def main():
+ def main(argv=None):
+-    run()
++    run(argv)
+*** Add File: notes.md
++the notes of the change
+*** Delete File: old.py
+*** End Patch
+</code></pre></div>
+<p>行首是空格的是留下的行，<code>-</code> 开头的删掉，<code>+</code> 开头的加上。<code>@@</code> 后面那段是
+「这块大概在哪儿」的提示，真正要对上的是那一段上下文。补丁也能删文件，
+最后一行是 <code>*** End Patch</code>。</p>
 <p><code>grep</code> 有三种模式：<code>content</code>（默认）、<code>files_with_matches</code>、<code>count</code>。
 它最多返回 100 条匹配，<code>glob</code> 最多 200 个文件。</p>
 <p>指向工作目录以外的链接不会被跟过去：<code>grep</code> 会跳过它，所以指向
@@ -5456,6 +5476,26 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tr>
 <td><code>multi_edit</code></td>
 <td><code>Error: Edit #1 failed, no changes were written. {inner}</code>——文件一个字节都没动。</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the patch must start with '*** Begin Patch'</code> / <code>Error: the patch must end with '*** End Patch'</code>——这压根不是个补丁。</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the context of the hunk does not match {path}: '{line}' is not where the patch says it is. Read the file again and use the lines that are really there.</code></td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the file {path} exists already.</code>——要新建的文件已经有了。</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: file not found: {path}.</code>——要改或者要删的文件不在。</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: '{path}' is outside the working directory {cwd}.</code>——补丁跑到会话的目录外面去了。</td>
 </tr>
 <tr>
 <td><code>grep</code></td>
@@ -5955,11 +5995,15 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
   模板。合适的时候 agent 自己会载入。</li>
 <li><strong>插件</strong>——<code>.coderagent/plugins</code>：一个 Python 模块，能加工具、命令和
   hook。第一次用要信任一次。</li>
-<li><strong>hook</strong>——六个时机：<code>SessionStart</code>、<code>UserPromptSubmit</code>、<code>PreToolUse</code>、
-  <code>PostToolUse</code>、<code>Stop</code>、<code>SessionEnd</code>。hook 是一条命令，读 JSON 答 JSON：
+<li><strong>hook</strong>——九个时机：<code>SessionStart</code>、<code>UserPromptSubmit</code>、<code>PreToolUse</code>、
+  <code>PostToolUse</code>、<code>Stop</code>、<code>SessionEnd</code>、<code>PreCompact</code>、<code>PostCompact</code> 和
+  <code>SubagentStop</code>。hook 是一条命令，读 JSON 答 JSON：
   允许、拒绝、拦下来，带理由、带额外上下文，或者带改写过的参数。</li>
-<li><strong>自己的命令</strong>——<code>.coderagent/commands/*.md</code>：一个 slash 命令，带说明、
-  参数提示、能用的工具，还有自己的模型。</li>
+<li><strong>自己的命令</strong>——<code>.coderagent/commands/*.md</code> 和
+  <code>~/.coderagent/commands/*.md</code>：一个 slash 命令，带说明、
+  参数提示、能用的工具，还有自己的模型。同名时项目里的那个算数。</li>
+<li><strong>命令的工具可以再收窄</strong>——<code>allowed-tools: bash(git diff:*), read</code> 的意思是：
+  这条命令能读、能跑 <code>git diff</code>，别的干不了。这个限制在哪种权限模式下都在。</li>
 <li><strong>MCP 服务器</strong>——stdio。它们的工具和别的工具一样，工具名是
   <code>mcp__&lt;服务器&gt;__&lt;工具&gt;</code>，一样要审批，断了会自己重连。</li>
 <li><strong>项目里的代码要等一个决定</strong>——项目定义的 MCP 服务器、hook 和验证命令都是
@@ -6027,12 +6071,15 @@ name: release
 <div class="highlight"><pre><span></span><code>---
 description: Make a commit of the changes
 argument-hint: [message]
-allowed-tools: bash, read
+allowed-tools: bash(git diff:*), read
 <span class="gu">model: cheap</span>
 <span class="gu">---</span>
 
 Commit everything with the message: $ARGUMENTS
 </code></pre></div>
+<p>工具后面的模式也是一道限制：<code>bash(git diff:*)</code> 是说这条命令只能跑
+<code>git diff</code>，别的命令都跑不了，用户的规则也不能把它放宽。没写出来的工具
+就是没有。</p>
 <h3 id="_24">出错时怎么办</h3>
 <table>
 <thead>
@@ -6090,8 +6137,8 @@ Commit everything with the message: $ARGUMENTS
 </tr>
 </tbody>
 </table>
-<p>自己的命令只在 <code>&lt;cwd&gt;/.coderagent/commands/*.md</code> 里找——agent <strong>不会</strong>一层层
-往上找。</p>
+<p>自己的命令在 <code>&lt;cwd&gt;/.coderagent/commands/*.md</code> 和 <code>~/.coderagent/commands/*.md</code>
+里找——agent <strong>不会</strong>一层层往上找。同名时项目里的那个算数。</p>
 <h2 id="_25">沙箱</h2>
 <ul>
 <li><strong>默认是本机</strong>——命令就在工作目录里跑。</li>
@@ -6230,6 +6277,9 @@ $ python -m pytest -q
 <li><strong>用 <code>@</code> 提文件</strong>——敲 <code>@src/app</code> 会把文件的路径补全，<code>→</code> 收下这个补全。</li>
 <li><strong>会话面板</strong>——<code>ctrl+o</code> 列出这个目录的会话，<code>enter</code> 接着选中的那个继续，
   <code>escape</code> 关掉面板。</li>
+<li><strong>文件树</strong>——<code>ctrl+t</code> 在左边打开：工作目录里的文件，三层深，改过的有标记
+  （<code>+</code> 新增、<code>●</code> 改过、<code>-</code> 删了、<code>?</code> 新文件）。点一个文件就把它的路径
+  填进输入框。</li>
 <li><strong>一轮结束时通知终端</strong>——通知里带着 agent 的回答，长的一轮不会错过。
   <code>ui.notifications: false</code> 可以关掉。</li>
 <li><strong>答案是 Markdown</strong>——代码块、表格、列表长得跟项目 README 里一样。文字流出来
@@ -6249,7 +6299,7 @@ $ python -m pytest -q
 </code></pre></div>
 <p><code>←</code>/<code>→</code> 移动光标，<code>↑</code>/<code>↓</code> 也一样，数字键直接跳到那一行，空格切换多选，
 <code>enter</code> 确认，<code>y</code>、<code>n</code>、<code>a</code> 直接回答。<code>ctrl+c</code> 打断这一轮，<code>ctrl+q</code> 收尾
-会话并退出，<code>ctrl+o</code> 打开会话面板。</p>
+会话并退出，<code>ctrl+o</code> 打开会话面板，<code>ctrl+t</code> 打开文件树。</p>
 <p>todo 面板用 <code>◉</code>（完成）、<code>◐</code>（进行中）、<code>○</code>（待办）标记任务状态。</p>
 <h3 id="_33">出错时怎么办</h3>
 <table>
@@ -6630,7 +6680,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <code>/cost</code>、<code>/todos</code>、<code>/mcp</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/agents</code>、<code>/skills</code>、
 <code>/plugins</code>、<code>/trust</code>、<code>/memory</code>、<code>/status</code>、<code>/sandbox</code>、<code>/export</code>、<code>/context</code>、
 <code>/exit</code>（别名 <code>/quit</code>）。</p>
-<p>自己的命令放在 <code>.coderagent/commands/*.md</code>，和它们一起用。</p>
+<p>自己的命令放在 <code>.coderagent/commands/*.md</code> 和 <code>~/.coderagent/commands/*.md</code>，
+和它们一起用。</p>
 <p><code>/help</code> 会说每个命令收什么——<code>/mode</code> 的那几个模式、<code>/trust</code> 的编号、自己命令的
 参数——不用记。</p>
 <h3 id="_41">审查</h3>
@@ -6778,7 +6829,7 @@ mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span c
 </tr>
 <tr>
 <td><a href="../coderagent_hooks_zh/">hook</a></td>
-<td>六个时机和 hook 的回答</td>
+<td>九个时机和 hook 的回答</td>
 </tr>
 <tr>
 <td><a href="../coderagent_plugins/">插件</a></td>

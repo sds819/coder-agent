@@ -3672,6 +3672,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#46-49-apply_patch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 / 4.9 文件树与 apply_patch ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3704,7 +3715,7 @@
   <a href="#52" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.2 认证失败要重试十分钟
+        5.2 认证失败要重试十分钟 ✅ 已修
       
     </span>
   </a>
@@ -3715,7 +3726,7 @@
   <a href="#53-agentsmd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.3 AGENTS.md 会话中途改了不生效
+        5.3 AGENTS.md 会话中途改了不生效 ✅ 已修
       
     </span>
   </a>
@@ -3726,7 +3737,7 @@
   <a href="#54-hook-6" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.4 hook 事件只有 6 个
+        5.4 hook 事件只有 6 个 ✅ 已修
       
     </span>
   </a>
@@ -3737,7 +3748,7 @@
   <a href="#55-allowed-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 自定义命令只有项目级，allowed-tools 太粗
+        5.5 自定义命令只有项目级，allowed-tools 太粗 ✅ 已修
       
     </span>
   </a>
@@ -3759,7 +3770,7 @@
   <a href="#57" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.7 其它零碎
+        5.7 其它零碎 ✅ 已修（一条改代码，一条写文档）
       
     </span>
   </a>
@@ -4235,6 +4246,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#46-49-apply_patch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 / 4.9 文件树与 apply_patch ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4267,7 +4289,7 @@
   <a href="#52" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.2 认证失败要重试十分钟
+        5.2 认证失败要重试十分钟 ✅ 已修
       
     </span>
   </a>
@@ -4278,7 +4300,7 @@
   <a href="#53-agentsmd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.3 AGENTS.md 会话中途改了不生效
+        5.3 AGENTS.md 会话中途改了不生效 ✅ 已修
       
     </span>
   </a>
@@ -4289,7 +4311,7 @@
   <a href="#54-hook-6" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.4 hook 事件只有 6 个
+        5.4 hook 事件只有 6 个 ✅ 已修
       
     </span>
   </a>
@@ -4300,7 +4322,7 @@
   <a href="#55-allowed-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 自定义命令只有项目级，allowed-tools 太粗
+        5.5 自定义命令只有项目级，allowed-tools 太粗 ✅ 已修
       
     </span>
   </a>
@@ -4322,7 +4344,7 @@
   <a href="#57" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.7 其它零碎
+        5.7 其它零碎 ✅ 已修（一条改代码，一条写文档）
       
     </span>
   </a>
@@ -4426,7 +4448,9 @@
 <p>所以这份清单里，<strong>真正该抄的是安全边界和输入通道</strong>（P0 的 1、3、4、5 和 P1 的 1、2），
 其余多半是「有了更好」而不是「缺了就危险」。</p>
 <p><strong>进度</strong>：§8 的第 1～8 步都做完了（两个 bug、网络开关、<code>/review</code>、<code>reasoning_effort</code>、
-TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Markdown）。
+<strong>进度</strong>：§8 的第 1～9 步都做完了（两个 bug、网络开关、<code>/review</code>、<code>reasoning_effort</code>、
+TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Markdown、
+<code>apply_patch</code> + TUI 文件树 + P2 清理一批）。
 做完的条目在小节标题上标着「✅ 已修」，原样保留着原来的描述，好回头看差在哪。</p>
 <hr>
 <h2 id="2">2. 怎么读这份清单</h2>
@@ -4695,7 +4719,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 </tr>
 <tr>
 <td>4.6</td>
-<td><strong>TUI 没有文件树</strong></td>
+<td><strong>TUI 没有文件树</strong> ✅</td>
 <td>文件树只在网页版左栏（<code>src/coderagent/web/</code>）；终端里只能靠 <code>ls</code> 工具</td>
 <td>侧栏文件树</td>
 <td>中</td>
@@ -4716,7 +4740,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 </tr>
 <tr>
 <td>4.9</td>
-<td><strong>没有 <code>apply_patch</code> 工具</strong></td>
+<td><strong>没有 <code>apply_patch</code> 工具</strong> ✅</td>
 <td>改文件用 <code>write</code> / <code>edit</code> / <code>multi_edit</code>（<code>src/coderagent/tools/builtin/fs.py</code>），是整串替换</td>
 <td><code>apply_patch</code>（带上下文的块补丁）</td>
 <td>中</td>
@@ -4779,6 +4803,32 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
     那是<strong>你的</strong>命令，不是 agent 的。</li>
 <li><strong>远端沙箱里停不掉</strong>：命令跑在容器里的时候，只能等它跑完，这一轮再停。</li>
 </ul>
+<h3 id="46-49-apply_patch">4.6 / 4.9 文件树与 <code>apply_patch</code> ✅ 已修</h3>
+<p>这两件凑在一起做，因为它们都在<strong>「改文件」这件事的边上</strong>：一个让模型改得更省，
+一个让人看得见改了什么。</p>
+<ul>
+<li><strong><code>apply_patch</code>（4.9）</strong>：新工具 <code>src/coderagent/tools/builtin/patch.py</code>，
+  补丁格式跟 Codex 一样——<code>*** Begin Patch</code> / <code>*** Update File:</code> / <code>@@</code> 块 /
+  <code>*** Add File:</code> / <code>*** Delete File:</code> / <code>*** End Patch</code>。</li>
+<li><strong>块是靠内容定位的</strong>，不是靠行号：<code>@@</code> 后面那段只是「大概在哪儿」的提示，
+    真正要对上的是那一段上下文（先精确匹配，再退一步容忍行尾空格）。
+    定位时会往后找，优先落在上一块后面，所以同一文件里连着几块也不会互相踩。</li>
+<li><strong>要么全成要么全不成</strong>：先把所有文件都算出来，任何一块对不上就一个文件
+    都不动。<code>multi_edit</code> 是这个性质，这里也是。</li>
+<li><strong>它没有绕过任何一道闸</strong>：它是写工具（要审批、只读沙箱里被拒）、
+    是串行工具（不能并发跑）、每个碰到的路径都要过 <code>within_bounds()</code>——
+    它的参数里没有 <code>path</code>，策略自己看不见，所以工具自己查。</li>
+<li><strong>检查点</strong>：一个补丁能改好几个文件，所以工具多了一个 <code>touched_paths(params)</code>，
+    执行器按路径逐个 <code>before_write</code>，每个改动的文件都有检查点。</li>
+<li>审批卡片上显示的是补丁的 diff（<code>ui/widgets/diff_view.py</code> 的 <code>prospective_diff</code>）。</li>
+<li><strong>TUI 文件树（4.6）</strong>：<code>src/coderagent/ui/widgets/file_tree.py</code>，
+  textual 的 <code>Tree</code>，<code>ctrl+t</code> 在左边打开，三层深。</li>
+<li><strong>改过的文件有标记</strong>：<code>git status --porcelain</code> 的结果映射成
+    <code>+</code>（新增）、<code>●</code>（改过）、<code>-</code>（删了）、<code>?</code>（新文件）。
+    不是 git 仓库时就没有标记，树照样能看。</li>
+<li><strong>点一下就把路径填进输入框</strong>——接着 <code>@</code> 那套补全用。</li>
+<li>每轮跑完刷新一次，文件树跟工作目录同步。</li>
+</ul>
 <hr>
 <h2 id="5-p2">5. P2：清理与锦上添花</h2>
 <h3 id="51">5.1 死配置 ✅ 已修</h3>
@@ -4829,7 +4879,7 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 <li><strong>顺带</strong>：终端的重试次数从 <strong>10</strong> 变成 <strong>3</strong>（配置的默认值），
   和浏览器一样了；这也算 §5.2 那条 complaint 的一半。</li>
 </ul>
-<h3 id="52">5.2 认证失败要重试十分钟</h3>
+<h3 id="52">5.2 认证失败要重试十分钟 ✅ 已修</h3>
 <p><code>src/coderagent/models/backends.py:31-39</code> 的 <code>abort_exceptions</code> 里<strong>没有</strong>
 <code>litellm.exceptions.InternalServerError</code>。中转站在<strong>完全没有 key</strong> 的时候返的是 500，
 于是走满 10 次重试（约两分钟）才放弃；而 <strong>key 写错</strong>的时候返 <code>AuthenticationError</code>，
@@ -4838,29 +4888,81 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 <p><strong>顺带变了</strong>：重试次数现在跟着 <code>model.max_retries</code> 走（默认 <strong>3</strong>，见 §5.1），
 所以「完全没有 key」的那种失败现在等的是三次而不是十次（约半分钟，不是两分钟）。
 根子上的问题还在：500 和「key 不对」走的路不一样。</p>
-<h3 id="53-agentsmd">5.3 <code>AGENTS.md</code> 会话中途改了不生效</h3>
+<p><strong>怎么做的</strong>：500 不一刀切地不重试——<strong>有的 500 值得等</strong>（服务端真的抖了）。
+所以改成<strong>看错误文本</strong>：<code>models/backends.py</code> 的 <code>is_auth_error()</code> 认
+<code>api key</code> / <code>invalid token</code> / <code>unauthorized</code> / <code>authentication</code> 这些说法，
+命中就把 500 换成 <code>AuthenticationError</code>——它在 <code>abort_exceptions</code> 里，重试立刻停。
+没命中就照旧重试。<strong>key 不会因为等一会儿变好，等待只是让用户多等。</strong></p>
+<h3 id="53-agentsmd">5.3 <code>AGENTS.md</code> 会话中途改了不生效 ✅ 已修</h3>
 <p><code>src/coderagent/core/context.py:109-110</code> 在 <code>ContextEngine</code> 构造时读一次指令文件，
 之后只追加<strong>子目录</strong>的指令（<code>context.py:392-395</code>）。项目根目录的 <code>AGENTS.md</code>
 在会话开始后被修改，模型这一轮还看的是旧内容。</p>
 <p>Codex 的做法是每次会话开始、每次 compact 之后重读。<strong>工作量：小</strong>（把「读指令」
 挪到和记忆同一层的「每轮重算」里）。</p>
-<h3 id="54-hook-6">5.4 hook 事件只有 6 个</h3>
+<p><strong>怎么做的</strong>：<code>ContextEngine</code> 多了一个 <code>reload_instructions</code> 标志——
+<strong>没显式给指令</strong>的时候（<code>instructions=None</code>）每轮重读 <code>AGENTS.md</code> / <code>CLAUDE.md</code>，
+<strong>显式给了</strong>的就以给的为准，不再重读（那是调用方的意思，不是项目的）。
+重读发生在 <code>_instruction_text()</code> 里，也就是<strong>每轮组消息的时候</strong>，
+所以项目中途改了规则，下一轮模型就看见了。</p>
+<h3 id="54-hook-6">5.4 hook 事件只有 6 个 ✅ 已修</h3>
 <p>现在有：<code>PreToolUse</code>、<code>PostToolUse</code>、<code>UserPromptSubmit</code>、<code>Stop</code>、<code>SessionStart</code>、<code>SessionEnd</code>
 （<code>src/coderagent/tools/executor.py:104,169</code>、<code>src/coderagent/core/loop.py:145,364,372,376</code>）。</p>
 <p>Codex 还提供压缩前后、通知、子 agent 停止等事件。<code>PreCompact</code> 对本项目特别有用——
 压缩是 coderagent 的核心机制之一（见<a href="../coderagent-context/">上下文专题</a>），
 压缩前后的钩子是天然的「记录摘要质量」的地方。</p>
-<h3 id="55-allowed-tools">5.5 自定义命令只有项目级，<code>allowed-tools</code> 太粗</h3>
+<p><strong>怎么做的</strong>：加了三个事件，都是<strong>通知</strong>（改不了什么）：</p>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>什么时候</th>
+<th>读到什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PreCompact</code></td>
+<td>压缩之前</td>
+<td><code>messages</code>（马上要走的那几条）、<code>turn</code></td>
+</tr>
+<tr>
+<td><code>PostCompact</code></td>
+<td>压缩之后</td>
+<td><code>summary</code>、<code>messages</code>（压掉几条）、<code>tokens</code>、<code>summary_tokens</code></td>
+</tr>
+<tr>
+<td><code>SubagentStop</code></td>
+<td>子 agent 结束</td>
+<td><code>agent</code>、<code>status</code>、<code>summary</code>、<code>files_touched</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>PreCompact</code> / <code>PostCompact</code> 挂在 <code>ContextEngine.compact()</code> 上（它拿得到
+<code>self.hooks</code>），<code>SubagentStop</code> 挂在 <code>SubAgentRunner.run()</code> 的收尾上。
+后两个 token 数就是评测报告里那个 <code>summary_ratio</code> 的原料——
+<strong>摘要质量从此可以被 hook 量出来</strong>。</p>
+<h3 id="55-allowed-tools">5.5 自定义命令只有项目级，<code>allowed-tools</code> 太粗 ✅ 已修</h3>
 <p><code>src/coderagent/ui/custom_commands.py:54</code> 只从 <code>&lt;cwd&gt;/.coderagent/commands</code> 读，
 没有用户级目录——<strong>用户没法给自己装一套全局命令</strong>。
 <code>allowed-tools</code> 在 <code>custom_commands.py:51</code> 被 <code>_split_tools</code> 按 <code>spec.split("(")[0]</code>
 截断，所以 <code>bash(git diff:*)</code> 里的<strong>参数模式整个丢掉</strong>，只剩工具名。</p>
+<p><strong>怎么做的</strong>：</p>
+<ul>
+<li><strong>用户级目录</strong>：<code>~/.coderagent/commands/*.md</code>（和子 agent、技能一个位置）。
+  <strong>同名时项目里的那个算数</strong>——它是属于眼前这份活的。</li>
+<li><strong><code>allowed-tools</code> 的模式成了真的限制</strong>：<code>CustomCommand.tool_rules()</code> 把
+  <code>bash(git diff:*)</code> 变成 <code>{"bash": "git diff"}</code>，交给权限策略的
+  <code>restriction</code>。这个限制<strong>在每种模式下都在</strong>（连 <code>bypass</code> 也一样），
+  <strong>用户的规则也放宽不了它</strong>——<code>evaluate()</code> 第一步就查它。
+  没写出来的工具就是没有；<code>bash</code> 的每一段命令都要对得上那个模式。</li>
+</ul>
 <h3 id="56-otel-json">5.6 OTel 只是本地 JSON</h3>
 <p><code>src/coderagent/core/telemetry.py:119</code> 的 <code>otel()</code> 返回一份 OTLP/JSON 的 <strong>dict</strong>，
 没有 exporter，不往任何地方发。要接真正的 OTel 后端，还差一个 exporter。</p>
-<h3 id="57">5.7 其它零碎</h3>
+<h3 id="57">5.7 其它零碎 ✅ 已修（一条改代码，一条写文档）</h3>
 <ul>
-<li><code>src/coderagent/core/instructions.py:12</code> 的 <code>PROJECT_FILES</code> 常量定义了但<strong>没人用</strong>（死代码）。</li>
+<li><code>src/coderagent/core/instructions.py:12</code> 的 <code>PROJECT_FILES</code> 常量定义了但<strong>没人用</strong>（死代码）。
+  —— <strong>删了</strong>。</li>
 <li>网页版的改动列表来自会话的检查点（<code>api.py:175</code> 的 <code>/changes</code>），
   没有检查点的改动不会出现在列表里（这条已经写进 <code>docs/usage/coderagent_web.md</code> 的「已知差距」）。</li>
 </ul>
@@ -4988,6 +5090,11 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <td>8</td>
 <td>~~<strong>图片输入（4.1）、中断粒度（4.4）、Markdown（4.3）</strong>~~ ✅</td>
 <td>三件事都在消息这一层，一起做</td>
+</tr>
+<tr>
+<td>9</td>
+<td>~~<strong><code>apply_patch</code>（4.9）、TUI 文件树（4.6）、P2 清理一批（5.2～5.5、5.7）</strong>~~ ✅</td>
+<td>一块改文件的东西，一块看文件的东西，剩下的都是收尾</td>
 </tr>
 </tbody>
 </table>

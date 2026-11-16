@@ -4909,6 +4909,10 @@ agent. The settings of <code>model.model_kwargs</code> win over the ones of the 
 <td>Several edits in one file, in order.</td>
 </tr>
 <tr>
+<td><code>apply_patch</code></td>
+<td>Apply a patch of blocks: change, add and delete files in one call.</td>
+</tr>
+<tr>
 <td><code>glob</code></td>
 <td>The files that match a pattern, e.g. <code>**/*.py</code>.</td>
 </tr>
@@ -5008,6 +5012,10 @@ decision:</p>
 The decision is <code>allow</code>, <code>ask</code> or <code>deny</code>. For the path tools the last rule that
 matches wins. A command is judged part by part and the strictest part wins, so
 an allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
+<p><code>apply_patch</code> has no path of its own — it changes several files at once — so a
+rule about it is about the whole call. Every file it touches is checked against
+the bounds of the session anyway: a patch that reaches outside the working
+directory is refused.</p>
 <p>The rules of the project live in <code>.coderagent/rules.yaml</code>, the rules of the
 user in <code>~/.coderagent/rules.yaml</code>. Both are read, in that order, so a rule of
 the user beats a rule of the project with the same tool and pattern. The rules
@@ -5360,6 +5368,10 @@ the <code>session_cost</code> of the command line.</p>
 <tr>
 <td><code>~/.coderagent/agents/</code>, <code>~/.coderagent/skills/</code>, <code>~/.coderagent/plugins/</code></td>
 <td>The extensions of the user</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/commands/</code></td>
+<td>The commands of the user</td>
 </tr>
 <tr>
 <td><code>~/.coderagent/trusted-plugins.json</code></td>

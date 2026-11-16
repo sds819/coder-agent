@@ -1167,7 +1167,7 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        六个时刻
+        九个时刻
       
     </span>
   </a>
@@ -3921,7 +3921,7 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        六个时刻
+        九个时刻
       
     </span>
   </a>
@@ -4061,7 +4061,7 @@
 <p><code>matcher</code> 是拿工具名去匹配的，所以它只对 <code>PreToolUse</code> 和 <code>PostToolUse</code> 有意义。其它事件留空就行。
 它是<strong>搜出来的正则，不是从头对上的</strong>：工具名 <code>multi_edit</code> 会被 <code>edit|write</code> 匹配上；大小写敏感，
 所以 <code>Bash</code> 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。</p>
-<h2 id="_2">六个时刻</h2>
+<h2 id="_2">九个时刻</h2>
 <table>
 <thead>
 <tr>
@@ -4101,6 +4101,21 @@
 <td>这一轮结束</td>
 <td>什么也不做，是个通知</td>
 </tr>
+<tr>
+<td><code>PreCompact</code></td>
+<td>压缩历史之前</td>
+<td>什么也不做，是个通知</td>
+</tr>
+<tr>
+<td><code>PostCompact</code></td>
+<td>压缩历史之后</td>
+<td>什么也不做，是个通知</td>
+</tr>
+<tr>
+<td><code>SubagentStop</code></td>
+<td>子 agent 干完之后</td>
+<td>什么也不做，是个通知</td>
+</tr>
 </tbody>
 </table>
 <p><code>SessionEnd</code> 是每一轮结束时都跑，不是只在整个会话结束时。</p>
@@ -4137,8 +4152,23 @@
 <td><code>SessionEnd</code></td>
 <td><code>session_id</code>、<code>turns</code>、<code>cost</code></td>
 </tr>
+<tr>
+<td><code>PreCompact</code></td>
+<td><code>messages</code>（马上要压掉的那几条）、<code>turn</code></td>
+</tr>
+<tr>
+<td><code>PostCompact</code></td>
+<td><code>summary</code>、<code>messages</code>（压掉了几条）、<code>tokens</code>、<code>summary_tokens</code></td>
+</tr>
+<tr>
+<td><code>SubagentStop</code></td>
+<td><code>agent</code>、<code>status</code>、<code>summary</code>、<code>files_touched</code></td>
+</tr>
 </tbody>
 </table>
+<p>后这三个是<strong>通知</strong>：它们改不了什么。<code>PreCompact</code> 和 <code>PostCompact</code> 是量摘要
+质量的地方——前一个看得见马上要走的消息，后一个看得见换回来的摘要和它花了
+多少 token。</p>
 <h2 id="hook">hook 怎么回答</h2>
 <p>hook 从标准输入读这些细节，把答案写成 JSON 写到标准输出：</p>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>

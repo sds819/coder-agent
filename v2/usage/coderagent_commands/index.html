@@ -4142,16 +4142,17 @@ Everything else: $ARGUMENTS
   session are back when the command is done.</li>
 <li><code>model</code> picks another model for this command.</li>
 </ul>
-<p>Only the <strong>name</strong> of the tool is read. The part in parentheses is thrown away,
-so <code>bash(git diff:*)</code> allows the <code>bash</code> tool for <strong>every</strong> command it runs —
-there is no way to restrict a tool to a pattern. Write <code>bash</code> and remember
-that the command may run anything.</p>
+<p>The part in parentheses is a <strong>pattern of its own</strong>: <code>bash(git diff:*)</code> lets
+the command run <code>git diff</code> and nothing else, and a tool that is not named is
+not there at all. The limit holds in every permission mode, and a rule of the
+user cannot widen it.</p>
 <p>The command above is used like this:</p>
 <div class="highlight"><pre><span></span><code>/commit<span class="w"> </span>src/coderagent/core/loop.py
 </code></pre></div>
 <p>A file without a front matter is ignored. The commands are looked up in
-<code>&lt;cwd&gt;/.coderagent/commands/*.md</code> — the agent does not walk up the directories
-to find them.</p>
+<code>&lt;cwd&gt;/.coderagent/commands/*.md</code> and in <code>~/.coderagent/commands/*.md</code> — the
+agent does not walk up the directories to find them. The command of the
+project wins when both have the same name.</p>
 
 
 

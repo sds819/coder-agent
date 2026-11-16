@@ -4105,6 +4105,21 @@ logged and matches nothing.</p>
 <td>The turn ends</td>
 <td>Nothing. It is a notification</td>
 </tr>
+<tr>
+<td><code>PreCompact</code></td>
+<td>Before the history is compacted</td>
+<td>Nothing. It is a notification</td>
+</tr>
+<tr>
+<td><code>PostCompact</code></td>
+<td>After the history was compacted</td>
+<td>Nothing. It is a notification</td>
+</tr>
+<tr>
+<td><code>SubagentStop</code></td>
+<td>After a sub agent is done</td>
+<td>Nothing. It is a notification</td>
+</tr>
 </tbody>
 </table>
 <p><code>SessionEnd</code> runs at the end of every turn, not only when the whole session
@@ -4142,8 +4157,24 @@ is over.</p>
 <td><code>SessionEnd</code></td>
 <td><code>session_id</code>, <code>turns</code>, <code>cost</code></td>
 </tr>
+<tr>
+<td><code>PreCompact</code></td>
+<td><code>messages</code> (the ones that are about to be compacted), <code>turn</code></td>
+</tr>
+<tr>
+<td><code>PostCompact</code></td>
+<td><code>summary</code>, <code>messages</code> (how many), <code>tokens</code>, <code>summary_tokens</code></td>
+</tr>
+<tr>
+<td><code>SubagentStop</code></td>
+<td><code>agent</code>, <code>status</code>, <code>summary</code>, <code>files_touched</code></td>
+</tr>
 </tbody>
 </table>
+<p>The three new events are <strong>notifications</strong>: they cannot change what happens.
+<code>PreCompact</code> and <code>PostCompact</code> are the place to measure the quality of the
+summaries — the first one sees the messages that go away, the second one sees
+the summary that comes and how many tokens it took.</p>
 <h2 id="what-a-hook-answers">What a hook answers</h2>
 <p>The hook reads the details on its standard input and writes its answer as JSON
 on its standard output:</p>

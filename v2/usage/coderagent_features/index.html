@@ -5339,7 +5339,7 @@ is retried, a bad request is not. The number of attempts comes from
 browser alike. The environment variable <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>
 overrides it, which is handy when a test should not wait.</p>
 <h2 id="the-tools">The tools</h2>
-<p>The thirteen built-in tools:</p>
+<p>The fourteen built-in tools:</p>
 <table>
 <thead>
 <tr>
@@ -5363,6 +5363,10 @@ overrides it, which is handy when a test should not wait.</p>
 <tr>
 <td><code>multi_edit</code></td>
 <td>Several edits in one file — all of them, or none</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td>Apply a patch of blocks: change, add and delete files in one call</td>
 </tr>
 <tr>
 <td><code>glob</code></td>
@@ -5431,6 +5435,24 @@ overrides it, which is handy when a test should not wait.</p>
 <span class="w">  </span><span class="p">{</span><span class="nt">"old_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main():"</span><span class="p">,</span><span class="w"> </span><span class="nt">"new_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main(argv=None):"</span><span class="p">}</span>
 <span class="p">]}}</span>
 </code></pre></div>
+<p><code>apply_patch</code> takes a patch with context, the way Codex writes one. It changes
+several files in one call, and it is <strong>all or nothing</strong>: when a hunk does not
+fit, no file is changed.</p>
+<div class="highlight"><pre><span></span><code>*** Begin Patch
+*** Update File: src/app.py
+@@ def main():
+ def main(argv=None):
+-    run()
++    run(argv)
+*** Add File: notes.md
++the notes of the change
+*** Delete File: old.py
+*** End Patch
+</code></pre></div>
+<p>A line that starts with a space stays, a line with <code>-</code> goes, a line with <code>+</code>
+comes. The text after <code>@@</code> is a hint about where the hunk belongs; the block
+itself is what has to match. The patch may also delete a file, and it ends
+with <code>*** End Patch</code>.</p>
 <p><code>grep</code> has three modes: <code>content</code> (the default), <code>files_with_matches</code> and
 <code>count</code>. It returns at most 100 matches, <code>glob</code> at most 200 files.</p>
 <p>A link that leads out of the working directory is not followed: <code>grep</code> skips
@@ -5470,6 +5492,26 @@ sees the message and can correct itself. The messages are:</p>
 <tr>
 <td><code>multi_edit</code></td>
 <td><code>Error: Edit #1 failed, no changes were written. {inner}</code> — the file is untouched.</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the patch must start with '*** Begin Patch'</code> / <code>Error: the patch must end with '*** End Patch'</code> — the patch is not a patch.</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the context of the hunk does not match {path}: '{line}' is not where the patch says it is. Read the file again and use the lines that are really there.</code></td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: the file {path} exists already.</code> — a file to add is there.</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: file not found: {path}.</code> — the file to change or to delete is not there.</td>
+</tr>
+<tr>
+<td><code>apply_patch</code></td>
+<td><code>Error: '{path}' is outside the working directory {cwd}.</code> — the patch leaves the directory of the session.</td>
 </tr>
 <tr>
 <td><code>grep</code></td>
@@ -5998,12 +6040,17 @@ it found:</p>
   scripts and templates for a kind of task. The agent loads one when it fits.</li>
 <li><strong>Plugins</strong> — <code>.coderagent/plugins</code>: a Python module that adds tools,
   commands and hooks. A plugin has to be trusted once.</li>
-<li><strong>Hooks</strong> — six moments: <code>SessionStart</code>, <code>UserPromptSubmit</code>, <code>PreToolUse</code>,
-  <code>PostToolUse</code>, <code>Stop</code> and <code>SessionEnd</code>. A hook is a command that reads
-  JSON and answers JSON: allow, deny or block, with a reason, with extra
-  context or with rewritten arguments.</li>
-<li><strong>Your own commands</strong> — <code>.coderagent/commands/*.md</code>: a slash command with a
-  description, an argument hint, the tools it may use and its own model.</li>
+<li><strong>Hooks</strong> — nine moments: <code>SessionStart</code>, <code>UserPromptSubmit</code>, <code>PreToolUse</code>,
+  <code>PostToolUse</code>, <code>Stop</code>, <code>SessionEnd</code>, <code>PreCompact</code>, <code>PostCompact</code> and
+  <code>SubagentStop</code>. A hook is a command that reads JSON and answers JSON: allow,
+  deny or block, with a reason, with extra context or with rewritten arguments.</li>
+<li><strong>Your own commands</strong> — <code>.coderagent/commands/*.md</code> and
+  <code>~/.coderagent/commands/*.md</code>: a slash command with a description, an
+  argument hint, the tools it may use and its own model. The command of the
+  project wins when both have the same name.</li>
+<li><strong>The tools of a command may be limited</strong> — <code>allowed-tools: bash(git diff:*),
+  read</code> means: the command may read and it may run <code>git diff</code>, and nothing
+  else. The limit holds in every permission mode.</li>
 <li><strong>MCP servers</strong> — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.</li>
@@ -6075,12 +6122,15 @@ prompt of the user with a string.</p>
 <div class="highlight"><pre><span></span><code>---
 description: Make a commit of the changes
 argument-hint: [message]
-allowed-tools: bash, read
+allowed-tools: bash(git diff:*), read
 <span class="gu">model: cheap</span>
 <span class="gu">---</span>
 
 Commit everything with the message: $ARGUMENTS
 </code></pre></div>
+<p>The pattern of a tool is a limit of its own: <code>bash(git diff:*)</code> lets the
+command run <code>git diff</code> and nothing else, and a rule of the user cannot widen
+it. A tool that is not named is not there at all.</p>
 <h3 id="when-something-goes-wrong_7">When something goes wrong</h3>
 <table>
 <thead>
@@ -6138,8 +6188,9 @@ Commit everything with the message: $ARGUMENTS
 </tr>
 </tbody>
 </table>
-<p>The custom commands are looked up in <code>&lt;cwd&gt;/.coderagent/commands/*.md</code> only —
-the agent does not walk up the directories to find them.</p>
+<p>The custom commands are looked up in <code>&lt;cwd&gt;/.coderagent/commands/*.md</code> and in
+<code>~/.coderagent/commands/*.md</code> — the agent does not walk up the directories to
+find them. The command of the project wins when both have the same name.</p>
 <h2 id="the-sandbox">The sandbox</h2>
 <ul>
 <li><strong>Local by default</strong> — the commands run in the working directory.</li>
@@ -6287,6 +6338,10 @@ $ python -m pytest -q
   completed; <code>→</code> takes the completion.</li>
 <li><strong>A panel of the sessions</strong> — <code>ctrl+o</code> lists the sessions of this directory;
   <code>enter</code> continues the one that is picked, <code>escape</code> closes the panel.</li>
+<li><strong>A tree of the files</strong> — <code>ctrl+t</code> opens it on the left: the files of the
+  working directory, three levels deep, with the ones that changed marked
+  (<code>+</code> added, <code>●</code> changed, <code>-</code> deleted, <code>?</code> new). Picking a file puts its
+  path in the input.</li>
 <li><strong>The terminal is told when a turn is over</strong> — a notification with the answer
   of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
 <li><strong>The answer is Markdown</strong> — the code blocks, the tables and the lists look the
@@ -6309,7 +6364,7 @@ $ python -m pytest -q
 <p><code>←</code>/<code>→</code> move the cursor, <code>↑</code>/<code>↓</code> do the same, the digits jump to a line, the
 space toggles a multiple choice, <code>enter</code> confirms, and <code>y</code>, <code>n</code> and <code>a</code> answer
 directly. <code>ctrl+c</code> interrupts the turn, <code>ctrl+q</code> settles the session and quits,
-<code>ctrl+o</code> opens the panel of the sessions.</p>
+<code>ctrl+o</code> opens the panel of the sessions, <code>ctrl+t</code> opens the tree of the files.</p>
 <p>The todo panel marks the state of a task with <code>◉</code> (completed), <code>◐</code> (in progress)
 and <code>○</code> (pending).</p>
 <h3 id="when-something-goes-wrong_10">When something goes wrong</h3>
@@ -6708,7 +6763,8 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <code>/image</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
 <code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
 <code>/context</code> and <code>/exit</code> (also <code>/quit</code>).</p>
-<p>Your own commands live in <code>.coderagent/commands/*.md</code> and join them.</p>
+<p>Your own commands live in <code>.coderagent/commands/*.md</code> and in
+<code>~/.coderagent/commands/*.md</code> and join them.</p>
 <p><code>/help</code> says what every command takes — the modes of <code>/mode</code>, the number of
 <code>/trust</code>, the arguments of your own commands — so nothing has to be remembered.</p>
 <h3 id="the-review">The review</h3>
@@ -6860,7 +6916,7 @@ the cost of every step; <code>inspector</code> reads it.</p>
 </tr>
 <tr>
 <td><a href="../coderagent_hooks/">Hooks</a></td>
-<td>The six moments and what a hook answers</td>
+<td>The nine moments and what a hook answers</td>
 </tr>
 <tr>
 <td><a href="../coderagent_plugins/">Plugins</a></td>
