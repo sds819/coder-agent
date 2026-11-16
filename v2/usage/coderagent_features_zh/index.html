@@ -6232,6 +6232,11 @@ $ python -m pytest -q
   <code>escape</code> 关掉面板。</li>
 <li><strong>一轮结束时通知终端</strong>——通知里带着 agent 的回答，长的一轮不会错过。
   <code>ui.notifications: false</code> 可以关掉。</li>
+<li><strong>答案是 Markdown</strong>——代码块、表格、列表长得跟项目 README 里一样。文字流出来
+  的时候是纯文本，说完了才渲染；<code>ui.markdown: false</code> 可以让它一直是纯文本。</li>
+<li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。</li>
+<li><strong><code>ctrl+c</code> 能停掉正在跑的工具</strong>——不只是这一轮：shell 里跑着的命令会被停掉，
+  它自己起的那些进程也一样。</li>
 </ul>
 <h3 id="_32">用法例子</h3>
 <p>状态栏长这样：</p>
@@ -6275,6 +6280,11 @@ $ python -m pytest -q
 <td><code>The agent is working. Wait for it, or press ctrl+c to stop it.</code></td>
 <td>agent 还在这一轮的中途时敲了命令，命令没有跑。</td>
 <td>等这一轮结束，或者按 <code>ctrl+c</code> 把 agent 停掉。</td>
+</tr>
+<tr>
+<td><code>shot.png is too big: 7000 KB, the limit is 5120 KB</code></td>
+<td>图片超过了 5 MB 的上限。</td>
+<td>把图片弄小一点，或者当成文件让 agent 自己去读。</td>
 </tr>
 </tbody>
 </table>
@@ -6569,7 +6579,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>、<code>notifications</code></td>
+<td><code>approval_timeout</code>、<code>notifications</code>、<code>markdown</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6615,8 +6625,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tbody>
 </table>
 <h2 id="_40">命令</h2>
-<p>二十七个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
-<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rewind</code>、<code>/diff</code>、<code>/review</code>、<code>/init</code>、
+<p>二十八个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
+<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rewind</code>、<code>/diff</code>、<code>/review</code>、<code>/image</code>、<code>/init</code>、
 <code>/cost</code>、<code>/todos</code>、<code>/mcp</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/agents</code>、<code>/skills</code>、
 <code>/plugins</code>、<code>/trust</code>、<code>/memory</code>、<code>/status</code>、<code>/sandbox</code>、<code>/export</code>、<code>/context</code>、
 <code>/exit</code>（别名 <code>/quit</code>）。</p>

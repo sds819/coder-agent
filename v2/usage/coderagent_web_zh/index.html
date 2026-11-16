@@ -4871,6 +4871,7 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <li>事件流一轮结束就关。中间长时间不说话的时候流是开着的，但每轮之后浏览器都要重连。</li>
 <li>改过的文件是从会话的检查点来的。没有检查点的改动不会出现在那个列表里。</li>
 <li>每个会话自己一套 MCP server 的线程。server 在会话跑第一轮的时候才起来，会话一多线程就多。</li>
+<li>浏览器里没法发图片。agent 认得图片，但图片得从终端发过来（<code>/image</code>）。</li>
 </ul>
 <p>端口被占了的话，服务会说一声然后停下；换一个端口：<code>--port</code>。</p>
 <h2 id="faq">常见问题</h2>

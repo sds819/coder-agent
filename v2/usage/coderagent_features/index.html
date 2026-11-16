@@ -6289,6 +6289,13 @@ $ python -m pytest -q
   <code>enter</code> continues the one that is picked, <code>escape</code> closes the panel.</li>
 <li><strong>The terminal is told when a turn is over</strong> — a notification with the answer
   of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
+<li><strong>The answer is Markdown</strong> — the code blocks, the tables and the lists look the
+  way they look in the README of a project. The text is plain while it arrives and
+  is rendered when it is complete; <code>ui.markdown: false</code> keeps it plain.</li>
+<li><strong>A picture can be sent</strong> — <code>/image shot.png what is this</code> sends the picture
+  with the text that goes with it.</li>
+<li><strong><code>ctrl+c</code> stops the tool that is running</strong> — not only the turn: a command that
+  runs in the shell is stopped, together with the processes it started.</li>
 </ul>
 <h3 id="example_10">Example</h3>
 <p>The status bar looks like this:</p>
@@ -6334,6 +6341,11 @@ and <code>○</code> (pending).</p>
 <td><code>The agent is working. Wait for it, or press ctrl+c to stop it.</code></td>
 <td>A command was typed while the agent was in the middle of a turn. The command did not run.</td>
 <td>Wait for the turn to end, or press <code>ctrl+c</code> to stop the agent.</td>
+</tr>
+<tr>
+<td><code>shot.png is too big: 7000 KB, the limit is 5120 KB</code></td>
+<td>The picture is bigger than the limit of 5 MB.</td>
+<td>Make the picture smaller, or send it as a file the agent can read.</td>
 </tr>
 </tbody>
 </table>
@@ -6641,7 +6653,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>, <code>notifications</code></td>
+<td><code>approval_timeout</code>, <code>notifications</code>, <code>markdown</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
@@ -6691,9 +6703,9 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Twenty-seven built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<p>Twenty-eight built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
 <code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
-<code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
+<code>/image</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
 <code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
 <code>/context</code> and <code>/exit</code> (also <code>/quit</code>).</p>
 <p>Your own commands live in <code>.coderagent/commands/*.md</code> and join them.</p>

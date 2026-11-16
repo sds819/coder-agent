@@ -4626,7 +4626,7 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 <tbody>
 <tr>
 <td><code>ctrl+c</code></td>
-<td>Stop the turn that is running. A second time leaves.</td>
+<td>Stop the turn that is running — and the tool that is running with it. A second time leaves.</td>
 </tr>
 <tr>
 <td><code>ctrl+q</code></td>
@@ -4659,6 +4659,12 @@ to the model, which then does something else.</p>
 <p>The box of the picked answer is starred in red, the others have a grey dash.
 The arrow keys (<code>←</code>/<code>→</code> or <code>↑</code>/<code>↓</code>) move the pick, the numbers jump to an
 answer, and <code>enter</code> confirms it.</p>
+<p>The answer of the agent is rendered as Markdown: the code blocks, the tables
+and the lists look the way they look in the README of a project. The text is
+plain while it arrives, and rendered when it is complete.</p>
+<p>A picture goes to the model with <code>/image</code>:</p>
+<div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>what<span class="w"> </span>is<span class="w"> </span>wrong<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>layout?
+</code></pre></div>
 <h2 id="the-web-interface">The web interface</h2>
 <p>The same agent, in the browser:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[web]"</span>
