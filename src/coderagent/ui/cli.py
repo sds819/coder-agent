@@ -319,12 +319,14 @@ def export(
     session: str = typer.Option("", "--session", help="The id of the session. The last one when empty."),
     output_format: str = typer.Option("json", "--format", help="json|otel"),
     out: str = typer.Option("", "--out", help="The file to write. The standard output when empty."),
+    push: bool = typer.Option(False, "--push", help="Send the trace to the address of telemetry.otel_endpoint."),
     cwd: Path = typer.Option(Path("."), "--cwd", help="The directory of the session"),
 ) -> None:
     """Write the trace of a session to a file."""
     import json
 
-    from coderagent.core.telemetry import otel, trace
+    from coderagent.core.otel import OtlpExporter, build_trace
+    from coderagent.core.telemetry import trace
 
     store = SessionStore()
     session_id = session
@@ -338,10 +340,19 @@ def export(
     if output_format == "json":
         data = trace(events, store.rebuild(session_id))
     elif output_format == "otel":
-        data = otel(events, store.rebuild(session_id))
+        data = build_trace(events, store.rebuild(session_id))
     else:
         typer.echo(f"Unknown format '{output_format}'. Use json or otel.")
         return
+    if push:
+        endpoint = load_config(cwd=cwd).telemetry.otel_endpoint
+        if not endpoint:
+            typer.echo("No telemetry.otel_endpoint is configured, so there is nowhere to push the trace.")
+            raise typer.Exit(code=1)
+        if not OtlpExporter(endpoint).export(data):
+            typer.echo(f"The trace did not reach {endpoint}.")
+            raise typer.Exit(code=1)
+        typer.echo(f"Pushed the trace to {endpoint}.")
     text = json.dumps(data, ensure_ascii=False, indent=2)
     if out:
         Path(out).write_text(text, encoding="utf-8")

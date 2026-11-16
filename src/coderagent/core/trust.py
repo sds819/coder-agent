@@ -177,6 +177,12 @@ def tightened(project: dict) -> dict:
     if isinstance(sandbox, dict) and str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
         """A project may close the sandbox, never open it."""
         sandbox.pop("mode", None)
+    telemetry = result.get("telemetry")
+    if isinstance(telemetry, dict):
+        if str(telemetry.get("otel_endpoint") or ""):
+            """A project may close the trace, never send it somewhere else."""
+            telemetry.pop("otel_endpoint", None)
+        telemetry.pop("otel_headers", None)
     permissions = result.get("permissions")
     if not isinstance(permissions, dict):
         return result

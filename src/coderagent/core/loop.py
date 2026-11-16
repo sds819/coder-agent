@@ -4,11 +4,11 @@ import logging
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-
 from coderagent.config.schema import ContextConfig
 from coderagent.core.content import text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
+from coderagent.core.otel import build_trace
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
 from coderagent.core.tokens import trim_text
@@ -20,7 +20,6 @@ logger = logging.getLogger("coderagent.core.loop")
 
 VERIFY_OUTPUT_TOKENS = 2000
 """The tokens of the output of a check that go back to the model."""
-
 
 @dataclass
 class TurnResult:
@@ -63,6 +62,7 @@ class AgentLoop:
         sandbox=None,
         schema_budget: int | None = None,
         verify=None,
+        exporter=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -94,6 +94,10 @@ class AgentLoop:
         """The tokens the schemas of the tools may take. None means no limit."""
         self.verify = verify
         """The commands that check the work of the agent. None means: no verification."""
+        self.exporter = exporter
+        """Where the trace of the session goes. None means: it stays in the event log."""
+        self._exported = 0
+        """How many events of the session the backend has seen."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self._warned_unpriced = False
@@ -134,6 +138,8 @@ class AgentLoop:
         )
         self.context.hooks = self.hooks
         self.context.restore()
+        self._exported = 0
+        """Another session has its own trace."""
         self._session_start()
 
     def run(self, user_input: str | list[dict]) -> TurnResult:
@@ -243,6 +249,7 @@ class AgentLoop:
         )
         self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE, stop_reason=stop_reason)
         self._session_end()
+        self._export_trace()
         return TurnResult(
             session_id=self.session.id,
             turn_count=self.session.turn_count,
@@ -384,6 +391,25 @@ class AgentLoop:
                 "SessionEnd",
                 {"session_id": self.session.id, "turns": self.session.turn_count, "cost": self.session.total_cost},
             )
+
+    def _export_trace(self) -> None:
+        """Send the spans of this turn to the backend, when there is one.
+
+        What the backend has seen is not sent again. A backend that is down is
+        a warning: the trace stays in the event log either way.
+        """
+        if self.exporter is None:
+            return
+        events = self.store.events(self.session.id)
+        fresh = events[self._exported :]
+        if not fresh:
+            return
+        payload = build_trace(fresh, self.session)
+        if not payload["resourceSpans"][0]["scopeSpans"][0]["spans"]:
+            self._exported = len(events)
+            return
+        if self.exporter.export(payload):
+            self._exported = len(events)
 
     def _query(self) -> tuple[dict | None, str]:
         """Ask the model. When the provider says the context is too big, compact and try once more."""

@@ -68,3 +68,8 @@ verify:
   commands: []
   max_rounds: 3
   timeout: 300
+
+telemetry:
+  otel_endpoint: ""
+  otel_headers: {}
+  otel_timeout: 5.0

@@ -285,3 +285,37 @@ def test_waiting_lists_the_code_of_the_project(tmp_path):
     project = {**MCP_PROJECT, **HOOK_PROJECT, **VERIFY_PROJECT}
     pending = waiting(project, tmp_path, user_home=tmp_path)
     assert set(pending.values()) == {"npx -y echo-server", "python lint.py", "python -m pytest -q"}
+
+
+def test_the_project_may_not_send_the_trace_somewhere(tmp_path, monkeypatch):
+    """The trace holds what the agent read: where it goes is the decision of the user."""
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        json.dumps({"telemetry": {"otel_endpoint": "http://mine:4318"}}), encoding="utf-8"
+    )
+    _project(tmp_path, {"telemetry": {"otel_endpoint": "http://theirs:4318"}})
+    assert load_config([], cwd=tmp_path).telemetry.otel_endpoint == "http://mine:4318"
+
+
+def test_the_project_may_close_the_trace(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        json.dumps({"telemetry": {"otel_endpoint": "http://mine:4318"}}), encoding="utf-8"
+    )
+    _project(tmp_path, {"telemetry": {"otel_endpoint": ""}})
+    assert load_config([], cwd=tmp_path).telemetry.otel_endpoint == ""
+
+
+def test_the_user_may_not_open_a_trace_the_project_closed(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        json.dumps({"telemetry": {"otel_endpoint": "http://mine:4318"}}), encoding="utf-8"
+    )
+    _project(tmp_path, {"telemetry": {"otel_endpoint": ""}})
+    assert load_config([], cwd=tmp_path).telemetry.otel_endpoint == ""

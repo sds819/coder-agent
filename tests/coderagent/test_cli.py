@@ -1,4 +1,6 @@
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 from typer.testing import CliRunner
@@ -146,3 +148,52 @@ def test_an_unknown_format_is_reported(tmp_path, monkeypatch):
     result = CliRunner().invoke(app, ["export", "--session", session.id, "--format", "xml", "--cwd", str(tmp_path)])
     assert result.exit_code == 0
     assert "Unknown format" in result.output
+
+
+def test_the_trace_is_pushed_to_the_backend(tmp_path, monkeypatch):
+    """`coder export --push` sends the trace to the address of the configuration."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    home = tmp_path / "home"
+    home.mkdir()
+    store = SessionStore(home / "sessions")
+    session = store.create(tmp_path)
+
+    received = []
+
+    class Backend(BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("content-length", 0))
+            received.append(json.loads(self.rfile.read(length)))
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"{}")
+
+        def log_message(self, *args):
+            """The test does not want the noise of the server."""
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Backend)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    endpoint = f"http://127.0.0.1:{server.server_port}/v1/traces"
+    (home / "config.yaml").write_text(json.dumps({"telemetry": {"otel_endpoint": endpoint}}), encoding="utf-8")
+    try:
+        result = CliRunner().invoke(
+            app, ["export", "--session", session.id, "--format", "otel", "--push", "--cwd", str(tmp_path)]
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert result.exit_code == 0
+    assert "Pushed the trace" in result.output
+    assert received[0]["resourceSpans"][0]["scopeSpans"][0]["scope"]["name"] == "coderagent"
+
+
+def test_pushing_without_an_address_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(
+        app, ["export", "--session", session.id, "--format", "otel", "--push", "--cwd", str(tmp_path)]
+    )
+    assert result.exit_code == 1
+    assert "No telemetry.otel_endpoint" in result.output

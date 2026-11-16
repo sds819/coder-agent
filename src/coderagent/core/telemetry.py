@@ -5,7 +5,6 @@ of the trace is `coder-agent-1.0`, next to the `mini-swe-agent-1.1` of
 mini-swe-agent.
 """
 
-import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
@@ -13,7 +12,6 @@ from typing import Any
 from coderagent.core.events import Event, EventType
 
 TRACE_FORMAT = "coder-agent-1.0"
-SCOPE = "coderagent"
 
 
 @dataclass
@@ -116,66 +114,6 @@ def trace(events: list[Event], session=None) -> dict[str, Any]:
     }
 
 
-def otel(events: list[Event], session=None) -> dict[str, Any]:
-    """The session as OTLP/JSON: one span per turn, one per tool call."""
-    session_id = getattr(session, "id", "") or (events[0].session_id if events else "")
-    trace_id = _hex(session_id, 32)
-    spans = []
-    turn: dict[str, Any] | None = None
-    children: list[dict[str, Any]] = []
-    for event in events:
-        if event.type == EventType.USER_MESSAGE:
-            if turn is not None:
-                turn["spans"] = children
-                spans.append(turn)
-            turn = {
-                "traceId": trace_id,
-                "spanId": _hex(f"{session_id}:{event.timestamp}", 16),
-                "name": "turn",
-                "kind": 1,
-                "startTimeUnixNano": _nanos(event.timestamp),
-                "endTimeUnixNano": _nanos(event.timestamp),
-                "attributes": [{"key": "session.id", "value": {"stringValue": session_id}}],
-                "spans": [],
-            }
-            children = []
-        elif turn is not None and event.type == EventType.TOOL_CALL:
-            for index, action in enumerate(payload_actions(event)):
-                children.append(
-                    {
-                        "traceId": trace_id,
-                        "spanId": _hex(f"{session_id}:{event.timestamp}:{index}", 16),
-                        "parentSpanId": turn["spanId"],
-                        "name": f"tool.{action.get('tool', '')}",
-                        "kind": 1,
-                        "startTimeUnixNano": _nanos(event.timestamp),
-                        "endTimeUnixNano": _nanos(event.timestamp),
-                        "attributes": [
-                            {"key": "tool.name", "value": {"stringValue": action.get("tool", "")}},
-                            {"key": "tool.call_id", "value": {"stringValue": action.get("tool_call_id", "")}},
-                        ],
-                    }
-                )
-        elif turn is not None:
-            turn["endTimeUnixNano"] = _nanos(event.timestamp)
-    if turn is not None:
-        turn["spans"] = children
-        spans.append(turn)
-    return {
-        "resourceSpans": [
-            {
-                "resource": {
-                    "attributes": [
-                        {"key": "session.id", "value": {"stringValue": session_id}},
-                        {"key": "session.cwd", "value": {"stringValue": str(getattr(session, "cwd", ""))}},
-                    ]
-                },
-                "scopeSpans": [{"scope": {"name": SCOPE}, "spans": spans}],
-            }
-        ]
-    }
-
-
 def payload_actions(event: Event) -> list[dict]:
     return event.payload.get("actions") or []
 
@@ -229,12 +167,4 @@ def _session(session) -> dict[str, Any]:
     }
 
 
-def _hex(seed: str, length: int) -> str:
-    return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:length]
-
-
-def _nanos(timestamp: float) -> str:
-    return str(int(timestamp * 1_000_000_000))
-
-
-__all__ = ["Metrics", "SCOPE", "TRACE_FORMAT", "collect", "otel", "trace"]
+__all__ = ["Metrics", "TRACE_FORMAT", "collect", "trace"]

@@ -13,6 +13,7 @@ from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.os_sandbox import Confinement
+from coderagent.core.otel import OtlpExporter
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
@@ -108,6 +109,17 @@ def schema_budget(config: Config, context_window: int) -> int:
     if config.tools.schema_budget_tokens:
         return config.tools.schema_budget_tokens
     return max(context_window // 10, estimate_tokens(build_registry().schemas()))
+
+
+def _exporter(config: Config) -> OtlpExporter | None:
+    """Where the trace of the session goes. Nothing when the user did not say."""
+    if not config.telemetry.otel_endpoint:
+        return None
+    return OtlpExporter(
+        config.telemetry.otel_endpoint,
+        config.telemetry.otel_headers,
+        config.telemetry.otel_timeout,
+    )
 
 
 def _confinement(config: Config, environment: Any, cwd: Path) -> Confinement | None:
@@ -257,6 +269,7 @@ def build_loop(
         plugins=plugins,
         sandbox=environment,
         verify=config.verify,
+        exporter=_exporter(config),
     )
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())
     """A tool that runs long asks the loop whether the turn is still going on."""

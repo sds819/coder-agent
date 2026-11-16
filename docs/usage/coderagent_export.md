@@ -60,21 +60,53 @@ history the summary kept. It is the gauge of the quality of the summary.
 
 ## The otel format
 
-The same session as OTLP/JSON: one span per turn, one span per tool call. The
-file goes into Jaeger, Tempo or any other place that reads OTLP.
+The same session as OTLP/JSON: one span per turn, one per model call, one per
+tool call. The calls of a turn are the children of that turn, and the file goes
+into Jaeger, Tempo or any other place that reads OTLP.
 
 ```json
 {
   "resourceSpans": [
     {
-      "resource": {"attributes": [{"key": "session.id", "value": {"stringValue": "20261106-a1b2c3"}}]},
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "coderagent"}},
+          {"key": "session.id", "value": {"stringValue": "20261106-a1b2c3"}},
+          {"key": "session.cwd", "value": {"stringValue": "/home/me/project"}}
+        ]
+      },
       "scopeSpans": [
         {
           "scope": {"name": "coderagent"},
           "spans": [
             {
               "name": "turn",
-              "spans": [{"name": "tool.read", "parentSpanId": "..."}]
+              "traceId": "6f1c…",
+              "spanId": "9a02…",
+              "startTimeUnixNano": "1762310400000000000",
+              "endTimeUnixNano": "1762310412000000000",
+              "attributes": [
+                {"key": "turn.cost", "value": {"doubleValue": 0.12}},
+                {"key": "turn.stop_reason", "value": {"stringValue": "end_turn"}}
+              ]
+            },
+            {
+              "name": "model",
+              "parentSpanId": "9a02…",
+              "attributes": [
+                {"key": "model.name", "value": {"stringValue": "deepseek/deepseek-flash"}},
+                {"key": "cost", "value": {"doubleValue": 0.05}},
+                {"key": "tokens.in", "value": {"intValue": 12000}},
+                {"key": "tokens.out", "value": {"intValue": 800}}
+              ]
+            },
+            {
+              "name": "tool.read",
+              "parentSpanId": "9a02…",
+              "attributes": [
+                {"key": "tool.name", "value": {"stringValue": "read"}},
+                {"key": "tool.call_id", "value": {"stringValue": "call_1"}}
+              ]
             }
           ]
         }
@@ -83,6 +115,38 @@ file goes into Jaeger, Tempo or any other place that reads OTLP.
   ]
 }
 ```
+
+The spans stand next to each other, not inside each other: that is what OTLP
+wants, and a backend that reads it will not complain. A tool that failed gets
+a `status` of code 2.
+
+## Sending the trace to a backend
+
+The trace does not have to stay on your machine. Name a collector and the trace
+of every turn goes there as the turn ends:
+
+```yaml
+telemetry:
+  otel_endpoint: "http://localhost:4318/v1/traces"
+  otel_headers:
+    authorization: "Bearer …"
+```
+
+- **The event log stays the source of truth** — the trace is built from it, and
+  the log is written whether the backend is there or not;
+- **A backend that is down is a warning**: the session does not stop, and the
+  trace is sent again with the next turn;
+- **Every span is sent once** — the second turn does not send the first one
+  again;
+- **A project may not send the trace somewhere**: the configuration of a
+  project may close the trace (`otel_endpoint: ""`), never point it at an
+  address of its own. Where the trace goes is your decision, not the decision
+  of the repository you cloned;
+- **By hand**: `coder export --format otel --push` sends one session to the
+  address of the configuration.
+
+The headers are for the backends that ask for a key. They are yours: the
+configuration of a project may not bring headers either.
 
 ## Where the money went
 

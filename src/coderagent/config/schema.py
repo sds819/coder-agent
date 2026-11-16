@@ -203,6 +203,15 @@ class VerifyConfig(BaseModel):
     """The seconds one command may take."""
 
 
+class TelemetryConfig(BaseModel):
+    otel_endpoint: str = ""
+    """Where the trace of a session goes. Empty means: it stays in the local event log."""
+    otel_headers: dict[str, str] = Field(default_factory=dict)
+    """The headers that address wants, like the key it asks for."""
+    otel_timeout: float = 5.0
+    """The seconds one push may take."""
+
+
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
@@ -216,4 +225,5 @@ class Config(BaseModel):
     ui: UIConfig = Field(default_factory=UIConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
+    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
     cwd: Path = Field(default_factory=Path.cwd)

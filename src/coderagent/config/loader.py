@@ -57,6 +57,7 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
     The project may only take tools away: the rules and the paths it denies
     are added to the ones of the user, and the tools it names may only remove
     from the tools of the others.
+
     """
     layers = config_layers(cwd)
     spec_layers = [get_config_from_spec(spec) for spec in specs or []]
@@ -74,9 +75,22 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
             """A project may close the network: the user does not open it again."""
             merged.setdefault("permissions", {})["network"] = "deny"
         _tighten_sandbox(merged, project)
+        _tighten_telemetry(merged, project)
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)
+
+
+def _tighten_telemetry(merged: dict, project: dict) -> None:
+    """A project may close the trace, and the user does not open it again.
+
+    The trace of a session holds what the agent read. Where it goes is the
+    decision of the user: a project may say "do not send it", never "send it
+    to me".
+    """
+    telemetry = project.get("telemetry")
+    if isinstance(telemetry, dict) and "otel_endpoint" in telemetry:
+        merged.setdefault("telemetry", {})["otel_endpoint"] = ""
 
 
 def _tighten_sandbox(merged: dict, project: dict) -> None:

@@ -5,7 +5,7 @@ import json
 import pytest
 
 from coderagent.core.events import Event, EventType
-from coderagent.core.telemetry import TRACE_FORMAT, collect, otel, trace
+from coderagent.core.telemetry import TRACE_FORMAT, collect, trace
 
 
 def _event(event_type: EventType, payload: dict, timestamp: float = 1.0) -> Event:
@@ -178,25 +178,3 @@ def test_the_trace_names_the_session():
     data = trace([], Session())
     assert data["session"]["id"] == "s1"
     assert data["session"]["state"] == "done"
-
-
-def test_the_otel_export_has_one_span_per_turn():
-    events = [
-        _event(EventType.USER_MESSAGE, {"content": "hi"}, 1.0),
-        _event(EventType.TOOL_CALL, {"actions": [{"tool": "read", "tool_call_id": "1"}]}, 2.0),
-        _event(EventType.USER_MESSAGE, {"content": "again"}, 3.0),
-    ]
-    spans = otel(events)["resourceSpans"][0]["scopeSpans"][0]["spans"]
-    assert len(spans) == 2
-    assert spans[0]["name"] == "turn"
-    assert spans[0]["spans"][0]["name"] == "tool.read"
-    assert spans[0]["spans"][0]["parentSpanId"] == spans[0]["spanId"]
-
-
-def test_the_otel_export_has_the_session_as_a_resource():
-    class Session:
-        id = "s1"
-        cwd = "/tmp"
-
-    resource = otel([], Session())["resourceSpans"][0]["resource"]
-    assert {"key": "session.id", "value": {"stringValue": "s1"}} in resource["attributes"]
