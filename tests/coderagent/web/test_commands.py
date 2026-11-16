@@ -1,8 +1,11 @@
 """The slash commands of the web interface."""
 
+import subprocess
 import time
 
 import pytest
+
+from coderagent.testing.scripted_model import ScriptedModel
 
 pytest.importorskip("fastapi")
 
@@ -65,6 +68,25 @@ def test_the_exit_command_says_the_server_keeps_running(make_client, send, wait_
     items = wait_for(client, session_id, "command_output")
 
     assert "ctrl+c" in [item["text"] for item in items if item["kind"] == "command_output"][0]
+
+
+def test_the_review_command_gives_the_diff_to_the_model(make_client, send, wait_for, tmp_path):
+    """The review is a turn of the session: the diff goes into the prompt."""
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "T"], cwd=tmp_path, check=True, capture_output=True)
+    (tmp_path / "a.py").write_text("print('a')\n", encoding="utf-8")
+    subprocess.run(["git", "add", "a.py"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "first"], cwd=tmp_path, check=True, capture_output=True)
+    (tmp_path / "a.py").write_text("print('b')\n", encoding="utf-8")
+    model = ScriptedModel([{"role": "assistant", "content": "one thing is wrong"}])
+    client = make_client(model=model)
+    session_id = client.post("/api/sessions").json()["id"]
+
+    send(client, session_id, "/review")
+    wait_for(client, session_id, "turn_end")
+
+    assert "+print('b')" in str(model.calls[0])
 
 
 def test_clear_starts_a_new_session_and_the_registry_follows(make_client, send):

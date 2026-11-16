@@ -226,6 +226,7 @@ rules:
 | `/mode` | 看/切权限模式 |
 | `/cost` | 这次会话花了多少钱，花在哪 |
 | `/diff` | 看工作区的改动 |
+| `/review` | 让模型审一遍改动（`/review main..HEAD` 审一个范围） |
 | `/init` | 给项目写一份模板 `AGENTS.md`（不问模型） |
 | `/todos` | agent 的任务清单 |
 | `/clear` | 开一个新会话（账从 0 开始） |

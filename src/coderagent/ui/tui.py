@@ -324,9 +324,14 @@ class CoderApp(App):
             checkpoints=self.loop.checkpoints,
             mcp=self.loop.mcp,
             output=self._add_command,
+            submit=self._submit_turn,
             quit=self.action_quit,
         )
         run_command(context, line)
+
+    def _submit_turn(self, text: str) -> None:
+        """Run a turn for a command that needs the model."""
+        self.run_worker(lambda: self._run_turn(text), thread=True, exclusive=True)
 
     # -- the keys ---------------------------------------------------------
 

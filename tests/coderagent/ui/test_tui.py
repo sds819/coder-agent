@@ -1,6 +1,7 @@
 """The terminal interface: the widgets and the app."""
 
 import asyncio
+import subprocess
 import threading
 import time
 
@@ -350,6 +351,35 @@ def test_several_answers_can_be_picked(tmp_path):
     options.move(1)
     assert options.selected_keys == ["y", "n"]
     assert options.markup().count("\\[[gray]-[/gray]]") == 1
+
+
+def _repo(tmp_path):
+    """A repository with one commit."""
+    for args in (
+        ["git", "init"],
+        ["git", "config", "user.email", "t@e.com"],
+        ["git", "config", "user.name", "T"],
+    ):
+        subprocess.run(args, cwd=tmp_path, check=True, capture_output=True)
+    (tmp_path / "a.py").write_text("print('a')\n", encoding="utf-8")
+    subprocess.run(["git", "add", "a.py"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "first"], cwd=tmp_path, check=True, capture_output=True)
+
+
+def test_the_review_command_gives_the_diff_to_the_model(tmp_path):
+    """The review is a turn of the session: the diff goes into the prompt."""
+    _repo(tmp_path)
+    (tmp_path / "a.py").write_text("print('b')\n", encoding="utf-8")
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"/review")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+
+    asyncio.run(go())
+    assert "+print('b')" in str(app.loop.model.backend.calls[0])
 
 
 def test_the_exit_command_leaves_the_interface(tmp_path):

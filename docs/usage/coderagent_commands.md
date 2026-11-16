@@ -35,6 +35,7 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | `/fork` | Copy the session into a new one | `[session-id]` |
 | `/rewind` | Show the checkpoints or roll back to one | `[checkpoint-id]` |
 | `/diff` | Show the changes in the working tree | |
+| `/review` | Review the changes, or the changes of a range | `[main..HEAD]` |
 | `/init` | Write an `AGENTS.md` for this project | |
 | `/cost` | The tokens and the money spent | |
 | `/todos` | The task list of the agent | |
@@ -59,6 +60,14 @@ too, with the arguments their file declares.
 
 The money of `/cost` is the money of the session. A new session (`/clear`) starts
 at zero, whatever the session before it spent.
+
+`/review` asks the model to look at the changes and say what is wrong with them.
+Without a range it reviews the working tree; with one (`/review main..HEAD`) it
+reviews that range. The files that are new and not in the diff yet are named, so
+the agent reads them when they matter. The review is a turn of the current
+session: the answer stays in the conversation, and you can act on it right away
+("fix the second one"). The agent is told not to change any file while it
+reviews.
 
 `/exit` closes the terminal interface, the same way `ctrl+q` does. In the
 browser there is nothing to close, so it says that the server keeps running:

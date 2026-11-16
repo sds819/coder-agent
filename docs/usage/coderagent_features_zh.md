@@ -968,9 +968,9 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 ## 命令
 
-二十六个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
-`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/init`、`/cost`、
-`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
+二十七个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/init`、
+`/cost`、`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。
 
@@ -978,6 +978,16 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 `/help` 会说每个命令收什么——`/mode` 的那几个模式、`/trust` 的编号、自己命令的
 参数——不用记。
+
+### 审查
+
+`/review` 把 diff 交给模型，让它说改动里哪里有问题。不带范围时审的是工作区里的
+改动，带范围时（`/review main..HEAD`）审的是那个范围。新加的、还没进版本库的文件
+会在提示词里点名，模型觉得重要就自己去读。diff 超过 60000 字符会被截断，并且
+告诉模型自己读文件。
+
+审查是当前会话里的一轮，用的是它自己的提示词，提示词里明写不改任何文件。
+结果留在对话里。
 
 ### 用法例子
 
@@ -1007,6 +1017,8 @@ agent 的回答。agent 正在干活的时候敲命令会被拒绝。
 | `Unknown mode 'bogus'. Use one of: default, acceptEdits, plan, bypass, readonly.` | `/mode` 给了一个不存在的模式。会话的模式没变。 | 用那五个之一。 |
 | `/rewind` 拿到的 id 不是检查点 | `ValueError: no checkpoint '<id>' in this session` | 不带 id 的 `/rewind` 会列出检查点。 |
 | `Not a git repository: {cwd}` | `/diff` 跑的是 `git diff`，而这个目录不是仓库。 | 在仓库里跑，或者看网页版的改动。 |
+| `No changes to review.` | `/review` 在工作区里没找到可审的东西。 | 先改点东西，或者给个范围：`/review main..HEAD`。 |
+| `Git does not know '{revision}'` | `/review` 拿到的范围 git 不认。 | 用 `git log --oneline` 看看范围。 |
 | `{path} already exists.` | `/init` 不会覆盖已有的 `AGENTS.md`。 | 自己改那个文件。 |
 | `No sessions yet.` | `/resume` 不带 id 时，这个目录里什么都没有。 | 先跑一轮。 |
 

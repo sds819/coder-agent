@@ -1038,16 +1038,27 @@ The sections and what they hold:
 
 ## The commands
 
-Twenty-six built-in commands: `/help`, `/model`, `/mode`, `/plan`,
-`/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/init`,
-`/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`, `/skills`,
-`/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`, `/context`
-and `/exit` (also `/quit`).
+Twenty-seven built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+`/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/review`,
+`/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
+`/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
+`/context` and `/exit` (also `/quit`).
 
 Your own commands live in `.coderagent/commands/*.md` and join them.
 
 `/help` says what every command takes — the modes of `/mode`, the number of
 `/trust`, the arguments of your own commands — so nothing has to be remembered.
+
+### The review
+
+`/review` gives the model the diff and asks it what is wrong with the changes.
+Without a range it reviews the working tree; with one (`/review main..HEAD`) it
+reviews that range. The files that are new and not in the diff yet are named in
+the prompt, so the model reads them when they matter. A diff that is longer
+than 60000 characters is cut, and the model is told to read the files itself.
+
+The review is a turn of the current session, with a prompt of its own that says
+not to change any file. The answer stays in the conversation.
 
 ### Example
 
@@ -1079,6 +1090,8 @@ comes from `GET /api/commands`.
 | `Unknown mode 'bogus'. Use one of: default, acceptEdits, plan, bypass, readonly.` | `/mode` was given a mode that does not exist. The mode of the session is unchanged. | Use one of the five. |
 | `/rewind` with an id that is not a checkpoint | `ValueError: no checkpoint '<id>' in this session` | `/rewind` without an id lists the checkpoints. |
 | `Not a git repository: {cwd}` | `/diff` runs `git diff`, and this directory is not a repository. | Run it in a repository, or use the changes of the web page. |
+| `No changes to review.` | `/review` found nothing to review in the working tree. | Make a change first, or give a range: `/review main..HEAD`. |
+| `Git does not know '{revision}'` | `/review` was given a range that git does not know. | Check the range with `git log --oneline`. |
 | `{path} already exists.` | `/init` does not overwrite an `AGENTS.md`. | Edit the file yourself. |
 | `No sessions yet.` | `/resume` without an id found nothing in this directory. | Run a turn first. |
 

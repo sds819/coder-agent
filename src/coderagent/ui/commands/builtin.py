@@ -175,6 +175,23 @@ def _diff(context: CommandContext, argument: str) -> None:
     context.say(result.stdout.strip() or "No changes in the working tree.")
 
 
+def _review(context: CommandContext, argument: str) -> None:
+    """Review the changes: the diff goes into the prompt of a turn."""
+    from coderagent.ui.commands.review import changes, prompt
+
+    if context.submit is None:
+        context.say("This interface cannot run a turn, so it cannot review.")
+        return
+    diff, untracked, error = changes(context.cwd, argument.strip())
+    if error:
+        context.say(error)
+        return
+    if not diff and not untracked:
+        context.say("No changes to review.")
+        return
+    context.submit(prompt(diff, untracked, argument.strip()))
+
+
 def _init(context: CommandContext, argument: str) -> None:
     target = context.cwd / "AGENTS.md"
     if target.exists():
@@ -444,6 +461,14 @@ register(
     )
 )
 register(Command(name="diff", description="Show the changes in the working tree", handler=_diff))
+register(
+    Command(
+        name="review",
+        description="Review the changes, or the changes of a range",
+        handler=_review,
+        usage="[main..HEAD]",
+    )
+)
 register(Command(name="init", description="Write an AGENTS.md for this project", handler=_init))
 register(Command(name="cost", description="Show the tokens and the money spent", handler=_cost))
 register(Command(name="todos", description="Show the task list", handler=_todos))

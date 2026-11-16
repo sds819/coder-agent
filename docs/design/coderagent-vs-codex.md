@@ -106,18 +106,34 @@ sandbox:
 
 ---
 
-### 3.2 没有 `/review`
+### 3.2 没有 `/review` ✅ 已修
 
-**现状**：coderagent 的命令注册表在 `src/coderagent/ui/commands/builtin.py:428-483`，
-一共二十来条，**没有 `review`**。Codex 有 `/review`，能把当前分支的改动拉出来做一次
+**原来**：coderagent 的命令注册表在 `src/coderagent/ui/commands/builtin.py`，
+二十来条命令里**没有 `review`**。Codex 有 `/review`，能把当前分支的改动拉出来做一次
 专门的审查轮。
 
-**影响**：审查这件事现在只能靠用户自己在输入框里写「帮我 review 一下这些改动」，
-走的是普通对话路径——没有独立的提示词、没有独立的 diff 上下文、也没有独立的结果区。
+**影响**：审查这件事只能靠用户自己在输入框里写「帮我 review 一下这些改动」，
+走的是普通对话路径——没有独立的提示词、没有独立的 diff 上下文。
 
-**建议**：加一条 `/review [范围]` 命令，把工作树的 diff（或 `base..head`）作为上下文喂进去，
-走一次专门的审查提示词。现有零件都有：`/diff`（`builtin.py:446`）已经会算工作树改动，
-`src/coderagent/core/checkpoint.py` 存着每一轮的快照。**工作量：小到中。**
+**已修：一条 `/review [范围]` 命令**（`src/coderagent/ui/commands/review.py`）
+
+- 不带范围时审查**工作树**的改动（`git diff HEAD`，没有提交时退回 `git diff`）；
+  带范围时审查那个范围（`git diff main..HEAD`）；
+- 范围 git 不认时说一句「Git does not know …」，不静默；
+- **新增但还没进版本库的文件单独列出来**（`git status --porcelain`），它们不在 diff 里，
+  提示词里点名，模型自己去读；
+- diff 进的是**一次专门的审查轮**的提示词（`REVIEW_PROMPT`），提示词里明写
+  「**Do not change any file**: this is a review, not a fix」——
+  审查只出结论，不动代码（要改的话走正常的审批门）；
+- diff 超过 60000 字符会被截断，并告诉模型「the diff is cut here, read the files yourself」；
+- 审查轮在**当前会话**里跑，结果留在对话里，用户可以接着说「把第二条改掉」。
+
+**实现要点**：命令自己不跑模型，它把提示词交给界面的 `submit` 回调——
+`CommandContext` 多了一个 `submit` 字段（TUI → 工作线程，网页版 → 会话线程，
+CLI → `render(loop.run_turn(...))`）。界面不能跑轮时（`submit is None`）说一句
+「This interface cannot run a turn, so it cannot review.」就完了。
+**没有**另起一个子 agent：审查留在对话里，用户能直接接着用结论。
+
 
 ---
 
@@ -295,7 +311,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 |---|---|---|
 | 1 | ~~**修 3.4 + 3.5 两个 bug**~~ ✅ | 都是几行的事，但一个白烧 token、一个静默吞配置 |
 | 2 | ~~**加网络开关（3.1 的第一步）**~~ ✅ | 一天内能做完，堵住最大的口子 |
-| 3 | **`/review`（3.2）** | 现有零件都齐了，性价比最高的功能缺口 |
+| 3 | ~~**`/review`（3.2）**~~ ✅ | 现有零件都齐了，性价比最高的功能缺口 |
 | 4 | **`reasoning_effort`（3.3）** | 便宜，且和 `model.routing` 是一套东西 |
 | 5 | **TUI 小件（4.2 / 4.5 / 4.7 / 4.8）** | 四个小改动合一个提交，都是「有了就顺手」 |
 | 6 | **死配置清理（5.1）** | 顺手做，别单开 |

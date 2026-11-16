@@ -35,6 +35,8 @@ class CommandContext:
     """The MCP manager, when one is running."""
     output: Callable[[str], None] = print
     """Where the answer goes."""
+    submit: Callable[[str], None] | None = None
+    """Run a turn with this prompt. None when the interface cannot run one."""
     quit: Callable[[], None] | None = None
     """How to leave the interface. None when there is nothing to leave."""
 

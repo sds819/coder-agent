@@ -54,7 +54,9 @@ def pick_session(
     return None
 
 
-def run_command(task: str, config, cwd: Path, store: SessionStore, session: Session | None) -> None:
+def run_command(
+    task: str, config, cwd: Path, store: SessionStore, session: Session | None, output_format: str = "text"
+) -> None:
     """Run a slash command instead of a turn."""
     from coderagent.ui.commands import CommandContext, run
 
@@ -70,6 +72,7 @@ def run_command(task: str, config, cwd: Path, store: SessionStore, session: Sess
         checkpoints=loop.checkpoints,
         mcp=loop.mcp,
         output=typer.echo,
+        submit=lambda text: typer.echo(render(loop.run_turn(text), output_format)),
         quit=lambda: None,
     )
     run(context, task)
@@ -138,7 +141,7 @@ def main(
         typer.echo(f"session {session.id}" if session else "no task given")
         return
     if task.startswith("/"):
-        run_command(task, config, cwd, store, session)
+        run_command(task, config, cwd, store, session, output_format)
         return
     _warn_pending(cwd)
     typer.echo(main_impl(task, config, cwd, output_format, store=store, session=session, permission_mode=permission_mode or None))

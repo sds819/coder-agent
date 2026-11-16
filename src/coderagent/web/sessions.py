@@ -190,6 +190,7 @@ class SessionRuntime:
             checkpoints=loop.checkpoints,
             mcp=loop.mcp,
             output=lambda text: self.emit({"kind": "command_output", "text": text}),
+            submit=self._run_turn,
         )
         run_command(context, line)
         if loop.session.id != self.session.id:
