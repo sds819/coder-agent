@@ -1771,6 +1771,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_13" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4946,6 +4957,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_13" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6609,14 +6631,22 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Twenty-six built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
-<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/init</code>,
-<code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>, <code>/skills</code>,
-<code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>, <code>/context</code>
-and <code>/exit</code> (also <code>/quit</code>).</p>
+<p>Twenty-seven built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
+<code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
+<code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
+<code>/context</code> and <code>/exit</code> (also <code>/quit</code>).</p>
 <p>Your own commands live in <code>.coderagent/commands/*.md</code> and join them.</p>
 <p><code>/help</code> says what every command takes — the modes of <code>/mode</code>, the number of
 <code>/trust</code>, the arguments of your own commands — so nothing has to be remembered.</p>
+<h3 id="the-review">The review</h3>
+<p><code>/review</code> gives the model the diff and asks it what is wrong with the changes.
+Without a range it reviews the working tree; with one (<code>/review main..HEAD</code>) it
+reviews that range. The files that are new and not in the diff yet are named in
+the prompt, so the model reads them when they matter. A diff that is longer
+than 60000 characters is cut, and the model is told to read the files itself.</p>
+<p>The review is a turn of the current session, with a prompt of its own that says
+not to change any file. The answer stays in the conversation.</p>
 <h3 id="example_13">Example</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># a command in the terminal</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>
@@ -6660,6 +6690,16 @@ comes from <code>GET /api/commands</code>.</p>
 <td><code>Not a git repository: {cwd}</code></td>
 <td><code>/diff</code> runs <code>git diff</code>, and this directory is not a repository.</td>
 <td>Run it in a repository, or use the changes of the web page.</td>
+</tr>
+<tr>
+<td><code>No changes to review.</code></td>
+<td><code>/review</code> found nothing to review in the working tree.</td>
+<td>Make a change first, or give a range: <code>/review main..HEAD</code>.</td>
+</tr>
+<tr>
+<td><code>Git does not know '{revision}'</code></td>
+<td><code>/review</code> was given a range that git does not know.</td>
+<td>Check the range with <code>git log --oneline</code>.</td>
 </tr>
 <tr>
 <td><code>{path} already exists.</code></td>

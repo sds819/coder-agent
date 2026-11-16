@@ -1572,7 +1572,7 @@
   <a href="#_41" class="md-nav__link">
     <span class="md-ellipsis">
       
-        用法例子
+        审查
       
     </span>
   </a>
@@ -1581,6 +1581,17 @@
         
           <li class="md-nav__item">
   <a href="#_42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用法例子
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_43" class="md-nav__link">
     <span class="md-ellipsis">
       
         出错时怎么办
@@ -1608,7 +1619,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_43" class="md-nav__link">
+  <a href="#_44" class="md-nav__link">
     <span class="md-ellipsis">
       
         用法例子
@@ -1619,7 +1630,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_44" class="md-nav__link">
+  <a href="#_45" class="md-nav__link">
     <span class="md-ellipsis">
       
         出错时怎么办
@@ -1635,7 +1646,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_45" class="md-nav__link">
+  <a href="#_46" class="md-nav__link">
     <span class="md-ellipsis">
       
         细节在哪
@@ -4951,7 +4962,7 @@
   <a href="#_41" class="md-nav__link">
     <span class="md-ellipsis">
       
-        用法例子
+        审查
       
     </span>
   </a>
@@ -4960,6 +4971,17 @@
         
           <li class="md-nav__item">
   <a href="#_42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用法例子
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_43" class="md-nav__link">
     <span class="md-ellipsis">
       
         出错时怎么办
@@ -4987,7 +5009,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_43" class="md-nav__link">
+  <a href="#_44" class="md-nav__link">
     <span class="md-ellipsis">
       
         用法例子
@@ -4998,7 +5020,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_44" class="md-nav__link">
+  <a href="#_45" class="md-nav__link">
     <span class="md-ellipsis">
       
         出错时怎么办
@@ -5014,7 +5036,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_45" class="md-nav__link">
+  <a href="#_46" class="md-nav__link">
     <span class="md-ellipsis">
       
         细节在哪
@@ -6539,15 +6561,22 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tbody>
 </table>
 <h2 id="_40">命令</h2>
-<p>二十六个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
-<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rewind</code>、<code>/diff</code>、<code>/init</code>、<code>/cost</code>、
-<code>/todos</code>、<code>/mcp</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/agents</code>、<code>/skills</code>、
+<p>二十七个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
+<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rewind</code>、<code>/diff</code>、<code>/review</code>、<code>/init</code>、
+<code>/cost</code>、<code>/todos</code>、<code>/mcp</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/agents</code>、<code>/skills</code>、
 <code>/plugins</code>、<code>/trust</code>、<code>/memory</code>、<code>/status</code>、<code>/sandbox</code>、<code>/export</code>、<code>/context</code>、
 <code>/exit</code>（别名 <code>/quit</code>）。</p>
 <p>自己的命令放在 <code>.coderagent/commands/*.md</code>，和它们一起用。</p>
 <p><code>/help</code> 会说每个命令收什么——<code>/mode</code> 的那几个模式、<code>/trust</code> 的编号、自己命令的
 参数——不用记。</p>
-<h3 id="_41">用法例子</h3>
+<h3 id="_41">审查</h3>
+<p><code>/review</code> 把 diff 交给模型，让它说改动里哪里有问题。不带范围时审的是工作区里的
+改动，带范围时（<code>/review main..HEAD</code>）审的是那个范围。新加的、还没进版本库的文件
+会在提示词里点名，模型觉得重要就自己去读。diff 超过 60000 字符会被截断，并且
+告诉模型自己读文件。</p>
+<p>审查是当前会话里的一轮，用的是它自己的提示词，提示词里明写不改任何文件。
+结果留在对话里。</p>
+<h3 id="_42">用法例子</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># 终端里跑一个命令</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/mode plan"</span>
@@ -6559,7 +6588,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/mode p
 <p>终端界面里，命令是它自己的一条消息：你敲的那一行会显示出来，命令的回答不会顶掉
 agent 的回答。agent 正在干活的时候敲命令会被拒绝。</p>
 <p>浏览器里，命令在聊天页的命令面板里，列表来自 <code>GET /api/commands</code>。</p>
-<h3 id="_42">出错时怎么办</h3>
+<h3 id="_43">出错时怎么办</h3>
 <table>
 <thead>
 <tr>
@@ -6590,6 +6619,16 @@ agent 的回答。agent 正在干活的时候敲命令会被拒绝。</p>
 <td>在仓库里跑，或者看网页版的改动。</td>
 </tr>
 <tr>
+<td><code>No changes to review.</code></td>
+<td><code>/review</code> 在工作区里没找到可审的东西。</td>
+<td>先改点东西，或者给个范围：<code>/review main..HEAD</code>。</td>
+</tr>
+<tr>
+<td><code>Git does not know '{revision}'</code></td>
+<td><code>/review</code> 拿到的范围 git 不认。</td>
+<td>用 <code>git log --oneline</code> 看看范围。</td>
+</tr>
+<tr>
 <td><code>{path} already exists.</code></td>
 <td><code>/init</code> 不会覆盖已有的 <code>AGENTS.md</code>。</td>
 <td>自己改那个文件。</td>
@@ -6613,7 +6652,7 @@ agent 的回答。agent 正在干活的时候敲命令会被拒绝。</p>
 <li><strong>模型</strong>——litellm 覆盖大多数厂商，另外还有 portkey、openrouter、
   requesty、基于文本的模型和 roulette 模型。</li>
 </ul>
-<h3 id="_43">用法例子</h3>
+<h3 id="_44">用法例子</h3>
 <div class="highlight"><pre><span></span><code>mini<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--environment-class<span class="w"> </span>docker<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--task<span class="w"> </span><span class="s2">"the failing test is in test_api.py"</span>
 
@@ -6622,7 +6661,7 @@ mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span c
 </code></pre></div>
 <p>一次运行的轨迹是一个 JSON 文件，里面有每一步的消息、工具调用和花费；
 <code>inspector</code> 读它。</p>
-<h3 id="_44">出错时怎么办</h3>
+<h3 id="_45">出错时怎么办</h3>
 <table>
 <thead>
 <tr>
@@ -6644,7 +6683,7 @@ mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span c
 </tr>
 </tbody>
 </table>
-<h2 id="_45">细节在哪</h2>
+<h2 id="_46">细节在哪</h2>
 <table>
 <thead>
 <tr>

@@ -3563,7 +3563,7 @@
   <a href="#32-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 没有 /review
+        3.2 没有 /review ✅ 已修
       
     </span>
   </a>
@@ -4098,7 +4098,7 @@
   <a href="#32-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 没有 /review
+        3.2 没有 /review ✅ 已修
       
     </span>
   </a>
@@ -4439,15 +4439,30 @@
 用户写的 <code>allow</code> 规则<strong>放宽不了</strong>这个边界——这是 coderagent 比 Codex 强的地方，
 做 OS 级沙箱时不要把它绕开。</p>
 <hr>
-<h3 id="32-review">3.2 没有 <code>/review</code></h3>
-<p><strong>现状</strong>：coderagent 的命令注册表在 <code>src/coderagent/ui/commands/builtin.py:428-483</code>，
-一共二十来条，<strong>没有 <code>review</code></strong>。Codex 有 <code>/review</code>，能把当前分支的改动拉出来做一次
+<h3 id="32-review">3.2 没有 <code>/review</code> ✅ 已修</h3>
+<p><strong>原来</strong>：coderagent 的命令注册表在 <code>src/coderagent/ui/commands/builtin.py</code>，
+二十来条命令里<strong>没有 <code>review</code></strong>。Codex 有 <code>/review</code>，能把当前分支的改动拉出来做一次
 专门的审查轮。</p>
-<p><strong>影响</strong>：审查这件事现在只能靠用户自己在输入框里写「帮我 review 一下这些改动」，
-走的是普通对话路径——没有独立的提示词、没有独立的 diff 上下文、也没有独立的结果区。</p>
-<p><strong>建议</strong>：加一条 <code>/review [范围]</code> 命令，把工作树的 diff（或 <code>base..head</code>）作为上下文喂进去，
-走一次专门的审查提示词。现有零件都有：<code>/diff</code>（<code>builtin.py:446</code>）已经会算工作树改动，
-<code>src/coderagent/core/checkpoint.py</code> 存着每一轮的快照。<strong>工作量：小到中。</strong></p>
+<p><strong>影响</strong>：审查这件事只能靠用户自己在输入框里写「帮我 review 一下这些改动」，
+走的是普通对话路径——没有独立的提示词、没有独立的 diff 上下文。</p>
+<p><strong>已修：一条 <code>/review [范围]</code> 命令</strong>（<code>src/coderagent/ui/commands/review.py</code>）</p>
+<ul>
+<li>不带范围时审查<strong>工作树</strong>的改动（<code>git diff HEAD</code>，没有提交时退回 <code>git diff</code>）；
+  带范围时审查那个范围（<code>git diff main..HEAD</code>）；</li>
+<li>范围 git 不认时说一句「Git does not know …」，不静默；</li>
+<li><strong>新增但还没进版本库的文件单独列出来</strong>（<code>git status --porcelain</code>），它们不在 diff 里，
+  提示词里点名，模型自己去读；</li>
+<li>diff 进的是<strong>一次专门的审查轮</strong>的提示词（<code>REVIEW_PROMPT</code>），提示词里明写
+  「<strong>Do not change any file</strong>: this is a review, not a fix」——
+  审查只出结论，不动代码（要改的话走正常的审批门）；</li>
+<li>diff 超过 60000 字符会被截断，并告诉模型「the diff is cut here, read the files yourself」；</li>
+<li>审查轮在<strong>当前会话</strong>里跑，结果留在对话里，用户可以接着说「把第二条改掉」。</li>
+</ul>
+<p><strong>实现要点</strong>：命令自己不跑模型，它把提示词交给界面的 <code>submit</code> 回调——
+<code>CommandContext</code> 多了一个 <code>submit</code> 字段（TUI → 工作线程，网页版 → 会话线程，
+CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<code>submit is None</code>）说一句
+「This interface cannot run a turn, so it cannot review.」就完了。
+<strong>没有</strong>另起一个子 agent：审查留在对话里，用户能直接接着用结论。</p>
 <hr>
 <h3 id="33-reasoning_effort">3.3 没有 <code>reasoning_effort</code>（思考预算）</h3>
 <p><strong>现状</strong>：<code>src/coderagent/config/schema.py</code> 的 <code>ModelConfig</code> 里<strong>没有</strong> <code>reasoning_effort</code>
@@ -4733,7 +4748,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </tr>
 <tr>
 <td>3</td>
-<td><strong><code>/review</code>（3.2）</strong></td>
+<td>~~<strong><code>/review</code>（3.2）</strong>~~ ✅</td>
 <td>现有零件都齐了，性价比最高的功能缺口</td>
 </tr>
 <tr>

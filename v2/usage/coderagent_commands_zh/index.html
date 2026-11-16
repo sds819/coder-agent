@@ -3978,6 +3978,11 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <td></td>
 </tr>
 <tr>
+<td><code>/review</code></td>
+<td>审查改动，或者审查一个范围的改动</td>
+<td><code>[main..HEAD]</code></td>
+</tr>
+<tr>
 <td><code>/init</code></td>
 <td>给这个项目写一个 <code>AGENTS.md</code></td>
 <td></td>
@@ -4064,6 +4069,10 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 里声明的参数。</p>
 <p><code>/cost</code> 里的钱就是会话的钱。新会话（<code>/clear</code>）从零开始，不管上一个会话花了
 多少。</p>
+<p><code>/review</code> 让模型看一遍改动，说出哪里有问题。不带范围时审的是工作区里的改动，
+带范围时（<code>/review main..HEAD</code>）审的是那个范围。新加的、还没进版本库的文件
+会被单独点名，模型觉得重要就自己去读。审查是当前会话里的一轮：结果留在对话里，
+你可以接着说「把第二条改掉」。审查的时候模型被要求不改任何文件。</p>
 <p><code>/exit</code> 关掉终端界面，和 <code>ctrl+q</code> 一样。浏览器里没有东西可关，所以它会说
 服务还在跑：要停掉它，得在启动它的那个终端里按 <code>ctrl+c</code>。</p>
 <h2 id="_4">自己的命令</h2>
