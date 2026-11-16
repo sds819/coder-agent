@@ -166,6 +166,8 @@ class UIConfig(BaseModel):
     show_reasoning: bool = True
     approval_timeout: int = 0
     """Seconds to wait for an approval. 0 waits forever."""
+    notifications: bool = True
+    """Tell the terminal when a turn is over. The terminal may not show it."""
 
 
 class SandboxConfig(BaseModel):

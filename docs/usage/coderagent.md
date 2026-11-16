@@ -105,6 +105,9 @@ The trace is the event log of the session with the metrics of the session. See
 |---|---|
 | `ctrl+c` | Stop the turn that is running. A second time leaves. |
 | `ctrl+q` | Leave. The session is settled in the memory first. |
+| `ctrl+o` | Open the panel of the sessions. `enter` continues the one that is picked. |
+| `↑` / `↓` | Walk through the messages you sent, the way a shell does. |
+| `@` | Complete the path of a file under the working directory; `→` takes it. |
 
 When the agent wants to run a tool that needs approval, the interface asks.
 `y` allows it once, `n` refuses it, `a` always allows it: that answer writes a

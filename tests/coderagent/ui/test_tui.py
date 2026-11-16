@@ -13,9 +13,12 @@ from coderagent.run import build_loop
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.widgets.diff_view import make_diff, prospective_diff
+from coderagent.ui.widgets.session_picker import SessionPicker
 from coderagent.ui.widgets.tool_card import summarize
 
 pytest.importorskip("textual")
+
+from textual.widgets import Input  # noqa: E402
 
 from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
 from coderagent.ui.widgets import MessageBlock, ToolCard  # noqa: E402
@@ -412,3 +415,90 @@ def test_the_approver_waits_for_the_answer(tmp_path):
     approver.answer(seen[0]["id"], ApprovalDecision.ALLOW)
     thread.join(timeout=5)
     assert results[0] is ApprovalDecision.ALLOW
+
+
+def test_the_messages_that_were_sent_can_be_seen_again(tmp_path):
+    """The up and down keys walk through the messages the user sent."""
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"first")
+            await pilot.press("enter")
+            await pilot.press(*"second")
+            await pilot.press("enter")
+            await pilot.press("up")
+            assert app.query_one(Input).value == "second"
+            await pilot.press("up")
+            assert app.query_one(Input).value == "first"
+            await pilot.press("down")
+            assert app.query_one(Input).value == "second"
+            await pilot.press("down")
+            assert app.query_one(Input).value == ""
+
+    asyncio.run(go())
+
+
+def test_the_message_that_is_being_written_is_kept(tmp_path):
+    """Walking back in the history and forward again gives the draft back."""
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"sent")
+            await pilot.press("enter")
+            await pilot.press(*"draft")
+            await pilot.press("up")
+            assert app.query_one(Input).value == "sent"
+            await pilot.press("down")
+            assert app.query_one(Input).value == "draft"
+
+    asyncio.run(go())
+
+
+def test_a_session_can_be_picked(tmp_path):
+    """The panel of the sessions continues the one that is picked."""
+    app = _app(tmp_path)
+    commands = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press("ctrl+o")
+            await pilot.pause()
+            assert isinstance(app.screen, SessionPicker)
+            await pilot.press("enter")
+            await pilot.pause()
+            commands.extend(_command_blocks(app))
+
+    asyncio.run(go())
+    assert commands[0].content == f"Resumed {app.loop.session.id}"
+
+
+def test_the_turn_is_told_to_the_terminal(tmp_path):
+    """The notification says what the agent answered."""
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+
+    asyncio.run(go())
+    assert app._notification() == "\x1b]777;notify;coder;hello\x07"
+
+
+def test_a_file_is_completed_in_the_input(tmp_path):
+    """The `@` of the input completes the path of a file."""
+    (tmp_path / "README.md").write_text("# hi\n", encoding="utf-8")
+    app = _app(tmp_path)
+    suggestions = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"look at @READ")
+            await asyncio.sleep(0.2)
+            suggestions.append(app.query_one(Input)._suggestion)
+
+    asyncio.run(go())
+    assert suggestions[0] == "look at @README.md"

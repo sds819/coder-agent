@@ -22,8 +22,12 @@ from coderagent.run import build_loop
 from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.commands import CommandContext
 from coderagent.ui.commands import run as run_command
+from coderagent.ui.commands.resume import resume as resume_session
+from coderagent.ui.notify import TITLE, escape_sequence
 from coderagent.ui.widgets import ApprovalPrompt, MessageBlock, StatusBar, TodoPanel, ToolCard
 from coderagent.ui.widgets.diff_view import prospective_diff
+from coderagent.ui.widgets.path_suggester import PathSuggester
+from coderagent.ui.widgets.session_picker import SessionPicker
 
 WRITE_TOOLS = {"write", "edit", "multi_edit"}
 logger = logging.getLogger("coderagent.ui")
@@ -81,6 +85,7 @@ class CoderApp(App):
     BINDINGS = [
         ("ctrl+c", "interrupt", "Interrupt"),
         ("ctrl+q", "quit", "Quit"),
+        ("ctrl+o", "sessions", "Sessions"),
     ]
 
     def __init__(
@@ -112,12 +117,24 @@ class CoderApp(App):
         self.interrupted = threading.Event()
         self.alive = True
         """False when the interface is gone; the events are dropped then."""
+        self.history: list[str] = []
+        """The messages the user sent, the oldest first."""
+        self.history_index: int | None = None
+        """Where in the history the user is; None is the message being written."""
+        self.draft = ""
+        """The message that was being written when the user went back in the history."""
+        self.last_answer = ""
+        """The last thing the agent said; the notification tells that much."""
 
     def compose(self) -> ComposeResult:
         yield StatusBar(id="status")
         yield VerticalScroll(id="conversation")
         yield TodoPanel(id="todos")
-        yield Input(placeholder="输入消息…  (/help 查看命令)", id="input")
+        yield Input(
+            placeholder="输入消息…  (/help 查看命令)",
+            id="input",
+            suggester=PathSuggester(self.cwd),
+        )
 
     def on_mount(self) -> None:
         self._subscribe()
@@ -195,6 +212,9 @@ class CoderApp(App):
     # -- what the interface does with them -------------------------------
 
     def _add_message(self, role: str, content: str, reasoning: str = "") -> None:
+        if role == "assistant":
+            self.last_answer = content
+            """The notification tells the user what the agent said."""
         if role == "assistant" and self.current is not None:
             self.current.set_content(content)
             if reasoning:
@@ -284,20 +304,44 @@ class CoderApp(App):
         event.input.value = ""
         if not text:
             return
+        self.history.append(text)
+        self.history_index = None
         if text.startswith("/"):
             self._run_command(text)
             return
         self.run_worker(lambda: self._run_turn(text), thread=True, exclusive=True)
 
+    def _show_history(self, key: str) -> None:
+        """Walk through the messages the user sent before, the way a shell does."""
+        if not self.history:
+            return
+        widget = self.query_one("#input", Input)
+        if self.history_index is None:
+            if key == "down":
+                return
+            self.draft = widget.value
+            self.history_index = len(self.history)
+        self.history_index += -1 if key == "up" else 1
+        if self.history_index < 0:
+            self.history_index = 0
+        if self.history_index >= len(self.history):
+            self.history_index = None
+            widget.value = self.draft
+            return
+        widget.value = self.history[self.history_index]
+        widget.cursor_position = len(widget.value)
+
     def _run_turn(self, text: str) -> None:
         """The turn itself, in a thread."""
         self.interrupted.clear()
         self.turn_running.set()
+        self.last_answer = ""
         self.loop.cancel = self.interrupted.is_set
         try:
             result = self.loop.run_turn(text)
         except Exception as e:
             self._ui(self._add_message, "error", f"{type(e).__name__}: {e}")
+            self._notify_terminal(f"{type(e).__name__}: {e}")
             return
         finally:
             self.turn_running.clear()
@@ -305,6 +349,20 @@ class CoderApp(App):
             self._ui(self._add_message, "error", "interrupted")
         elif result.error:
             self._ui(self._add_message, "error", result.error)
+        self._notify_terminal()
+
+    def _notify_terminal(self, body: str = "") -> None:
+        """Tell the terminal that the turn is over, in the way a terminal understands."""
+        if not self.config.ui.notifications or self.is_headless:
+            return
+        driver = getattr(self, "_driver", None)
+        if driver is None:
+            return
+        driver.write(self._notification(body))
+
+    def _notification(self, body: str = "") -> str:
+        """The sequence that tells the terminal that the turn is over."""
+        return escape_sequence(TITLE, body or self.last_answer or "The turn is over.")
 
     def _run_command(self, line: str) -> None:
         """A slash command: quick enough to run in the interface itself."""
@@ -338,6 +396,9 @@ class CoderApp(App):
     def on_key(self, event) -> None:
         prompt = self.pending_approval
         if prompt is None:
+            if event.key in ("up", "down"):
+                self._show_history(event.key)
+                event.stop()
             return
         if event.key in ("left", "up"):
             prompt.move(-1)
@@ -382,6 +443,39 @@ class CoderApp(App):
             self._add_message("error", "interrupting…")
         else:
             self.exit()
+
+    def action_sessions(self) -> None:
+        """Show the sessions of this directory, so that another one can be continued."""
+        if self.turn_running.is_set():
+            self._add_message("error", "The agent is working. Wait for it, or press ctrl+c to stop it.")
+            return
+        sessions = self.store.list(self.cwd)
+        if not sessions:
+            self._add_message("error", "No sessions yet.")
+            return
+        self.push_screen(SessionPicker(sessions), self._continue_session)
+
+    def _continue_session(self, session_id: str | None) -> None:
+        """Continue the session that was picked."""
+        if not session_id:
+            return
+        self.loop.switch_to(resume_session(self.store, session_id))
+        self._show_session(session_id)
+        self._update_status()
+        self._add_command(f"Resumed {session_id}")
+
+    def _show_session(self, session_id: str) -> None:
+        """Show the conversation of the session, so that the screen is not a lie."""
+        self.query_one("#conversation", VerticalScroll).remove_children()
+        self.cards.clear()
+        self.current = None
+        for event in self.store.events(session_id):
+            if event.type == EventType.USER_MESSAGE:
+                self._add_message("user", event.payload.get("content", ""))
+            elif event.type == EventType.ASSISTANT_MESSAGE:
+                self.current = None
+                """Every message of the log is a message of its own."""
+                self._add_message("assistant", (event.payload.get("message") or {}).get("content", ""))
 
     def action_quit(self) -> None:
         """Leave, after settling the session in the memory."""

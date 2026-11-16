@@ -787,6 +787,13 @@ $ python -m pytest -q
 - **todo 面板**——这一轮要做的事。
 - **命令有自己的位置**——你敲的那一行和命令的回答各自是一条消息，agent 的回答
   还在。
+- **输入框有历史**——`↑` 和 `↓` 翻你发过的消息，跟 shell 一样；翻过最新那条
+  就回到你正在写的那句。
+- **用 `@` 提文件**——敲 `@src/app` 会把文件的路径补全，`→` 收下这个补全。
+- **会话面板**——`ctrl+o` 列出这个目录的会话，`enter` 接着选中的那个继续，
+  `escape` 关掉面板。
+- **一轮结束时通知终端**——通知里带着 agent 的回答，长的一轮不会错过。
+  `ui.notifications: false` 可以关掉。
 
 ### 用法例子
 
@@ -806,7 +813,7 @@ deepseek/deepseek-flash | 1.5k/64k | $0.0000 | ~/work/project | default
 
 `←`/`→` 移动光标，`↑`/`↓` 也一样，数字键直接跳到那一行，空格切换多选，
 `enter` 确认，`y`、`n`、`a` 直接回答。`ctrl+c` 打断这一轮，`ctrl+q` 收尾
-会话并退出。
+会话并退出，`ctrl+o` 打开会话面板。
 
 todo 面板用 `◉`（完成）、`◐`（进行中）、`○`（待办）标记任务状态。
 
@@ -957,7 +964,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
-| `ui` | `theme`、`show_reasoning`、`approval_timeout` |
+| `ui` | `theme`、`show_reasoning`、`approval_timeout`、`notifications` |
 | `sandbox` | `type` 和环境的那些选项 |
 
 ### 出错时怎么办

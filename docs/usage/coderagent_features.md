@@ -843,6 +843,14 @@ $ python -m pytest -q
 - **The todo panel** — the task list of the current work.
 - **The commands have a place of their own** — the line you typed and the answer
   of the command are messages of their own; the answer of the agent stays.
+- **The input has a history** — `↑` and `↓` walk through the messages you sent,
+  the way a shell does; walking past the newest one gives your draft back.
+- **A file is mentioned with `@`** — type `@src/app` and the path of the file is
+  completed; `→` takes the completion.
+- **A panel of the sessions** — `ctrl+o` lists the sessions of this directory;
+  `enter` continues the one that is picked, `escape` closes the panel.
+- **The terminal is told when a turn is over** — a notification with the answer
+  of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
 
 ### Example
 
@@ -862,7 +870,8 @@ An approval is a numbered list, and the selected one is marked:
 
 `←`/`→` move the cursor, `↑`/`↓` do the same, the digits jump to a line, the
 space toggles a multiple choice, `enter` confirms, and `y`, `n` and `a` answer
-directly. `ctrl+c` interrupts the turn, `ctrl+q` settles the session and quits.
+directly. `ctrl+c` interrupts the turn, `ctrl+q` settles the session and quits,
+`ctrl+o` opens the panel of the sessions.
 
 The todo panel marks the state of a task with `◉` (completed), `◐` (in progress)
 and `○` (pending).
@@ -1027,7 +1036,7 @@ The sections and what they hold:
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
-| `ui` | `theme`, `show_reasoning`, `approval_timeout` |
+| `ui` | `theme`, `show_reasoning`, `approval_timeout`, `notifications` |
 | `sandbox` | `type` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 
