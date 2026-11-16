@@ -704,9 +704,14 @@ async function startSettings() {
   document.getElementById("permission-mode").value = permissions.mode || "default";
   document.getElementById("deny-paths").value = (permissions.deny_paths || []).join("\n");
   document.getElementById("include-dirs").value = (permissions.include_dirs || []).join("\n");
+  document.getElementById("network").value = permissions.network || "allow";
   const permissionSource = document.getElementById("source-mode");
   if (permissionSource) {
     permissionSource.textContent = t("from", { source: (permissions.source || {}).mode || "defaults" });
+  }
+  const networkSource = document.getElementById("source-network");
+  if (networkSource) {
+    networkSource.textContent = t("from", { source: (permissions.source || {}).network || "defaults" });
   }
   const serverNote = document.getElementById("server-mode-note");
   if (serverNote) {
@@ -827,6 +832,7 @@ async function startSettings() {
           mode: document.getElementById("permission-mode").value,
           deny_paths: splitLines(document.getElementById("deny-paths").value),
           include_dirs: splitLines(document.getElementById("include-dirs").value),
+          network: document.getElementById("network").value,
         },
       });
       note.textContent = t("saved", { path: answer.path });

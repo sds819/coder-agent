@@ -129,6 +129,13 @@ model:
       <textarea id="include-dirs" rows="3" placeholder="/path/to/other/project"></textarea>
       <small class="source">一行一个目录：工作目录以外、agent 仍然可以碰的目录</small>
     </label>
+    <label>网络
+      <select id="network">
+        <option value="allow" title="要出网的命令会先问一次。">allow</option>
+        <option value="deny" title="要出网的命令一律拒绝。">deny</option>
+      </select>
+      <small id="source-network" class="source"></small>
+    </label>
     <div class="row">
       <button type="submit" class="primary">保存</button>
       <span id="permissions-message" class="note"></span>

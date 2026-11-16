@@ -54,6 +54,24 @@ def test_an_unknown_mode_is_refused():
     """A mode that does not exist must not reach the file."""
 
 
+def test_the_network_is_written_to_the_user_file(tmp_path):
+    config_api.write_user_permissions({"network": "deny"})
+    data = yaml.safe_load((config_home() / "config.yaml").read_text(encoding="utf-8"))
+    assert data["permissions"]["network"] == "deny"
+
+
+def test_an_unknown_network_policy_is_refused():
+    with pytest.raises(ValueError):
+        config_api.write_user_permissions({"network": "sometimes"})
+    """A network policy that does not exist must not reach the file."""
+
+
+def test_the_view_shows_the_network(tmp_path):
+    view = config_api.permissions_view(tmp_path)
+    assert view["network"] == "allow"
+    assert view["networks"] == ["allow", "deny"]
+
+
 def test_the_view_shows_the_settings_of_the_files(tmp_path):
     (tmp_path / ".coderagent").mkdir()
     (tmp_path / ".coderagent" / "config.yaml").write_text("permissions:\n  mode: plan\n", encoding="utf-8")

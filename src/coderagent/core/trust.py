@@ -177,6 +177,9 @@ def tightened(project: dict) -> dict:
     if str(permissions.get("mode") or "") not in TIGHT_MODES:
         permissions.pop("mode", None)
     permissions.pop("include_dirs", None)
+    if str(permissions.get("network") or "") != "deny":
+        """A project may close the network, never open it."""
+        permissions.pop("network", None)
     rules = permissions.get("rules")
     permissions["rules"] = (
         [rule for rule in rules if isinstance(rule, dict) and str(rule.get("decision")) == "deny"]

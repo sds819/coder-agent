@@ -73,6 +73,24 @@ def mode_block(mode: PermissionMode) -> str:
     return f'<permission_mode mode="{PermissionMode(mode).value}">\n{note}\n</permission_mode>'
 
 
+NETWORK_NOTES = {
+    "deny": (
+        "The network is closed. A command that reaches it is refused: no `curl`, no `wget`, no "
+        "package install, no `git fetch`. Work with what is on the disk and say what you would "
+        "have fetched instead."
+    ),
+}
+"""What the model is told when the network is closed."""
+
+
+def network_block(network: str) -> str:
+    """The note as the block the model sees, empty when the network is open."""
+    note = NETWORK_NOTES.get(network, "")
+    if not note:
+        return ""
+    return f'<permission_network policy="{network}">\n{note}\n</permission_network>'
+
+
 class Approver(Protocol):
     def request(self, tool: str, params: dict, reason: str) -> ApprovalDecision: ...
 
@@ -122,6 +140,7 @@ class PermissionPolicy:
         cwd: Path | None = None,
         include_dirs: list[str] | None = None,
         bounded: bool = True,
+        network: str = "allow",
     ) -> None:
         self.mode = PermissionMode(mode)
         self.rules = list(rules or [])
@@ -129,6 +148,10 @@ class PermissionPolicy:
         self.include_dirs = [Path(directory).resolve() for directory in include_dirs or []]
         self.bounded = bounded
         """Whether the commands run on this disk. A container has its own boundary."""
+        if network not in ("allow", "deny"):
+            raise ValueError(f"unknown network policy '{network}'")
+        self.network = network
+        """Whether the commands may reach the network. `deny` refuses them."""
 
     def check(self, tool: str, params: dict) -> str:
         """Return `allow`, `ask` or `deny`."""
@@ -162,6 +185,12 @@ class PermissionPolicy:
         if outside:
             """The bounds of the disk hold in every mode, like they do for the file tools."""
             return Decision("deny", None, self._outside_reason(outside[0]))
+        if self.network == "deny":
+            """The network is closed: the commands that reach it are refused."""
+            for segment in bash_policy.segments(command):
+                reason = bash_policy.needs_network(segment)
+                if reason:
+                    return Decision("deny", None, f"the network is closed: {reason}")
         if self.mode == PermissionMode.BYPASS:
             return Decision("allow", None, "")
         if self.mode in (PermissionMode.PLAN, PermissionMode.READONLY):

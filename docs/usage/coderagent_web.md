@@ -170,7 +170,8 @@ instead of changing anything.
 
 ### The settings page
 
-The form has the mode, the denied paths and the extra directories, and it is
+The form has the mode, the denied paths, the extra directories and the network
+switch, and it is
 written to the same user level file as the model: `~/.coderagent/config.yaml`
 (or `$MSWEA_CODER_HOME/config.yaml`). The project level file is never
 written, and the rules of `permissions.rules` are left alone — those are the

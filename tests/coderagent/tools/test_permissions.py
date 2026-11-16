@@ -7,6 +7,7 @@ from coderagent.tools.permissions import (
     glob_to_regex,
     mode_block,
     mode_note,
+    network_block,
     pattern_for,
 )
 
@@ -220,3 +221,48 @@ def test_the_rule_of_an_always_allow_matches_the_command_again(tmp_path):
         PermissionMode.DEFAULT, [Rule(tool="bash", pattern=pattern, decision="allow")], cwd=tmp_path
     )
     assert policy.check("bash", {"command": "pytest -q && echo done"}) == "allow"
+
+
+def test_a_closed_network_refuses_the_commands_that_reach_it(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, network="deny")
+    assert policy.check("bash", {"command": "curl http://example.com"}) == "deny"
+    assert policy.check("bash", {"command": "pip install requests"}) == "deny"
+    assert policy.check("bash", {"command": "git push origin main"}) == "deny"
+
+
+def test_a_closed_network_leaves_the_commands_that_stay_at_home(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, network="deny")
+    assert policy.check("bash", {"command": "git status"}) == "allow"
+    assert policy.check("bash", {"command": "pytest -q"}) == "ask"
+
+
+def test_a_closed_network_holds_in_bypass(tmp_path):
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=tmp_path, network="deny")
+    assert policy.check("bash", {"command": "curl http://example.com"}) == "deny"
+
+
+def test_an_allow_rule_cannot_open_a_closed_network(tmp_path):
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT,
+        [Rule(tool="bash", pattern="curl .*", decision="allow")],
+        cwd=tmp_path,
+        network="deny",
+    )
+    assert policy.check("bash", {"command": "curl http://example.com"}) == "deny"
+
+
+def test_the_reason_of_a_closed_network_says_why(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, network="deny")
+    decision = policy.evaluate("bash", {"command": "curl http://example.com"})
+    assert "the network is closed" in decision.reason
+    assert "curl" in decision.reason
+
+
+def test_an_unknown_network_policy_is_refused():
+    with pytest.raises(ValueError, match="unknown network policy"):
+        PermissionPolicy(network="maybe")
+
+
+def test_the_model_is_told_when_the_network_is_closed():
+    assert network_block("deny").startswith('<permission_network policy="deny">')
+    assert network_block("allow") == ""

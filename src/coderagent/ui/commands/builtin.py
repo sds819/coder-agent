@@ -256,7 +256,7 @@ def _trust(context: CommandContext, argument: str) -> None:
 
 def _permissions(context: CommandContext, argument: str) -> None:
     rules = context.policy.rules
-    lines = [f"mode: {context.policy.mode.value}"]
+    lines = [f"mode: {context.policy.mode.value}", f"network: {context.policy.network}"]
     lines += [
         f"{rule.tool} {rule.pattern} -> {rule.decision}" + (f" ({rule.reason})" if rule.reason else "")
         for rule in rules

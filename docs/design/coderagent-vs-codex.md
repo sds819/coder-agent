@@ -69,7 +69,7 @@ sandbox:
 - `curl` / `wget` / `nc` 这些出网命令，在 `src/coderagent/tools/bash_policy.py:90-96`
   里被标成「危险」，但**危险只意味着弹审批框，不意味着拦下来**——
   `default` 模式下用户一路点「允许」就能把数据发出去；
-- 没有 `sandbox_policy.network_access` 这样的开关。
+- ~~没有 `sandbox_policy.network_access` 这样的开关。~~ ✅ 已修（见下面「已修」）
 
 **影响**：一个被 prompt injection 拐走的 agent，在 `local` 模式下能读 `~/.ssh`、
 能改 `~/.zshrc`、能把仓库内容 POST 到外面。`permissions.include_dirs` 只能**加**目录，
@@ -77,11 +77,28 @@ sandbox:
 
 **建议**：
 
-1. 先做**便宜的半个**——加一个 `network: deny | allow` 开关，在 `bash_policy` 里把
-   出网命令从「弹审批」升级成「直接拒绝」（`bypass` 模式除外）。一天内能做完，收益最大。
+1. ~~先做**便宜的半个**——加一个 `network: deny | allow` 开关，在 `bash_policy` 里把
+   出网命令从「弹审批」升级成「直接拒绝」。~~ ✅ 已修（见下面）
 2. 再做 `sandbox_mode` 三档，把 `local` 拆成 `read-only` / `workspace-write` /
    `full-access`，其中 `workspace-write` 在 macOS 上接 Seatbelt、Linux 上接 bubblewrap。
    这是「大」的工作，但这是 Codex 真正拉开差距的地方。
+
+**已修：网络开关**（`permissions.network`，默认 `allow`）
+
+- `bash_policy.py` 里加了一张出网命令的表（`NETWORK_COMMANDS`）和 `git` 的出网子命令
+  （`NETWORK_SUBCOMMANDS`），另有一个 `needs_network()` 判断某一段命令要不要出网；
+- `PermissionPolicy` 多了一个 `network` 参数：`deny` 时，出网的命令**直接拒绝**，
+  不是弹审批框；
+- **拒绝在所有模式下都成立，`bypass` 也不例外**——这一点和原文写的
+  「（`bypass` 模式除外）」不同：磁盘边界（`within_bounds()`）本来就在 `bypass`
+  下成立，Codex 的 `network_access` 也和 `approval_policy` 是两个正交的轴，
+  所以让网络边界跟磁盘边界一个口径；
+- 用户写的 `allow` 规则**放宽不了**它，和路径边界一个待遇；
+- 模型会被告知：一段 `<permission_network policy="deny">` 进上下文，和
+  `<permission_mode ...>` 一样，每轮重算，不烤进 system prompt；
+- 信任边界照旧：项目里的配置**只能关网络，不能开网络**（`core/trust.py` 的
+  `tightened()` 把 `network` 留在配置里当且仅当它是 `deny`；`config/loader.py`
+  里项目层说 `deny` 时，用户层不能把它重新打开）。
 
 **注意**：`within_bounds()`（`src/coderagent/tools/permissions.py`）在**所有**模式下都生效，
 用户写的 `allow` 规则**放宽不了**这个边界——这是 coderagent 比 Codex 强的地方，
@@ -277,7 +294,7 @@ coderagent 的 `bypass` 模式语义类似，但它建立在「所有副作用�
 | 顺序 | 做什么 | 为什么排这个位置 |
 |---|---|---|
 | 1 | ~~**修 3.4 + 3.5 两个 bug**~~ ✅ | 都是几行的事，但一个白烧 token、一个静默吞配置 |
-| 2 | **加网络开关（3.1 的第一步）** | 一天内能做完，堵住最大的口子 |
+| 2 | ~~**加网络开关（3.1 的第一步）**~~ ✅ | 一天内能做完，堵住最大的口子 |
 | 3 | **`/review`（3.2）** | 现有零件都齐了，性价比最高的功能缺口 |
 | 4 | **`reasoning_effort`（3.3）** | 便宜，且和 `model.routing` 是一套东西 |
 | 5 | **TUI 小件（4.2 / 4.5 / 4.7 / 4.8）** | 四个小改动合一个提交，都是「有了就顺手」 |

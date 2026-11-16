@@ -68,6 +68,10 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
         if isinstance(project.get("tools"), dict) and "enabled" in project["tools"]:
             enabled = _items(project, ("tools", "enabled"))
             _put(merged, ("tools", "enabled"), [tool for tool in _items(base, ("tools", "enabled")) if tool in enabled])
+        project_permissions = project.get("permissions")
+        if isinstance(project_permissions, dict) and project_permissions.get("network") == "deny":
+            """A project may close the network: the user does not open it again."""
+            merged.setdefault("permissions", {})["network"] = "deny"
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)

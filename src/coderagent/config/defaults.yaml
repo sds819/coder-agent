@@ -26,6 +26,7 @@ permissions:
   rules: []
   deny_paths: []
   include_dirs: []
+  network: allow
 
 context:
   reserved_output: 8000

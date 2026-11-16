@@ -87,6 +87,8 @@ class PermissionConfig(BaseModel):
     deny_paths: list[str] = Field(default_factory=list)
     include_dirs: list[str] = Field(default_factory=list)
     """Directories outside the working directory that the agent may still touch."""
+    network: str = "allow"
+    """One of allow, deny. `deny` refuses the commands that reach the network."""
 
 
 class ContextConfig(BaseModel):

@@ -398,6 +398,22 @@ outside the working directory is refused in every mode. The paths of a command
 are the ones it names, variables and all, and a substitution runs a command
 too: `cat $HOME/.ssh/id_rsa` is refused, and `echo $(rm -rf ~)` asks.
 
+The network has a switch of its own: `permissions.network` is `allow` by
+default, `deny` closes it.
+
+```yaml
+permissions:
+  network: deny
+```
+
+When the network is closed, the commands that reach it are **refused** instead
+of asked for: `curl`, `wget`, `pip install`, `git push` and the like. The
+refusal holds in every mode, `bypass` included, and a rule of the user cannot
+open the network again — the same way the boundaries of the disk hold. The
+model is told about it: a `<permission_network policy="deny">` block goes into
+the conversation, next to the one of the mode. The project may close the
+network, never open it.
+
 `/permissions` shows the mode and the rules that are in effect.
 
 Without a terminal nobody can be asked, so a call that needs approval is

@@ -92,3 +92,22 @@ def test_a_list_of_paths_is_not_one_path():
 
 def test_a_substitution_that_names_a_path_is_found():
     assert bash_policy.outside_paths("cat `echo /etc/passwd`", Path("/tmp/work"), []) == ["/etc/passwd"]
+
+
+def test_a_command_that_reaches_the_network_is_named():
+    assert "curl" in bash_policy.needs_network("curl http://example.com")
+    assert "pip" in bash_policy.needs_network("pip install requests")
+
+
+def test_a_command_that_stays_at_home_does_not_reach_the_network():
+    assert bash_policy.needs_network("git status") == ""
+    assert bash_policy.needs_network("pytest -q") == ""
+
+
+def test_a_subcommand_of_git_that_reaches_the_network_is_named():
+    assert "push" in bash_policy.needs_network("git push origin main")
+    assert bash_policy.needs_network("git log") == ""
+
+
+def test_a_flag_between_git_and_its_subcommand_does_not_hide_it():
+    assert "push" in bash_policy.needs_network("git -C /tmp push")

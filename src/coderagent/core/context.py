@@ -30,7 +30,7 @@ from coderagent.core.summarize import (
     summarize_prompt,
 )
 from coderagent.core.tokens import estimate_tokens
-from coderagent.tools.permissions import PermissionPolicy, mode_block
+from coderagent.tools.permissions import PermissionPolicy, mode_block, network_block
 
 SUMMARY_OVERHEAD = 2000
 """The tokens the prompt template and the answer of a summary take."""
@@ -187,7 +187,7 @@ class ContextEngine:
         messages = []
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
-        mode = self._mode_text()
+        mode = self._policy_text()
         if mode:
             messages.append({"role": "user", "content": mode})
         instructions = self._instruction_text()
@@ -199,13 +199,15 @@ class ContextEngine:
         messages.extend(repair_tool_calls(self.history.messages))
         return messages
 
-    def _mode_text(self) -> str:
-        """What the model is told when the permission mode takes tools away from it.
+    def _policy_text(self) -> str:
+        """What the model is told when the permissions take something away from it.
 
-        The mode changes while the session runs, so this is read every time the
-        messages are built and never baked into the system prompt.
+        The mode and the network change while the session runs, so this is read
+        every time the messages are built and never baked into the system prompt.
         """
-        return mode_block(self.policy.mode) if self.policy is not None else ""
+        if self.policy is None:
+            return ""
+        return "\n\n".join(text for text in (mode_block(self.policy.mode), network_block(self.policy.network)) if text)
 
     def estimated_tokens(self, tools: list[dict] | None = None) -> int:
         """The size of the whole context. This is what the budget is checked against."""

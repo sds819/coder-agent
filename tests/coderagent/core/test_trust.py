@@ -89,6 +89,30 @@ def test_the_user_may_loosen_the_permissions(tmp_path, monkeypatch):
     assert load_config([], cwd=tmp_path).permissions.mode == "bypass"
 
 
+def test_the_project_may_close_the_network(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"permissions": {"network": "deny"}})
+    assert load_config([], cwd=tmp_path).permissions.network == "deny"
+
+
+def test_the_project_may_not_open_the_network(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"permissions": {"network": "deny"}}), encoding="utf-8")
+    _project(tmp_path, {"permissions": {"network": "allow"}})
+    assert load_config([], cwd=tmp_path).permissions.network == "deny"
+
+
+def test_the_user_may_not_open_a_network_the_project_closed(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"permissions": {"network": "allow"}}), encoding="utf-8")
+    _project(tmp_path, {"permissions": {"network": "deny"}})
+    assert load_config([], cwd=tmp_path).permissions.network == "deny"
+
+
 def test_the_project_may_not_allow_itself(tmp_path, monkeypatch):
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     _project(

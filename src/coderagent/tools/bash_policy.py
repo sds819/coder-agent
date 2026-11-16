@@ -125,6 +125,49 @@ COMMANDS: dict[str, object] = {
 _MISSING = object()
 """The marker for a command that is not in the tree."""
 
+NETWORK_COMMANDS = {
+    "curl",
+    "wget",
+    "ssh",
+    "scp",
+    "sftp",
+    "rsync",
+    "nc",
+    "ncat",
+    "netcat",
+    "telnet",
+    "ftp",
+    "aria2c",
+    "http",
+    "https",
+    "ping",
+    "npm",
+    "npx",
+    "yarn",
+    "pnpm",
+    "pip",
+    "pip3",
+    "uv",
+    "poetry",
+    "apt",
+    "apt-get",
+    "yum",
+    "dnf",
+    "brew",
+    "aws",
+    "gcloud",
+    "az",
+    "docker",
+    "kubectl",
+    "terraform",
+    "gh",
+    "glab",
+}
+"""The commands that reach the network."""
+
+NETWORK_SUBCOMMANDS = {"git": ("clone", "fetch", "pull", "push")}
+"""The subcommands of a command that reach the network."""
+
 EMBEDDED_PATH = re.compile(r"""['"(]\s*(/[^\s'"()]+)""")
 """An absolute path inside a quoted word, like the file of a small script."""
 
@@ -238,6 +281,31 @@ def classify(command: str) -> tuple[str, str]:
     if all(kind == "safe" for kind, _ in kinds):
         return "safe", ""
     return "unknown", ""
+
+
+def needs_network(segment: str) -> str:
+    """Why a part of a command reaches the network, empty when it does not.
+
+    Only the known commands are looked at: a program that is not known may
+    reach the network, but the policy cannot tell.
+    """
+    parts = tokens(segment)
+    if not parts:
+        return ""
+    program = parts[0].strip("\"'")
+    if "/" in program:
+        """A program of a path is not one of the known ones."""
+        return ""
+    if program in NETWORK_COMMANDS:
+        return f"'{program}' reaches the network"
+    subcommands = NETWORK_SUBCOMMANDS.get(program)
+    if subcommands:
+        """Every word is looked at: `git -C /tmp push` is a push."""
+        for argument in parts[1:]:
+            value = argument.strip("\"'")
+            if value in subcommands:
+                return f"'{program} {value}' reaches the network"
+    return ""
 
 
 def writes(segment: str) -> bool:

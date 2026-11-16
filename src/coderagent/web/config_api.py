@@ -25,8 +25,11 @@ SECRET_MARKERS = ("key", "token", "secret", "password")
 PERMISSION_MODES = [mode.value for mode in PermissionMode]
 """The permission modes the browser can choose from."""
 
-PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs")
+PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs", "network")
 """The permission settings that live directly under `permissions:`."""
+
+NETWORK_POLICIES = ("allow", "deny")
+"""What the browser may choose for the network."""
 
 DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")
 """The settings of the model that live directly under `model:`."""
@@ -168,6 +171,8 @@ def permissions_view(cwd: Path, *, server_mode: str = "") -> dict[str, Any]:
         "modes": list(PERMISSION_MODES),
         "deny_paths": list(permissions.deny_paths),
         "include_dirs": list(permissions.include_dirs),
+        "network": permissions.network,
+        "networks": list(NETWORK_POLICIES),
         "source": source,
         "server_mode": server_mode,
     }
@@ -196,6 +201,11 @@ def write_user_permissions(payload: dict) -> Path:
         values = payload.get(field)
         if isinstance(values, list):
             permissions[field] = [str(value).strip() for value in values if str(value).strip()]
+    network = payload.get("network")
+    if isinstance(network, str) and network.strip():
+        if network.strip() not in NETWORK_POLICIES:
+            raise ValueError(f"unknown network policy '{network}'")
+        permissions["network"] = network.strip()
 
     data["permissions"] = permissions
     path.parent.mkdir(parents=True, exist_ok=True)

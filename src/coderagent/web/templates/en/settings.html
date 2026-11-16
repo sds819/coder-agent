@@ -132,6 +132,13 @@ model:
       <textarea id="include-dirs" rows="3" placeholder="/path/to/other/project"></textarea>
       <small class="source">one path per line: directories outside the working directory the agent may still touch</small>
     </label>
+    <label>Network
+      <select id="network">
+        <option value="allow" title="The commands that reach the network ask for approval.">allow</option>
+        <option value="deny" title="The commands that reach the network are refused.">deny</option>
+      </select>
+      <small id="source-network" class="source"></small>
+    </label>
     <div class="row">
       <button type="submit" class="primary">Save</button>
       <span id="permissions-message" class="note"></span>

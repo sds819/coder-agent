@@ -274,6 +274,9 @@ checkpoint 时会被去掉密钥，`/rewind` 也不会把它恢复回去：文�
 - **禁止的路径**——`permissions.deny_paths`，agent 不许碰的路径。
 - **额外的目录**——`permissions.include_dirs`，工作目录以外、agent 仍然
   可以碰的目录。
+- **网络开关**——`permissions.network` 默认是 `allow`（出网的命令先问一次），
+  `deny` 则**直接拒绝**。拒绝在**所有模式**下都成立，`bypass` 也不例外，
+  用户级的规则也放宽不了它。项目里的配置**只能关网络，不能开网络**。
 - **三个答案**——允许、拒绝、永久允许。没人回答就是拒绝：浏览器里等
   `ui.approval_timeout` 秒（默认五分钟），终端里一直等，因为那儿坐着人。
 - **终端里用方向键选答案**，浏览器里点卡片上的按钮；没有终端时一律拒绝。
@@ -943,7 +946,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit`、`subagent_max_turns`、`subagent_max_parallel` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
-| `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs` |
+| `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs`、`network` |
 | `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model`、`summary_chunk_tokens` |
 | `memory` | `project_path`、`user_path`、`enabled` |
 | `checkpoint` | `enabled`、`keep` |

@@ -73,6 +73,7 @@ def build_policy(config: Config, cwd: Path, permission_mode: str | None = None) 
         cwd=cwd,
         include_dirs=config.permissions.include_dirs,
         bounded=config.sandbox.type == "local",
+        network=config.permissions.network,
     )
 
 

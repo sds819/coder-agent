@@ -155,7 +155,7 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 
 ### 设置页
 
-表单里有模式、禁止访问的路径、额外的目录，写到和模型同一个用户级文件
+表单里有模式、禁止访问的路径、额外的目录和网络开关，写到和模型同一个用户级文件
 `~/.coderagent/config.yaml`（或者 `$MSWEA_CODER_HOME/config.yaml`）。项目级的文件永远不写，
 `permissions.rules` 里的规则也不动——那些是审批卡片上 `Always allow` 按钮的事。
 
