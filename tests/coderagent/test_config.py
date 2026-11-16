@@ -114,3 +114,71 @@ def test_a_file_with_the_keys_that_are_gone_still_loads(tmp_path, monkeypatch):
     project.parent.mkdir(parents=True)
     project.write_text("ui:\n  theme: dark\n  show_reasoning: false\n", encoding="utf-8")
     assert load_config([], cwd=tmp_path).ui.approval_timeout == 0
+
+
+def _user_config(tmp_path, monkeypatch, text: str) -> None:
+    """The configuration of the user."""
+    home = tmp_path / "home"
+    home.mkdir(exist_ok=True)
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(text, encoding="utf-8")
+
+
+def test_a_profile_is_used_when_it_is_selected(tmp_path, monkeypatch):
+    _user_config(
+        tmp_path,
+        monkeypatch,
+        "profiles:\n  fast:\n    model:\n      model_name: cheap/model\n    agent:\n      max_turns: 3\n",
+    )
+    config = load_config(["profile=fast"], cwd=tmp_path)
+    assert config.model.model_name == "cheap/model"
+    assert config.agent.max_turns == 3
+
+
+def test_a_profile_that_is_not_selected_is_not_used(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "profiles:\n  fast:\n    agent:\n      max_turns: 3\n")
+    assert load_config([], cwd=tmp_path).agent.max_turns == 50
+
+
+def test_the_user_may_select_a_profile_in_the_configuration(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "profile: fast\nprofiles:\n  fast:\n    agent:\n      max_turns: 3\n")
+    assert load_config([], cwd=tmp_path).agent.max_turns == 3
+
+
+def test_a_profile_wins_over_the_configuration_of_the_user(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "agent:\n  max_turns: 9\nprofiles:\n  fast:\n    agent:\n      max_turns: 3\n")
+    assert load_config(["profile=fast"], cwd=tmp_path).agent.max_turns == 3
+
+
+def test_the_command_line_wins_over_the_profile(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "profiles:\n  fast:\n    agent:\n      max_turns: 3\n")
+    assert load_config(["profile=fast", "agent.max_turns=5"], cwd=tmp_path).agent.max_turns == 5
+
+
+def test_a_profile_that_does_not_exist_is_refused(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "profiles:\n  fast:\n    agent:\n      max_turns: 3\n")
+    with pytest.raises(ValueError, match="unknown profile 'slow'"):
+        load_config(["profile=slow"], cwd=tmp_path)
+
+
+def test_the_profile_of_the_project_is_not_used(tmp_path, monkeypatch):
+    """Choosing a set of permissions is the decision of the user."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    project = tmp_path / ".coderagent" / "config.yaml"
+    project.parent.mkdir(parents=True)
+    project.write_text("profile: fast\nprofiles:\n  fast:\n  agent:\n    max_turns: 3\n", encoding="utf-8")
+    config = load_config([], cwd=tmp_path)
+    assert config.agent.max_turns == 50
+    assert config.profiles == {}
+
+
+def test_a_profile_may_not_open_a_sandbox_the_project_closed(tmp_path, monkeypatch):
+    _user_config(
+        tmp_path,
+        monkeypatch,
+        "profiles:\n  fast:\n    sandbox:\n      mode: full-access\n",
+    )
+    project = tmp_path / ".coderagent" / "config.yaml"
+    project.parent.mkdir(parents=True)
+    project.write_text("sandbox:\n  mode: read-only\n", encoding="utf-8")
+    assert load_config(["profile=fast"], cwd=tmp_path).sandbox.mode == "read-only"

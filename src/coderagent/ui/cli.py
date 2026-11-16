@@ -111,6 +111,7 @@ def main(
     task: str = typer.Option("", "-t", "--task", help="Task/problem statement"),
     model_name: str = typer.Option("", "-m", "--model", help="Model to use"),
     config_spec: list[str] = typer.Option([], "-c", "--config", help="Config file or key=value overrides"),
+    profile: str = typer.Option("", "-p", "--profile", help="Named preset of the configuration"),
     print_mode: bool = typer.Option(False, "--print", help="Non-interactive mode (the only mode in M0)"),
     output_format: str = typer.Option("text", "--output-format", help="text|json"),
     cwd: Path = typer.Option(Path("."), "--cwd", help="Working directory of the session"),
@@ -124,7 +125,7 @@ def main(
     # fmt: on
     if ctx.invoked_subcommand is not None:
         return
-    config = load_config(config_spec, cwd=cwd)
+    config = load_config(config_spec + ([f"profile={profile}"] if profile else []), cwd=cwd)
     if model_name:
         config.model.model_name = model_name
     store = SessionStore()
@@ -166,6 +167,7 @@ def web(
     host: str = typer.Option("127.0.0.1", "--host", help="The address to listen on"),
     port: int = typer.Option(8765, "--port", help="The port to listen on"),
     config_spec: list[str] = typer.Option([], "-c", "--config", help="Config file or key=value overrides"),
+    profile: str = typer.Option("", "-p", "--profile", help="Named preset of the configuration"),
     model_name: str = typer.Option("", "-m", "--model", help="Model to use"),
     permission_mode: str = typer.Option("", "--permission-mode", help="default|acceptEdits|plan|bypass|readonly"),
 ) -> None:
@@ -179,6 +181,8 @@ def web(
     spec = list(config_spec)
     if model_name:
         spec.append(f"model.model_name={model_name}")
+    if profile:
+        spec.append(f"profile={profile}")
     serve(cwd=cwd, host=host, port=port, config_spec=spec, permission_mode=permission_mode or None)
 
 

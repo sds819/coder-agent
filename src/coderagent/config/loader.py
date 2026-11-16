@@ -62,8 +62,9 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
     layers = config_layers(cwd)
     spec_layers = [get_config_from_spec(spec) for spec in specs or []]
     project = next((data for name, data in layers if name == "project"), None)
-    base = recursive_merge(*[data for name, data in layers if name != "project"], *spec_layers)
-    merged = recursive_merge(*[data for _, data in layers], *spec_layers)
+    profile = _profile(recursive_merge(*[data for _, data in layers], *spec_layers))
+    base = recursive_merge(*[data for name, data in layers if name != "project"], profile, *spec_layers)
+    merged = recursive_merge(*[data for _, data in layers], profile, *spec_layers)
     if project is not None:
         for path in ADDED_LISTS:
             _put(merged, path, [*_items(project, path), *_items(base, path)])
@@ -91,6 +92,24 @@ def _tighten_telemetry(merged: dict, project: dict) -> None:
     telemetry = project.get("telemetry")
     if isinstance(telemetry, dict) and "otel_endpoint" in telemetry:
         merged.setdefault("telemetry", {})["otel_endpoint"] = ""
+
+
+def _profile(merged: dict) -> dict:
+    """The configuration of the profile that is in effect.
+
+    The name of the profile comes from the user or from the command line: a
+    project may neither define a profile nor choose one, because choosing a set
+    of permissions is the decision of the user.
+    """
+    tables = merged.get("profiles")
+    tables = tables if isinstance(tables, dict) else {}
+    name = str(merged.get("profile") or "")
+    if not name:
+        return {}
+    chosen = tables.get(name)
+    if not isinstance(chosen, dict):
+        raise ValueError(f"unknown profile '{name}'. Use one of: {', '.join(sorted(tables)) or 'none'}.")
+    return chosen
 
 
 def _tighten_sandbox(merged: dict, project: dict) -> None:

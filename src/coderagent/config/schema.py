@@ -226,4 +226,8 @@ class Config(BaseModel):
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
+    profiles: dict[str, dict] = Field(default_factory=dict)
+    """Named presets of the configuration. `--profile` picks one of them."""
+    profile: str = ""
+    """The name of the profile that is in effect."""
     cwd: Path = Field(default_factory=Path.cwd)

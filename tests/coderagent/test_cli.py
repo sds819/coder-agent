@@ -74,6 +74,14 @@ def test_help_is_available():
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "--output-format" in result.output
+    assert "--profile" in result.output
+
+
+def test_a_profile_that_does_not_exist_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(app, ["--profile", "nope", "--cwd", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "unknown profile" in str(result.exception)
 
 
 def test_the_sessions_of_the_directory_are_listed(tmp_path, monkeypatch):

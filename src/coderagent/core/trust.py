@@ -116,6 +116,9 @@ def without_untrusted(project: dict, directory: Path, user_home: Path | None = N
     if not pending:
         return project
     result = copy.deepcopy(project)
+    result.pop("profile", None)
+    result.pop("profiles", None)
+    """A project may not choose a set of permissions: that is the decision of the user."""
     _without_servers(result, pending)
     _without_hooks(result, pending)
     _without_verify(result, pending)
@@ -173,6 +176,9 @@ def tightened(project: dict) -> dict:
     the rules it brings may only deny.
     """
     result = copy.deepcopy(project)
+    result.pop("profile", None)
+    result.pop("profiles", None)
+    """A project may not choose a set of permissions: that is the decision of the user."""
     sandbox = result.get("sandbox")
     if isinstance(sandbox, dict) and str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
         """A project may close the sandbox, never open it."""
