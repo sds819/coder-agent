@@ -3617,6 +3617,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. P1：影响日常效率">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#42-45-47-48-tui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 / 4.5 / 4.7 / 4.8 TUI 小件 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4152,6 +4169,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. P1：影响日常效率">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#42-45-47-48-tui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 / 4.5 / 4.7 / 4.8 TUI 小件 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4546,7 +4580,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 </tr>
 <tr>
 <td>4.2</td>
-<td><strong>没有输入历史</strong></td>
+<td><strong>没有输入历史</strong> ✅</td>
 <td>TUI 的 <code>Input</code> 部件没有历史栈（<code>src/coderagent/ui/tui.py</code> 里没有相关实现），上下键只能移动光标</td>
 <td>上下键翻历史</td>
 <td>小</td>
@@ -4567,7 +4601,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 </tr>
 <tr>
 <td>4.5</td>
-<td><strong>没有 @ 提及文件</strong></td>
+<td><strong>没有 @ 提及文件</strong> ✅</td>
 <td>输入框里 <code>@foo.py</code> 不会被展开成路径</td>
 <td><code>@</code> 补全文件</td>
 <td>小</td>
@@ -4581,14 +4615,14 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 </tr>
 <tr>
 <td>4.7</td>
-<td><strong>TUI 没有会话切换器</strong></td>
+<td><strong>TUI 没有会话切换器</strong> ✅</td>
 <td>终端里切会话要 <code>/resume</code>（<code>builtin.py:437</code>），是一个列表文本</td>
 <td>会话切换面板</td>
 <td>小</td>
 </tr>
 <tr>
 <td>4.8</td>
-<td><strong>没有终端通知</strong></td>
+<td><strong>没有终端通知</strong> ✅</td>
 <td>跑完一轮没有任何通知；长任务跑完时人不在屏幕前就不知道</td>
 <td>OSC 777 通知（可配）</td>
 <td>小</td>
@@ -4605,6 +4639,25 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 <p>关于 4.9 要说句公道话：<code>edit</code> 的 <code>old_string</code> 匹配逻辑（<code>fs.py:36-58</code>）已经处理了
 CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_patch</code> 的真正价值是模型侧更省 token</strong>
 （块补丁比整段内容短），不是功能更多。所以这条排 P1 而不是 P0。</p>
+<h3 id="42-45-47-48-tui">4.2 / 4.5 / 4.7 / 4.8 TUI 小件 ✅ 已修</h3>
+<p>四个小改动合在一起做，都是「有了就顺手」：</p>
+<ul>
+<li><strong>输入历史（4.2）</strong>：<code>CoderApp</code> 记住发出去的消息，上下键在上面走，
+  走过最新的一条就把正在写的那句还给你（<code>ui/tui.py</code> 的 <code>_show_history</code>）。
+  翻历史的键和审批面板的方向键不打架：面板在的时候方向键归面板。</li>
+<li><strong><code>@</code> 补全（4.5）</strong>：<code>ui/widgets/path_suggester.py</code> 里的 <code>PathSuggester</code> 是
+  textual 的 <code>Suggester</code>：输入框里敲 <code>@src/app</code>，补全出这个文件的路径，
+  <code>→</code> 收下。补的是<strong>工作目录里</strong>的文件，隐藏目录和 <code>node_modules</code> 这些不看。</li>
+<li><strong>会话面板（4.7）</strong>：<code>ctrl+o</code> 打开 <code>ui/widgets/session_picker.py</code>：
+  这个目录的会话一个一个列出来，<code>enter</code> 接着选中的那个继续
+  （<code>loop.switch_to</code> 换会话，屏幕上的对话也重画成那个会话的），
+  <code>escape</code> 关掉。<code>/resume</code> 还在，它给的是文字列表。</li>
+<li><strong>终端通知（4.8）</strong>：一轮结束时给终端发 <strong>OSC 777</strong> 的通知序列
+  （<code>ui/notify.py</code> 的 <code>escape_sequence</code>），内容是 agent 的回答。
+  终端认不认这套序列是终端的事；<code>ui.notifications: false</code> 可以关掉。</li>
+</ul>
+<p><strong>为什么是 <code>ctrl+o</code></strong>：textual 自己把 <code>ctrl+p</code> 拿去做命令面板了，
+<code>ctrl+s</code> 在有些终端里会截住（XON），<code>ctrl+q</code> 已经用来退出了。</p>
 <hr>
 <h2 id="5-p2">5. P2：清理与锦上添花</h2>
 <h3 id="51">5.1 死配置</h3>
@@ -4774,7 +4827,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </tr>
 <tr>
 <td>5</td>
-<td><strong>TUI 小件（4.2 / 4.5 / 4.7 / 4.8）</strong></td>
+<td>~~<strong>TUI 小件（4.2 / 4.5 / 4.7 / 4.8）</strong>~~ ✅</td>
 <td>四个小改动合一个提交，都是「有了就顺手」</td>
 </tr>
 <tr>

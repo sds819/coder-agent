@@ -6235,6 +6235,14 @@ $ python -m pytest -q
 <li><strong>The todo panel</strong> — the task list of the current work.</li>
 <li><strong>The commands have a place of their own</strong> — the line you typed and the answer
   of the command are messages of their own; the answer of the agent stays.</li>
+<li><strong>The input has a history</strong> — <code>↑</code> and <code>↓</code> walk through the messages you sent,
+  the way a shell does; walking past the newest one gives your draft back.</li>
+<li><strong>A file is mentioned with <code>@</code></strong> — type <code>@src/app</code> and the path of the file is
+  completed; <code>→</code> takes the completion.</li>
+<li><strong>A panel of the sessions</strong> — <code>ctrl+o</code> lists the sessions of this directory;
+  <code>enter</code> continues the one that is picked, <code>escape</code> closes the panel.</li>
+<li><strong>The terminal is told when a turn is over</strong> — a notification with the answer
+  of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
 </ul>
 <h3 id="example_10">Example</h3>
 <p>The status bar looks like this:</p>
@@ -6247,7 +6255,8 @@ $ python -m pytest -q
 </code></pre></div>
 <p><code>←</code>/<code>→</code> move the cursor, <code>↑</code>/<code>↓</code> do the same, the digits jump to a line, the
 space toggles a multiple choice, <code>enter</code> confirms, and <code>y</code>, <code>n</code> and <code>a</code> answer
-directly. <code>ctrl+c</code> interrupts the turn, <code>ctrl+q</code> settles the session and quits.</p>
+directly. <code>ctrl+c</code> interrupts the turn, <code>ctrl+q</code> settles the session and quits,
+<code>ctrl+o</code> opens the panel of the sessions.</p>
 <p>The todo panel marks the state of a task with <code>◉</code> (completed), <code>◐</code> (in progress)
 and <code>○</code> (pending).</p>
 <h3 id="when-something-goes-wrong_10">When something goes wrong</h3>
@@ -6586,7 +6595,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>theme</code>, <code>show_reasoning</code>, <code>approval_timeout</code></td>
+<td><code>theme</code>, <code>show_reasoning</code>, <code>approval_timeout</code>, <code>notifications</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>

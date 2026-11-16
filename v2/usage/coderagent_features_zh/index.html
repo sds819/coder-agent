@@ -6182,6 +6182,13 @@ $ python -m pytest -q
 <li><strong>todo 面板</strong>——这一轮要做的事。</li>
 <li><strong>命令有自己的位置</strong>——你敲的那一行和命令的回答各自是一条消息，agent 的回答
   还在。</li>
+<li><strong>输入框有历史</strong>——<code>↑</code> 和 <code>↓</code> 翻你发过的消息，跟 shell 一样；翻过最新那条
+  就回到你正在写的那句。</li>
+<li><strong>用 <code>@</code> 提文件</strong>——敲 <code>@src/app</code> 会把文件的路径补全，<code>→</code> 收下这个补全。</li>
+<li><strong>会话面板</strong>——<code>ctrl+o</code> 列出这个目录的会话，<code>enter</code> 接着选中的那个继续，
+  <code>escape</code> 关掉面板。</li>
+<li><strong>一轮结束时通知终端</strong>——通知里带着 agent 的回答，长的一轮不会错过。
+  <code>ui.notifications: false</code> 可以关掉。</li>
 </ul>
 <h3 id="_32">用法例子</h3>
 <p>状态栏长这样：</p>
@@ -6194,7 +6201,7 @@ $ python -m pytest -q
 </code></pre></div>
 <p><code>←</code>/<code>→</code> 移动光标，<code>↑</code>/<code>↓</code> 也一样，数字键直接跳到那一行，空格切换多选，
 <code>enter</code> 确认，<code>y</code>、<code>n</code>、<code>a</code> 直接回答。<code>ctrl+c</code> 打断这一轮，<code>ctrl+q</code> 收尾
-会话并退出。</p>
+会话并退出，<code>ctrl+o</code> 打开会话面板。</p>
 <p>todo 面板用 <code>◉</code>（完成）、<code>◐</code>（进行中）、<code>○</code>（待办）标记任务状态。</p>
 <h3 id="_33">出错时怎么办</h3>
 <table>
@@ -6519,7 +6526,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>theme</code>、<code>show_reasoning</code>、<code>approval_timeout</code></td>
+<td><code>theme</code>、<code>show_reasoning</code>、<code>approval_timeout</code>、<code>notifications</code></td>
 </tr>
 <tr>
 <td><code>sandbox</code></td>
