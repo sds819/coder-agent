@@ -3997,17 +3997,13 @@ conversation, in this order:</p>
 <td><code>.coderagent/memory/*.md</code></td>
 <td>What the agent learned about the project</td>
 </tr>
-<tr>
-<td><code>~/.coderagent/CLAUDE.md</code></td>
-<td>The preferences of the user</td>
-</tr>
 </tbody>
 </table>
 <p>An <code>AGENTS.md</code> in a subdirectory is read when the agent touches something in
 it, and not before.</p>
-<p>The file of the user is read twice: once as the instructions of the user, and
-once as the memory of the user. The preferences that <code>/memory confirm</code> writes
-are therefore read at the start of the next session.</p>
+<p>The file of the user is read once: it is the instructions of the user and the
+memory of the user at the same time. It is read again in every round, so the
+preferences that <code>/memory confirm</code> writes are known right away.</p>
 <p>The project memory is every markdown file of <code>.coderagent/memory/</code>, so you
 may write <code>conventions.md</code> or <code>architecture.md</code> next to the file the agent
 keeps for itself.</p>

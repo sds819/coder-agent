@@ -3947,20 +3947,29 @@ See <a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p
 </tr>
 <tr>
 <td><code>url</code></td>
-<td>The address of the server, for the http transport. Ignored today</td>
+<td>The address of the server, for the http transport</td>
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td>The headers of the http transport. Ignored today</td>
+<td>The headers of the http transport</td>
 </tr>
 </tbody>
 </table>
 <p>The <code>timeout</code> is not a key of a server: it belongs to <code>mcp</code>, next to
 <code>servers</code>, and it is how long the agent waits for a server.</p>
-<p>Only the standard input and output transport works today. A server with a
-<code>url</code> and no <code>command</code> is skipped: the http transport is not implemented yet.
-<code>url</code> and <code>headers</code> are accepted by the configuration but have no effect —
-nothing reads them.</p>
+<p>A server has either a <code>command</code> or a <code>url</code>, not both. With a <code>command</code> the
+server is started over the standard input and output; with a <code>url</code> the agent
+talks to it over http (the streamable http transport), and the <code>headers</code> go
+with every request:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">servers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remote</span>
+<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://mcp.example.com/mcp</span>
+<span class="w">      </span><span class="nt">headers</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Authorization</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bearer the-token-of-the-user</span>
+</code></pre></div>
+<p>A server on this machine is not asked through the proxy of the system: the
+proxy is there for the other hosts.</p>
 <p>The <code>env</code> of a server is <strong>added</strong> to the environment it inherits, it does not
 replace it: the server keeps <code>PATH</code>, <code>HOME</code> and the rest of the variables the
 MCP SDK passes on, and the ones of the configuration win over them.</p>
@@ -3995,12 +4004,13 @@ The other servers keep working.</p>
 <div class="highlight"><pre><span></span><code>/mcp
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>filesystem       connected
-remote           not connected
+remote           connected
 broken           failed: MCPError: Connection closed
+empty            no command and no url
 </code></pre></div>
-<p><code>not connected</code> is a server that was never started: it has no <code>command</code>, so
-the http transport would be needed and it is not implemented yet. <code>failed</code> is
-a server that was started and did not come up.</p>
+<p><code>failed</code> is a server that was started and did not come up. <code>no command and no
+url</code> is a server that says nothing about how it should be reached — it is
+skipped, and it says so instead of being silent.</p>
 <p>When a call breaks the connection, the agent reconnects and tries the call one
 more time. When it fails again, the error goes back to the model.</p>
 

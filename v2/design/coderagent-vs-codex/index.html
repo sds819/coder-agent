@@ -3585,7 +3585,7 @@
   <a href="#34-bugcoderagentclaudemd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.4 真 bug：~/.coderagent/CLAUDE.md 被加载了两次
+        3.4 真 bug：~/.coderagent/CLAUDE.md 被加载了两次 ✅ 已修
       
     </span>
   </a>
@@ -3596,7 +3596,7 @@
   <a href="#35-bugmcp-url-headers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.5 真 bug：MCP 的 url 和 headers 配了但不生效
+        3.5 真 bug：MCP 的 url 和 headers 配了但不生效 ✅ 已修
       
     </span>
   </a>
@@ -4120,7 +4120,7 @@
   <a href="#34-bugcoderagentclaudemd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.4 真 bug：~/.coderagent/CLAUDE.md 被加载了两次
+        3.4 真 bug：~/.coderagent/CLAUDE.md 被加载了两次 ✅ 已修
       
     </span>
   </a>
@@ -4131,7 +4131,7 @@
   <a href="#35-bugmcp-url-headers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.5 真 bug：MCP 的 url 和 headers 配了但不生效
+        3.5 真 bug：MCP 的 url 和 headers 配了但不生效 ✅ 已修
       
     </span>
   </a>
@@ -4444,8 +4444,8 @@
 <p><strong>建议</strong>：<code>ModelConfig</code> 加一个 <code>reasoning_effort: str = ""</code>，写进 <code>model_kwargs</code>
 之前先按厂商前缀翻译成对应的参数名。<strong>工作量：小。</strong></p>
 <hr>
-<h3 id="34-bugcoderagentclaudemd">3.4 真 bug：<code>~/.coderagent/CLAUDE.md</code> 被加载了两次</h3>
-<p><strong>现状</strong>：</p>
+<h3 id="34-bugcoderagentclaudemd">3.4 真 bug：<code>~/.coderagent/CLAUDE.md</code> 被加载了两次 ✅ 已修</h3>
+<p><strong>原来</strong>：</p>
 <ul>
 <li><code>src/coderagent/core/instructions.py:39</code> — <code>load_instructions()</code> 读
   <code>home / USER_FILE</code>，<code>USER_FILE = "CLAUDE.md"</code>（<code>instructions.py:13</code>），
@@ -4458,12 +4458,12 @@
 <p><strong>影响</strong>：用户级的 <code>CLAUDE.md</code> 每次组消息都<strong>出现两遍</strong>，白烧 token；
 更要紧的是，如果用户在这份文件里写了「每次回答都要先说 X」这类自我约束，
 模型看到的是两遍，可能误以为那是强调。</p>
-<p><strong>建议</strong>：二选一——要么把用户级指令文件从「指令」和「记忆」里择一，
-要么让 <code>load_user_memory()</code> 跳过已经被 <code>load_instructions()</code> 读过的那个路径。
-<strong>工作量：极小（改一处 + 一个回归测试）。</strong></p>
+<p><strong>怎么修的</strong>：<code>core/instructions.py</code> 加了 <code>once_per_file()</code>，组消息的时候
+<strong>一个文件只出一段</strong>，后读的盖住先读的。记忆那份赢——它每轮重读，
+所以 <code>/memory confirm</code> 写下的偏好在<strong>下一轮</strong>就生效，不用等下一个会话。</p>
 <hr>
-<h3 id="35-bugmcp-url-headers">3.5 真 bug：MCP 的 <code>url</code> 和 <code>headers</code> 配了但不生效</h3>
-<p><strong>现状</strong>：<code>src/coderagent/config/schema.py:117-124</code> 的 <code>MCPServerConfig</code> 里有
+<h3 id="35-bugmcp-url-headers">3.5 真 bug：MCP 的 <code>url</code> 和 <code>headers</code> 配了但不生效 ✅ 已修</h3>
+<p><strong>原来</strong>：<code>src/coderagent/config/schema.py:117-124</code> 的 <code>MCPServerConfig</code> 里有
 <code>url</code>（http 传输的地址）和 <code>headers</code> 两个字段，文档里也写着它们能用。但是
 <code>src/coderagent/tools/mcp.py</code> 里<strong>从头到尾没有出现过 <code>url</code> 或 <code>headers</code></strong>——
 <code>MCPManager.start()</code> 在 <code>mcp.py:182</code> 只认 <code>server.command</code>：</p>
@@ -4472,9 +4472,10 @@
 </code></pre></div>
 <p><strong>影响</strong>：配了 <code>url:</code> 的 MCP server <strong>被静默跳过</strong>——不启动、不报错、不出现在
 <code>/mcp</code> 的状态里。用户看 <code>/mcp</code> 只看到「没有连上的 server」，根本猜不到是配置字段没用。</p>
-<p><strong>建议</strong>：要么实现 http 传输（<code>streamable_http</code>），要么在 schema 上<strong>拒收</strong> <code>url</code>/<code>headers</code>
-并给出明确报错（<code>extra="forbid"</code> + 迁移提示）。<strong>静默忽略是最糟的一种。</strong>
-<strong>工作量：小（先做「拒收 + 报错」，实现 http 另算）。</strong></p>
+<p><strong>怎么修的</strong>：http 传输<strong>实现了</strong>（<code>streamable_http</code>），<code>headers</code> 跟着每个请求发出去；
+<code>command</code> 和 <code>url</code> 同时给会报错；两样都没有的 server 不再沉默，<code>/mcp</code> 里写
+<code>no command and no url</code>。另外：<strong>本机上的 server 不走系统代理</strong>（代理是给别的主机用的），
+不然 macOS 上开着代理的机器连 <code>127.0.0.1</code> 的 server 会被代理挡回来。</p>
 <hr>
 <h2 id="4-p1">4. P1：影响日常效率</h2>
 <table>
@@ -4705,7 +4706,7 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <tbody>
 <tr>
 <td>1</td>
-<td><strong>修 3.4 + 3.5 两个 bug</strong></td>
+<td>~~<strong>修 3.4 + 3.5 两个 bug</strong>~~ ✅</td>
 <td>都是几行的事，但一个白烧 token、一个静默吞配置</td>
 </tr>
 <tr>
@@ -4759,7 +4760,8 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 </ol>
 <blockquote>
 <p>本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
-尚未修复。修复时请补上回归测试。</p>
+也都修了：3.4 让一个文件只出一段（<code>core/instructions.py</code> 的 <code>once_per_file()</code>），
+3.5 把 http 传输和 <code>headers</code> 实现了（<code>tools/mcp.py</code>）。两条都有回归测试。</p>
 </blockquote>
 
 
