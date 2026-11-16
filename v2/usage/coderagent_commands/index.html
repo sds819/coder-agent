@@ -4018,6 +4018,11 @@ does not run. Wait for the turn to end, or press <code>ctrl+c</code> to stop the
 <td><code>&lt;path&gt; [what to do with it]</code></td>
 </tr>
 <tr>
+<td><code>/mention</code></td>
+<td>Send a file to the agent, with its content</td>
+<td><code>&lt;path&gt; [what to do with it]</code></td>
+</tr>
+<tr>
 <td><code>/init</code></td>
 <td>Write an <code>AGENTS.md</code> for this project</td>
 <td></td>
@@ -4121,6 +4126,16 @@ provider takes, and a file that is bigger than 5 MB is refused instead of being
 sent. The picture costs tokens like a text does, so the size of the context grows
 by the size of the image. The answer of the model stays in the conversation, like
 the answer of any other turn.</p>
+<p><code>/mention</code> sends a <strong>file</strong> to the model, with its content in the message, so
+that the model does not have to read it again with a tool call:</p>
+<div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
+</code></pre></div>
+<p>The same happens when the question names the file itself: <code>look at @src/app.py</code>
+puts the content of the file in the message. A name that is not a file stays as
+it is, so an address or a decorator is not opened.</p>
+<p>The bounds of the permissions hold here too: a file outside the working
+directory, or one that a rule denies, does not go into the message. The message
+says that the agent may not read it.</p>
 <p><code>/exit</code> closes the terminal interface, the same way <code>ctrl+q</code> does. In the
 browser there is nothing to close, so it says that the server keeps running:
 stop it with <code>ctrl+c</code> in the terminal that started it.</p>

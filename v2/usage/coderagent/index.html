@@ -4552,6 +4552,10 @@ The name of the model is <code>model.model_name</code> in the configuration, or
 <td>A configuration file, or <code>key=value</code> overrides</td>
 </tr>
 <tr>
+<td><code>--profile</code>, <code>-p</code></td>
+<td>A named piece of the configuration</td>
+</tr>
+<tr>
 <td><code>--cwd</code></td>
 <td>The directory of the session</td>
 </tr>
@@ -4562,6 +4566,10 @@ The name of the model is <code>model.model_name</code> in the configuration, or
 <tr>
 <td><code>--output-format</code></td>
 <td><code>text</code> (the default) or <code>json</code></td>
+</tr>
+<tr>
+<td><code>--output-schema</code></td>
+<td>A file with the JSON schema the answer has to fit</td>
 </tr>
 <tr>
 <td><code>--resume &lt;id&gt;</code></td>
@@ -4604,17 +4612,22 @@ The json output has the same numbers in fields:</p>
 <span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0016</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"session_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0019</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
+<span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"output"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><code>stop_reason</code> is <code>end_turn</code>, <code>max_turns</code>, <code>cost_exceeded</code>, <code>token_limit</code>, <code>verify_failed</code>,
-<code>interrupted</code> or <code>error</code>. <code>error</code> is empty unless the turn failed.</p>
+<code>schema_invalid</code>, <code>interrupted</code> or <code>error</code>. <code>error</code> is empty unless the turn failed.
+<code>output</code> is the answer when a schema was asked for with <code>--output-schema</code>, and
+<code>null</code> when it was not.</p>
 <h3 id="the-trace-of-a-session">The trace of a session</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>trace.json
 coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>otel<span class="w"> </span>--out<span class="w"> </span>trace.otlp
+coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>otel<span class="w"> </span>--push
 </code></pre></div>
-<p>The trace is the event log of the session with the metrics of the session. See
-<a href="../coderagent_export/">Trace export</a>.</p>
+<p>The trace is the event log of the session with the metrics of the session. With
+<code>telemetry.otel_endpoint</code> in the configuration, the trace of every turn also
+goes to that OpenTelemetry collector. See <a href="../coderagent_export/">Trace export</a>.</p>
 <h2 id="the-terminal-interface">The terminal interface</h2>
 <table>
 <thead>
@@ -4664,6 +4677,10 @@ and the lists look the way they look in the README of a project. The text is
 plain while it arrives, and rendered when it is complete.</p>
 <p>A picture goes to the model with <code>/image</code>:</p>
 <div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>what<span class="w"> </span>is<span class="w"> </span>wrong<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>layout?
+</code></pre></div>
+<p>A file goes to the model with its content in the message, with <code>/mention</code> or by
+naming it in the question:</p>
+<div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
 </code></pre></div>
 <h2 id="the-web-interface">The web interface</h2>
 <p>The same agent, in the browser:</p>

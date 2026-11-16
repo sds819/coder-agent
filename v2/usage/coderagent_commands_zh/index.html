@@ -4018,6 +4018,11 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <td><code>&lt;path&gt; [要它做什么]</code></td>
 </tr>
 <tr>
+<td><code>/mention</code></td>
+<td>给 agent 发一个文件，带着内容</td>
+<td><code>&lt;path&gt; [要它做什么]</code></td>
+</tr>
+<tr>
 <td><code>/init</code></td>
 <td>给这个项目写一个 <code>AGENTS.md</code></td>
 <td></td>
@@ -4114,6 +4119,14 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <p>图片原样发过去：<code>png</code>、<code>jpg</code>、<code>gif</code>、<code>webp</code> 是模型那边认的格式，超过 5 MB 的
 文件会被拒绝，而不是硬发过去。图片和文本一样算 token，所以上下文会按图片的大小
 变大。模型的回答像别的轮次一样留在对话里。</p>
+<p><code>/mention</code> 把一个<strong>文件</strong>发给模型，内容直接进消息，模型不用再花一次工具调用
+去读它：</p>
+<div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>这个文件做什么？
+</code></pre></div>
+<p>提问里点名文件也是一样：<code>看看 @src/app.py</code> 会把文件内容放进消息。不存在的
+名字就当没写，所以邮箱和装饰器不会被打开。</p>
+<p>这里权限的边界照样管着：工作目录外面的文件、规则拒绝的文件，都不进消息。
+消息里写的是「agent 读不了这个文件」。</p>
 <p><code>/exit</code> 关掉终端界面，和 <code>ctrl+q</code> 一样。浏览器里没有东西可关，所以它会说
 服务还在跑：要停掉它，得在启动它的那个终端里按 <code>ctrl+c</code>。</p>
 <h2 id="_4">自己的命令</h2>

@@ -1489,6 +1489,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#picking-the-tools-of-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picking the tools of a server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3894,6 +3905,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#picking-the-tools-of-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picking the tools of a server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3983,6 +4005,14 @@ See <a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p
 <td><code>headers</code></td>
 <td>The headers of the http transport</td>
 </tr>
+<tr>
+<td><code>enabled_tools</code></td>
+<td>The tools of this server the agent may call. Empty means: all of them</td>
+</tr>
+<tr>
+<td><code>disabled_tools</code></td>
+<td>The tools of this server the agent may not call</td>
+</tr>
 </tbody>
 </table>
 <p>The <code>timeout</code> is not a key of a server: it belongs to <code>mcp</code>, next to
@@ -4027,6 +4057,30 @@ A rule that allows one for good looks like this:</p>
 </code></pre></div>
 <p>The name of the tool is the whole name, with the server in it. The <code>pattern</code>
 is <code>*</code> or the same name: a glob does not work here.</p>
+<h2 id="picking-the-tools-of-a-server">Picking the tools of a server</h2>
+<p>A server often has more tools than the task needs. <code>enabled_tools</code> and
+<code>disabled_tools</code> choose which of them the agent sees:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">servers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filesystem</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-filesystem .</span>
+<span class="w">      </span><span class="nt">enabled_tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"read_file"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"list_directory"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-postgres</span>
+<span class="w">      </span><span class="nt">disabled_tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"drop_table"</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>The tools that are not on the list are <strong>not in the list of tools at all</strong>: the
+model does not see them, so it cannot ask for them. The names are the names of
+the server, without the <code>mcp__&lt;server&gt;__</code> in front of them.</p>
+<p><code>enabled_tools</code> comes first, <code>disabled_tools</code> after it, and both only take
+tools away:</p>
+<ul>
+<li><code>enabled_tools</code> empty: every tool of the server is there.</li>
+<li><code>enabled_tools</code> with names: only those tools are there.</li>
+<li><code>disabled_tools</code> with names: those tools are never there.</li>
+<li><code>*</code> in <code>enabled_tools</code>: every tool of the server is there.</li>
+<li><code>*</code> in <code>disabled_tools</code>: no tool of the server is there.</li>
+</ul>
 <h2 id="the-servers-and-the-session">The servers and the session</h2>
 <p>The servers are started when the session starts, one thread each. A server
 that does not start is skipped, the reason is in the log and <code>/mcp</code> shows it.

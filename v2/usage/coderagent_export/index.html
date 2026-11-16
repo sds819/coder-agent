@@ -1601,6 +1601,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sending-the-trace-to-a-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending the trace to a backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-the-money-went" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3894,6 +3905,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sending-the-trace-to-a-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending the trace to a backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-the-money-went" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3981,19 +4003,51 @@ mini-swe-agent:</p>
 <p><code>summary_ratios</code> holds one number per compaction: how much of the compacted
 history the summary kept. It is the gauge of the quality of the summary.</p>
 <h2 id="the-otel-format">The otel format</h2>
-<p>The same session as OTLP/JSON: one span per turn, one span per tool call. The
-file goes into Jaeger, Tempo or any other place that reads OTLP.</p>
+<p>The same session as OTLP/JSON: one span per turn, one per model call, one per
+tool call. The calls of a turn are the children of that turn, and the file goes
+into Jaeger, Tempo or any other place that reads OTLP.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"resourceSpans"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">"resource"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"session.id"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261106-a1b2c3"</span><span class="p">}}]},</span>
+<span class="w">      </span><span class="nt">"resource"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"service.name"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coderagent"</span><span class="p">}},</span>
+<span class="w">          </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"session.id"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261106-a1b2c3"</span><span class="p">}},</span>
+<span class="w">          </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"session.cwd"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/me/project"</span><span class="p">}}</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">"scopeSpans"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
 <span class="w">          </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coderagent"</span><span class="p">},</span>
 <span class="w">          </span><span class="nt">"spans"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">            </span><span class="p">{</span>
 <span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"turn"</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">"spans"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.read"</span><span class="p">,</span><span class="w"> </span><span class="nt">"parentSpanId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">}]</span>
+<span class="w">              </span><span class="nt">"traceId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6f1c…"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"spanId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9a02…"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"startTimeUnixNano"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1762310400000000000"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"endTimeUnixNano"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1762310412000000000"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"turn.cost"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"doubleValue"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">}},</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"turn.stop_reason"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">}}</span>
+<span class="w">              </span><span class="p">]</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"parentSpanId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9a02…"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model.name"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deepseek/deepseek-flash"</span><span class="p">}},</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cost"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"doubleValue"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.05</span><span class="p">}},</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tokens.in"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"intValue"</span><span class="p">:</span><span class="w"> </span><span class="mi">12000</span><span class="p">}},</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tokens.out"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"intValue"</span><span class="p">:</span><span class="w"> </span><span class="mi">800</span><span class="p">}}</span>
+<span class="w">              </span><span class="p">]</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.read"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"parentSpanId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9a02…"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"attributes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.name"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"read"</span><span class="p">}},</span>
+<span class="w">                </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tool.call_id"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"stringValue"</span><span class="p">:</span><span class="w"> </span><span class="s2">"call_1"</span><span class="p">}}</span>
+<span class="w">              </span><span class="p">]</span>
 <span class="w">            </span><span class="p">}</span>
 <span class="w">          </span><span class="p">]</span>
 <span class="w">        </span><span class="p">}</span>
@@ -4002,6 +4056,33 @@ file goes into Jaeger, Tempo or any other place that reads OTLP.</p>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>The spans stand next to each other, not inside each other: that is what OTLP
+wants, and a backend that reads it will not complain. A tool that failed gets
+a <code>status</code> of code 2.</p>
+<h2 id="sending-the-trace-to-a-backend">Sending the trace to a backend</h2>
+<p>The trace does not have to stay on your machine. Name a collector and the trace
+of every turn goes there as the turn ends:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">telemetry</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">otel_endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:4318/v1/traces"</span>
+<span class="w">  </span><span class="nt">otel_headers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">authorization</span><span class="p">:</span><span class="w"> </span><span class="s">"Bearer</span><span class="nv"> </span><span class="s">…"</span>
+</code></pre></div>
+<ul>
+<li><strong>The event log stays the source of truth</strong> — the trace is built from it, and
+  the log is written whether the backend is there or not;</li>
+<li><strong>A backend that is down is a warning</strong>: the session does not stop, and the
+  trace is sent again with the next turn;</li>
+<li><strong>Every span is sent once</strong> — the second turn does not send the first one
+  again;</li>
+<li><strong>A project may not send the trace somewhere</strong>: the configuration of a
+  project may close the trace (<code>otel_endpoint: ""</code>), never point it at an
+  address of its own. Where the trace goes is your decision, not the decision
+  of the repository you cloned;</li>
+<li><strong>By hand</strong>: <code>coder export --format otel --push</code> sends one session to the
+  address of the configuration.</li>
+</ul>
+<p>The headers are for the backends that ask for a key. They are yours: the
+configuration of a project may not bring headers either.</p>
 <h2 id="where-the-money-went">Where the money went</h2>
 <p>The <code>/cost</code> command shows the same metrics, with the cost of the session split
 by purpose, by model and by tool:</p>

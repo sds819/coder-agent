@@ -1294,6 +1294,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-shape-of-the-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shape of the answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#when-something-goes-wrong" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1448,6 +1459,17 @@
   
     <nav class="md-nav" aria-label="The sessions">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-trace-of-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The trace of a session
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#example_4" class="md-nav__link">
@@ -1773,6 +1795,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#when-something-goes-wrong_12" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1805,6 +1838,17 @@
     <span class="md-ellipsis">
       
         The review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-files-you-mention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The files you mention
       
     </span>
   </a>
@@ -4480,6 +4524,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-shape-of-the-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shape of the answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#when-something-goes-wrong" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4634,6 +4689,17 @@
   
     <nav class="md-nav" aria-label="The sessions">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-trace-of-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The trace of a session
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#example_4" class="md-nav__link">
@@ -4959,6 +5025,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#when-something-goes-wrong_12" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4991,6 +5068,17 @@
     <span class="md-ellipsis">
       
         The review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-files-you-mention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The files you mention
       
     </span>
   </a>
@@ -5111,6 +5199,9 @@ the end of each section.</p>
 <ul>
 <li><strong>One turn from the terminal</strong> — <code>coder -t "fix the failing test"</code>. The
   answer is printed as text, or as JSON with <code>--output-format json</code>.</li>
+<li><strong>One turn with a shape</strong> — <code>coder -t "..." --output-schema answer.json</code>. The
+  answer is JSON that fits the schema, and the JSON of the turn has it in
+  <code>output</code>.</li>
 <li><strong>The terminal interface</strong> — <code>coder</code> without a task, or <code>coder --tui</code>. A
   full screen interface with a status bar, tool cards and approvals.</li>
 <li><strong>The browser</strong> — <code>coder web</code>. The same agent in a chat page, with a
@@ -5129,6 +5220,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"add a d
 <span class="c1"># One turn, the answer as JSON (for a script).</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list the files of this directory"</span><span class="w"> </span>--output-format<span class="w"> </span>json
 
+<span class="c1"># One turn, the answer as JSON that fits a schema.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list the files of this directory"</span><span class="w"> </span>--output-schema<span class="w"> </span>files.json
+
 <span class="c1"># The terminal interface.</span>
 coder<span class="w">                      </span><span class="c1"># with a terminal this is the TUI</span>
 coder<span class="w"> </span>--tui<span class="w">                </span><span class="c1"># the same, said explicitly</span>
@@ -5140,20 +5234,42 @@ coder<span class="w"> </span>web<span class="w"> </span>--cwd<span class="w"> </
 coder<span class="w"> </span>--list
 </code></pre></div>
 <p>The JSON of one turn has the fields <code>session_id</code>, <code>messages</code>, <code>cost</code>,
-<code>session_cost</code>, <code>stop_reason</code> and <code>error</code>:</p>
+<code>session_cost</code>, <code>stop_reason</code>, <code>error</code> and <code>output</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261109-3f0a91"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"assistant"</span><span class="p">,</span><span class="w"> </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"I added the docstring."</span><span class="p">}],</span>
 <span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0012</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"session_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0143</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
+<span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"output"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><code>cost</code> is what the turn cost, <code>session_cost</code> what the whole session has cost
-so far.</p>
+so far. <code>output</code> is the answer when a schema was asked for, and <code>null</code> when it
+was not.</p>
 <p><code>stop_reason</code> is one of <code>end_turn</code>, <code>max_turns</code>, <code>cost_exceeded</code>, <code>token_limit</code>, <code>verify_failed</code>,
-<code>error</code> and <code>interrupted</code>.</p>
+<code>schema_invalid</code>, <code>error</code> and <code>interrupted</code>.</p>
+<h3 id="the-shape-of-the-answer">The shape of the answer</h3>
+<p><code>--output-schema</code> takes a file with a JSON schema. The answer of the agent has
+to fit it, and the schema is checked here, in the agent, not by the provider:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"files"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="nt">"items"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">}}},</span>
+<span class="w">  </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"files"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"additionalProperties"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The keywords that are understood are <code>type</code> (a name or a list of names),
+<code>properties</code>, <code>required</code>, <code>additionalProperties</code>, <code>items</code>, <code>enum</code> and
+<code>nullable</code>. A schema that uses anything else is not checked, not refused: the
+answer is simply not validated against that part.</p>
+<p>The model is told the schema before it starts, and an answer that does not fit
+is <strong>given back to it</strong> with the errors, so that it can try again. It gets two
+answers; when the second one does not fit either, the turn stops with
+<code>stop_reason</code> <code>schema_invalid</code> and the errors are in <code>error</code>.</p>
+<p>The answer is read out of the text of the model: a code fence around the JSON
+is fine, and so is a sentence in front of it.</p>
 <h3 id="when-something-goes-wrong">When something goes wrong</h3>
 <table>
 <thead>
@@ -5188,6 +5304,21 @@ so far.</p>
 <td><code>ValueError: Unknown output format: xml</code></td>
 <td><code>--output-format</code> accepts only <code>text</code> and <code>json</code>.</td>
 <td>Use <code>text</code> or <code>json</code>.</td>
+</tr>
+<tr>
+<td><code>Invalid value: the schema file is not valid JSON: ...</code></td>
+<td>The file of <code>--output-schema</code> does not hold JSON.</td>
+<td>Fix the file, or drop the flag.</td>
+</tr>
+<tr>
+<td><code>Invalid value: the schema file cannot be read: ...</code></td>
+<td>The file of <code>--output-schema</code> is not there.</td>
+<td>Check the path.</td>
+</tr>
+<tr>
+<td><code>stop_reason</code> is <code>schema_invalid</code></td>
+<td>The model did not answer with JSON that fits the schema, twice.</td>
+<td>The errors are in <code>error</code>; the messages of the turn say what the model was told.</td>
 </tr>
 <tr>
 <td><code>Unknown format 'xml'. Use json or otel.</code></td>
@@ -5409,6 +5540,10 @@ overrides it, which is handy when a test should not wait.</p>
 <ul>
 <li><strong>Tools of MCP servers</strong> — <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>, from every server that
   is configured.</li>
+<li><strong>The tools of an MCP server can be picked</strong> — <code>enabled_tools</code> (only these)
+  and <code>disabled_tools</code> (not these) choose the tools of one server by name, and
+  <code>*</code> means all of them. A tool that is not shown is not in the list of tools
+  at all, so the model does not see it.</li>
 <li><strong>Tools of plugins</strong> — a plugin can add tools, commands and hooks.</li>
 <li><strong>The schemas are trimmed to the budget</strong> — the schemas of the tools may
   take a tenth of the context window; <code>tools.schema_budget_tokens</code> sets
@@ -5816,6 +5951,29 @@ cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span
 <li><strong>The trace</strong> — <code>coder export --format json|otel</code> writes the session out,
   for a dashboard or for OpenTelemetry.</li>
 </ul>
+<h3 id="the-trace-of-a-session">The trace of a session</h3>
+<p>The trace is the event log with the metrics of the session. <code>coder export</code>
+writes it to a file, and <code>telemetry.otel_endpoint</code> sends it to a collector:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">telemetry</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">otel_endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:4318/v1/traces"</span>
+<span class="w">  </span><span class="nt">otel_headers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">authorization</span><span class="p">:</span><span class="w"> </span><span class="s">"Bearer</span><span class="nv"> </span><span class="s">…"</span>
+</code></pre></div>
+<ul>
+<li><strong>One span per turn, one per model call, one per tool call</strong> — the calls of
+  a turn are the children of that turn;</li>
+<li><strong>The money is on the spans</strong> — <code>turn.cost</code>, <code>cost</code>, <code>tokens.in</code> and
+  <code>tokens.out</code>;</li>
+<li><strong>Every span is sent once</strong>, when the turn ends;</li>
+<li><strong>A backend that is down is a warning</strong> — the session goes on, and the trace
+  is sent again with the next turn;</li>
+<li><strong>The event log stays the truth</strong> — the trace is built from it, and the log
+  is written whether the backend is there or not;</li>
+<li><strong>A project may not send the trace somewhere</strong> — it may close the trace
+  (<code>otel_endpoint: ""</code>), never point it at an address of its own.</li>
+</ul>
+<p><code>coder export --format otel --push</code> sends one session by hand. See
+<a href="../coderagent_export/">Trace export</a>.</p>
 <h3 id="example_4">Example</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"first task"</span><span class="w">                     </span><span class="c1"># a new session</span>
 coder<span class="w"> </span>--list<span class="w">                              </span><span class="c1"># the sessions of this directory</span>
@@ -5879,6 +6037,11 @@ the snapshot.</p>
 <td>A turn ends with <code>stop_reason: interrupted</code></td>
 <td>Somebody pressed <code>ctrl+c</code>.</td>
 <td>The session is saved; continue it with <code>--resume</code>.</td>
+</tr>
+<tr>
+<td>The trace does not arrive at the backend</td>
+<td>The backend refused it or is not there. The reason is in the log of the agent.</td>
+<td>Check <code>telemetry.otel_endpoint</code> and the headers.</td>
 </tr>
 </tbody>
 </table>
@@ -6635,11 +6798,13 @@ server warns:</p>
 </code></pre></div>
 <h2 id="the-configuration">The configuration</h2>
 <ul>
-<li><strong>Four layers</strong> — the defaults of the package, the project file
-  <code>.coderagent/config.yaml</code>, the user file <code>~/.coderagent/config.yaml</code>, and
-  the overrides of the command line (<code>-c key=value</code>). The later wins.</li>
+<li><strong>Five layers</strong> — the defaults of the package, the project file
+  <code>.coderagent/config.yaml</code>, the user file <code>~/.coderagent/config.yaml</code>, the
+  profile that is in effect, and the overrides of the command line
+  (<code>-c key=value</code>). The later wins.</li>
 <li><strong>The sections</strong> — <code>model</code>, <code>agent</code>, <code>tools</code>, <code>permissions</code>, <code>context</code>,
-  <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code> and <code>verify</code>.</li>
+  <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code>, <code>verify</code> and
+  <code>telemetry</code>, plus <code>profiles</code> and <code>profile</code>.</li>
 <li><strong>The paths</strong> — <code>MSWEA_CODER_HOME</code> moves the user level files somewhere
   else.</li>
 <li><strong>The settings page writes the user file only</strong> — the project file is in
@@ -6656,11 +6821,40 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <li>the defaults of the package (<code>src/coderagent/config/defaults.yaml</code>),</li>
 <li><code>.coderagent/config.yaml</code> of the project,</li>
 <li><code>~/.coderagent/config.yaml</code> of the user,</li>
+<li>the profile that is in effect,</li>
 <li>the <code>-c</code> of the command line.</li>
 </ol>
 <p>The model name is looked up in this order: the <code>-c</code> of the command line, the
 project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <code>anthropic/claude-sonnet-4-5</code>.</p>
+<h3 id="the-profiles">The profiles</h3>
+<p>A profile is a named piece of configuration. It is chosen with <code>--profile</code> (or
+<code>-p</code>), and it sits above the user file and below the <code>-c</code> of the command line:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
+<span class="nt">profiles</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">fast</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">model</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">careful</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">permissions</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plan</span>
+<span class="w">    </span><span class="nt">verify</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"pytest</span><span class="nv"> </span><span class="s">-q"</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>--profile<span class="w"> </span>fast
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-p<span class="w"> </span>careful
+</code></pre></div>
+<p>The name of the profile can also stand in the configuration itself:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fast</span>
+</code></pre></div>
+<p>A <strong>project</strong> may neither define a profile nor choose one: the profiles of a
+project are dropped, like every other piece of code that comes with a
+repository. Choosing a set of permissions is the decision of the user.</p>
+<p>The tightening of the project still wins: a project that closes the sandbox
+(<code>sandbox.mode: read-only</code>) keeps it closed, even when the profile says
+<code>full-access</code>.</p>
 <p>The sections and what they hold:</p>
 <table>
 <thead>
@@ -6718,6 +6912,18 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <td><code>verify</code></td>
 <td><code>commands</code>, <code>max_rounds</code>, <code>timeout</code></td>
 </tr>
+<tr>
+<td><code>telemetry</code></td>
+<td><code>otel_endpoint</code>, <code>otel_headers</code>, <code>otel_timeout</code></td>
+</tr>
+<tr>
+<td><code>profiles</code></td>
+<td>The named pieces of configuration. <code>--profile</code> picks one of them</td>
+</tr>
+<tr>
+<td><code>profile</code></td>
+<td>The name of the profile that is in effect</td>
+</tr>
 </tbody>
 </table>
 <h3 id="when-something-goes-wrong_12">When something goes wrong</h3>
@@ -6755,12 +6961,17 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <td>A layer above the file wins.</td>
 <td>Remember the order; <code>--list</code> of the layers is on the settings page.</td>
 </tr>
+<tr>
+<td><code>ValueError: unknown profile 'slow'. Use one of: fast, careful.</code></td>
+<td>The name of the profile is not one of the <code>profiles</code> of the configuration.</td>
+<td>Check the spelling, or add the profile to the file.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Twenty-eight built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<p>Twenty-nine built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
 <code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
-<code>/image</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
+<code>/image</code>, <code>/mention</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
 <code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
 <code>/context</code> and <code>/exit</code> (also <code>/quit</code>).</p>
 <p>Your own commands live in <code>.coderagent/commands/*.md</code> and in
@@ -6775,6 +6986,24 @@ the prompt, so the model reads them when they matter. A diff that is longer
 than 60000 characters is cut, and the model is told to read the files itself.</p>
 <p>The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.</p>
+<h3 id="the-files-you-mention">The files you mention</h3>
+<p>A file that is named in the question goes into the message <strong>with its
+content</strong>, so that the model does not have to spend a tool call on reading it
+again:</p>
+<div class="highlight"><pre><span></span><code>look at @src/app.py and tell me what it does
+</code></pre></div>
+<p>The mention works in the terminal interface and in the command line alike.
+<code>/mention</code> does the same thing with an explicit path:</p>
+<div class="highlight"><pre><span></span><code>/mention src/app.py what does this do
+</code></pre></div>
+<p>The file that is not there is left alone: <code>@</code> is used for other things too, in
+an address or in a decorator, so only a name that is a file is opened.</p>
+<p>The <strong>bounds still hold</strong>: a file outside the working directory, or one that
+the rules of the permissions deny, does not go into the message. The message
+says that the agent may not read it, instead of smuggling the content in.</p>
+<p>Only text goes in: a file that is not text is named and left alone, and an
+image goes with <code>/image</code>. A file that is longer than 20000 characters is cut,
+and the cut is said.</p>
 <h3 id="example_13">Example</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># a command in the terminal</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>
