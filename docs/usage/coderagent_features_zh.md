@@ -806,6 +806,11 @@ $ python -m pytest -q
   `escape` 关掉面板。
 - **一轮结束时通知终端**——通知里带着 agent 的回答，长的一轮不会错过。
   `ui.notifications: false` 可以关掉。
+- **答案是 Markdown**——代码块、表格、列表长得跟项目 README 里一样。文字流出来
+  的时候是纯文本，说完了才渲染；`ui.markdown: false` 可以让它一直是纯文本。
+- **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。
+- **`ctrl+c` 能停掉正在跑的工具**——不只是这一轮：shell 里跑着的命令会被停掉，
+  它自己起的那些进程也一样。
 
 ### 用法例子
 
@@ -837,6 +842,7 @@ todo 面板用 `◉`（完成）、`◐`（进行中）、`○`（待办）标�
 | 工具输出下面有 `▸ 42 more lines` | 输出比卡片长。 | 有意思的部分还在眼前；要全文就打开文件，或者把命令的输出调少再跑一次。 |
 | 界面起不来 | 终端里不给任务的 `coder` 会起界面；没有终端就打印 `no task given`。 | 用 `coder --tui` 强制起。 |
 | `The agent is working. Wait for it, or press ctrl+c to stop it.` | agent 还在这一轮的中途时敲了命令，命令没有跑。 | 等这一轮结束，或者按 `ctrl+c` 把 agent 停掉。 |
+| `shot.png is too big: 7000 KB, the limit is 5120 KB` | 图片超过了 5 MB 的上限。 | 把图片弄小一点，或者当成文件让 agent 自己去读。 |
 
 ## 网页版
 
@@ -976,7 +982,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`、`notifications` |
+| `ui` | `approval_timeout`、`notifications`、`markdown` |
 | `sandbox` | `type`、`mode` 和环境的那些选项 |
 
 ### 出错时怎么办
@@ -991,8 +997,8 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 ## 命令
 
-二十七个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
-`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/init`、
+二十八个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/image`、`/init`、
 `/cost`、`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。

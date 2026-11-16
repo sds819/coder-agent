@@ -1,6 +1,5 @@
 """The commands that are always available."""
 
-import json
 import subprocess
 from pathlib import Path
 
@@ -194,6 +193,28 @@ def _review(context: CommandContext, argument: str) -> None:
         context.say("No changes to review.")
         return
     context.submit(prompt(diff, untracked, argument.strip()))
+
+
+def _image(context: CommandContext, argument: str) -> None:
+    """Send an image to the model, with the text that goes with it."""
+    from coderagent.core.content import data_url, parts
+
+    if context.submit is None:
+        context.say("This interface cannot run a turn, so it cannot send an image.")
+        return
+    path_text, _, text = argument.strip().partition(" ")
+    if not path_text:
+        context.say("Which image? Try /image <path> [what to do with it].")
+        return
+    path = Path(path_text).expanduser()
+    if not path.is_absolute():
+        path = context.cwd / path
+    try:
+        url = data_url(path)
+    except (OSError, ValueError) as e:
+        context.say(str(e))
+        return
+    context.submit(parts(text.strip(), [url]))
 
 
 def _init(context: CommandContext, argument: str) -> None:
@@ -417,13 +438,16 @@ def _sandbox(context: CommandContext, argument: str) -> None:
 
 
 def _export(context: CommandContext, argument: str) -> None:
+    from coderagent.core.content import describe_message
+
     target = Path(argument) if argument else context.cwd / "conversation.md"
     lines = ["# Conversation", ""]
     for message in context.loop.context.history.messages:
         role = message.get("role", "")
         content = message.get("content")
         if not isinstance(content, str):
-            content = json.dumps(content, ensure_ascii=False)
+            """A message with an image is named, not dumped: the file stays readable."""
+            content = describe_message(content)
         lines += [f"## {role}", "", content, ""]
     target.write_text("\n".join(lines), encoding="utf-8")
     context.say(f"Wrote {target}")
@@ -465,6 +489,14 @@ register(
     )
 )
 register(Command(name="diff", description="Show the changes in the working tree", handler=_diff))
+register(
+    Command(
+        name="image",
+        description="Send an image to the agent",
+        handler=_image,
+        usage="<path> [what to do with it]",
+    )
+)
 register(
     Command(
         name="review",

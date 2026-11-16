@@ -21,12 +21,13 @@ pytest.importorskip("textual")
 from textual.widgets import Input  # noqa: E402
 
 from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
-from coderagent.ui.widgets import MessageBlock, ToolCard  # noqa: E402
+from coderagent.ui.widgets import MarkdownMessage, MessageBlock, ToolCard  # noqa: E402
 
 
-def _app(tmp_path, responses=None, mode="default"):
+def _app(tmp_path, responses=None, mode="default", markdown=True):
     config = Config()
     config.permissions.mode = mode
+    config.ui.markdown = markdown
     bus = EventBus()
     approver = TUIAprover(bus)
     model = ScriptedModel(responses or [{"role": "assistant", "content": "hello", "extra": {"cost": 0.0}}])
@@ -44,6 +45,10 @@ async def _wait_for(predicate, timeout=10.0) -> bool:
 
 
 def _assistant_blocks(app) -> list:
+    """The answer of the agent: the plain block while it arrives, the Markdown when it is complete."""
+    rendered = list(app.query(MarkdownMessage))
+    if rendered:
+        return rendered
     return [block for block in app.query(MessageBlock) if block.role == "assistant"]
 
 
@@ -89,6 +94,64 @@ def test_the_app_shows_the_answer(tmp_path):
 
     asyncio.run(go())
     assert blocks[0].content == "hello"
+
+
+def test_the_answer_is_rendered_as_markdown(tmp_path):
+    """The answer of the agent is Markdown: the code blocks and the lists look right."""
+    answer = "# Title\n\n- one\n- two\n"
+    app = _app(tmp_path, responses=[{"role": "assistant", "content": answer, "extra": {"cost": 0.0}}])
+    blocks = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+            blocks.extend(_assistant_blocks(app))
+
+    asyncio.run(go())
+    assert isinstance(blocks[0], MarkdownMessage)
+    assert blocks[0].content == answer
+
+
+def test_the_markdown_can_be_turned_off(tmp_path):
+    """The user who wants plain text gets plain text."""
+    app = _app(tmp_path, markdown=False)
+    blocks = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+            blocks.extend(_assistant_blocks(app))
+
+    asyncio.run(go())
+    assert not list(app.query(MarkdownMessage))
+    assert blocks[0].content == "hello"
+
+
+def test_the_image_reaches_the_model(tmp_path):
+    """The `/image` command sends the picture with the text that goes with it."""
+    import base64
+
+    (tmp_path / "shot.png").write_bytes(
+        base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        )
+    )
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"/image shot.png what is this")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+
+    asyncio.run(go())
+    content = app.loop.model.backend.calls[0][-1]["content"]
+    assert content[0] == {"type": "text", "text": "what is this"}
+    assert content[1]["image_url"]["url"].startswith("data:image/png;base64,")
 
 
 def test_the_status_bar_shows_the_session(tmp_path):
@@ -222,22 +285,25 @@ def test_the_brackets_of_the_model_do_not_break_the_card():
 
 
 def test_a_message_with_brackets_is_shown(tmp_path):
-    from textual.content import Content
+    from textual.widgets import Markdown
 
     answer = "[Function(name='read'), id='call_1', type='function')]"
     app = _app(tmp_path, responses=[{"role": "assistant", "content": answer, "extra": {"cost": 0.0}}])
     blocks = []
+    sources = []
 
     async def go():
         async with app.run_test() as pilot:
             await pilot.press(*"hello")
             await pilot.press("enter")
             assert await _wait_for(lambda: _assistant_blocks(app))
+            assert await _wait_for(lambda: list(app.query(Markdown)))
             blocks.extend(_assistant_blocks(app))
+            sources.append(app.query_one(Markdown).source)
 
     asyncio.run(go())
     assert blocks[0].content == answer
-    assert answer in str(Content.from_markup(blocks[0].render()))
+    assert answer in sources[0]
 
 
 def test_the_approval_is_asked_and_the_tool_runs(tmp_path):

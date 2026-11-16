@@ -3,6 +3,7 @@
 import json
 from typing import Any
 
+from coderagent.core.content import describe_message
 from coderagent.core.loop import TurnResult
 
 
@@ -44,7 +45,7 @@ def render_text(result: TurnResult) -> str:
 
 def _render_message(message: dict[str, Any]) -> list[str]:
     role = message.get("role", "")
-    content = message.get("content") or ""
+    content = describe_message(message.get("content"))
     if role == "tool":
         return [f"[tool] {content.strip()}"]
     if not content:

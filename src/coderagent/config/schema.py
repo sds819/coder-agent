@@ -167,6 +167,8 @@ class UIConfig(BaseModel):
     """Seconds to wait for an approval. 0 waits forever."""
     notifications: bool = True
     """Tell the terminal when a turn is over. The terminal may not show it."""
+    markdown: bool = True
+    """Render the answer of the agent as Markdown. The text stays plain while it arrives."""
 
 
 class SandboxConfig(BaseModel):

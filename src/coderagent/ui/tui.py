@@ -15,6 +15,7 @@ from textual.containers import VerticalScroll
 from textual.widgets import Input
 
 from coderagent.config.schema import Config
+from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
@@ -24,7 +25,14 @@ from coderagent.ui.commands import CommandContext
 from coderagent.ui.commands import run as run_command
 from coderagent.ui.commands.resume import resume as resume_session
 from coderagent.ui.notify import TITLE, escape_sequence
-from coderagent.ui.widgets import ApprovalPrompt, MessageBlock, StatusBar, TodoPanel, ToolCard
+from coderagent.ui.widgets import (
+    ApprovalPrompt,
+    MarkdownMessage,
+    MessageBlock,
+    StatusBar,
+    TodoPanel,
+    ToolCard,
+)
 from coderagent.ui.widgets.diff_view import prospective_diff
 from coderagent.ui.widgets.path_suggester import PathSuggester
 from coderagent.ui.widgets.session_picker import SessionPicker
@@ -169,12 +177,12 @@ class CoderApp(App):
         bus.subscribe(EventType.ERROR, self._on_error)
 
     def _on_user_message(self, event: Event) -> None:
-        self._ui(self._add_message, "user", event.payload.get("content", ""))
+        self._ui(self._add_message, "user", describe_message(event.payload.get("content", "")))
 
     def _on_assistant_message(self, event: Event) -> None:
         message = event.payload.get("message") or {}
         reasoning = (message.get("extra") or {}).get("reasoning", "")
-        self._ui(self._add_message, "assistant", message.get("content", ""), reasoning)
+        self._ui(self._add_markdown, message.get("content", ""), reasoning)
 
     def _on_text_delta(self, event: Event) -> None:
         self._ui(self._append_text, event.payload.get("content", ""))
@@ -201,7 +209,7 @@ class CoderApp(App):
         if payload.get("model"):
             self._ui(
                 self._add_message,
-                "assistant",
+                "notice",
                 f"Switched from {payload.get('previous', '?')} to {payload['model']}: {payload.get('reason', '')}",
             )
         self._ui(self._update_status, payload.get("state", ""))
@@ -233,6 +241,29 @@ class CoderApp(App):
         """The answer of a command: a block of its own, so the answer of the agent stays."""
         block = MessageBlock("command", text)
         self.query_one("#conversation", VerticalScroll).mount(block)
+        block.scroll_visible()
+
+    def _add_markdown(self, content: str, reasoning: str = "") -> None:
+        """The answer of the agent, rendered as Markdown.
+
+        The text is shown as it arrives and rendered when it is complete: half a
+        code block is not worth rendering.
+        """
+        self.last_answer = content
+        """The notification tells the user what the agent said."""
+        if not self.config.ui.markdown:
+            """The user asked for plain text, so the text that arrived stays."""
+            self._add_message("assistant", content, reasoning)
+            return
+        block = MarkdownMessage(content, reasoning)
+        conversation = self.query_one("#conversation", VerticalScroll)
+        if self.current is not None:
+            """The plain text that was shown while it arrived gives way to the Markdown."""
+            conversation.mount(block, before=self.current)
+            self.current.remove()
+        else:
+            conversation.mount(block)
+        self.current = None
         block.scroll_visible()
 
     def _append_text(self, text: str) -> None:
@@ -331,7 +362,7 @@ class CoderApp(App):
         widget.value = self.history[self.history_index]
         widget.cursor_position = len(widget.value)
 
-    def _run_turn(self, text: str) -> None:
+    def _run_turn(self, text: str | list[dict]) -> None:
         """The turn itself, in a thread."""
         self.interrupted.clear()
         self.turn_running.set()
@@ -387,7 +418,7 @@ class CoderApp(App):
         )
         run_command(context, line)
 
-    def _submit_turn(self, text: str) -> None:
+    def _submit_turn(self, text: str | list[dict]) -> None:
         """Run a turn for a command that needs the model."""
         self.run_worker(lambda: self._run_turn(text), thread=True, exclusive=True)
 
@@ -471,11 +502,11 @@ class CoderApp(App):
         self.current = None
         for event in self.store.events(session_id):
             if event.type == EventType.USER_MESSAGE:
-                self._add_message("user", event.payload.get("content", ""))
+                self._add_message("user", describe_message(event.payload.get("content", "")))
             elif event.type == EventType.ASSISTANT_MESSAGE:
                 self.current = None
                 """Every message of the log is a message of its own."""
-                self._add_message("assistant", (event.payload.get("message") or {}).get("content", ""))
+                self._add_markdown((event.payload.get("message") or {}).get("content", ""))
 
     def action_quit(self) -> None:
         """Leave, after settling the session in the memory."""

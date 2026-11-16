@@ -866,6 +866,13 @@ $ python -m pytest -q
   `enter` continues the one that is picked, `escape` closes the panel.
 - **The terminal is told when a turn is over** — a notification with the answer
   of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
+- **The answer is Markdown** — the code blocks, the tables and the lists look the
+  way they look in the README of a project. The text is plain while it arrives and
+  is rendered when it is complete; `ui.markdown: false` keeps it plain.
+- **A picture can be sent** — `/image shot.png what is this` sends the picture
+  with the text that goes with it.
+- **`ctrl+c` stops the tool that is running** — not only the turn: a command that
+  runs in the shell is stopped, together with the processes it started.
 
 ### Example
 
@@ -899,6 +906,7 @@ and `○` (pending).
 | `▸ 42 more lines` under the output of a tool | The output was longer than the card. | The interesting part is visible; open the file, or run the command again with less output. |
 | The interface does not start | `coder` without a task in a terminal starts the interface; without a terminal it prints `no task given`. | Use `coder --tui` to force it. |
 | `The agent is working. Wait for it, or press ctrl+c to stop it.` | A command was typed while the agent was in the middle of a turn. The command did not run. | Wait for the turn to end, or press `ctrl+c` to stop the agent. |
+| `shot.png is too big: 7000 KB, the limit is 5120 KB` | The picture is bigger than the limit of 5 MB. | Make the picture smaller, or send it as a file the agent can read. |
 
 ## The web interface
 
@@ -1051,7 +1059,7 @@ The sections and what they hold:
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`, `notifications` |
+| `ui` | `approval_timeout`, `notifications`, `markdown` |
 | `sandbox` | `type`, `mode` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 
@@ -1067,9 +1075,9 @@ The sections and what they hold:
 
 ## The commands
 
-Twenty-seven built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+Twenty-eight built-in commands: `/help`, `/model`, `/mode`, `/plan`,
 `/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/review`,
-`/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
+`/image`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
 `/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
 `/context` and `/exit` (also `/quit`).
 

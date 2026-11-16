@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -14,6 +15,8 @@ from coderagent.tools.base import ToolContext, ToolResult
 from minisweagent.environments.local import LocalEnvironment
 
 CHARS_PER_TOKEN = 3.5
+POLL_SECONDS = 0.05
+"""How often a running command is asked whether the turn is still going on."""
 
 
 class CodingEnvironment(LocalEnvironment):
@@ -25,6 +28,79 @@ class CodingEnvironment(LocalEnvironment):
 
     def _check_finished(self, output: dict) -> None:
         return None
+
+    def execute_cancellable(self, action: dict, cwd: str = "", *, timeout: int = 30, cancel=None) -> dict:
+        """Run a command that can be stopped while it runs.
+
+        The turn can be interrupted while a command is running. The command is then
+        killed, together with the children it started, and the output it produced so
+        far is returned. A command in a remote sandbox cannot be killed, which is why
+        this is here and not in the environment of mini-swe-agent.
+        """
+        command = action.get("command", "")
+        cwd = cwd or self.config.cwd or os.getcwd()
+        process = subprocess.Popen(  # noqa: S602
+            command,
+            shell=True,
+            text=True,
+            cwd=cwd,
+            env=os.environ | self.config.env,
+            encoding="utf-8",
+            errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            start_new_session=os.name == "posix",
+        )
+        text, interrupted, timed_out = self._drain(process, timeout, cancel)
+        if interrupted:
+            return {"output": text, "returncode": -1, "interrupted": True, "exception_info": ""}
+        if timed_out:
+            return {
+                "output": text,
+                "returncode": -1,
+                "exception_info": f"An error occurred while executing the command: Command '{command}' timed out after {timeout} seconds",
+            }
+        return {"output": text, "returncode": process.returncode, "exception_info": ""}
+
+    def _drain(self, process, timeout: int, cancel) -> tuple[str, bool, bool]:
+        """Read the output of a command until it ends, is interrupted or times out."""
+        collected: list[str] = []
+        reader = threading.Thread(target=lambda: collected.append(process.stdout.read() or ""), daemon=True)
+        reader.start()
+        deadline = time.time() + timeout
+        interrupted = False
+        timed_out = False
+        while process.poll() is None:
+            if cancel is not None and cancel():
+                interrupted = True
+                _kill(process)
+                break
+            if time.time() >= deadline:
+                timed_out = True
+                _kill(process)
+                break
+            time.sleep(POLL_SECONDS)
+        reader.join(timeout=2)
+        return "".join(collected), interrupted, timed_out
+
+
+def _kill(process) -> None:
+    """Stop a command and the children it started."""
+    try:
+        if os.name == "posix":
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        else:
+            process.terminate()
+    except ProcessLookupError:
+        """The command ended by itself between the check and the kill."""
+        return
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        if os.name == "posix":
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        else:
+            process.kill()
 
 
 def trim_output(text: str, max_output_tokens: int) -> str:
@@ -73,15 +149,32 @@ class BashTool:
         env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
         """A remote sandbox has its own working directory, the path of the host means nothing there."""
         cwd = str(ctx.cwd) if isinstance(env, LocalEnvironment) else ""
-        result = env.execute({"command": _confined(command, ctx)}, cwd=cwd, timeout=timeout)
+        result = self._execute(env, _confined(command, ctx), cwd, timeout, ctx)
         output = str(result.get("output", ""))
         content = trim_output(output, ctx.config.max_output_tokens)
         returncode = result.get("returncode", 0)
-        if result.get("exception_info"):
+        interrupted = bool(result.get("interrupted"))
+        if interrupted:
+            content = f"{content}\n[interrupted]".strip()
+        elif result.get("exception_info"):
             content = f"{content}\n{result['exception_info']}".strip()
         elif returncode != 0:
             content = f"{content}\n[exit code {returncode}]".strip()
-        return ToolResult(content, is_error=returncode != 0, metadata={"returncode": returncode})
+        return ToolResult(
+            content,
+            is_error=returncode != 0 and not interrupted,
+            metadata={"returncode": returncode, "interrupted": interrupted},
+        )
+
+    def _execute(self, env, command: str, cwd: str, timeout: int, ctx: ToolContext) -> dict:
+        """Run the command, and stop it when the turn is interrupted.
+
+        A command that runs on this machine can be killed. A command in a remote
+        sandbox cannot, so there the turn stops after the command is done.
+        """
+        if ctx.cancel is not None and isinstance(env, CodingEnvironment):
+            return env.execute_cancellable({"command": command}, cwd=cwd, timeout=timeout, cancel=ctx.cancel)
+        return env.execute({"command": command}, cwd=cwd, timeout=timeout)
 
     def _start_background(self, command: str, ctx: ToolContext) -> ToolResult:
         task_id = uuid.uuid4().hex[:8]

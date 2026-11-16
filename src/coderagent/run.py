@@ -236,7 +236,7 @@ def build_loop(
         hooks=hooks,
         store=store,
     )
-    return AgentLoop(
+    loop = AgentLoop(
         gateway,
         executor,
         session,
@@ -258,6 +258,9 @@ def build_loop(
         sandbox=environment,
         verify=config.verify,
     )
+    ctx.cancel = lambda: bool(loop.cancel and loop.cancel())
+    """A tool that runs long asks the loop whether the turn is still going on."""
+    return loop
 
 
 def settle_session(

@@ -202,6 +202,23 @@ def test_the_context_of_the_hook_goes_to_the_rewritten_prompt(tmp_path):
     assert "and this" in content
 
 
+def test_a_hook_that_rewrites_the_prompt_keeps_the_image(tmp_path):
+    """The hook rewrites the text of the message; the picture stays."""
+    from coderagent.core.content import parts
+
+    hooks = _runner(
+        tmp_path,
+        "UserPromptSubmit",
+        "import json\nprint(json.dumps({'updatedInput': 'the rewritten prompt'}))",
+    )
+    loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
+    url = "data:image/png;base64,AAAA"
+    loop.run_turn(parts("what is this?", [url]))
+    content = model.calls[0][-1]["content"]
+    assert content[0] == {"type": "text", "text": "the rewritten prompt"}
+    assert content[1]["image_url"]["url"] == url
+
+
 def test_a_prompt_is_not_the_arguments_of_a_tool(tmp_path):
     """A string `updatedInput` of a tool hook does not replace the arguments."""
     hooks = _runner(tmp_path, "PreToolUse", "import json\nprint(json.dumps({'updatedInput': 'not arguments'}))")

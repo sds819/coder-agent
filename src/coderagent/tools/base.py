@@ -1,5 +1,6 @@
 """Tool abstractions shared by every tool implementation."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -31,6 +32,8 @@ class ToolContext:
     """The boundary of the operating system around the commands of the agent."""
     background: dict[str, Any] = field(default_factory=dict)
     """Background shell tasks, keyed by task id."""
+    cancel: Callable[[], bool] | None = None
+    """Whether the turn should stop. A tool that runs long asks it while it runs."""
 
 
 class Tool(Protocol):

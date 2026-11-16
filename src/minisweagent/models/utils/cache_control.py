@@ -18,8 +18,8 @@ def _get_content_text(entry: dict) -> str | None:
 
 def _clear_cache_control(entry: dict) -> None:
     if isinstance(entry["content"], list):
-        assert len(entry["content"]) == 1, "Expected single message in content"
-        entry["content"][0].pop("cache_control", None)
+        for part in entry["content"]:
+            part.pop("cache_control", None)
     # Note: entry["content"] can be None for assistant messages with only tool_use
     entry.pop("cache_control", None)
 

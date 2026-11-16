@@ -9,6 +9,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from coderagent.core.content import text_of
 from coderagent.core.tokens import estimate_tokens
 
 FIELDS = ("goal", "findings", "decisions", "files_touched", "open_questions", "next_steps", "errors_seen")
@@ -134,7 +135,7 @@ def summarize_prompt(messages: list[dict]) -> str:
     transcript = []
     for message in messages:
         role = message.get("role", "?")
-        content = str(message.get("content") or "")
+        content = text_of(message.get("content"))
         for call in message.get("tool_calls") or []:
             function = call.get("function") or {}
             content += f"\n[tool call {function.get('name', '?')}: {function.get('arguments', '')}]"
@@ -258,7 +259,7 @@ def conservative_summary(messages: list[dict]) -> Summary:
     """Fallback when the model does not return a usable summary."""
     findings = []
     for message in messages[-CONSERVATIVE_MESSAGES:]:
-        content = str(message.get("content") or "").strip()
+        content = text_of(message.get("content")).strip()
         if content:
             findings.append(f"{message.get('role', '?')}: {content[:400]}")
     return Summary(
@@ -272,7 +273,7 @@ def recent_errors(messages: list[dict], limit: int = 3) -> list[str]:
     """The last few tool errors, so they do not get lost in the compaction."""
     errors = []
     for message in messages:
-        content = str(message.get("content") or "")
+        content = text_of(message.get("content"))
         if message.get("role") == "tool" and content.startswith("Error:"):
             errors.append(content[:300])
     return errors[-limit:]

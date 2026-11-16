@@ -132,3 +132,12 @@ def test_a_secret_does_not_reach_the_log_of_the_session(tmp_path):
     executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session))
     executor.execute(executor.plan([_call("read", {"path": "a.env"})]))
     assert "sk-abcdefghijklmnopqrstuvwxyz" not in store.path(session.id).read_text(encoding="utf-8")
+
+
+def test_a_tool_does_not_run_when_the_turn_was_interrupted(tmp_path):
+    ctx = build_context(tmp_path)
+    ctx.cancel = lambda: True
+    executor = build_executor(tmp_path, context=ctx)
+    observations = executor.execute(executor.plan([_call("bash", {"command": "touch marker.txt"})]))
+    assert "interrupted" in observations[0]["content"]
+    assert not (tmp_path / "marker.txt").exists()

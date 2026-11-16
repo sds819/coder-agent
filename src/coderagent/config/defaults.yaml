@@ -58,6 +58,7 @@ hooks:
 ui:
   approval_timeout: 0
   notifications: true
+  markdown: true
 
 sandbox:
   type: local

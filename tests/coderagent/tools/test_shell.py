@@ -73,3 +73,27 @@ def test_a_background_task_can_be_read_and_killed(ctx):
 def test_the_background_tools_reject_unknown_tasks(ctx):
     assert BashOutputTool().run({"task_id": "nope"}, ctx).is_error
     assert BashKillTool().run({"task_id": "nope"}, ctx).is_error
+
+
+def test_a_running_command_is_stopped_when_the_turn_is_interrupted(ctx):
+    ctx.cancel = lambda: True
+    started = time.time()
+    result = BashTool().run({"command": "sleep 30"}, ctx)
+    assert time.time() - started < 10
+    assert "[interrupted]" in result.content
+    assert not result.is_error
+
+
+def test_the_children_of_an_interrupted_command_are_stopped(ctx, tmp_path):
+    marker = tmp_path / "marker.txt"
+    ctx.cancel = lambda: True
+    BashTool().run({"command": f"sleep 1; touch {marker}"}, ctx)
+    time.sleep(1.5)
+    assert not marker.exists()
+
+
+def test_the_output_of_a_command_that_is_not_interrupted_is_kept(ctx):
+    ctx.cancel = lambda: False
+    result = BashTool().run({"command": "echo before"}, ctx)
+    assert "before" in result.content
+    assert "[interrupted]" not in result.content

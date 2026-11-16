@@ -8,6 +8,8 @@ estimate only drives decisions (compact or not), the API has the last word.
 import json
 from functools import lru_cache
 
+from coderagent.core.content import image_tokens, text_of
+
 CHARS_PER_TOKEN = 3.6
 MESSAGE_OVERHEAD = 4
 
@@ -29,7 +31,7 @@ def _encoding():
 
 def message_text(message: dict) -> str:
     """The part of a message that costs tokens."""
-    parts = [str(message.get("content") or "")]
+    parts = [text_of(message.get("content"))]
     for call in message.get("tool_calls") or []:
         function = call.get("function") or {}
         parts.append(str(function.get("name") or ""))
@@ -40,15 +42,16 @@ def message_text(message: dict) -> str:
 def estimate_tokens(messages: list[dict], tools: list[dict] | None = None) -> int:
     """Rough token count of a conversation, including the tool schemas."""
     encoding = _encoding()
+    images = sum(image_tokens(message.get("content")) for message in messages)
     if encoding is not None:
         total = sum(MESSAGE_OVERHEAD + len(encoding.encode(message_text(message))) for message in messages)
         if tools:
             total += len(encoding.encode(json.dumps(tools, ensure_ascii=False)))
-        return total
+        return total + images
     characters = sum(len(message_text(message)) for message in messages)
     if tools:
         characters += len(json.dumps(tools, ensure_ascii=False))
-    return int(characters / CHARS_PER_TOKEN) + MESSAGE_OVERHEAD * len(messages)
+    return int(characters / CHARS_PER_TOKEN) + MESSAGE_OVERHEAD * len(messages) + images
 
 
 def count_text_tokens(text: str) -> int:

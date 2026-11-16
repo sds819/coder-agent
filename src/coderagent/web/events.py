@@ -4,6 +4,7 @@ The core speaks in events, the browser in items. Most events are one item; a too
 call is one item per action, and a tool result is one item per observation.
 """
 
+from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventType
 from coderagent.ui.widgets.tool_card import summarize
 
@@ -23,7 +24,7 @@ def normalize(event: Event) -> list[dict]:
         return [
             {
                 "kind": "user_message",
-                "content": payload.get("content", ""),
+                "content": describe_message(payload.get("content", "")),
                 "original": payload.get("original", ""),
             }
         ]

@@ -149,6 +149,11 @@ class ToolExecutor:
     def _run(self, action: dict, ctx: ToolContext) -> dict:
         if action.get("error"):
             return self._observation(action["tool_call_id"], action["error"])
+        if ctx.cancel is not None and ctx.cancel():
+            """The turn was interrupted: the tool does not run at all."""
+            return self._observation(
+                action["tool_call_id"], "Error: the turn was interrupted, so the tool did not run."
+            )
         tool = self.registry.get(action["tool"])
         path = action["args"].get("path")
         if path and self.on_path:

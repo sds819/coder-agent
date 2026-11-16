@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 from coderagent.config.schema import ContextConfig
+from coderagent.core.content import text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.protocols import ToolExecutor
@@ -132,17 +133,20 @@ class AgentLoop:
         self.context.restore()
         self._session_start()
 
-    def run(self, user_input: str) -> TurnResult:
+    def run(self, user_input: str | list[dict]) -> TurnResult:
         """Alias for `run_turn`; the caller drives the conversation."""
         return self.run_turn(user_input)
 
-    def run_turn(self, user_input: str) -> TurnResult:
-        """Run one turn: query the model, execute its tool calls, repeat until it stops."""
+    def run_turn(self, user_input: str | list[dict]) -> TurnResult:
+        """Run one turn: query the model, execute its tool calls, repeat until it stops.
+
+        The input is a string, or the parts of a message that carries images.
+        """
         turn_messages: list[dict] = []
         prompt = user_input
         original = ""
         if self.hooks:
-            hook = self.hooks.apply("UserPromptSubmit", {"prompt": user_input})
+            hook = self.hooks.apply("UserPromptSubmit", {"prompt": text_of(prompt)})
             if hook.blocked:
                 reason = hook.reason or "the prompt was blocked"
                 self._publish(EventType.ERROR, {"error": reason})
@@ -156,10 +160,10 @@ class AgentLoop:
                 )
             if isinstance(hook.updated_input, str):
                 """The hook rewrote the prompt. What the user typed is kept aside."""
-                prompt = hook.updated_input
-                original = user_input
+                prompt = with_text(prompt, hook.updated_input)
+                original = text_of(user_input)
             if hook.additional_context:
-                prompt = f"{prompt}\n\n[hook] {hook.additional_context}"
+                prompt = with_text(prompt, f"{text_of(prompt)}\n\n[hook] {hook.additional_context}")
         self.context.append({"role": "user", "content": prompt}, original=original)
         turn_messages.append({"role": "user", "content": prompt})
         self.session.turn_count += 1

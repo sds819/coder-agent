@@ -103,7 +103,7 @@ The trace is the event log of the session with the metrics of the session. See
 
 | Key | What it does |
 |---|---|
-| `ctrl+c` | Stop the turn that is running. A second time leaves. |
+| `ctrl+c` | Stop the turn that is running — and the tool that is running with it. A second time leaves. |
 | `ctrl+q` | Leave. The session is settled in the memory first. |
 | `ctrl+o` | Open the panel of the sessions. `enter` continues the one that is picked. |
 | `↑` / `↓` | Walk through the messages you sent, the way a shell does. |
@@ -126,6 +126,16 @@ The answers are listed one per line, each in a numbered box:
 The box of the picked answer is starred in red, the others have a grey dash.
 The arrow keys (`←`/`→` or `↑`/`↓`) move the pick, the numbers jump to an
 answer, and `enter` confirms it.
+
+The answer of the agent is rendered as Markdown: the code blocks, the tables
+and the lists look the way they look in the README of a project. The text is
+plain while it arrives, and rendered when it is complete.
+
+A picture goes to the model with `/image`:
+
+```bash
+/image screenshot.png what is wrong with this layout?
+```
 
 ## The web interface
 

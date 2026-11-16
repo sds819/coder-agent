@@ -213,3 +213,73 @@ def test_conversation_is_restored_from_the_event_log(tmp_path):
     result = resumed.run_turn("second question")
     assert result.messages[0] == {"role": "user", "content": "second question"}
     assert store.rebuild(session.id).turn_count == 2
+
+
+def test_a_message_with_an_image_reaches_the_model(tmp_path):
+    """The model sees the image as a part of the message."""
+    from coderagent.core.content import parts
+
+    loop, store, session, _ = _loop(tmp_path, [_assistant(content="done")])
+    url = "data:image/png;base64,AAAA"
+    loop.run_turn(parts("what is this?", [url]))
+
+    assert loop.model.backend.calls[0][-1]["content"] == [
+        {"type": "text", "text": "what is this?"},
+        {"type": "image_url", "image_url": {"url": url}},
+    ]
+    users = [event for event in store.events(session.id) if event.type == EventType.USER_MESSAGE]
+    assert users[0].payload["content"][1]["image_url"]["url"] == url
+
+
+def test_a_message_with_an_image_survives_a_restart(tmp_path):
+    """The event log keeps the image, so the session can be continued."""
+    from coderagent.core.content import parts
+
+    loop, store, session, _ = _loop(tmp_path, [_assistant(content="done")])
+    url = "data:image/png;base64,AAAA"
+    loop.run_turn(parts("what is this?", [url]))
+
+    executor = build_executor(tmp_path)
+    resumed = AgentLoop(
+        ModelGateway(ScriptedModel([_assistant(content="still here")])),
+        executor,
+        store.rebuild(session.id),
+        store,
+        EventBus(),
+        tools=executor.registry.schemas(),
+    )
+    assert resumed.messages[0]["content"][1]["image_url"]["url"] == url
+
+
+def test_the_tools_of_the_session_know_when_the_turn_is_interrupted(tmp_path):
+    from coderagent.config.schema import Config
+    from coderagent.run import build_loop
+
+    loop = build_loop(Config(), tmp_path, model=ScriptedModel([_assistant(content="hi")]))
+    assert loop.executor.ctx_factory().cancel() is False
+    loop.cancel = lambda: True
+    assert loop.executor.ctx_factory().cancel() is True
+
+
+def test_a_command_that_is_interrupted_ends_the_turn(tmp_path):
+    from coderagent.config.schema import Config
+    from coderagent.run import build_loop
+
+    loop = build_loop(
+        Config(),
+        tmp_path,
+        model=ScriptedModel([_assistant(tool_calls=[_bash_call("sleep 30")])]),
+        permission_mode="bypass",
+    )
+    seen: list[int] = []
+
+    def cancel() -> bool:
+        seen.append(1)
+        """The loop asks first, then the tool asks while it runs."""
+        return len(seen) > 2
+
+    loop.cancel = cancel
+    result = loop.run_turn("run something long")
+
+    assert result.stop_reason == "interrupted"
+    assert "[interrupted]" in result.messages[-1]["content"]

@@ -36,6 +36,7 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | `/rewind` | Show the checkpoints or roll back to one | `[checkpoint-id]` |
 | `/diff` | Show the changes in the working tree | |
 | `/review` | Review the changes, or the changes of a range | `[main..HEAD]` |
+| `/image` | Send an image to the agent | `<path> [what to do with it]` |
 | `/init` | Write an `AGENTS.md` for this project | |
 | `/cost` | The tokens and the money spent | |
 | `/todos` | The task list of the agent | |
@@ -68,6 +69,19 @@ the agent reads them when they matter. The review is a turn of the current
 session: the answer stays in the conversation, and you can act on it right away
 ("fix the second one"). The agent is told not to change any file while it
 reviews.
+
+`/image` sends a picture to the model. The path is the first word, everything
+after it is the text that goes with the picture:
+
+```bash
+/image screenshot.png what is wrong with this layout?
+```
+
+The image is sent as it is: `png`, `jpg`, `gif` and `webp` are the formats a
+provider takes, and a file that is bigger than 5 MB is refused instead of being
+sent. The picture costs tokens like a text does, so the size of the context grows
+by the size of the image. The answer of the model stays in the conversation, like
+the answer of any other turn.
 
 `/exit` closes the terminal interface, the same way `ctrl+q` does. In the
 browser there is nothing to close, so it says that the server keeps running:

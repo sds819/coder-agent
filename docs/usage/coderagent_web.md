@@ -372,6 +372,8 @@ browser shows everything.
 - Each session gets its own MCP server threads. The servers are only started
   when a session runs its first turn, but a lot of sessions means a lot of
   threads.
+- There is no way to send a picture from the browser. The agent understands
+  images, but the picture has to come from the terminal (`/image`).
 
 If the port is taken, the server says so and stops; start it on another one
 with `--port`.
