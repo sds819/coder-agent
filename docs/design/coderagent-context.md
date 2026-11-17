@@ -103,6 +103,10 @@ should_compact = estimated > target
 `tiktoken` 是懒加载且容错的：装不上、或者首次下载词表失败，都安静地退回启发式（`tokens.py:20-28`）。
 估算只用来决定「要不要压」，不用来计费——**API 才是最后裁判**。
 
+**工具 schema 也算在预算里**：`ContextEngine.estimated_tokens()`（`context.py:233-239`）把当前这轮的
+schema 一起算进去——schema 是每次请求都要发的东西，不算它就会低估一个「工具很多」的会话。
+切点也跟着让位：留在窗口里的原文要给 schema 腾出份额（见 §4.3）。
+
 ### 3.2 配置项
 
 `ContextConfig`（`config/schema.py:83-94`）：
@@ -174,12 +178,12 @@ for index in 候选轮边界:
 最后还有一条**硬上限**兜底：
 
 ```
-target = guard.target() - estimate_tokens(摘要本身)
+target = guard.target() - estimate_tokens(摘要本身) - estimate_tokens(工具 schema)
 while estimate_tokens(messages[cut:]) > target:
     cut = 下一个轮边界；没有轮边界了就切进最后一轮里
 ```
 
-即「留下的原文 + 摘要」也不能超预算。宁可多切一轮，也不能让这一次请求直接被 provider 拒掉。
+即「留下的原文 + 摘要 + 工具 schema」也不能超预算。宁可多切一轮，也不能让这一次请求直接被 provider 拒掉。
 
 **`keep_recent_turns` 是目标，不是承诺**：轮数还没攒够 `keep_recent_turns` 时，上面的兜底照样生效——
 窗口满了就压，哪怕只聊了三轮。反过来，轮数攒够了但窗口还很空，也不压。
@@ -440,6 +444,9 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
    但看不出它变**大得对不对**——一份啰嗦但完整的摘要和一个丢了一半的摘要，比值可能一样。
 10. **被裁掉的工具仍然能执行**。schema 裁剪省的是上下文，不是权限（见 §6.4）。
 11. **参数不做 schema 级校验**。schema 只是发给模型的说明，错了由工具自己抛（见 §6.4）。
+12. **恢复出来的会话知道上次压到哪一轮**。`COMPACTION` 事件带 `turn`，`restore()` 把它读回
+    `last_compact_turn`：恢复后的会话不会因为「不知道上次什么时候压的」而马上再压一次，
+    也不会因为计数归零而永远不压。
 
 ---
 

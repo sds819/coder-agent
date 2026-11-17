@@ -69,6 +69,14 @@ def test_a_file_that_mentions_another_file_does_not_pull_it_in(tmp_path):
     assert "the other file" not in text
 
 
+def test_a_secret_in_a_mentioned_file_is_redacted(tmp_path):
+    """The content of the file goes into the log of the session, so the secrets go."""
+    (tmp_path / "a.py").write_text("key = 'sk-abcdefghijklmnopqrstuvwxyz'\n", encoding="utf-8")
+    text = expand("look at @a.py", tmp_path, _policy(tmp_path))
+    assert "sk-abcdefghijklmnopqrstuvwxyz" not in text
+    assert "[redacted]" in text
+
+
 def _loop(tmp_path, responses):
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)

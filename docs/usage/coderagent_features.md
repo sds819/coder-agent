@@ -1345,6 +1345,10 @@ Only text goes in: a file that is not text is named and left alone, and an
 image goes with `/image`. A file that is longer than 20000 characters is cut,
 and the cut is said.
 
+A secret in the file is taken out before the content goes in: the same
+redaction as the output of a tool, so a key that sits in a mentioned file does
+not end up in the log of the session.
+
 ### Example
 
 ```bash

@@ -140,6 +140,8 @@ class AgentLoop:
             self.context.system_prompt = f"{self.context.system_prompt}\n\n{schema.note(output_schema)}".strip()
         self.context.hooks = self.hooks
         """The context needs the hooks too: it is the one that compresses."""
+        self.context.tools = self.tools
+        """The schemas of the tools are in every request, so the budget counts them."""
         self.context.restore()
         self._session_start()
 
@@ -161,8 +163,13 @@ class AgentLoop:
             summary_model=self.context.summary_model,
             cwd=session.cwd,
             policy=self.policy,
+            instructions=self.context.instruction_blocks,
+            user_home=self.context.user_home,
         )
+        self.context.reload_instructions = True
+        """The instruction files of the new directory are read again."""
         self.context.hooks = self.hooks
+        self.context.tools = self.tools
         self.context.restore()
         self._exported = 0
         """Another session has its own trace."""

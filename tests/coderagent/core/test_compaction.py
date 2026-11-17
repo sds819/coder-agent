@@ -200,6 +200,45 @@ def test_maybe_compact_does_nothing_when_the_budget_is_far_away(tmp_path):
     assert engine.summary is None
 
 
+def test_the_schemas_of_the_tools_count_against_the_budget(tmp_path):
+    """The tools are in every request, so a session with big schemas compacts sooner."""
+    config = ContextConfig(context_window=1000, reserved_output=0, compact_threshold=0.5, keep_recent_turns=1)
+    engine = make_engine(tmp_path, config=config)
+    fill(engine, 6)
+    assert engine.maybe_compact() is False
+    engine.tools = [{"name": "bash", "description": "x" * 4000, "parameters": {}}]
+    assert engine.maybe_compact() is True
+    assert engine.summary is not None
+
+
+def test_the_schemas_of_the_tools_leave_less_room_for_the_history(tmp_path):
+    """The kept window has to fit together with the schemas, not on its own."""
+    config = ContextConfig(context_window=1000, reserved_output=0, compact_threshold=0.5, keep_recent_turns=1)
+    plain = make_engine(tmp_path / "plain", config=config)
+    with_tools = make_engine(tmp_path / "tools", config=config)
+    with_tools.tools = [{"name": "bash", "description": "x" * 800, "parameters": {}}]
+    for engine in (plain, with_tools):
+        for index in range(20):
+            engine.append({"role": "user", "content": f"question {index} " + "x" * 60})
+            engine.append({"role": "assistant", "content": f"answer {index} " + "y" * 60})
+    assert plain.compact()
+    assert with_tools.compact()
+    assert len(with_tools.history.messages) < len(plain.history.messages)
+
+
+def test_a_restored_session_knows_when_it_compacted_last(tmp_path):
+    """Without the turn of the last compaction, a restored session compacts again."""
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0, compact_every_turns=3)
+    engine = make_engine(tmp_path, config=config)
+    fill(engine, 4)
+    engine.session.turn_count = 5
+    assert engine.compact()
+    restored = ContextEngine(engine.session, engine.store, EventBus(), config, FakeModel(), cwd=tmp_path)
+    restored.restore()
+    assert restored.last_compact_turn == 5
+    assert restored.maybe_compact() is False
+
+
 def test_maybe_compact_can_be_switched_off(tmp_path):
     config = ContextConfig(context_window=100, reserved_output=0, compact_threshold=0.5, auto_compact=False)
     engine = make_engine(tmp_path, config=config)

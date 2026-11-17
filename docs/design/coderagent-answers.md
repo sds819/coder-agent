@@ -388,7 +388,10 @@
 **结论**：能。会话状态和对话内容都是从 JSONL **重放**出来的——`SessionStore.rebuild(session_id)` 恢复状态、todo、成本，`ContextEngine.restore()` 恢复对话历史和摘要。
 
 - **`/resume`**（`ui/commands/resume.py`）：列出会话、`latest_session()` 取最近一个、`resume()` 就是 `store.rebuild()`。
-- **切到旧会话**：`AgentLoop.switch_to(session)` 重建 `ContextEngine`（带着 config、memory 配置、摘要模型、权限策略），然后 `context.restore()`——历史和摘要从日志里**重放**回来（包括 `COMPACTION` 事件的截断、`REVERTED` 事件的回退）。
+- **切到旧会话**：`AgentLoop.switch_to(session)` 重建 `ContextEngine`（带着 config、memory 配置、摘要模型、权限策略、
+  **子目录指令块和用户级目录**），然后 `context.restore()`——历史和摘要从日志里**重放**回来
+  （包括 `COMPACTION` 事件的截断、`REVERTED` 事件的回退，以及**上次压缩发生在第几轮**）。
+  换了会话不会把上一个会话的指令和记忆弄丢。
 - **分叉**：`store.fork(session_id)` 把整个事件日志复制到新会话 id，原会话**一个字节都不动**。
 
 **取舍**：对话状态是从日志**重算**出来的，不是存出来的。好处是没有「两份状态不一致」这种 bug；代价是恢复的代码必须跟着事件格式走。

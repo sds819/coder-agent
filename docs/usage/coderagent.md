@@ -595,6 +595,9 @@ they are in the summary.
 
 `/compact` compacts now.
 
+The schemas of the tools go with every request, so they count against the
+window: a session with many tools compacts a little sooner.
+
 `/recap` summarizes the conversation without changing it: nothing is dropped and
 nothing is compressed, the summary does not go into the context of the model. It
 is a report for you, not a step of the work.

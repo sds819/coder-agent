@@ -8,6 +8,8 @@ does not go into the message either: the message says that it may not be seen.
 import re
 from pathlib import Path
 
+from coderagent.core.redact import redact
+
 MAX_CHARS = 20000
 """How much of a mentioned file goes into the message."""
 
@@ -71,6 +73,9 @@ def _content(path_text: str, cwd: Path, policy) -> str | None:
     if "\x00" in text:
         """A file with a null byte in it is not a file of text."""
         return f'<file path="{path_text}">\nThis file is not text.\n</file>'
+    text = redact(text)
+    """The content of the file goes into the prompt and into the log of the session,
+    so the secrets in it are taken out, as they are in the output of a tool."""
     if len(text) > MAX_CHARS:
         text = text[:MAX_CHARS] + "\n... (the rest of the file is not here)"
     return f'<file path="{path_text}">\n{text}\n</file>'

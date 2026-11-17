@@ -110,6 +110,8 @@ class ContextEngine:
         """The permission policy. It is shared, so the mode can change under us."""
         self.hooks = hooks
         """The hook runner, when the session has hooks."""
+        self.tools: list[dict] = []
+        """The schemas of the tools. They are part of every request, so they count."""
         self.history = History()
         self.summaries: list[Summary] = []
         self.instruction_blocks: list[InstructionBlock] = list(instructions or [])
@@ -150,6 +152,9 @@ class ContextEngine:
             elif event.type == EventType.COMPACTION:
                 messages = messages[payload.get("compacted_messages", 0) :]
                 summaries = [Summary.from_dict(item) for item in payload.get("summaries", [])]
+                self.last_compact_turn = int(payload.get("turn", 0))
+                """The turn of the last compaction. Without it a restored session
+                compacts again right away, or never at all."""
             elif event.type == EventType.REVERTED:
                 messages = messages[: payload.get("messages", len(messages))]
         self.history = History(messages)
@@ -229,8 +234,13 @@ class ContextEngine:
         )
 
     def estimated_tokens(self, tools: list[dict] | None = None) -> int:
-        """The size of the whole context. This is what the budget is checked against."""
-        return estimate_tokens(self.build_messages(tools=tools), tools)
+        """The size of the whole context. This is what the budget is checked against.
+
+        The schemas of the tools are part of every request, so they count: without
+        them a session with many tools looks smaller than it is.
+        """
+        schemas = self.tools if tools is None else tools
+        return estimate_tokens(self.build_messages(), schemas)
 
     def _instruction_text(self) -> str:
         """The instructions and the memory, one block per file.
@@ -324,6 +334,7 @@ class ContextEngine:
             timestamp=time.time(),
             payload={
                 "compacted_messages": cut,
+                "turn": self.session.turn_count,
                 "tokens": source_tokens,
                 "summary_tokens": summary_tokens,
                 "summary_ratio": round(summary_tokens / source_tokens, 4) if source_tokens else 0.0,
@@ -391,7 +402,8 @@ class ContextEngine:
             return 0
         candidates = [0, *starts]
         earliest = starts[max(0, len(starts) - self.config.keep_recent_turns)]
-        target = self.guard.target() - estimate_tokens(self._summary_messages())
+        target = self.guard.target() - estimate_tokens(self._summary_messages()) - estimate_tokens([], self.tools)
+        """The schemas of the tools are in every request, so they take their share."""
         if force:
             """The provider refused the context: only the last turn is kept."""
             cut = starts[-1]

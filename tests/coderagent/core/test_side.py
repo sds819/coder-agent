@@ -93,3 +93,28 @@ def test_the_answer_of_a_side_conversation_is_in_its_own_log(tmp_path):
         if event.type == EventType.ASSISTANT_MESSAGE
     ]
     assert answers == ["the answer"]
+
+
+def test_the_instructions_and_the_memory_survive_a_side_conversation(tmp_path):
+    """A conversation that goes aside must not take the context of the session with it."""
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / "CLAUDE.md").write_text("the memory of the user", encoding="utf-8")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "AGENTS.md").write_text("the rules of the subdirectory", encoding="utf-8")
+    store = SessionStore(tmp_path / "sessions")
+    loop = build_loop(
+        Config(),
+        tmp_path,
+        model=ScriptedModel([{"role": "assistant", "content": "the answer"}]),
+        store=store,
+        bus=EventBus(),
+        user_home=home,
+    )
+    loop.context.note_path(str(tmp_path / "sub" / "AGENTS.md"))
+    side = store.side(loop.session.id)
+    loop.run_turn("what does this do?", "side", side)
+    assert loop.context.user_home == home
+    text = "\n".join(str(message.get("content")) for message in loop.context.build_messages())
+    assert "the rules of the subdirectory" in text
+    assert "the memory of the user" in text
