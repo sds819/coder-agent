@@ -5259,6 +5259,16 @@ they are in the summary.</p>
 </tbody>
 </table>
 <p><code>/compact</code> compacts now.</p>
+<p><code>/recap</code> summarizes the conversation without changing it: nothing is dropped and
+nothing is compressed, the summary does not go into the context of the model. It
+is a report for you, not a step of the work.</p>
+<p><code>/side &lt;question&gt;</code> asks a question in a conversation that goes aside: it has its
+own session and its own log, and the conversation you are in is not touched. The
+question and the answer are recorded in your session, so the agent does not lose
+the thread of the work.</p>
+<div class="highlight"><pre><span></span><code>/recap
+/side<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>the<span class="w"> </span>retry<span class="w"> </span>logic<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>client<span class="w"> </span>do?
+</code></pre></div>
 <h3 id="the-memory">The memory</h3>
 <p>At the end of a session the agent asks the model what is worth remembering.
 The facts about the project are written right away, the preferences of the

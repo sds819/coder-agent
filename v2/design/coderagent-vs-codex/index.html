@@ -3915,6 +3915,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#99-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.9 第 13 步：一份总结，和一段岔开的对话 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4588,6 +4599,17 @@
     <span class="md-ellipsis">
       
         9.8 第 12 步：会话的生命周期和历史的保留 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.9 第 13 步：一份总结，和一段岔开的对话 ✅ 已修
       
     </span>
   </a>
@@ -5348,12 +5370,17 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <td>~~<strong>第三轮剩下的差距（§9.6）</strong>~~ ✅</td>
 <td>会话的生命周期和历史的保留策略，加上两个小的</td>
 </tr>
+<tr>
+<td>13</td>
+<td>~~<strong>§9.6 最后一条</strong>~~ ✅</td>
+<td>一份总结（<code>/recap</code>）和一段岔开的对话（<code>/side</code>）</td>
+</tr>
 </tbody>
 </table>
 <p>第 12 步做掉了 §9.6 里剩下的<strong>两个中的</strong>（<code>file_opener</code>、
 <code>supports_parallel_tool_calls</code>）和<strong>两个大的</strong>（会话的生命周期、历史的保留策略）。
-§9.6 里只剩 <code>/side</code> 和 <code>/recap</code> 没做——那两个要的是<strong>新的会话形态</strong>，
-不是加一条命令。</p>
+第 13 步做掉了 §9.6 里<strong>最后一条</strong>：<code>/recap</code> 和 <code>/side</code>——它们要的是新的会话形态，
+所以顺带把「工具和检查点属于哪个会话」这个真 bug 一起修了。</p>
 <hr>
 <h2 id="9">9. 第二轮对照：又找到的差距</h2>
 <p>第一轮读的是 Codex 文档里最显眼的几页（沙箱、审批、命令集、多模态）。
@@ -5478,7 +5505,8 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 它们要么是锦上添花，要么该等第 10 步的提交落地之后再挑。这节只作记录。</p>
 <blockquote>
 <p>第 11 步之后，这一节里<strong>六个小的和两个中的都做掉了</strong>（见 §9.7）；
-第 12 步之后，<strong>两个中的和两个大的也做掉了</strong>（见 §9.8），
+第 12 步之后，<strong>两个中的和两个大的也做掉了</strong>（见 §9.8）；
+第 13 步之后，<strong>最后那条也做掉了</strong>（见 §9.9）。
 表里打 ✅ 的就是它们。</p>
 </blockquote>
 <p><strong>已经有的、不用再抄的</strong>（对过命令表和配置 schema）：<code>/diff</code>、<code>/init</code>、<code>/status</code>、
@@ -5584,10 +5612,10 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 </thead>
 <tbody>
 <tr>
-<td><code>/side</code>（临时岔开聊）、<code>/recap</code>（只总结不压缩）</td>
+<td><code>/side</code>（临时岔开聊）、<code>/recap</code>（只总结不压缩） ✅</td>
 <td>有</td>
-<td>没有</td>
-<td><strong>没做</strong>：要新的会话形态，不是加一条命令</td>
+<td>有了（见 §9.9）</td>
+<td>要新的会话形态，不是加一条命令</td>
 </tr>
 <tr>
 <td><code>/rename</code> / <code>/archive</code> / <code>/delete</code> ✅</td>
@@ -5651,9 +5679,28 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
   <code>max_bytes</code> 是<strong>全部会话的历史</strong>能占的字节数，超了就<strong>从最老的开始删</strong>，
   <strong>正在跑的那个会话永远不在被删的里头</strong>。</li>
 </ul>
-<p><strong>没做的</strong>：<code>/side</code> 和 <code>/recap</code> 还在 §9.6 里。它们要的是<strong>新的会话形态</strong>
-（岔出去聊一条，回头再合并；只总结、不动上下文），不是加一条命令——
-留在那儿，等有人真的需要它们。</p>
+<h3 id="99-13">9.9 第 13 步：一份总结，和一段岔开的对话 ✅ 已修</h3>
+<p><strong>怎么做的</strong>：</p>
+<ul>
+<li><strong><code>/recap</code>（只总结，不动上下文）</strong>：复用压缩的那套摘要机器（<code>core/context.py</code> 的
+  <code>recap()</code>），但<strong>不碰</strong> <code>self.summaries</code>，<strong>不碰</strong>历史，也<strong>不把摘要交给模型</strong>——
+  模型看到的还是整段对话。摘要只是<strong>给你看的一份报告</strong>，不是干活的一步。</li>
+<li><strong>摘要的钱记在会话上</strong>：摘要用 <code>context.summarize_model</code> 跑（没配就是会话自己的模型），
+  费用记到 <code>session.total_cost</code>，事件日志里是一条 <code>RECAP</code> 事件（带 <code>summary</code> / <code>text</code> / <code>cost</code>）。
+  <code>collect()</code> 按用途 <code>recap</code> 归集，所以 <code>/cost</code> 里看得见这一笔。</li>
+<li><strong><code>/side &lt;问题&gt;</code>（岔出去聊一条）</strong>：当前会话<strong>分叉</strong>成一个新会话（<code>SessionStore.side()</code>），
+  新会话知道自己的<strong>父亲</strong>（<code>metadata["parent"]</code>），<strong>原来的会话一个字都没动</strong>。</li>
+<li><strong>跑完就回来</strong>：<code>AgentLoop.run_turn(..., session=...)</code> 会切到岔开的会话跑那一轮，
+  然后切回来（<code>switch_to(..., start=False)</code>，所以 <code>SessionStart</code> 的 hook 不会响两次）。
+  问题和回答记在<strong>你当前会话</strong>的日志里（一条 <code>SIDE_CONVERSATION</code> 事件），
+  所以 agent 不会丢掉干活的线索——但也就这些：岔开的那些消息留在岔开的会话里，
+  它用的工具也算在那个会话上。</li>
+<li><strong>岔开的会话有自己的 id</strong>，跟别的会话一样能打开（<code>/resume &lt;id&gt;</code>）。</li>
+<li><strong>顺带修了一个真 bug</strong>：工具和检查点<strong>原来是在 build 的时候把会话钉死的</strong>
+  （<code>run.py</code>），所以 <code>/resume</code>、<code>/fork</code>、<code>/clear</code> 之后，工具的结果落进了<strong>旧会话</strong>的日志。
+  现在工具的上下文、checkpoint 的回调、子 agent 的 <code>session_id</code> 都<strong>跟着循环所在的会话走</strong>。</li>
+</ul>
+<p><strong>没做的</strong>：这一轮把 §9.6 清空了。剩下的差距要等下一轮对照再看。</p>
 <hr>
 <h2 id="_1">附录：这份清单是怎么来的</h2>
 <ol>
@@ -5674,8 +5721,9 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 <p><strong>第三轮</strong>（§9.6）第 10 步落地之后又拉了一份全量清单，对完源码，
 剩下的差距<strong>只记录、没做</strong>——这一节就是那份记录。
 第 11 步做掉了其中<strong>八个</strong>（六个小的 + 两个中的），见 §9.7；
-第 12 步做掉了<strong>四个</strong>（两个中的 + 两个大的），见 §9.8。
-剩下的 <code>/side</code> 和 <code>/recap</code> <strong>没做</strong>——它们要的是新的会话形态。</p>
+第 12 步做掉了<strong>四个</strong>（两个中的 + 两个大的），见 §9.8；
+第 13 步做掉了<strong>最后一条</strong>（<code>/side</code> 和 <code>/recap</code>），见 §9.9——
+§9.6 至此是空的。</p>
 <p>本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
 也都修了：3.4 让一个文件只出一段（<code>core/instructions.py</code> 的 <code>once_per_file()</code>），
 3.5 把 http 传输和 <code>headers</code> 实现了（<code>tools/mcp.py</code>）。两条都有回归测试。</p>

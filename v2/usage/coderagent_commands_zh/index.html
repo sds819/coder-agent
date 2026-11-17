@@ -1122,7 +1122,7 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        会话的一生
+        一份总结，和一段岔开的对话
       
     </span>
   </a>
@@ -1133,7 +1133,7 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        用户自己的文件
+        会话的一生
       
     </span>
   </a>
@@ -1142,6 +1142,17 @@
       
         <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用户自己的文件
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
     <span class="md-ellipsis">
       
         自己的命令
@@ -3921,7 +3932,7 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        会话的一生
+        一份总结，和一段岔开的对话
       
     </span>
   </a>
@@ -3932,7 +3943,7 @@
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        用户自己的文件
+        会话的一生
       
     </span>
   </a>
@@ -3941,6 +3952,17 @@
       
         <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用户自己的文件
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
     <span class="md-ellipsis">
       
         自己的命令
@@ -4025,6 +4047,16 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <td><code>/compact</code></td>
 <td>现在就压缩对话</td>
 <td></td>
+</tr>
+<tr>
+<td><code>/recap</code></td>
+<td>总结一下对话，但什么都不改</td>
+<td></td>
+</tr>
+<tr>
+<td><code>/side</code></td>
+<td>在一段岔开的对话里问一个问题</td>
+<td><code>&lt;question&gt;</code></td>
 </tr>
 <tr>
 <td><code>/clear</code></td>
@@ -4195,7 +4227,23 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 消息里写的是「agent 读不了这个文件」。</p>
 <p><code>/exit</code> 关掉终端界面，和 <code>ctrl+q</code> 一样。浏览器里没有东西可关，所以它会说
 服务还在跑：要停掉它，得在启动它的那个终端里按 <code>ctrl+c</code>。</p>
-<h2 id="_4">会话的一生</h2>
+<h2 id="_4">一份总结，和一段岔开的对话</h2>
+<p><code>/recap</code> 把到现在的对话总结一遍，把总结给你看：目标、发现、决定、动过的文件、
+还没解决的问题、下一步。</p>
+<div class="highlight"><pre><span></span><code>/recap
+</code></pre></div>
+<p>什么都不会被丢掉，也不会被压缩：模型看到的还是整段对话，总结本身不进它的上下文。
+这是一份给你看的报告，不是干活的一步。总结要花一次模型调用，这笔钱记在会话上，
+用途是 <code>recap</code>。</p>
+<p><code>/side</code> 在一段自己的对话里问一个问题：</p>
+<div class="highlight"><pre><span></span><code>/side<span class="w"> </span>客户端的重试逻辑是怎么做的？
+</code></pre></div>
+<p>这段对话是你当前会话的一份拷贝，有自己的日志。问题和回答会记在你当前会话里，
+所以 agent 不会丢掉干活的线索，但也就这些：岔开的那些消息留在岔开的会话里，
+它用的工具也算在那个会话上。</p>
+<p>岔开的会话有自己的 id，跟别的会话一样可以打开（<code>/resume &lt;id&gt;</code>）。它花的钱记在
+你当前会话上，用途是 <code>side</code>。</p>
+<h2 id="_5">会话的一生</h2>
 <p>会话有名字，可以收起来，也可以删掉：</p>
 <div class="highlight"><pre><span></span><code>/rename<span class="w"> </span>monday<span class="w"> </span>那个<span class="w"> </span>bug<span class="w">   </span><span class="c1"># 给当前会话起个名字</span>
 /archive<span class="w">                 </span><span class="c1"># 把这个会话收起来</span>
@@ -4207,7 +4255,7 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 就又拿出来了。</p>
 <p><code>/delete</code> 要会话的 id，而且<strong>不删你正待着的那个会话</strong>：先 <code>/clear</code> 开一个新的。
 会话里的一切——事件日志和它的元数据文件——一起没了。</p>
-<h2 id="_5">用户自己的文件</h2>
+<h2 id="_6">用户自己的文件</h2>
 <p><code>/open</code> 在用户自己的编辑器里打开一个文件：</p>
 <div class="highlight"><pre><span></span><code>/open<span class="w"> </span>src/app.py
 </code></pre></div>
@@ -4218,7 +4266,7 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <p><code>vscode</code>、<code>cursor</code>、<code>windsurf</code> 这些名字是认识的。用户自己的命令也行，
 用 <code>{file}</code> 告诉它文件放在哪：<code>my-editor {file} --wait</code>。文件必须在工作目录
 里面，而且<strong>项目不能挑编辑器</strong>——那个程序跑在用户的机器上，这个选择归用户。</p>
-<h2 id="_6">自己的命令</h2>
+<h2 id="_7">自己的命令</h2>
 <p>一个命令就是 <code>.coderagent/commands</code> 里的一个 markdown 文件。文件开头是 front
 matter，和 Claude Code 一个写法：</p>
 <div class="highlight"><pre><span></span><code>---

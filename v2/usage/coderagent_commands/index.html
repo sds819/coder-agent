@@ -1349,6 +1349,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-summary-and-a-conversation-that-goes-aside" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A summary and a conversation that goes aside
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-life-of-a-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3916,6 +3927,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-summary-and-a-conversation-that-goes-aside" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A summary and a conversation that goes aside
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-life-of-a-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4025,6 +4047,16 @@ does not run. Wait for the turn to end, or press <code>ctrl+c</code> to stop the
 <td><code>/compact</code></td>
 <td>Compact the conversation now</td>
 <td></td>
+</tr>
+<tr>
+<td><code>/recap</code></td>
+<td>Summarize the conversation without changing it</td>
+<td></td>
+</tr>
+<tr>
+<td><code>/side</code></td>
+<td>Ask a question that goes aside, in a conversation of its own</td>
+<td><code>&lt;question&gt;</code></td>
 </tr>
 <tr>
 <td><code>/clear</code></td>
@@ -4206,6 +4238,27 @@ says that the agent may not read it.</p>
 <p><code>/exit</code> closes the terminal interface, the same way <code>ctrl+q</code> does. In the
 browser there is nothing to close, so it says that the server keeps running:
 stop it with <code>ctrl+c</code> in the terminal that started it.</p>
+<h2 id="a-summary-and-a-conversation-that-goes-aside">A summary and a conversation that goes aside</h2>
+<p><code>/recap</code> summarizes the conversation so far and shows you the summary: the goal,
+the findings, the decisions, the files that were touched, the questions that are
+still open and the next steps.</p>
+<div class="highlight"><pre><span></span><code>/recap
+</code></pre></div>
+<p>Nothing is dropped and nothing is compressed: the model still sees the whole
+conversation, and the summary does not go into its context. It is a report for
+you, not a step of the work. The summary costs one call of the model, and the
+money is on the session, under the purpose <code>recap</code>.</p>
+<p><code>/side</code> asks a question in a conversation of its own:</p>
+<div class="highlight"><pre><span></span><code>/side<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>the<span class="w"> </span>retry<span class="w"> </span>logic<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>client<span class="w"> </span>do?
+</code></pre></div>
+<p>The side conversation is a copy of the session you are in, with a log of its
+own. The question and the answer are recorded in the session you are in, so
+the agent does not lose the thread of the work, but nothing else is: the
+messages of the side conversation stay in the side session, and the tools it
+uses belong to that session too.</p>
+<p>The side session has its own id and can be opened like any other one
+(<code>/resume &lt;id&gt;</code>). The money it spent is on the session you are in, under the
+purpose <code>side</code>.</p>
 <h2 id="the-life-of-a-session">The life of a session</h2>
 <p>A session has a name, it can be put away, and it can be removed:</p>
 <div class="highlight"><pre><span></span><code>/rename<span class="w"> </span>the<span class="w"> </span>bug<span class="w"> </span>of<span class="w"> </span>monday<span class="w">   </span><span class="c1"># the name of the session you are in</span>

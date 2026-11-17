@@ -1845,6 +1845,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-recap-and-the-side-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The recap and the side conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-files-you-mention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5075,6 +5086,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-recap-and-the-side-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The recap and the side conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-files-you-mention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6090,6 +6112,8 @@ memory of the session keeps what was learned before the failure.</p>
 <li><strong>What is kept</strong> — the last turns, or the last 40 % of the tokens, whichever
   is more.</li>
 <li><strong><code>/compact</code></strong> — compress on demand.</li>
+<li><strong><code>/recap</code></strong> — summarize the conversation without dropping anything: the
+  summary is for you to read, the model still sees the whole conversation.</li>
 <li><strong>The order of the messages</strong> — system prompt, the instruction files, the
   todo list, the summary of the session, then the history.</li>
 <li><strong>The instruction files are cut</strong> — one file may take 32768 bytes
@@ -7016,8 +7040,8 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Thirty-three built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
-<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rename</code>, <code>/archive</code>, <code>/delete</code>,
+<p>Thirty-five built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<code>/compact</code>, <code>/recap</code>, <code>/side</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rename</code>, <code>/archive</code>, <code>/delete</code>,
 <code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
 <code>/image</code>, <code>/mention</code>, <code>/open</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
 <code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
@@ -7038,6 +7062,19 @@ not to change any file. The answer stays in the conversation.</p>
 <code>model.routing.review</code> wins over that. Without either one the review runs on
 the model of the session. The purpose of the turn is in the log, so it can be
 read back later.</p>
+<h3 id="the-recap-and-the-side-conversation">The recap and the side conversation</h3>
+<p><code>/recap</code> summarizes the conversation so far and shows you the summary: the goal,
+the findings, the decisions, the files that were touched, the questions that are
+still open and the next steps. Nothing is dropped, nothing is compressed, and
+the summary does not go into the context of the model — the model still sees the
+whole conversation. It is a report for you. The summary costs one call of the
+model, and the money is on the session, under the purpose <code>recap</code>.</p>
+<p><code>/side &lt;question&gt;</code> asks a question in a conversation of its own. The side
+conversation is a copy of the current session with a log of its own: the
+question and the answer are recorded in the current session, so the agent does
+not lose the thread of the work, and nothing else is. The tools the side
+conversation uses belong to the side session, and the money it spent is on the
+current session, under the purpose <code>side</code>.</p>
 <h3 id="the-files-you-mention">The files you mention</h3>
 <p>A file that is named in the question goes into the message <strong>with its
 content</strong>, so that the model does not have to spend a tool call on reading it
