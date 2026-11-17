@@ -79,6 +79,45 @@ def test_compact_of_a_single_turn_does_nothing(tmp_path):
     assert engine.compact() is False
 
 
+def test_the_context_is_compacted_before_the_kept_turns_are_used_up(tmp_path):
+    """The default keeps 20 turns, but a session that is too big is compacted anyway."""
+    config = ContextConfig(context_window=400, reserved_output=0, compact_threshold=0.5)
+    engine = make_engine(tmp_path, config=config)
+    for _ in range(3):
+        engine.append({"role": "user", "content": "question " * 40})
+        engine.append({"role": "assistant", "content": "answer " * 40})
+    assert engine.maybe_compact()
+    assert engine.summary is not None
+    assert len(engine.history.messages) < 6
+
+
+def test_a_turn_that_does_not_fit_is_cut_inside(tmp_path):
+    """Even the last turn may be too big: then the cut is inside it."""
+    config = ContextConfig(context_window=200, reserved_output=0, compact_threshold=0.5, keep_recent_turns=1)
+    engine = make_engine(tmp_path, config=config)
+    engine.append({"role": "user", "content": "q"})
+    engine.append({"role": "assistant", "content": "", "tool_calls": [{"id": "1", "function": {"name": "read"}}]})
+    engine.append({"role": "tool", "tool_call_id": "1", "content": "x" * 4000})
+    engine.append({"role": "assistant", "content": "the answer"})
+    assert engine.maybe_compact()
+    assert engine.summary is not None
+    assert [message["content"] for message in engine.history.messages] == ["the answer"]
+    """What the model sees is still a history that a provider accepts."""
+    messages = engine.build_messages()
+    assert messages[0]["role"] == "user"
+    assert [message["role"] for message in messages[-2:]] == ["user", "assistant"]
+
+
+def test_a_forced_compaction_cuts_even_when_the_window_fits(tmp_path):
+    """The provider refused the context: the oldest turns go anyway."""
+    config = ContextConfig(context_window=1000000)
+    engine = make_engine(tmp_path, config=config)
+    fill(engine, 6)
+    assert engine.compact() is False
+    assert engine.force_compact()
+    assert len(engine.history.messages) == 2
+
+
 def test_compact_publishes_an_event_that_can_be_replayed(tmp_path):
     config = ContextConfig(keep_recent_turns=2, keep_recent_token_ratio=0.0)
     engine = make_engine(tmp_path, config=config)

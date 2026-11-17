@@ -53,8 +53,9 @@ Every file of the task directory that is not a yaml file is a fixture: it is
 copied into the working directory before the agent starts.
 
 `prompts:` gives the agent several turns, one after the other, in the same
-session. A task with a single prompt can never compact: the cut of the history
-has to land on a turn boundary, and a turn that never happened cannot be cut.
+session. A task with a single prompt hardly compacts: the cut of the history
+has to land on a turn boundary, and a turn that never happened cannot be cut
+(only when that one turn does not fit at all, the cut may land inside it).
 A task that wants to see the compaction — and to measure the size of the
 summary — needs more than one prompt.
 

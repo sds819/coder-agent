@@ -281,11 +281,16 @@ class ContextEngine:
 
     def force_compact(self) -> bool:
         """Compact regardless of the budget. Used when the provider says the context is too big."""
-        return self.compact()
+        return self.compact(force=True)
 
-    def compact(self) -> bool:
-        """Replace the older part of the history with a summary."""
-        cut = self._cut_index()
+    def compact(self, force: bool = False) -> bool:
+        """Replace the older part of the history with a summary.
+
+        `force` says that the provider refused the context: then only the last turn
+        is kept, whatever the rules say. A session that forgets is worth more than a
+        session that cannot continue.
+        """
+        cut = self._cut_index(force=force)
         if cut <= 0:
             return False
         compacted = self.history.messages[:cut]
@@ -364,12 +369,21 @@ class ContextEngine:
         self.store.append(self.session.id, event)
         return summary
 
-    def _cut_index(self) -> int:
-        """Where the kept window starts. Always a turn boundary.
+    def _cut_index(self, force: bool = False) -> int:
+        """Where the kept window starts. A turn boundary, unless the last turn does
+        not fit on its own.
 
         Two rules decide how much is kept: the last `keep_recent_turns` turns, and
         enough tokens to fill `keep_recent_token_ratio` of the context window. The
         larger of the two wins, so a few huge turns are kept as well as many small ones.
+
+        The kept window also has to fit into the target, so it is cut further when it
+        does not: on a turn boundary first, and inside the last turn when even that
+        is not enough. `keep_recent_turns` is therefore a target, not a promise: a
+        session that is too big is compacted even in its first turns.
+
+        `force` says that the provider refused the context: then only the last turn
+        is kept, and inside it what still does not fit.
         """
         messages = self.history.messages
         starts = self.history.turn_starts()
@@ -377,17 +391,21 @@ class ContextEngine:
             return 0
         candidates = [0, *starts]
         earliest = starts[max(0, len(starts) - self.config.keep_recent_turns)]
-        if earliest == 0:
-            return 0
+        target = self.guard.target() - estimate_tokens(self._summary_messages())
+        if force:
+            """The provider refused the context: only the last turn is kept."""
+            cut = starts[-1]
+            return cut if estimate_tokens(messages[cut:]) <= target else _inside_cut(messages, cut, target)
         budget = int(self.config.context_window * self.config.keep_recent_token_ratio)
         cut = earliest
         for index in candidates:
             if index <= earliest and estimate_tokens(messages[index:]) >= budget:
                 cut = index
-        limit = self.guard.limit() - estimate_tokens(self._summary_messages())
-        while cut < len(messages) and estimate_tokens(messages[cut:]) > limit:
+        while cut < len(messages) and estimate_tokens(messages[cut:]) > target:
             later = [index for index in candidates if index > cut]
             if not later:
+                """Even the last turn does not fit: cut inside it."""
+                cut = _inside_cut(messages, cut, target)
                 break
             cut = later[0]
         return cut
@@ -474,6 +492,32 @@ class ContextEngine:
             if block.path not in known:
                 self.instruction_blocks.append(block)
                 known.add(block.path)
+
+
+def _inside_cut(messages: list[dict], cut: int, limit: int) -> int:
+    """A cut inside the last turn, for when even that turn does not fit.
+
+    The kept window starts with an assistant message: the tool calls whose results
+    are cut away are repaired before the model sees them. When no cut inside the
+    turn fits, the earliest one is used: the rest is dropped, the window is still
+    too big, and the caller says so.
+    """
+    inside = [index for index in range(cut + 1, len(messages)) if messages[index].get("role") == "assistant"]
+    if not inside:
+        return cut
+    sizes = _suffix_sizes(messages)
+    for index in reversed(inside):
+        if sizes[index] <= limit:
+            return index
+    return inside[0]
+
+
+def _suffix_sizes(messages: list[dict]) -> list[int]:
+    """The tokens of every suffix of the history."""
+    sizes = [0] * (len(messages) + 1)
+    for index in range(len(messages) - 1, -1, -1):
+        sizes[index] = sizes[index + 1] + estimate_tokens([messages[index]])
+    return sizes
 
 
 def _writes(messages: list[dict]) -> bool:

@@ -95,6 +95,17 @@ def test_the_turn_survives_an_overflow(tmp_path):
     assert result.messages[-1]["content"] == "done"
 
 
+def test_the_turn_survives_an_overflow_with_few_turns(tmp_path):
+    """The recovery does not wait for 20 turns: a session that is too big is compacted."""
+    model = OverflowingModel()
+    loop, store, session = _loop(tmp_path, model)
+    _prefill(loop, turns=3)
+    result = loop.run_turn("hello")
+    assert result.stop_reason == "end_turn"
+    assert len(model.seen[1]) < len(model.seen[0])
+    assert any("<session_summary>" in str(message.get("content", "")) for message in model.seen[1])
+
+
 def test_the_context_is_compacted_before_the_second_attempt(tmp_path):
     model = OverflowingModel()
     loop, _, _ = _loop(tmp_path, model)

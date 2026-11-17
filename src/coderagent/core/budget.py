@@ -36,6 +36,10 @@ class BudgetGuard:
         """Tokens available for the context itself."""
         return max(0, self.context_window - self.reserved_output)
 
+    def target(self) -> int:
+        """The tokens the conversation may take before it has to be compacted."""
+        return min(int(self.context_window * self.compact_threshold), self.limit())
+
     def should_compact(self, estimated: int) -> bool:
         """True when the conversation is close enough to the limit to compact."""
-        return estimated > min(int(self.context_window * self.compact_threshold), self.limit())
+        return estimated > self.target()

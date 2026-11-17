@@ -586,8 +586,8 @@ they are in the summary.
 |---|---|
 | `context_window` | The size of the window. By default the one of the model. |
 | `compact_threshold` | When to compact, as a share of the window. |
-| `keep_recent_turns` | The turns that are never compacted. |
-| `keep_recent_token_ratio` | The share of the window that is always kept. |
+| `keep_recent_turns` | How many recent turns to keep when the window has room for them. |
+| `keep_recent_token_ratio` | The share of the window to keep when the window has room for it. |
 | `compact_every_turns` | Compact after that many turns, even when the window is free. |
 | `reserved_output` | The room that is kept for the answer of the model. |
 | `auto_compact` | Whether the agent compacts on its own. |

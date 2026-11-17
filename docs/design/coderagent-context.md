@@ -76,15 +76,17 @@ MODEL_CONTEXT_WINDOWS = {"gpt-": 128000, "claude": 200000, "deepseek": 64000, "q
 def context_window_for(model_name, default=200000): ...   # 按模型名（去掉厂商前缀后）的前缀查表
 
 limit          = max(0, context_window - reserved_output)
-should_compact = estimated > min(int(context_window * compact_threshold), limit())
+target         = min(int(context_window * compact_threshold), limit())
+should_compact = estimated > target
 ```
 
 三条要点：
 
 1. **窗口大小跟随模型，但显式配置优先**。`run.py` 的 `_context_config()`（`run.py:78-82`）检查
    `"context_window" in config.context.model_fields_set`——用户配了就用用户的，没配才查表。
-2. **两个阈值取小的**：比例阈值（`compact_threshold`，默认 0.8）和绝对上限（`limit()`）谁紧听谁。
-   这样小窗口模型不会被比例阈值放行到超限，大窗口模型不会因为比例太低而提前压缩。
+2. **两个阈值取小的**：比例阈值（`compact_threshold`，默认 0.8）和绝对上限（`limit()`）谁紧听谁，
+   小的那个叫 `target()`。这样小窗口模型不会被比例阈值放行到超限，大窗口模型不会因为比例太低而提前压缩。
+   **`target` 同时也是切点的目标**：压缩完留下的原文 + 摘要要落回 `target` 之下，否则下一轮立刻又触发。
 3. **`reserved_output`（默认 8000）** 给模型的输出留位置——上下文不能占满整个窗口。
 
 ### 3.1 token 估算
@@ -110,8 +112,8 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 | `context.context_window` | 200000 | 窗口大小（不配则跟随模型名） |
 | `context.reserved_output` | 8000 | 给输出留的 token |
 | `context.compact_threshold` | 0.8 | 触发压缩的比例阈值 |
-| `context.keep_recent_turns` | 20 | 至少保留最近多少轮 |
-| `context.keep_recent_token_ratio` | 0.4 | 至少保留多少比例的窗口 |
+| `context.keep_recent_turns` | 20 | 窗口有余量时保留最近多少轮 |
+| `context.keep_recent_token_ratio` | 0.4 | 窗口有余量时保留多少比例 |
 | `context.compact_every_turns` | 40 | 最多隔多少轮强制压一次 |
 | `context.auto_compact` | true | 关掉就完全不自动压缩 |
 | `context.summarize_model` | "" | 用单独的模型做摘要；空 = 走路由的 `summarize` 用途 |
@@ -130,17 +132,18 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 
 1. **预算到了**：`guard.should_compact(estimated_tokens())`；
 2. **轮数到了**：`session.turn_count - last_compact_turn > compact_every_turns`；
-3. **provider 报溢出**：`force_compact()`（`context.py:213-215`）——
+3. **provider 报溢出**：`force_compact()`（`context.py:282-284`）——
    `loop.py` 的 `_query` 捕获上下文溢出异常后强制压一次，**然后重试一次**；压不动才返回错误
    （文本里带 "nothing left to compact"）。
 
-第 3 条是兜底：前两条是**预判**，第 3 条是**事后救**。
+第 3 条是兜底：前两条是**预判**，第 3 条是**事后救**。**强制压缩只留最后一轮**（必要时切进那一轮里面），
+不按 `keep_recent_turns` 走——provider 已经说了装不下，先能继续，再谈记性。
 
 **注意**：`auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`（`context.py:202`），
 所以第 2 条**永远不会单独成立**——「只按轮数压」是做不到的，`auto_compact` 是总开关
 （只有第 3 条的 `force_compact()` 不受它管）。
 
-### 4.2 切点：永远在轮边界
+### 4.2 切点：优先轮边界
 
 `History.turn_starts()`（`core/history.py:27-29`）= 所有 `role == "user"` 的消息下标——**轮的唯一定义**。
 一轮 = 一条 user 消息 + 模型为它做的一切（assistant 消息 + 后续工具结果）。
@@ -148,9 +151,13 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 切在轮边界上，工具结果才不会跟「发起它的那条 assistant 消息」分家。切在半路，模型会看到
 「请求还在，结果没了」。
 
+**例外**：最后一轮自己就装不下的时候（一次读了个大文件），轮边界用完了，只能切进那一轮里面——
+切点落在**那条 assistant 消息**上，它发起的工具调用由 `repair_tool_calls()` 补一个
+「没跑完」的结果，模型看到的是一次明确的失败，而不是一个悬空的请求。
+
 ### 4.3 切点：两条规则取更严的
 
-`_cut_index()`（`context.py:252-278`）：
+`_cut_index()`（`context.py:372-403`）：
 
 ```
 earliest = starts[max(0, len(starts) - keep_recent_turns)]     # 最近 N 轮的起点
@@ -167,12 +174,15 @@ for index in 候选轮边界:
 最后还有一条**硬上限**兜底：
 
 ```
-limit = guard.limit() - estimate_tokens(摘要本身)
-while estimate_tokens(messages[cut:]) > limit:
-    cut = 下一个轮边界
+target = guard.target() - estimate_tokens(摘要本身)
+while estimate_tokens(messages[cut:]) > target:
+    cut = 下一个轮边界；没有轮边界了就切进最后一轮里
 ```
 
 即「留下的原文 + 摘要」也不能超预算。宁可多切一轮，也不能让这一次请求直接被 provider 拒掉。
+
+**`keep_recent_turns` 是目标，不是承诺**：轮数还没攒够 `keep_recent_turns` 时，上面的兜底照样生效——
+窗口满了就压，哪怕只聊了三轮。反过来，轮数攒够了但窗口还很空，也不压。
 
 ### 4.4 摘要：固定 schema，不是自由文本
 
@@ -417,8 +427,8 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
 2. **摘要永远只有一份**。第二次压缩时，第一次摘要的细节被压成一句再合并进新摘要。
 3. **窗口外的内容模型取不回**。原文在磁盘上，但模型只能靠 `read` / `grep` 重新捞——这就是
    `conservative_summary` 要写「去重读文件」的原因。
-4. **`_cut_index` 用的是 `config.context_window` 而不是 `guard.limit()`**（`context.py:252` vs `budget.py:35`），
-   两者差一个 `reserved_output`，极端情况下会切得偏保守。
+4. **切点盯的是 `guard.target()`，不是 `guard.limit()`**（`context.py:394` vs `budget.py:39`）——
+   `target` 取比例阈值和绝对上限里小的那个，所以压缩后落在阈值的**下面**，留出余量给下一轮。
 5. **指令块会累积**。`instruction_blocks` 随 agent 走过的目录增长，且**不随压缩清理**。
 6. **相邻的两条 user 消息**。权限模式说明和摘要是两条连续的 `user` 消息，中间没有 assistant。
    合法，但严格说不是自然对话形态。

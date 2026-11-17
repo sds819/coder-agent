@@ -33,7 +33,7 @@
 
 - **窗口大小**：`context_window_for(model_name)` 按模型名前缀查表（`gpt-` 128k、`claude` 200k、`deepseek` 64k、`gemini` 1M、`minimax` 204800……）。**只有用户没显式配 `context.context_window` 时才生效**——`run.py` 的 `_context_config()` 会检查 `"context_window" in config.context.model_fields_set`。显式配置永远赢。
 - **可用上限**：`BudgetGuard.limit() = max(0, context_window - reserved_output)`，`reserved_output` 默认 8000。
-- **压缩阈值**：`should_compact(estimated) = estimated > min(int(context_window * compact_threshold), limit())`，默认 `compact_threshold=0.8`。两个阈值取小的那个，即**比例阈值和绝对上限谁更紧听谁的**。
+- **压缩阈值**：`should_compact(estimated) = estimated > target()`，其中 `target() = min(int(context_window * compact_threshold), limit())`，默认 `compact_threshold=0.8`。两个阈值取小的那个，即**比例阈值和绝对上限谁更紧听谁的**。
 - **token 估算**：装了 `tiktoken` 就用 `cl100k_base` 精确算（含 tool schema 的 JSON 长度，每条消息额外 4 token 开销）；没装就退回启发式：`字符数 / 3.6 + 4 × 消息数`。
 
 **为什么**：估算只是用来**决定要不要压缩**，不用来精确计费，所以宁可便宜。但 tiktoken 存在时用精确值，能少很多次无谓压缩。
@@ -55,11 +55,15 @@
 
 **切点**在 `ContextEngine._cut_index()`：
 
-- 候选切点只有**轮边界**（`History.turn_starts()`，即每条 role 为 user 的消息）。切在轮边界上，工具结果消息才不会跟「发起它的那条 assistant 消息」分家。
+- 候选切点优先是**轮边界**（`History.turn_starts()`，即每条 role 为 user 的消息）。切在轮边界上，工具结果消息才不会跟「发起它的那条 assistant 消息」分家。
 - 两个条件**取更严的**：一是「保留最近 `keep_recent_turns`（默认 20）轮」，二是「保留最近 `keep_recent_token_ratio`（默认 0.4）个窗口的 token」——哪个切得更靠前就切哪里。
-- 还有一条**硬上限**兜底：切完之后剩余部分 + 摘要的 token 也不能超过 `guard.limit()`，超了就继续往后切一个轮。
+- 还有一条**硬上限**兜底：切完之后剩余部分 + 摘要的 token 也不能超过 `guard.target()`，超了就继续往后切一个轮。
+- **`keep_recent_turns` 是目标不是承诺**：轮数没攒够 20 轮时，只要窗口满了照样压；轮数攒够了但窗口还空着，就不压。
+- 最后一轮自己就装不下时（一次读了个大文件），轮边界用完了，切点落进那一轮的**那条 assistant 消息**上，它发起的工具调用由 `repair_tool_calls()` 补一个「没跑完」的结果。
+- provider 报溢出时的**强制压缩只留最后一轮**（必要时切进那一轮里面），不按 `keep_recent_turns` 走。
 
 **为什么**：宁可多留一点，也不要让切点落在半个工具调用中间——那会让模型看到「结果没了，但请求还在」。
+（唯一的例外是「整轮都装不下」，那时只能落在 assistant 消息上。）
 
 ### a4 被切掉的内容去哪了？摘要失败怎么办？
 
