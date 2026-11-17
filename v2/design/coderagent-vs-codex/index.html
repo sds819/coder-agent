@@ -4832,7 +4832,9 @@ TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Mark
   「<strong>Do not change any file</strong>: this is a review, not a fix」——
   审查只出结论，不动代码（要改的话走正常的审批门）；</li>
 <li>diff 超过 60000 字符会被截断，并告诉模型「the diff is cut here, read the files yourself」；</li>
-<li>审查轮在<strong>当前会话</strong>里跑，结果留在对话里，用户可以接着说「把第二条改掉」。</li>
+<li>审查轮在<strong>当前会话</strong>里跑，结果留在对话里，用户可以接着说「把第二条改掉」；</li>
+<li><strong>diff 只在这一轮里</strong>：轮结束就换成一句提示（「改动不在上下文里了，自己再读一遍」），
+  否则一次大审查就把整个会话的窗口吃掉了。</li>
 </ul>
 <p><strong>实现要点</strong>：命令自己不跑模型，它把提示词交给界面的 <code>submit</code> 回调——
 <code>CommandContext</code> 多了一个 <code>submit</code> 字段（TUI → 工作线程，网页版 → 会话线程，
@@ -4871,13 +4873,13 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 <h3 id="34-bugcoderagentclaudemd">3.4 真 bug：<code>~/.coderagent/CLAUDE.md</code> 被加载了两次 ✅ 已修</h3>
 <p><strong>原来</strong>：</p>
 <ul>
-<li><code>src/coderagent/core/instructions.py:39</code> — <code>load_instructions()</code> 读
-  <code>home / USER_FILE</code>，<code>USER_FILE = "CLAUDE.md"</code>（<code>instructions.py:13</code>），
+<li><code>src/coderagent/core/instructions.py:66</code> — <code>load_instructions()</code> 读
+  <code>home / USER_FILE</code>，<code>USER_FILE = "CLAUDE.md"</code>（<code>instructions.py:12</code>），
   于是读的是 <code>~/.coderagent/CLAUDE.md</code>；</li>
-<li><code>src/coderagent/core/memory.py:32</code> — <code>load_user_memory()</code> 读
+<li><code>src/coderagent/core/memory.py:36</code> — <code>load_user_memory()</code> 读
   <code>home / Path(config.user_path).name</code>，而 <code>user_path</code> 的默认值就是
   <code>~/.coderagent/CLAUDE.md</code>（<code>src/coderagent/config/schema.py:108</code>）；</li>
-<li>这两块在 <code>src/coderagent/core/context.py:215-220</code> 被<strong>同时</strong>拼进指令段。</li>
+<li>这两块在 <code>src/coderagent/core/context.py:270-293</code> 被<strong>同时</strong>拼进指令段。</li>
 </ul>
 <p><strong>影响</strong>：用户级的 <code>CLAUDE.md</code> 每次组消息都<strong>出现两遍</strong>，白烧 token；
 更要紧的是，如果用户在这份文件里写了「每次回答都要先说 X」这类自我约束，
@@ -4937,7 +4939,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 <tr>
 <td>4.4</td>
 <td><strong>中断的粒度是「轮」</strong> ✅</td>
-<td><code>loop.cancel</code> 只在<strong>每轮模型调用之前</strong>检查（<code>src/coderagent/core/loop.py:179-181</code>），<code>tools/executor.py</code> 里没有取消检查——<strong>一条跑着的 <code>bash</code> 停不下来</strong>，只能等它自己结束</td>
+<td><code>loop.cancel</code> 只在<strong>每轮模型调用之前</strong>检查（<code>src/coderagent/core/loop.py:272</code>），<code>tools/executor.py</code> 里没有取消检查——<strong>一条跑着的 <code>bash</code> 停不下来</strong>，只能等它自己结束</td>
 <td>能中断正在跑的工具</td>
 <td>中</td>
 </tr>
@@ -5125,8 +5127,8 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 命中就把 500 换成 <code>AuthenticationError</code>——它在 <code>abort_exceptions</code> 里，重试立刻停。
 没命中就照旧重试。<strong>key 不会因为等一会儿变好，等待只是让用户多等。</strong></p>
 <h3 id="53-agentsmd">5.3 <code>AGENTS.md</code> 会话中途改了不生效 ✅ 已修</h3>
-<p><code>src/coderagent/core/context.py:109-110</code> 在 <code>ContextEngine</code> 构造时读一次指令文件，
-之后只追加<strong>子目录</strong>的指令（<code>context.py:392-395</code>）。项目根目录的 <code>AGENTS.md</code>
+<p><code>src/coderagent/core/context.py:118-120</code> 在 <code>ContextEngine</code> 构造时读一次指令文件，
+之后只追加<strong>子目录</strong>的指令（<code>context.py:532-544</code>）。项目根目录的 <code>AGENTS.md</code>
 在会话开始后被修改，模型这一轮还看的是旧内容。</p>
 <p>Codex 的做法是每次会话开始、每次 compact 之后重读。<strong>工作量：小</strong>（把「读指令」
 挪到和记忆同一层的「每轮重算」里）。</p>
@@ -5137,7 +5139,7 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 所以项目中途改了规则，下一轮模型就看见了。</p>
 <h3 id="54-hook-6">5.4 hook 事件只有 6 个 ✅ 已修</h3>
 <p>现在有：<code>PreToolUse</code>、<code>PostToolUse</code>、<code>UserPromptSubmit</code>、<code>Stop</code>、<code>SessionStart</code>、<code>SessionEnd</code>
-（<code>src/coderagent/tools/executor.py:104,169</code>、<code>src/coderagent/core/loop.py:145,364,372,376</code>）。</p>
+（<code>src/coderagent/tools/executor.py:104,169</code>、<code>src/coderagent/core/loop.py:232,301,491,495</code>）。</p>
 <p>Codex 还提供压缩前后、通知、子 agent 停止等事件。<code>PreCompact</code> 对本项目特别有用——
 压缩是 coderagent 的核心机制之一（见<a href="../coderagent-context/">上下文专题</a>），
 压缩前后的钩子是天然的「记录摘要质量」的地方。</p>

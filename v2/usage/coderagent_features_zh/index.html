@@ -6066,7 +6066,7 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
   整段对话。</li>
 <li><strong>消息的顺序</strong>——系统提示词、指令文件、todo、会话摘要，然后是历史。</li>
 <li><strong>指令文件会裁</strong>——一个文件最多 32768 字节（<code>context.project_doc_max_bytes</code>）。
-  太长的裁短，而且告诉 agent 它没看全。</li>
+  太长的裁短，而且告诉 agent 它没看全。记忆文件同样裁。</li>
 </ul>
 <h3 id="_19">用法例子</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
@@ -6108,8 +6108,13 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 </tr>
 <tr>
 <td>摘要是个兜底版本，不是真的摘要</td>
-<td>模型没按摘要的 JSON 回答。试两次之后就用保守摘要：最后五条消息，<code>next_steps</code> 是 <code>["re-read the files that were mentioned to recover the details"]</code>。</td>
+<td>模型没按摘要的 JSON 回答。试两次之后就用保守摘要：最后五条消息，<code>next_steps</code> 是 <code>["re-read the files that were mentioned to recover the details"]</code>。上一轮的摘要会合并进来，所以会话不会把记忆丢了。</td>
 <td>不用管，会话继续走。再问模型一次那些细节。</td>
+</tr>
+<tr>
+<td>摘要里没说改过哪些文件</td>
+<td>模型没说它动过什么。文件列表从消息里取——消息才是事实。</td>
+<td>不用管。</td>
 </tr>
 <tr>
 <td><code>recent_errors</code> 是空的，但会话里明明有错</td>
@@ -6127,8 +6132,8 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 <li><strong>用户记忆</strong>——<code>~/.coderagent/CLAUDE.md</code>，记用户的偏好。</li>
 <li><strong>偏好要等人确认</strong>——先落在 <code>pending-memory.md</code>，<code>/memory confirm</code> 才写
   进去。</li>
-<li><strong>指令文件</strong>——项目的 <code>AGENTS.md</code> 和 <code>CLAUDE.md</code>、用户的 <code>CLAUDE.md</code>，
-  agent 都读。</li>
+<li><strong>指令文件</strong>——仓库和项目的 <code>AGENTS.md</code> 与 <code>CLAUDE.md</code>、用户的 <code>CLAUDE.md</code>，
+  agent 都读。从子目录里启动，仓库根的规则照样读得到。</li>
 <li><strong>可以关掉</strong>——<code>memory.enabled</code>。</li>
 </ul>
 <h3 id="_22">用法例子</h3>
@@ -6986,6 +6991,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 消息里写的是「agent 读不了这个文件」，而不是把内容偷偷塞进去。</p>
 <p>只带文本：不是文本的文件只会被点名，不会进去；图片走 <code>/image</code>。超过 20000
 字符的文件会被截断，并且说明截断了。</p>
+<p>文件里的密钥在内容进去之前就被换掉：跟工具输出一个规矩，所以被提到的文件里
+有 key，也不会进会话日志。</p>
 <h3 id="_46">用法例子</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># 终端里跑一个命令</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>

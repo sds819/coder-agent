@@ -5019,7 +5019,7 @@
 <ul>
 <li><strong>窗口大小</strong>：<code>context_window_for(model_name)</code> 按模型名前缀查表（<code>gpt-</code> 128k、<code>claude</code> 200k、<code>deepseek</code> 64k、<code>gemini</code> 1M、<code>minimax</code> 204800……）。<strong>只有用户没显式配 <code>context.context_window</code> 时才生效</strong>——<code>run.py</code> 的 <code>_context_config()</code> 会检查 <code>"context_window" in config.context.model_fields_set</code>。显式配置永远赢。</li>
 <li><strong>可用上限</strong>：<code>BudgetGuard.limit() = max(0, context_window - reserved_output)</code>，<code>reserved_output</code> 默认 8000。</li>
-<li><strong>压缩阈值</strong>：<code>should_compact(estimated) = estimated &gt; min(int(context_window * compact_threshold), limit())</code>，默认 <code>compact_threshold=0.8</code>。两个阈值取小的那个，即<strong>比例阈值和绝对上限谁更紧听谁的</strong>。</li>
+<li><strong>压缩阈值</strong>：<code>should_compact(estimated) = estimated &gt; target()</code>，其中 <code>target() = min(int(context_window * compact_threshold), limit())</code>，默认 <code>compact_threshold=0.8</code>。两个阈值取小的那个，即<strong>比例阈值和绝对上限谁更紧听谁的</strong>。</li>
 <li><strong>token 估算</strong>：装了 <code>tiktoken</code> 就用 <code>cl100k_base</code> 精确算（含 tool schema 的 JSON 长度，每条消息额外 4 token 开销）；没装就退回启发式：<code>字符数 / 3.6 + 4 × 消息数</code>。</li>
 </ul>
 <p><strong>为什么</strong>：估算只是用来<strong>决定要不要压缩</strong>，不用来精确计费，所以宁可便宜。但 tiktoken 存在时用精确值，能少很多次无谓压缩。</p>
@@ -5032,22 +5032,26 @@
 <li><code>auto_compact</code> 为真，<strong>且</strong>距上次压缩超过 <code>compact_every_turns</code>（默认 40）轮；</li>
 <li>provider 报上下文溢出 → 走另一条路 <code>force_compact()</code> 强制压一次再重试（它不受 <code>auto_compact</code> 开关约束）。</li>
 </ol>
-<p><strong>注意</strong>：<code>auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>（<code>core/context.py:202</code>），
+<p><strong>注意</strong>：<code>auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>（<code>core/context.py:305-306</code>），
 所以条件 2 永远不会单独成立——想「只按轮数压」是做不到的，<code>auto_compact</code> 是总开关。</p>
 <p><strong>切点</strong>在 <code>ContextEngine._cut_index()</code>：</p>
 <ul>
-<li>候选切点只有<strong>轮边界</strong>（<code>History.turn_starts()</code>，即每条 role 为 user 的消息）。切在轮边界上，工具结果消息才不会跟「发起它的那条 assistant 消息」分家。</li>
+<li>候选切点优先是<strong>轮边界</strong>（<code>History.turn_starts()</code>，即每条 role 为 user 的消息）。切在轮边界上，工具结果消息才不会跟「发起它的那条 assistant 消息」分家。</li>
 <li>两个条件<strong>取更严的</strong>：一是「保留最近 <code>keep_recent_turns</code>（默认 20）轮」，二是「保留最近 <code>keep_recent_token_ratio</code>（默认 0.4）个窗口的 token」——哪个切得更靠前就切哪里。</li>
-<li>还有一条<strong>硬上限</strong>兜底：切完之后剩余部分 + 摘要的 token 也不能超过 <code>guard.limit()</code>，超了就继续往后切一个轮。</li>
+<li>还有一条<strong>硬上限</strong>兜底：切完之后剩下的原文 + <strong>固定前缀</strong>（system prompt、权限模式说明、指令 / 记忆 / todo、上一份摘要）+ 工具 schema，也不能超过 <code>guard.target()</code>。前缀不在历史里，但<strong>每次请求都带着它</strong>，所以必须先扣掉。</li>
+<li><strong><code>keep_recent_turns</code> 是目标不是承诺</strong>：轮数没攒够 20 轮时，只要窗口满了照样压；轮数攒够了但窗口还空着，就不压。</li>
+<li>最后一轮自己就装不下时（一次读了个大文件），轮边界用完了，切点落进那一轮的<strong>那条 assistant 消息</strong>上，它发起的工具调用由 <code>repair_tool_calls()</code> 补一个「没跑完」的结果。</li>
+<li>provider 报溢出时的<strong>强制压缩只留最后一轮</strong>（必要时切进那一轮里面），不按 <code>keep_recent_turns</code> 走。</li>
 </ul>
-<p><strong>为什么</strong>：宁可多留一点，也不要让切点落在半个工具调用中间——那会让模型看到「结果没了，但请求还在」。</p>
+<p><strong>为什么</strong>：宁可多留一点，也不要让切点落在半个工具调用中间——那会让模型看到「结果没了，但请求还在」。
+（唯一的例外是「整轮都装不下」，那时只能落在 assistant 消息上。）</p>
 <h3 id="a4">a4 被切掉的内容去哪了？摘要失败怎么办？</h3>
 <p><strong>结论</strong>：<code>core/summarize.py</code> + <code>ContextEngine.compact()</code>。</p>
 <ul>
 <li><strong>摘要 schema</strong>（<code>Summary</code> / <code>FIELDS</code>）：<code>goal</code>、<code>findings</code>、<code>decisions</code>、<code>files_touched</code>、<code>open_questions</code>、<code>next_steps</code>、<code>errors_seen</code>，再加一个<strong>派生</strong>字段 <code>recent_errors</code>（从消息里直接算，不问模型）。<code>files_touched</code> 的每一项是 <code>{path, change, state}</code>。</li>
 <li><strong>永远只有一份摘要</strong>：<code>self.summaries = [summary]</code> 是<strong>替换</strong>不是追加。所以第二次压缩时，<strong>上一份摘要会作为额外输入喂给模型</strong>——否则摘要会越堆越多把预算吃光。</li>
-<li><strong>失败判定</strong>：解析不出 JSON → 失败；<strong>压缩掉的段落里有写操作、但摘要里 <code>files_touched</code> 是空的</strong> → 也算失败（模型忘了改过文件，说明它没读懂）。失败就<strong>重试一次</strong>。</li>
-<li><strong>两次都失败</strong> → <code>conservative_summary()</code> 兜底：<code>goal</code> 写「对话前半部分被压缩了」，<code>findings</code> 放最后 5 条消息（每条截 400 字），<code>next_steps</code> 写「重新读一遍提到的文件来恢复细节」。</li>
+<li><strong>失败判定</strong>：解析不出 JSON → 失败；<strong>压缩掉的段落里有写操作、但摘要里 <code>files_touched</code> 是空的</strong> → 重试一次。<strong>重试之后还是这样，但摘要本身有内容</strong>（goal / findings）→ <strong>留下它</strong>，文件列表从消息里补上（<code>write</code> / <code>edit</code> / <code>multi_edit</code> / <code>apply_patch</code> 的参数是事实，模型的说法不是）。摘要器坏一次，不该抹掉这个会话的结构化记忆。</li>
+<li><strong>两次都不行</strong> → <code>conservative_summary()</code> 兜底：<code>goal</code> 写「对话前半部分被压缩了」，<code>findings</code> 放最后 5 条消息（每条截 400 字），<code>next_steps</code> 写「重新读一遍提到的文件来恢复细节」。<strong>兜底还会把上一份摘要合并进来</strong>，所以上一轮的结论原样还在。</li>
 <li><strong>落地</strong>：写一条 <code>EventType.COMPACTION</code> 事件（<code>compacted_messages</code> / <code>tokens</code> / <code>summary_tokens</code> / <code>summary_ratio</code> / <code>cost</code> / <code>summary</code>），历史被截断成 <code>history.messages[cut:]</code>。</li>
 <li><strong>历史装不下一个提示词时</strong>：按 map-reduce 做——<code>chunk_messages()</code> 按轮切块，每块摘要一次，再用 <code>merge_prompt()</code> 把若干 partial 合成一份（带上一份摘要）；合并失败时用纯代码的 <code>merge_summaries()</code> 拼起来，一条不丢。</li>
 </ul>
@@ -5055,7 +5059,8 @@
 <h3 id="a5">a5 指令文件从哪儿加载？优先级？子目录怎么办？</h3>
 <p><strong>结论</strong>：<code>core/instructions.py</code>。</p>
 <ul>
-<li><code>load_instructions(cwd, user_home)</code> 按顺序加载：用户 <code>CLAUDE.md</code> → 项目 <code>AGENTS.md</code> → 项目 <code>CLAUDE.md</code>。渲染成 <code>&lt;project_instructions source="AGENTS.md"&gt;…&lt;/project_instructions&gt;</code> 块。</li>
+<li><code>load_instructions(cwd, user_home)</code> 按顺序加载：用户 <code>CLAUDE.md</code> → <strong>仓库根</strong>的 <code>AGENTS.md</code> 和 <code>CLAUDE.md</code> → 当前目录的 <code>AGENTS.md</code> 和 <code>CLAUDE.md</code>。仓库根是往上找 <code>.git</code> 找到的（<code>project_root()</code>），所以从子目录启动时仓库的规矩照样读得到，而且排在目录的规矩前面。渲染成 <code>&lt;project_instructions source="AGENTS.md"&gt;…&lt;/project_instructions&gt;</code> 块。</li>
+<li><strong>每个文件只读一次</strong>：用户的 <code>CLAUDE.md</code> 既是指令又是记忆，同一轮读两遍是白读；记忆那份还<strong>不设上限</strong>，一个长文件能把上下文吃掉。现在记忆文件跟指令文件一样受 <code>context.project_doc_max_bytes</code> 限制。</li>
 <li><strong>子目录惰性加载</strong>：<code>subdirectory_instructions(path, cwd)</code> 从 <code>cwd</code> 往 <code>path</code> 逐层走，<strong>由深到浅</strong>加载每层的 <code>AGENTS.md</code>（子目录只认 <code>AGENTS.md</code>，不认 <code>CLAUDE.md</code>）。不在 <code>cwd</code> 底下就返回空。</li>
 <li><strong>触发时机</strong>：不是预先全读，而是<strong>agent 碰某个路径时</strong>才加载——<code>ToolExecutor</code> 对每个带 <code>path</code> 参数的工具调 <code>on_path(path)</code>（<code>run.py</code> 里接的是 <code>context.note_path</code>）。同一路径只加载一次。</li>
 </ul>
@@ -5195,9 +5200,9 @@
 <h3 id="b9">b9 模型的一次工具调用，是怎么一步步跑下来的？</h3>
 <p><strong>结论</strong>：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。</p>
 <ol>
-<li><strong>取</strong>：<code>core/loop.py:206</code> 从 assistant 消息里取 <code>tool_calls</code>。没有 <code>tool_calls</code> 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。</li>
+<li><strong>取</strong>：<code>core/loop.py:299</code> 从 assistant 消息里取 <code>tool_calls</code>。没有 <code>tool_calls</code> 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。</li>
 <li><strong>规整</strong>：<code>executor.plan()</code>（<code>executor.py:51</code>）把原始 tool call 变成统一形状：<code>{"tool", "tool_call_id", "args", "raw"}</code>。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是<strong>对象</strong>，就在这里记下 <code>error</code>，<strong>不会走到执行</strong>。</li>
-<li><strong>记账</strong>：<code>loop.py:225</code> 发一个 <code>TOOL_CALL</code> 事件，<strong>在执行之前</strong>。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。</li>
+<li><strong>记账</strong>：<code>loop.py:334</code> 发一个 <code>TOOL_CALL</code> 事件，<strong>在执行之前</strong>。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。</li>
 <li><strong>准备</strong>：<code>executor._prepare()</code>（<code>executor.py:93</code>）对每个 action 依次做四件事：</li>
 <li><strong>查注册表</strong>：<code>registry.get(name)</code>，找不到就直接记错（见 b10）；</li>
 <li><strong>PreToolUse hook</strong>：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；</li>
@@ -5327,6 +5332,8 @@
 <li><strong>内置三个</strong>：<code>code-explorer</code>（<code>read/grep/glob/ls</code>，15 轮）、<code>verifier</code>（<code>read/grep/glob/bash</code>，20 轮）、<code>refactorer</code>（<code>read/edit/grep/glob</code>，30 轮）。</li>
 <li><strong>和主 agent 的关系</strong>：</li>
 <li><strong>不共享上下文</strong>。子 agent 自己起一份 <code>[system, user]</code> 消息（<code>subagent.py</code> 的 <code>messages = [system, user]</code>），看不见主对话。</li>
+<li><strong>但共享项目的规矩</strong>。它的 system prompt 里除了自己的提示词和权限模式说明，还有项目的 <code>AGENTS.md</code>、项目的记忆和用户的记忆（<code>project_text()</code>）——它在这个项目里干活，就得守这个项目的规矩。</li>
+<li><strong>自己管上下文</strong>。子 agent 没有摘要这一步，所以它<strong>忘事而不是摘要</strong>：请求装不下窗口时最早的一轮走掉；provider 报溢出时，丢掉最早的一轮再问一次，而不是整个失败。</li>
 <li><strong>不共享工具</strong>。它有一份<strong>白名单</strong>工具表（<code>_restricted(spec)</code> 另建一个 <code>ToolRegistry</code>）。</li>
 <li><strong>不共享轮数</strong>。自己的 <code>max_turns</code>（默认 20），但有个<strong>全局天花板</strong>：<code>agent.subagent_max_turns</code>（默认 0 = 不设天花板）压过 front matter 里的值。</li>
 <li><strong>共享权限模式</strong>，而且这个模式说明被写进子 agent 的 system prompt，让它知道自己和主 agent 一样受限。</li>
@@ -5377,7 +5384,10 @@
 <p><strong>结论</strong>：能。会话状态和对话内容都是从 JSONL <strong>重放</strong>出来的——<code>SessionStore.rebuild(session_id)</code> 恢复状态、todo、成本，<code>ContextEngine.restore()</code> 恢复对话历史和摘要。</p>
 <ul>
 <li><strong><code>/resume</code></strong>（<code>ui/commands/resume.py</code>）：列出会话、<code>latest_session()</code> 取最近一个、<code>resume()</code> 就是 <code>store.rebuild()</code>。</li>
-<li><strong>切到旧会话</strong>：<code>AgentLoop.switch_to(session)</code> 重建 <code>ContextEngine</code>（带着 config、memory 配置、摘要模型、权限策略），然后 <code>context.restore()</code>——历史和摘要从日志里<strong>重放</strong>回来（包括 <code>COMPACTION</code> 事件的截断、<code>REVERTED</code> 事件的回退）。</li>
+<li><strong>切到旧会话</strong>：<code>AgentLoop.switch_to(session)</code> 重建 <code>ContextEngine</code>（带着 config、memory 配置、摘要模型、权限策略、
+  <strong>子目录指令块和用户级目录</strong>），然后 <code>context.restore()</code>——历史和摘要从日志里<strong>重放</strong>回来
+  （包括 <code>COMPACTION</code> 事件的截断、<code>REVERTED</code> 事件的回退，以及<strong>上次压缩发生在第几轮</strong>）。
+  换了会话不会把上一个会话的指令和记忆弄丢。</li>
 <li><strong>分叉</strong>：<code>store.fork(session_id)</code> 把整个事件日志复制到新会话 id，原会话<strong>一个字节都不动</strong>。</li>
 </ul>
 <p><strong>取舍</strong>：对话状态是从日志<strong>重算</strong>出来的，不是存出来的。好处是没有「两份状态不一致」这种 bug；代价是恢复的代码必须跟着事件格式走。</p>
@@ -5440,6 +5450,7 @@
 <li><strong>用户偏好</strong>不直接写：要么 <code>/memory confirm</code> 确认后写进用户 <code>CLAUDE.md</code> 的 <code>## Preferences</code> 段，要么落到 <code>&lt;cwd&gt;/.coderagent/pending-memory.md</code> 等确认；</li>
 <li><code>/memory forget &lt;文本&gt;</code> 可以从项目记忆或待确认文件里删掉一行。</li>
 <li>整个 <code>settle()</code> <strong>吞掉所有异常</strong>——「这里的失败不能毁掉这一轮运行」。</li>
+<li>反思看到的对话里，<strong>只会调工具的 assistant 消息</strong>保留工具名——那句话本身是空的，不留名字那一步就凭空消失了。</li>
 <li>反思的成本会记成一条 <code>EventType.REFLECTION</code> 事件，并加进会话总账。</li>
 </ul>
 <p><strong>为什么</strong>：项目事实可以直接写，用户偏好必须确认。用户偏好会永久改变 agent 的行为，不该由一次会话自己决定。</p>
@@ -5793,6 +5804,7 @@
 <li><strong>权限层判不了「合不合适」</strong>：它判的是「这个工具在这个模式下、这条命令是否被允许」，不判「这个任务该不该用这个工具」。</li>
 <li><strong>参数不做 schema 级校验</strong>：schema 只是发给模型的说明，执行前不按它校验；类型不对由工具自己抛，被兜成错误文本。</li>
 <li><strong><code>TRIM_ORDER</code> 是写死的</strong>：不按任务类型裁——一个读代码的任务和一个大改的任务，裁掉的工具是一样的。</li>
+<li><strong>子 agent 忘事，而不是摘要</strong>：子 agent 没有摘要这一步，上下文装不下时它丢掉最早的一轮。好处是便宜，代价是结论里可能少一块——主 agent 只能靠「结论里写了什么」判断可信度。</li>
 </ol>
 
 

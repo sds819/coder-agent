@@ -5234,11 +5234,11 @@ they are in the summary.</p>
 </tr>
 <tr>
 <td><code>keep_recent_turns</code></td>
-<td>The turns that are never compacted.</td>
+<td>How many recent turns to keep when the window has room for them.</td>
 </tr>
 <tr>
 <td><code>keep_recent_token_ratio</code></td>
-<td>The share of the window that is always kept.</td>
+<td>The share of the window to keep when the window has room for it.</td>
 </tr>
 <tr>
 <td><code>compact_every_turns</code></td>
@@ -5259,6 +5259,8 @@ they are in the summary.</p>
 </tbody>
 </table>
 <p><code>/compact</code> compacts now.</p>
+<p>The schemas of the tools go with every request, so they count against the
+window: a session with many tools compacts a little sooner.</p>
 <p><code>/recap</code> summarizes the conversation without changing it: nothing is dropped and
 nothing is compressed, the summary does not go into the context of the model. It
 is a report for you, not a step of the work.</p>
@@ -5322,11 +5324,15 @@ axes: the permissions ask the user, the sandbox asks nobody. See
 </code></pre></div>
 <p><code>/init</code> writes a template with the layout of the directory; the model is not
 asked. It does nothing when the file already exists.</p>
-<p>The user file <code>~/.coderagent/CLAUDE.md</code> comes first, then the project. An
-<code>AGENTS.md</code> in a subdirectory is read when the agent touches something in it.</p>
+<p>The user file <code>~/.coderagent/CLAUDE.md</code> comes first, then the repository, then
+the project. An <code>AGENTS.md</code> in a subdirectory is read when the agent touches
+something in it.</p>
+<p>The rules of the repository are read even when the agent starts in a
+subdirectory of it, and they come before the rules of the directory.</p>
 <p>One instruction file may take 32768 bytes (<code>context.project_doc_max_bytes</code>).
 A longer file is cut short, and the agent is told that it did not see all of
-it — a huge <code>AGENTS.md</code> does not eat the whole window.</p>
+it — a huge <code>AGENTS.md</code> does not eat the whole window. The memory files are
+cut the same way.</p>
 <h2 id="what-the-agent-can-delegate">What the agent can delegate</h2>
 <h3 id="the-sub-agents">The sub agents</h3>
 <p>A sub agent works in its own context and returns a conclusion, so the main

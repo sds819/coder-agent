@@ -1161,6 +1161,17 @@
   <a href="#agent_1" class="md-nav__link">
     <span class="md-ellipsis">
       
+        子 agent 的上下文
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         子 agent 在哪里找
       
     </span>
@@ -3943,6 +3954,17 @@
   <a href="#agent_1" class="md-nav__link">
     <span class="md-ellipsis">
       
+        子 agent 的上下文
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         子 agent 在哪里找
       
     </span>
@@ -4139,7 +4161,16 @@ agent 只跑 20 轮。反过来，子 agent 总是可以要更少的。</p>
 <p>子 agent 的轮数<strong>不算</strong>主 agent 的轮数：它们不占 <code>agent.max_turns</code>。但钱是共享
 的——子 agent 的花费算在这个会话的账单里，所以 <code>cost_limit</code> 和 <code>token_limit</code> 照样
 管得住它。</p>
-<h2 id="agent_1">子 agent 在哪里找</h2>
+<h2 id="agent_1">子 agent 的上下文</h2>
+<p>子 agent 和主 agent 在同一个项目里干活，所以它看得见项目的规矩：<code>AGENTS.md</code>、
+项目的记忆和用户的记忆都在它的 system prompt 里，紧挨着它自己的提示词和权限
+模式的说明。</p>
+<p>上下文是它自己的，也归它自己管。子 agent 没有摘要这一步，所以它不摘要——
+<strong>它忘事</strong>：请求装不进模型的窗口时，最早的那一轮走掉（工具结果跟着发起它的那轮
+一起走）。</p>
+<p>provider 说上下文太长时，子 agent 会丢掉最早的一轮再问一次，而不是直接失败。
+一个把窗口用完的子 agent 不是错误，是一个忘了几件事的子 agent。</p>
+<h2 id="agent_2">子 agent 在哪里找</h2>
 <table>
 <thead>
 <tr>

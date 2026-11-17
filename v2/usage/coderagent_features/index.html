@@ -6118,7 +6118,7 @@ memory of the session keeps what was learned before the failure.</p>
   todo list, the summary of the session, then the history.</li>
 <li><strong>The instruction files are cut</strong> — one file may take 32768 bytes
   (<code>context.project_doc_max_bytes</code>). A longer file is cut short, and the agent
-  is told that it did not see all of it.</li>
+  is told that it did not see all of it. The memory files are cut the same way.</li>
 </ul>
 <h3 id="example_5">Example</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
@@ -6161,8 +6161,13 @@ everything else.</p>
 </tr>
 <tr>
 <td>The summary is a fallback instead of the real thing</td>
-<td>The model answered with something that is not the JSON of the summary. It is tried twice, and the second time a conservative summary is used: the last five messages, with <code>next_steps: ["re-read the files that were mentioned to recover the details"]</code>.</td>
+<td>The model answered with something that is not the JSON of the summary. It is tried twice, and the second time a conservative summary is used: the last five messages, with <code>next_steps: ["re-read the files that were mentioned to recover the details"]</code>. The summary of the round before is merged into it, so the session does not lose its memory.</td>
 <td>Nothing to do — the session continues. Ask the model again for the details it lost.</td>
+</tr>
+<tr>
+<td>The summary does not name the files that were changed</td>
+<td>The model did not say what it touched. The files are taken from the messages instead, which know the truth.</td>
+<td>Nothing to do.</td>
 </tr>
 <tr>
 <td><code>recent_errors</code> is empty although the session had errors</td>
@@ -6182,8 +6187,10 @@ the compression, so installing tiktoken is worth it for a long session.</p>
   preferences of the user.</li>
 <li><strong>Preferences wait for a confirmation</strong> — they land in
   <code>pending-memory.md</code> first, and <code>/memory confirm</code> writes them.</li>
-<li><strong>The instruction files</strong> — <code>AGENTS.md</code> and <code>CLAUDE.md</code> of the project, and
-  the <code>CLAUDE.md</code> of the user, are read by the agent.</li>
+<li><strong>The instruction files</strong> — <code>AGENTS.md</code> and <code>CLAUDE.md</code> of the repository and
+  of the project, and the <code>CLAUDE.md</code> of the user, are read by the agent. The
+  rules of the repository are read even when the agent starts in a
+  subdirectory of it.</li>
 <li><strong>It can be switched off</strong> — <code>memory.enabled</code>.</li>
 </ul>
 <h3 id="example_6">Example</h3>
@@ -7058,6 +7065,10 @@ the prompt, so the model reads them when they matter. A diff that is longer
 than 60000 characters is cut, and the model is told to read the files itself.</p>
 <p>The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.</p>
+<p>The diff does not stay in the context: the model reads it during the turn, and
+afterwards it is replaced by a note that says the changes are not there any
+more and the files have to be read again. A review of a big diff would
+otherwise cost the whole session its window.</p>
 <p>The review may run on a model of its own: <code>model.review_model</code> names it, and
 <code>model.routing.review</code> wins over that. Without either one the review runs on
 the model of the session. The purpose of the turn is in the log, so it can be
@@ -7093,6 +7104,9 @@ says that the agent may not read it, instead of smuggling the content in.</p>
 <p>Only text goes in: a file that is not text is named and left alone, and an
 image goes with <code>/image</code>. A file that is longer than 20000 characters is cut,
 and the cut is said.</p>
+<p>A secret in the file is taken out before the content goes in: the same
+redaction as the output of a tool, so a key that sits in a mentioned file does
+not end up in the log of the session.</p>
 <h3 id="example_13">Example</h3>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># a command in the terminal</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>

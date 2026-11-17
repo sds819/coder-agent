@@ -4016,11 +4016,11 @@ conversation, in this order:</p>
 <td>The instructions and the preferences of the user</td>
 </tr>
 <tr>
-<td><code>AGENTS.md</code></td>
-<td>The instructions of the project</td>
+<td><code>AGENTS.md</code>, <code>CLAUDE.md</code> of the repository</td>
+<td>The instructions of the repository</td>
 </tr>
 <tr>
-<td><code>CLAUDE.md</code></td>
+<td><code>AGENTS.md</code>, <code>CLAUDE.md</code> of the project</td>
 <td>The instructions of the project</td>
 </tr>
 <tr>
@@ -4031,9 +4031,15 @@ conversation, in this order:</p>
 </table>
 <p>An <code>AGENTS.md</code> in a subdirectory is read when the agent touches something in
 it, and not before.</p>
+<p>The rules of the repository are read even when the agent starts in a
+subdirectory of it, and they come before the rules of the directory: the rules
+of the directory win when the two say different things.</p>
 <p>The file of the user is read once: it is the instructions of the user and the
 memory of the user at the same time. It is read again in every round, so the
 preferences that <code>/memory confirm</code> writes are known right away.</p>
+<p>Every file is cut short at <code>context.project_doc_max_bytes</code> (32 KB by default),
+the memory files included: one long file may not take the whole context. The
+rest of it is not shown, and the agent is told so.</p>
 <p>The project memory is every markdown file of <code>.coderagent/memory/</code>, so you
 may write <code>conventions.md</code> or <code>architecture.md</code> next to the file the agent
 keeps for itself.</p>

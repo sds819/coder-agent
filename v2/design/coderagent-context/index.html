@@ -3554,7 +3554,7 @@
   <a href="#22" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.2 子目录指令：惰性加载
+        2.2 仓库根的规矩，和子目录指令的惰性加载
       
     </span>
   </a>
@@ -3632,7 +3632,7 @@
   <a href="#42" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4.2 切点：永远在轮边界
+        4.2 切点：优先轮边界
       
     </span>
   </a>
@@ -3715,7 +3715,7 @@
   <a href="#53" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.3 摘要失败不许通过
+        5.3 摘要失败不许通过，但也不全丢
       
     </span>
   </a>
@@ -4223,7 +4223,7 @@
   <a href="#22" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.2 子目录指令：惰性加载
+        2.2 仓库根的规矩，和子目录指令的惰性加载
       
     </span>
   </a>
@@ -4301,7 +4301,7 @@
   <a href="#42" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4.2 切点：永远在轮边界
+        4.2 切点：优先轮边界
       
     </span>
   </a>
@@ -4384,7 +4384,7 @@
   <a href="#53" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.3 摘要失败不许通过
+        5.3 摘要失败不许通过，但也不全丢
       
     </span>
   </a>
@@ -4582,7 +4582,7 @@
 </ul>
 <hr>
 <h2 id="2">2. 上下文的四层结构</h2>
-<p><code>ContextEngine.build_messages()</code>（<code>core/context.py:145-168</code>）固定五段，顺序不可换：</p>
+<p><code>ContextEngine.build_messages()</code>（<code>core/context.py:219-233</code>）固定五段，顺序不可换：</p>
 <table>
 <thead>
 <tr>
@@ -4634,18 +4634,24 @@
 <h3 id="21-23">2.1 为什么第 2、3 段不进历史</h3>
 <p><strong>权限模式说明</strong>：权限模式会在会话中途变（<code>/mode</code>、<code>/plan</code> 原地改 <code>policy.mode</code>）。如果烤进 system prompt，
 模型看到的就是过期规则。早期版本的 <code>plan</code> 和 <code>readonly</code> 就是这么成了空壳——模式对模型完全不可见，
-于是「不能写文件」这件事没人告诉模型。所以这段是<strong>每次组装消息时现算</strong>的（<code>_mode_text()</code>，<code>context.py:162-168</code>）。</p>
+于是「不能写文件」这件事没人告诉模型。所以这段是<strong>每次组装消息时现算</strong>的（<code>_policy_text()</code>，<code>context.py:243-259</code>）。</p>
 <p><strong>指令 / 记忆 / todo</strong>：它们的性质是「本轮的外部状态」，不是「对话历史」。合并成<strong>一条</strong> user 消息
-（<code>_instruction_text()</code>，<code>context.py:174-188</code>），而不是拆成几条——拆开会让模型误以为用户连着说了好几句话。
+（<code>_instruction_text()</code>，<code>context.py:270-293</code>），而不是拆成几条——拆开会让模型误以为用户连着说了好几句话。
 todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <div class="highlight"><pre><span></span><code>&lt;current_todos&gt;
 - [x] 读一下 calc.py
 - [ ] 改掉 off-by-one
 &lt;/current_todos&gt;
 </code></pre></div>
-<h3 id="22">2.2 子目录指令：惰性加载</h3>
-<p><code>load_instructions(cwd, user_home)</code> 在启动时加载三处：用户 <code>CLAUDE.md</code> → 项目 <code>AGENTS.md</code> → 项目 <code>CLAUDE.md</code>。</p>
-<p><strong>子目录的 <code>AGENTS.md</code> 不预读</strong>。<code>ContextEngine.note_path(path)</code>（<code>context.py:345-357</code>）在 agent <strong>碰到某个路径时</strong>
+<h3 id="22">2.2 仓库根的规矩，和子目录指令的惰性加载</h3>
+<p><code>load_instructions(cwd, user_home)</code> 加载的顺序是：用户 <code>CLAUDE.md</code> → <strong>仓库根</strong>的
+<code>AGENTS.md</code> 和 <code>CLAUDE.md</code> → 当前目录的 <code>AGENTS.md</code> 和 <code>CLAUDE.md</code>。</p>
+<p>仓库根是往上找 <code>.git</code> 找到的（<code>project_root()</code>，<code>core/instructions.py:53-63</code>）。所以从子目录
+启动时，仓库的规矩照样读得到，而且排在目录的规矩前面——两层规矩打架时，目录的赢。</p>
+<p>每个文件都<strong>只读一次</strong>：用户的 <code>CLAUDE.md</code> 既是「指令」又是「记忆」，同一轮里读两遍就是白读，
+而记忆那份<strong>不设上限</strong>，一个长文件能把整个上下文吃掉。现在记忆文件跟指令文件一样受
+<code>context.project_doc_max_bytes</code> 管。</p>
+<p><strong>子目录的 <code>AGENTS.md</code> 不预读</strong>。<code>ContextEngine.note_path(path)</code>（<code>context.py:532-544</code>）在 agent <strong>碰到某个路径时</strong>
 才去 <code>cwd</code> 与该路径之间逐层加载（由深到浅，只认 <code>AGENTS.md</code>），加载过的按路径去重。
 <code>ToolExecutor</code> 对每个带 <code>path</code> 参数的工具调 <code>on_path</code>（<code>run.py</code> 里接的就是 <code>context.note_path</code>）。</p>
 <p><strong>为什么</strong>：一个仓库可能有几百个目录的规矩文件，全量塞进上下文必炸。惰性加载让「我要去那个目录了」
@@ -4660,14 +4666,16 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">context_window_for</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">200000</span><span class="p">):</span> <span class="o">...</span>   <span class="c1"># 按模型名（去掉厂商前缀后）的前缀查表</span>
 
 <span class="n">limit</span>          <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">context_window</span> <span class="o">-</span> <span class="n">reserved_output</span><span class="p">)</span>
-<span class="n">should_compact</span> <span class="o">=</span> <span class="n">estimated</span> <span class="o">&gt;</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">context_window</span> <span class="o">*</span> <span class="n">compact_threshold</span><span class="p">),</span> <span class="n">limit</span><span class="p">())</span>
+<span class="n">target</span>         <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">context_window</span> <span class="o">*</span> <span class="n">compact_threshold</span><span class="p">),</span> <span class="n">limit</span><span class="p">())</span>
+<span class="n">should_compact</span> <span class="o">=</span> <span class="n">estimated</span> <span class="o">&gt;</span> <span class="n">target</span>
 </code></pre></div>
 <p>三条要点：</p>
 <ol>
 <li><strong>窗口大小跟随模型，但显式配置优先</strong>。<code>run.py</code> 的 <code>_context_config()</code>（<code>run.py:78-82</code>）检查
    <code>"context_window" in config.context.model_fields_set</code>——用户配了就用用户的，没配才查表。</li>
-<li><strong>两个阈值取小的</strong>：比例阈值（<code>compact_threshold</code>，默认 0.8）和绝对上限（<code>limit()</code>）谁紧听谁。
-   这样小窗口模型不会被比例阈值放行到超限，大窗口模型不会因为比例太低而提前压缩。</li>
+<li><strong>两个阈值取小的</strong>：比例阈值（<code>compact_threshold</code>，默认 0.8）和绝对上限（<code>limit()</code>）谁紧听谁，
+   小的那个叫 <code>target()</code>。这样小窗口模型不会被比例阈值放行到超限，大窗口模型不会因为比例太低而提前压缩。
+   <strong><code>target</code> 同时也是切点的目标</strong>：压缩完留下的原文 + 摘要要落回 <code>target</code> 之下，否则下一轮立刻又触发。</li>
 <li><strong><code>reserved_output</code>（默认 8000）</strong> 给模型的输出留位置——上下文不能占满整个窗口。</li>
 </ol>
 <h3 id="31-token">3.1 token 估算</h3>
@@ -4681,6 +4689,9 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <strong>工具调用的参数也是 token</strong>，只算 content 会低估不少。</p>
 <p><code>tiktoken</code> 是懒加载且容错的：装不上、或者首次下载词表失败，都安静地退回启发式（<code>tokens.py:20-28</code>）。
 估算只用来决定「要不要压」，不用来计费——<strong>API 才是最后裁判</strong>。</p>
+<p><strong>工具 schema 也算在预算里</strong>：<code>ContextEngine.estimated_tokens()</code>（<code>context.py:261-268</code>）把当前这轮的
+schema 一起算进去——schema 是每次请求都要发的东西，不算它就会低估一个「工具很多」的会话。
+切点也跟着让位：留在窗口里的原文要给 schema 腾出份额（见 §4.3）。</p>
 <h3 id="32">3.2 配置项</h3>
 <p><code>ContextConfig</code>（<code>config/schema.py:83-94</code>）：</p>
 <table>
@@ -4710,12 +4721,12 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <tr>
 <td><code>context.keep_recent_turns</code></td>
 <td>20</td>
-<td>至少保留最近多少轮</td>
+<td>窗口有余量时保留最近多少轮</td>
 </tr>
 <tr>
 <td><code>context.keep_recent_token_ratio</code></td>
 <td>0.4</td>
-<td>至少保留多少比例的窗口</td>
+<td>窗口有余量时保留多少比例</td>
 </tr>
 <tr>
 <td><code>context.compact_every_turns</code></td>
@@ -4740,29 +4751,33 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 </tbody>
 </table>
 <p>摘要模型可以是<strong>另一个模型</strong>（<code>run.py:161-164</code>）：配了就用它，没配就用路由里的 <code>summarize</code> 用途。
-摘要跑在别的模型上时，它的成本会<strong>记到主模型账上</strong>（<code>context.py:225-228</code>），所以总账不错。</p>
+摘要跑在别的模型上时，它的成本会<strong>记到主模型账上</strong>（<code>context.py:337-341</code>），所以总账不错。</p>
 <hr>
 <h2 id="4">4. 压缩：触发、切点、摘要</h2>
 <h3 id="41">4.1 三个触发口子</h3>
-<p><code>ContextEngine.maybe_compact()</code>（<code>context.py:200-211</code>），每轮问模型之前调一次：</p>
+<p><code>ContextEngine.maybe_compact()</code>（<code>context.py:305-316</code>），每轮问模型之前调一次：</p>
 <ol>
 <li><strong>预算到了</strong>：<code>guard.should_compact(estimated_tokens())</code>；</li>
 <li><strong>轮数到了</strong>：<code>session.turn_count - last_compact_turn &gt; compact_every_turns</code>；</li>
-<li><strong>provider 报溢出</strong>：<code>force_compact()</code>（<code>context.py:213-215</code>）——
+<li><strong>provider 报溢出</strong>：<code>force_compact()</code>（<code>context.py:318-320</code>）——
    <code>loop.py</code> 的 <code>_query</code> 捕获上下文溢出异常后强制压一次，<strong>然后重试一次</strong>；压不动才返回错误
    （文本里带 "nothing left to compact"）。</li>
 </ol>
-<p>第 3 条是兜底：前两条是<strong>预判</strong>，第 3 条是<strong>事后救</strong>。</p>
-<p><strong>注意</strong>：<code>auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>（<code>context.py:202</code>），
+<p>第 3 条是兜底：前两条是<strong>预判</strong>，第 3 条是<strong>事后救</strong>。<strong>强制压缩只留最后一轮</strong>（必要时切进那一轮里面），
+不按 <code>keep_recent_turns</code> 走——provider 已经说了装不下，先能继续，再谈记性。</p>
+<p><strong>注意</strong>：<code>auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>（<code>context.py:305-306</code>），
 所以第 2 条<strong>永远不会单独成立</strong>——「只按轮数压」是做不到的，<code>auto_compact</code> 是总开关
 （只有第 3 条的 <code>force_compact()</code> 不受它管）。</p>
-<h3 id="42">4.2 切点：永远在轮边界</h3>
+<h3 id="42">4.2 切点：优先轮边界</h3>
 <p><code>History.turn_starts()</code>（<code>core/history.py:27-29</code>）= 所有 <code>role == "user"</code> 的消息下标——<strong>轮的唯一定义</strong>。
 一轮 = 一条 user 消息 + 模型为它做的一切（assistant 消息 + 后续工具结果）。</p>
 <p>切在轮边界上，工具结果才不会跟「发起它的那条 assistant 消息」分家。切在半路，模型会看到
 「请求还在，结果没了」。</p>
+<p><strong>例外</strong>：最后一轮自己就装不下的时候（一次读了个大文件），轮边界用完了，只能切进那一轮里面——
+切点落在<strong>那条 assistant 消息</strong>上，它发起的工具调用由 <code>repair_tool_calls()</code> 补一个
+「没跑完」的结果，模型看到的是一次明确的失败，而不是一个悬空的请求。</p>
 <h3 id="43">4.3 切点：两条规则取更严的</h3>
-<p><code>_cut_index()</code>（<code>context.py:252-278</code>）：</p>
+<p><code>_cut_index()</code>（<code>context.py:409-450</code>）：</p>
 <div class="highlight"><pre><span></span><code>earliest = starts[max(0, len(starts) - keep_recent_turns)]     # 最近 N 轮的起点
 budget   = int(context_window * keep_recent_token_ratio)       # 保留的 token 份额
 cut = earliest
@@ -4773,11 +4788,20 @@ for index in 候选轮边界:
 <p>也就是说：<strong>保留量取「最近 N 轮」和「最近 40% 窗口 token」里更靠前的那个</strong>。
 两者取大，保证「几轮特别大的对话」和「很多轮小对话」都能留下足够内容。</p>
 <p>最后还有一条<strong>硬上限</strong>兜底：</p>
-<div class="highlight"><pre><span></span><code>limit = guard.limit() - estimate_tokens(摘要本身)
-while estimate_tokens(messages[cut:]) &gt; limit:
-    cut = 下一个轮边界
+<div class="highlight"><pre><span></span><code>target = guard.target() - estimate_tokens(固定前缀) - estimate_tokens(工具 schema)
+while estimate_tokens(messages[cut:]) &gt; target:
+    cut = 下一个轮边界；没有轮边界了就切进最后一轮里
 </code></pre></div>
-<p>即「留下的原文 + 摘要」也不能超预算。宁可多切一轮，也不能让这一次请求直接被 provider 拒掉。</p>
+<p>「固定前缀」= 每次请求都一样的那部分（<code>context.py</code> 的 <code>_prefix_messages()</code>）：
+system prompt + 权限模式说明 + 项目指令 / 记忆 / todo + 上一份摘要。
+工具 schema 也在每次请求里（<code>tools</code> 参数），所以一并扣掉。</p>
+<p>即「留下的原文 + 固定前缀 + 摘要 + 工具 schema」也不能超预算。宁可多切一轮，
+也不能让这一次请求直接被 provider 拒掉。</p>
+<p><strong>为什么必须扣前缀</strong>：前缀不是历史的一部分，但它<strong>在每次请求里</strong>。
+不扣的话，一次「原文 30k + 前缀 20k」的会话压完还是 50k，照样溢出——
+切点算得再准，请求还是被拒。</p>
+<p><strong><code>keep_recent_turns</code> 是目标，不是承诺</strong>：轮数还没攒够 <code>keep_recent_turns</code> 时，上面的兜底照样生效——
+窗口满了就压，哪怕只聊了三轮。反过来，轮数攒够了但窗口还很空，也不压。</p>
 <h3 id="44-schema">4.4 摘要：固定 schema，不是自由文本</h3>
 <p><code>core/summarize.py</code> 的 <code>FIELDS</code>：</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
@@ -4798,7 +4822,7 @@ while estimate_tokens(messages[cut:]) &gt; limit:
 <p>被压缩掉的那段历史可能<strong>比一次提示词还大</strong>。旧的做法是把它整个塞进一次调用：
 超了 → provider 溢出 → 重试一次 → 还是超 → 只剩最后 5 条消息活着，其余静默蒸发。</p>
 <p>现在按 <strong>map-reduce</strong> 做（<code>core/summarize.py</code> 的 <code>chunk_messages()</code> + <code>merge_prompt()</code>，
-<code>core/context.py:284-306</code> 的 <code>_summarize()</code>）：</p>
+<code>core/context.py:452-478</code> 的 <code>_summarize()</code>）：</p>
 <div class="highlight"><pre><span></span><code>被压缩的历史
    │
    ├─ chunk_messages(messages, limit)   按轮切成若干块（轮不拆；单轮超大才在消息边界拆）
@@ -4815,7 +4839,7 @@ while estimate_tokens(messages[cut:]) &gt; limit:
 <li><strong>上一份摘要进合并提示词</strong>：第二次压缩不会丢第一次的结论（见 §5.4）。</li>
 </ul>
 <p>块的大小由 <code>context.summary_chunk_tokens</code> 决定；为 0 时按摘要模型的窗口算
-（<code>window - reserved_output - 2000</code>，<code>context.py:320-328</code>）。</p>
+（<code>window - reserved_output - 2000</code>，<code>context.py:507-515</code>）。</p>
 <p><strong>为什么值得多花一次模型调用</strong>：一次超长的提示词失败，是<strong>整段历史</strong>的损失；
 分块之后失败只影响一块，而且还能机械兜底。</p>
 <hr>
@@ -4824,7 +4848,7 @@ while estimate_tokens(messages[cut:]) &gt; limit:
 而是<strong>在代码里把丢内容的路径一条条堵死</strong>。</p>
 <h3 id="51">5.1 压缩是「移出窗口」，不是「删除事实」</h3>
 <p>被切掉的原文<strong>永远在事件日志里</strong>（JSONL 追加写，<code>core/session.py</code>）。
-<code>COMPACTION</code> 事件记下切了多少条、多大、多贵、摘要全文（<code>context.py:217-248</code>）：</p>
+<code>COMPACTION</code> 事件记下切了多少条、多大、多贵、摘要全文（<code>context.py:356-372</code>）：</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"compacted_messages"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span><span class="w"> </span><span class="nt">"tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">18342</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">1204</span><span class="p">,</span>
 <span class="w"> </span><span class="nt">"summary_ratio"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0656</span><span class="p">,</span><span class="w"> </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.012</span><span class="p">,</span>
 <span class="w"> </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span><span class="w"> </span><span class="nt">"summaries"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="err">...</span><span class="p">}]}</span>
@@ -4833,36 +4857,44 @@ while estimate_tokens(messages[cut:]) &gt; limit:
 它突然变大，要么是摘要变啰嗦了，要么是被摘的那段变啰嗦了。
 <code>telemetry.collect()</code> 把它收进 <code>Metrics.summary_ratios</code>，
 评测报告里给出均值和最差值（<code>eval/report.py</code>）。</p>
-<p><code>restore()</code> 重放日志时按 <code>compacted_messages</code> 截断（<code>context.py:99-101</code>），原文随时能取回。</p>
+<p><code>restore()</code> 重放日志时按 <code>compacted_messages</code> 截断（<code>context.py:155-156</code>），原文随时能取回。</p>
 <p><strong>「模型看不见」和「事实没了」是两回事</strong>——这是整套设计的地基。</p>
 <h3 id="52">5.2 切点必在轮边界</h3>
 <p>见 §4.2。工具结果与它的请求不分家。</p>
-<h3 id="53">5.3 摘要失败不许通过</h3>
-<p><code>_summarize()</code>（<code>context.py:284-306</code>）的判定链（重试的循环在 <code>_ask()</code>，<code>context.py:308-318</code>）：</p>
+<h3 id="53">5.3 摘要失败不许通过，但也不全丢</h3>
+<p><code>_summarize()</code>（<code>context.py</code>）的判定链（重试的循环在 <code>_ask()</code>）：</p>
 <div class="highlight"><pre><span></span><code>for _ in range(2):                      # 最多两次
     text = summary_model.complete(...)   # 抛异常就 continue
     summary = parse_summary(text)
-    if summary is not None and (summary.files_touched or not expect_files):
-        break                           # 过了
-    summary = None                      # 没过
-if summary is None:
-    summary = conservative_summary(payload)
+    if summary is None:                  # 不是 JSON / 不是 dict
+        continue
+    if summary.files_touched or 没有写操作:
+        return summary                   # 过了
+    usable = summary                     # 有内容，只是没交代文件
+if usable is not None:
+    usable.files_touched = 从消息里读出来的文件   # 用事实补上
+    return usable
+return None                              # 两次都不行
 </code></pre></div>
-<p><code>expect_files</code> = 被压缩的部分里有没有 <code>write</code> / <code>edit</code> / <code>multi_edit</code>（<code>context.py:359-365</code>）。</p>
-<p><strong>关键判定</strong>：压缩掉的段落里有写操作，但摘要的 <code>files_touched</code> 是空的 → <strong>算失败</strong>。
-模型没交代它改过文件，说明它没读懂被压缩的内容。这时不能接受，重试一次。</p>
-<p>两次都失败才用 <code>conservative_summary()</code> 兜底（<code>summarize.py:257-269</code>）：</p>
+<p>被压缩的部分里有写操作，但摘要的 <code>files_touched</code> 是空的 → 模型没交代它改过文件。
+这时<strong>重试一次</strong>；还是不行，但摘要本身有内容（goal / findings），就<strong>留下它</strong>，
+把文件列表<strong>从消息里补上</strong>（<code>write</code> / <code>edit</code> / <code>multi_edit</code> / <code>apply_patch</code> 的参数——
+消息是事实，模型的说法不是）。</p>
+<p><strong>兜底也不许丢上一份摘要</strong>：<code>_fallback()</code> 把 <code>conservative_summary()</code>（<code>summarize.py</code>）
+和<strong>上一份摘要</strong>合并起来：</p>
 <div class="highlight"><pre><span></span><code><span class="n">Summary</span><span class="p">(</span>
     <span class="n">goal</span><span class="o">=</span><span class="s2">"the earlier part of the conversation was compacted"</span><span class="p">,</span>
     <span class="n">findings</span><span class="o">=</span><span class="p">[</span><span class="n">最后</span> <span class="mi">5</span> <span class="n">条消息</span><span class="err">，</span><span class="n">每条截</span> <span class="mi">400</span> <span class="n">字</span><span class="p">],</span>
     <span class="n">next_steps</span><span class="o">=</span><span class="p">[</span><span class="s2">"re-read the files that were mentioned to recover the details"</span><span class="p">],</span>
 <span class="p">)</span>
 </code></pre></div>
-<p><strong>宁可给模型一句笨话，也不要假装压缩成功了。</strong></p>
+<p>合并后的摘要里，上一份的 goal / findings / 决定<strong>原样还在</strong>。
+<strong>摘要器坏一次，不该抹掉这个会话的结构化记忆</strong>——旧的做法会，
+因为兜底摘要只描述「刚刚被压缩掉的那 5 条消息」。</p>
 <h3 id="54">5.4 摘要链不断</h3>
-<p><code>summaries</code> <strong>永远只有一份</strong>——<code>self.summaries = [summary]</code>（<code>context.py:229</code>）是<strong>替换</strong>不是追加。
+<p><code>summaries</code> <strong>永远只有一份</strong>——<code>self.summaries = [summary]</code>（<code>context.py:342</code>）是<strong>替换</strong>不是追加。
 否则摘要会越堆越多把预算吃光（第二份摘要的输入里已经有第一份，再加一份就是复利）。</p>
-<p>但压缩第 N 次时，<strong>上一份摘要会作为额外输入喂给模型</strong>（<code>context.py:291</code>）：</p>
+<p>但压缩第 N 次时，<strong>上一份摘要会作为额外输入喂给模型</strong>（<code>context.py:462-463</code>）：</p>
 <div class="highlight"><pre><span></span><code><span class="n">previous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">summaries</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">summaries</span> <span class="k">else</span> <span class="kc">None</span>
 <span class="c1"># 单块：作为一条 user 消息接在历史后面</span>
 <span class="c1"># 多块：作为 merge_prompt 的 previous 参数</span>
@@ -4948,13 +4980,18 @@ if summary is None:
 <tbody>
 <tr>
 <td>指令不进历史</td>
-<td><code>context.py:174-188</code></td>
+<td><code>context.py:270-293</code></td>
 <td>每次重算，不累积在 history 里</td>
 </tr>
 <tr>
 <td>子目录指令惰性加载</td>
-<td><code>context.py:345-357</code></td>
+<td><code>context.py:532-544</code></td>
 <td>只加载走过的目录</td>
+</tr>
+<tr>
+<td>审查完的 diff 只留一句话</td>
+<td><code>core/context.py:166-189</code></td>
+<td>这一轮看完，下一轮换成提示</td>
 </tr>
 <tr>
 <td>工具 schema 预算裁剪</td>
@@ -4986,8 +5023,8 @@ if summary is None:
 <li><strong>摘要永远只有一份</strong>。第二次压缩时，第一次摘要的细节被压成一句再合并进新摘要。</li>
 <li><strong>窗口外的内容模型取不回</strong>。原文在磁盘上，但模型只能靠 <code>read</code> / <code>grep</code> 重新捞——这就是
    <code>conservative_summary</code> 要写「去重读文件」的原因。</li>
-<li><strong><code>_cut_index</code> 用的是 <code>config.context_window</code> 而不是 <code>guard.limit()</code></strong>（<code>context.py:252</code> vs <code>budget.py:35</code>），
-   两者差一个 <code>reserved_output</code>，极端情况下会切得偏保守。</li>
+<li><strong>切点盯的是 <code>guard.target()</code>，不是 <code>guard.limit()</code></strong>（<code>context.py:431</code> vs <code>budget.py:39</code>）——
+   <code>target</code> 取比例阈值和绝对上限里小的那个，所以压缩后落在阈值的<strong>下面</strong>，留出余量给下一轮。</li>
 <li><strong>指令块会累积</strong>。<code>instruction_blocks</code> 随 agent 走过的目录增长，且<strong>不随压缩清理</strong>。</li>
 <li><strong>相邻的两条 user 消息</strong>。权限模式说明和摘要是两条连续的 <code>user</code> 消息，中间没有 assistant。
    合法，但严格说不是自然对话形态。</li>
@@ -4999,6 +5036,14 @@ if summary is None:
    但看不出它变<strong>大得对不对</strong>——一份啰嗦但完整的摘要和一个丢了一半的摘要，比值可能一样。</li>
 <li><strong>被裁掉的工具仍然能执行</strong>。schema 裁剪省的是上下文，不是权限（见 §6.4）。</li>
 <li><strong>参数不做 schema 级校验</strong>。schema 只是发给模型的说明，错了由工具自己抛（见 §6.4）。</li>
+<li><strong>恢复出来的会话知道上次压到哪一轮</strong>。<code>COMPACTION</code> 事件带 <code>turn</code>，<code>restore()</code> 把它读回
+    <code>last_compact_turn</code>：恢复后的会话不会因为「不知道上次什么时候压的」而马上再压一次，
+    也不会因为计数归零而永远不压。</li>
+<li><strong>子 agent 忘事，而不是摘要</strong>。子 agent 没有摘要这一步，上下文装不下时它丢掉最早的一轮
+    （<code>core/subagent.py</code> 的 <code>_trim()</code> / <code>_shrink()</code>）。provider 报溢出时它也走这条路：
+    丢掉最早的一轮再问一次，而不是整个失败。便宜，但结论里可能少一块。</li>
+<li><strong>审查之后，模型看不到 diff 了</strong>。diff 只在这一轮里，轮结束就换成一句提示。
+    追问「第 42 行那个发现是什么意思」时，模型得自己重新读文件——这是拿上下文换的钱。</li>
 </ol>
 <hr>
 <h2 id="9">9. 一张图</h2>
