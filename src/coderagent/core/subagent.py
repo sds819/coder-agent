@@ -18,6 +18,7 @@ the context of the main agent stays clean.
 
 import json
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -129,7 +130,7 @@ class SubAgentRunner:
         approver=None,
         gateway_for=None,
         bus: EventBus | None = None,
-        session_id: str = "",
+        session_id: str | Callable[[], str] = "",
         hooks=None,
         before_write=None,
         store=None,
@@ -147,6 +148,7 @@ class SubAgentRunner:
         """Returns the gateway of a purpose. The main gateway when it is not set."""
         self.bus = bus
         self.session_id = session_id
+        """The session the events of the sub agent belong to. A callable follows the session of the loop."""
         self.hooks = hooks
         """The hook runner of the session. The sub agent goes through the same hooks."""
         self.before_write = before_write
@@ -263,7 +265,7 @@ class SubAgentRunner:
         self.bus.publish(
             Event(
                 type=EventType.TOOL_CALL,
-                session_id=self.session_id,
+                session_id=self.session_id() if callable(self.session_id) else self.session_id,
                 timestamp=0.0,
                 payload={"actions": actions},
             )

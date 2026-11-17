@@ -21,6 +21,8 @@ from coderagent.core.memory import load_project_memory, load_user_memory
 from coderagent.core.os_sandbox import sandbox_block
 from coderagent.core.session import Session, SessionStore
 from coderagent.core.summarize import (
+    COMPACTED_GOAL,
+    RECAP_GOAL,
     Summary,
     chunk_messages,
     conservative_summary,
@@ -329,6 +331,39 @@ class ContextEngine:
         self.store.append(self.session.id, event)
         return True
 
+    def recap(self) -> Summary | None:
+        """Summarize the conversation without changing it.
+
+        Nothing is dropped and the summary does not go into the context of the
+        model: it is a report for the user to read. None when there is nothing
+        to summarize.
+        """
+        messages = self.history.messages
+        if not messages:
+            return None
+        before = getattr(self.summary_model, "total_cost", 0.0)
+        summary = self._summarize(messages, compacted=False)
+        cost = getattr(self.summary_model, "total_cost", 0.0) - before
+        if self.summary_model is not self.model:
+            """The summary ran on its own model, so its cost is booked on the main one."""
+            self.model.total_cost = getattr(self.model, "total_cost", 0.0) + cost
+        self.session.total_cost += cost
+        """The recap is not part of a turn, so its cost is added to the session here."""
+        event = Event(
+            type=EventType.RECAP,
+            session_id=self.session.id,
+            timestamp=time.time(),
+            payload={
+                "summary": summary.to_dict(),
+                "text": summary.to_text(),
+                "tokens": estimate_tokens(messages),
+                "cost": cost,
+            },
+        )
+        self.bus.publish(event)
+        self.store.append(self.session.id, event)
+        return summary
+
     def _cut_index(self) -> int:
         """Where the kept window starts. Always a turn boundary.
 
@@ -361,23 +396,28 @@ class ContextEngine:
         text = self._summary_text()
         return [{"role": "user", "content": text}] if text else []
 
-    def _summarize(self, messages: list[dict]) -> Summary:
+    def _summarize(self, messages: list[dict], compacted: bool = True) -> Summary:
         """Summarize the compacted part.
 
         A history that does not fit into one prompt is summarized in chunks, and
         the partial summaries are merged into one. The previous summary goes in
         as well, so that a second compaction does not lose what the first one found.
+
+        `compacted` says whether the messages are about to be dropped: a recap
+        keeps them, so it must not claim that they are gone.
         """
         previous = self.summaries[-1] if self.summaries else None
+        goal = COMPACTED_GOAL if compacted else RECAP_GOAL
         chunks = chunk_messages(messages, self._summary_limit())
         if len(chunks) <= 1:
             payload = list(chunks[0]) if chunks else []
             if previous:
                 payload.append({"role": "user", "content": previous.render()})
-            summary = self._ask(summarize_prompt, payload, _writes(messages)) or conservative_summary(payload)
+            summary = self._ask(summarize_prompt, payload, _writes(messages)) or conservative_summary(payload, goal)
         else:
             parts = [
-                self._ask(summarize_prompt, chunk, _writes(chunk)) or conservative_summary(chunk) for chunk in chunks
+                self._ask(summarize_prompt, chunk, _writes(chunk)) or conservative_summary(chunk, goal)
+                for chunk in chunks
             ]
             summary = self._ask(partial(merge_prompt, previous=self._summary_text()), parts, _writes(messages)) or (
                 merge_summaries([previous, *parts] if previous else parts)

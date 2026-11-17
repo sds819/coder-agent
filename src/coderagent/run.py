@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -229,6 +230,18 @@ def build_loop(
         env=environment,
         sandbox=_confinement(config, environment, cwd),
     )
+    holder: dict[str, AgentLoop] = {}
+    """The loop of this session. The tools have to follow it."""
+
+    def tool_context() -> ToolContext:
+        """The tool context of the session the loop is in.
+
+        The loop may go to another session (`/resume`, `/fork`, a conversation
+        that goes aside), and then the tools have to follow it: their results
+        belong to the log of the session that is running.
+        """
+        return replace(ctx, session=holder["loop"].session)
+
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
 
@@ -236,23 +249,29 @@ def build_loop(
         """Snapshot the file before a write tool changes it."""
         path = params.get("path")
         if path and config.checkpoint.enabled:
+            loop = holder["loop"]
             create_file_checkpoint(
-                checkpoints, session.id, session.turn_count, cwd, str(path), len(context.history.messages)
+                checkpoints,
+                loop.session.id,
+                loop.session.turn_count,
+                cwd,
+                str(path),
+                len(loop.context.history.messages),
             )
 
     runner = SubAgentRunner(
         gateway,
         registry,
         policy,
-        lambda: ctx,
+        tool_context,
         approver=approver or HeadlessApprover(allow=False),
         gateway_for=lambda purpose: purpose_gateway(config, gateway, purpose),
         bus=bus,
-        session_id=session.id,
+        session_id=lambda: holder["loop"].session.id,
         hooks=hooks,
         before_write=before_write,
         store=store,
-        on_path=context.note_path,
+        on_path=lambda path: holder["loop"].context.note_path(path),
         schema_budget=budget,
         max_turns=config.agent.subagent_max_turns,
         max_parallel=config.agent.subagent_max_parallel,
@@ -265,9 +284,9 @@ def build_loop(
     executor = ToolExecutor(
         registry,
         policy,
-        lambda: ctx,
+        tool_context,
         approver or HeadlessApprover(allow=False),
-        on_path=context.note_path,
+        on_path=lambda path: holder["loop"].context.note_path(path),
         before_write=before_write,
         hooks=hooks,
         store=store,
@@ -296,6 +315,7 @@ def build_loop(
         exporter=_exporter(config),
         output_schema=output_schema,
     )
+    holder["loop"] = loop
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())
     """A tool that runs long asks the loop whether the turn is still going on."""
     return loop

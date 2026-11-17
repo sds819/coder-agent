@@ -87,6 +87,14 @@ def collect(events: list[Event]) -> Metrics:
             metrics.per_purpose_cost["summarize"] = metrics.per_purpose_cost.get("summarize", 0.0) + cost
             if "summary_ratio" in payload:
                 metrics.summary_ratios.append(float(payload.get("summary_ratio") or 0.0))
+        elif event.type == EventType.RECAP:
+            cost = float(payload.get("cost") or 0.0)
+            metrics.total_cost += cost
+            metrics.per_purpose_cost["recap"] = metrics.per_purpose_cost.get("recap", 0.0) + cost
+        elif event.type == EventType.SIDE_CONVERSATION:
+            cost = float(payload.get("cost") or 0.0)
+            metrics.total_cost += cost
+            metrics.per_purpose_cost["side"] = metrics.per_purpose_cost.get("side", 0.0) + cost
         elif event.type == EventType.REFLECTION:
             cost = float(payload.get("cost") or 0.0)
             metrics.total_cost += cost

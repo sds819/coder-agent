@@ -109,3 +109,30 @@ def test_clear_starts_a_new_session_and_the_registry_follows(make_client, send):
     assert switched["previous_session_id"] == session_id
     assert client.get(f"/api/sessions/{new_id}").status_code == 200
     """The old session is still in the log, it is just not the one that is running."""
+
+
+def test_a_side_conversation_answers_in_the_stream(make_client, send, wait_for):
+    client = make_client([{"role": "assistant", "content": "the answer"}])
+    session_id = client.post("/api/sessions").json()["id"]
+
+    send(client, session_id, "/side what does this do?")
+
+    items = wait_for(client, session_id, "assistant_message")
+    assert any(item.get("content") == "the answer" for item in items if item["kind"] == "assistant_message")
+
+
+def test_a_recap_summarizes_the_conversation(make_client, send, wait_for):
+    client = make_client(
+        [
+            {"role": "assistant", "content": "ok"},
+            {"role": "assistant", "content": '{"goal": "the goal"}'},
+        ]
+    )
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "hello")
+    wait_for(client, session_id, "turn_end")
+
+    send(client, session_id, "/recap")
+
+    items = wait_for(client, session_id, "command_output")
+    assert any("the goal" in item["text"] for item in items if item["kind"] == "command_output")

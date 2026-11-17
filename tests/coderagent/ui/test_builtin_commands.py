@@ -203,6 +203,47 @@ def test_compact_says_when_there_is_nothing_to_compact(tmp_path):
     assert "Nothing to compact" in _run(context, output, "/compact")
 
 
+def test_recap_summarizes_the_conversation_without_changing_it(tmp_path):
+    context, output = _context(
+        tmp_path,
+        [
+            {"role": "assistant", "content": "ok"},
+            {"role": "assistant", "content": '{"goal": "the goal"}'},
+        ],
+    )
+    context.loop.run_turn("hello")
+    before = list(context.loop.context.history.messages)
+    assert "goal: the goal" in _run(context, output, "/recap")
+    assert context.loop.context.history.messages == before
+    assert context.loop.context.summary is None
+
+
+def test_recap_says_when_there_is_nothing_to_summarize(tmp_path):
+    context, output = _context(tmp_path)
+    assert "Nothing to summarize" in _run(context, output, "/recap")
+
+
+def test_side_asks_for_a_question(tmp_path):
+    context, output = _context(tmp_path)
+    assert "What do you want to ask" in _run(context, output, "/side")
+
+
+def test_side_says_when_the_interface_cannot_run_a_turn(tmp_path):
+    context, output = _context(tmp_path)
+    assert "cannot run a turn" in _run(context, output, "/side what does this do?")
+
+
+def test_side_starts_a_conversation_of_its_own(tmp_path):
+    context, output = _context(tmp_path)
+    asked = []
+    context.submit_side = lambda text, session: asked.append((text, session))
+    before = list(context.loop.context.history.messages)
+    assert "side conversation" in _run(context, output, "/side what does this do?")
+    assert asked[0][0] == "what does this do?"
+    assert asked[0][1].metadata["parent"] == context.session.id
+    assert context.loop.context.history.messages == before
+
+
 def test_clear_starts_a_new_session(tmp_path):
     context, output = _context(tmp_path)
     before = context.session.id

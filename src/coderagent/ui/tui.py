@@ -372,14 +372,14 @@ class CoderApp(App):
         widget.value = self.history[self.history_index]
         widget.cursor_position = len(widget.value)
 
-    def _run_turn(self, text: str | list[dict], purpose: str = "") -> None:
+    def _run_turn(self, text: str | list[dict], purpose: str = "", session=None) -> None:
         """The turn itself, in a thread."""
         self.interrupted.clear()
         self.turn_running.set()
         self.last_answer = ""
         self.loop.cancel = self.interrupted.is_set
         try:
-            result = self.loop.run_turn(text, purpose)
+            result = self.loop.run_turn(text, purpose, session)
         except Exception as e:
             self._ui(self._add_message, "error", f"{type(e).__name__}: {e}")
             self._notify_terminal(f"{type(e).__name__}: {e}")
@@ -429,6 +429,7 @@ class CoderApp(App):
             mcp=self.loop.mcp,
             output=self._add_command,
             submit=self._submit_turn,
+            submit_side=self._submit_side,
             quit=self.action_quit,
         )
         run_command(context, line)
@@ -436,6 +437,10 @@ class CoderApp(App):
     def _submit_turn(self, text: str | list[dict], purpose: str = "") -> None:
         """Run a turn for a command that needs the model."""
         self.run_worker(lambda: self._run_turn(text, purpose), thread=True, exclusive=True)
+
+    def _submit_side(self, text: str, session) -> None:
+        """Run a turn in a conversation that goes aside."""
+        self.run_worker(lambda: self._run_turn(text, "", session), thread=True, exclusive=True)
 
     # -- the keys ---------------------------------------------------------
 

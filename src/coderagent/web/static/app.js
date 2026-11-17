@@ -240,6 +240,12 @@ function render(item) {
     case "compaction":
       bubble("separator", t("compacted", { tokens: item.tokens }));
       break;
+    case "recap":
+      bubble("separator", t("recapped"));
+      break;
+    case "side_conversation":
+      bubble("separator", t("side_conversation"));
+      break;
     case "verify":
       bubble("separator", t("verified", { failed: (item.failed || []).length }));
       break;

@@ -631,6 +631,8 @@ memory of the session keeps what was learned before the failure.
 - **What is kept** — the last turns, or the last 40 % of the tokens, whichever
   is more.
 - **`/compact`** — compress on demand.
+- **`/recap`** — summarize the conversation without dropping anything: the
+  summary is for you to read, the model still sees the whole conversation.
 - **The order of the messages** — system prompt, the instruction files, the
   todo list, the summary of the session, then the history.
 - **The instruction files are cut** — one file may take 32768 bytes
@@ -1270,8 +1272,8 @@ The sections and what they hold:
 
 ## The commands
 
-Thirty-three built-in commands: `/help`, `/model`, `/mode`, `/plan`,
-`/compact`, `/clear`, `/resume`, `/fork`, `/rename`, `/archive`, `/delete`,
+Thirty-five built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+`/compact`, `/recap`, `/side`, `/clear`, `/resume`, `/fork`, `/rename`, `/archive`, `/delete`,
 `/rewind`, `/diff`, `/review`,
 `/image`, `/mention`, `/open`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
 `/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
@@ -1298,6 +1300,22 @@ The review may run on a model of its own: `model.review_model` names it, and
 `model.routing.review` wins over that. Without either one the review runs on
 the model of the session. The purpose of the turn is in the log, so it can be
 read back later.
+
+### The recap and the side conversation
+
+`/recap` summarizes the conversation so far and shows you the summary: the goal,
+the findings, the decisions, the files that were touched, the questions that are
+still open and the next steps. Nothing is dropped, nothing is compressed, and
+the summary does not go into the context of the model — the model still sees the
+whole conversation. It is a report for you. The summary costs one call of the
+model, and the money is on the session, under the purpose `recap`.
+
+`/side <question>` asks a question in a conversation of its own. The side
+conversation is a copy of the current session with a log of its own: the
+question and the answer are recorded in the current session, so the agent does
+not lose the thread of the work, and nothing else is. The tools the side
+conversation uses belong to the side session, and the money it spent is on the
+current session, under the purpose `side`.
 
 ### The files you mention
 

@@ -106,6 +106,7 @@ def run_command(
         mcp=loop.mcp,
         output=typer.echo,
         submit=lambda text, purpose="": typer.echo(render(loop.run_turn(text, purpose), output_format)),
+        submit_side=lambda text, session: typer.echo(render(loop.run_turn(text, "side", session), output_format)),
         quit=lambda: None,
     )
     run(context, task)

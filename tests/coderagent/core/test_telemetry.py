@@ -110,6 +110,20 @@ def test_the_cost_of_a_summary_is_part_of_the_total():
     assert metrics.per_purpose_cost == {"main": 0.2, "summarize": 0.05}
 
 
+def test_the_cost_of_a_recap_is_part_of_the_total():
+    events = [_assistant(0.2), _event(EventType.RECAP, {"cost": 0.05})]
+    metrics = collect(events)
+    assert metrics.total_cost == pytest.approx(0.25)
+    assert metrics.per_purpose_cost == {"main": 0.2, "recap": 0.05}
+
+
+def test_the_cost_of_a_side_conversation_is_part_of_the_total():
+    events = [_assistant(0.2), _event(EventType.SIDE_CONVERSATION, {"cost": 0.05})]
+    metrics = collect(events)
+    assert metrics.total_cost == pytest.approx(0.25)
+    assert metrics.per_purpose_cost == {"main": 0.2, "side": 0.05}
+
+
 def test_the_cost_of_a_reflection_is_part_of_the_total():
     events = [
         _assistant(0.2),

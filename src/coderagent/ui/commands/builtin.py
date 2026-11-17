@@ -124,6 +124,28 @@ def _compact(context: CommandContext, argument: str) -> None:
     context.say(f"Compacted the context: {before} -> {context.loop.context.estimated_tokens()} tokens.")
 
 
+def _recap(context: CommandContext, argument: str) -> None:
+    """Summarize the conversation without changing it."""
+    summary = context.loop.context.recap()
+    if summary is None:
+        context.say("Nothing to summarize yet.")
+        return
+    context.say(summary.to_text())
+
+
+def _side(context: CommandContext, argument: str) -> None:
+    """Ask a question that goes aside: the main conversation is not touched."""
+    if not argument:
+        context.say("What do you want to ask? Try /side <question>.")
+        return
+    if context.submit_side is None:
+        context.say("This interface cannot run a turn, so it cannot go aside.")
+        return
+    side = context.store.side(context.session.id)
+    context.say(f"A side conversation ({side.id}). This one stays as it is.")
+    context.submit_side(argument, side)
+
+
 def _clear(context: CommandContext, argument: str) -> None:
     from coderagent.run import settle
 
@@ -549,6 +571,15 @@ register(
 register(Command(name="mode", description="Show or switch the permission mode", handler=_mode, usage=f"[{MODES}]"))
 register(Command(name="plan", description="Switch to plan mode, where nothing is changed", handler=_plan))
 register(Command(name="compact", description="Compact the conversation now", handler=_compact))
+register(Command(name="recap", description="Summarize the conversation without changing it", handler=_recap))
+register(
+    Command(
+        name="side",
+        description="Ask a question that goes aside, in a conversation of its own",
+        handler=_side,
+        usage="<question>",
+    )
+)
 register(Command(name="clear", description="Start a new session", handler=_clear))
 register(Command(name="resume", description="List the sessions or resume one", handler=_resume, usage="[session-id]"))
 register(Command(name="fork", description="Copy the session into a new one", handler=_fork, usage="[session-id]"))

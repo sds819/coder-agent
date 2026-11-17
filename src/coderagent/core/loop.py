@@ -29,6 +29,14 @@ MAX_SCHEMA_ATTEMPTS = 2
 """How many answers the model may give for a schema. Two means: one answer and one try again."""
 
 
+def _answer_of(messages: list[dict]) -> str:
+    """What the agent answered."""
+    for message in reversed(messages):
+        if message.get("role") == "assistant":
+            return text_of(message.get("content"))
+    return ""
+
+
 @dataclass
 class TurnResult:
     session_id: str
@@ -139,7 +147,7 @@ class AgentLoop:
     def messages(self) -> list[dict]:
         return self.context.history.messages
 
-    def switch_to(self, session: Session) -> None:
+    def switch_to(self, session: Session, *, start: bool = True) -> None:
         """Continue in another session, with the history that session already has."""
         self.session = session
         self.context = ContextEngine(
@@ -158,19 +166,54 @@ class AgentLoop:
         self.context.restore()
         self._exported = 0
         """Another session has its own trace."""
-        self._session_start()
+        if start:
+            self._session_start()
 
     def run(self, user_input: str | list[dict]) -> TurnResult:
         """Alias for `run_turn`; the caller drives the conversation."""
         return self.run_turn(user_input)
 
-    def run_turn(self, user_input: str | list[dict], purpose: str = "") -> TurnResult:
+    def run_turn(self, user_input: str | list[dict], purpose: str = "", session: Session | None = None) -> TurnResult:
         """Run one turn: query the model, execute its tool calls, repeat until it stops.
 
         The input is a string, or the parts of a message that carries images.
         The purpose says which model answers the turn: `main` unless the caller
-        says otherwise, like `review`.
+        says otherwise, like `review`. A session says that the turn happens
+        somewhere else: a conversation that goes aside.
         """
+        if session is None:
+            return self._turn(user_input, purpose)
+        return self._aside(user_input, purpose, session)
+
+    def _aside(self, user_input: str | list[dict], purpose: str, session: Session) -> TurnResult:
+        """Run a turn in another session, and come back to this one.
+
+        The conversation that goes aside has its own log. This one is not
+        touched: the question and the answer are recorded in it, and nothing else.
+        """
+        previous = self.session
+        exported = self._exported
+        self.switch_to(session)
+        try:
+            result = self._turn(user_input, purpose or "side")
+        finally:
+            self.switch_to(previous, start=False)
+            self._exported = exported
+        self.session.total_cost += result.cost
+        """The user paid for the side conversation, so the session pays for it."""
+        self._publish(
+            EventType.SIDE_CONVERSATION,
+            {
+                "question": text_of(user_input),
+                "answer": _answer_of(result.messages),
+                "session_id": session.id,
+                "cost": result.cost,
+                "stop_reason": result.stop_reason,
+            },
+        )
+        return result
+
+    def _turn(self, user_input: str | list[dict], purpose: str = "") -> TurnResult:
         self.purpose = purpose or "main"
         turn_messages: list[dict] = []
         prompt = user_input

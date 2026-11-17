@@ -30,6 +30,8 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | `/mode` | Show or switch the permission mode | `[default\|acceptEdits\|plan\|bypass\|readonly]` |
 | `/plan` | Switch to plan mode, where nothing is changed | |
 | `/compact` | Compact the conversation now | |
+| `/recap` | Summarize the conversation without changing it | |
+| `/side` | Ask a question that goes aside, in a conversation of its own | `<question>` |
 | `/clear` | Start a new session | |
 | `/resume` | List the sessions or resume one | `[session-id]` |
 | `/fork` | Copy the session into a new one | `[session-id]` |
@@ -110,6 +112,37 @@ says that the agent may not read it.
 `/exit` closes the terminal interface, the same way `ctrl+q` does. In the
 browser there is nothing to close, so it says that the server keeps running:
 stop it with `ctrl+c` in the terminal that started it.
+
+## A summary and a conversation that goes aside
+
+`/recap` summarizes the conversation so far and shows you the summary: the goal,
+the findings, the decisions, the files that were touched, the questions that are
+still open and the next steps.
+
+```bash
+/recap
+```
+
+Nothing is dropped and nothing is compressed: the model still sees the whole
+conversation, and the summary does not go into its context. It is a report for
+you, not a step of the work. The summary costs one call of the model, and the
+money is on the session, under the purpose `recap`.
+
+`/side` asks a question in a conversation of its own:
+
+```bash
+/side what does the retry logic of the client do?
+```
+
+The side conversation is a copy of the session you are in, with a log of its
+own. The question and the answer are recorded in the session you are in, so
+the agent does not lose the thread of the work, but nothing else is: the
+messages of the side conversation stay in the side session, and the tools it
+uses belong to that session too.
+
+The side session has its own id and can be opened like any other one
+(`/resume <id>`). The money it spent is on the session you are in, under the
+purpose `side`.
 
 ## The life of a session
 

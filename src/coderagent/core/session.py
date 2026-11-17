@@ -150,6 +150,8 @@ class SessionStore:
                     session.name = payload["name"]
                 if "archived" in payload:
                     session.archived = bool(payload["archived"])
+                if "parent" in payload:
+                    session.metadata["parent"] = payload["parent"]
             elif event.type == EventType.USER_MESSAGE:
                 session.turn_count += 1
             elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
@@ -223,6 +225,24 @@ class SessionStore:
             ),
         )
         return self.rebuild(forked.id)
+
+    def side(self, session_id: str) -> Session:
+        """A copy of a session, for a conversation that goes aside.
+
+        The copy knows its parent, so the session it came from is not lost.
+        The original is not touched.
+        """
+        side = self.fork(session_id)
+        self.append(
+            side.id,
+            Event(
+                type=EventType.STATE_CHANGE,
+                session_id=side.id,
+                timestamp=time.time(),
+                payload={"parent": session_id},
+            ),
+        )
+        return self.rebuild(side.id)
 
     def _write_meta(self, session: Session) -> None:
         meta = {

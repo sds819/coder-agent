@@ -578,6 +578,8 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
   目标、发现、决定、动过的文件、没解决的问题、下一步、见过的错。
 - **留什么**——最近几轮，或者最近 40 % 的 token，哪个多留哪个。
 - **`/compact`**——随时手动压缩。
+- **`/recap`**——总结一下对话，但什么都不丢：总结是给你看的，模型看到的还是
+  整段对话。
 - **消息的顺序**——系统提示词、指令文件、todo、会话摘要，然后是历史。
 - **指令文件会裁**——一个文件最多 32768 字节（`context.project_doc_max_bytes`）。
   太长的裁短，而且告诉 agent 它没看全。
@@ -1173,8 +1175,8 @@ profile: fast
 
 ## 命令
 
-三十三个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
-`/clear`、`/resume`、`/fork`、`/rename`、`/archive`、`/delete`、`/rewind`、`/diff`、
+三十五个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、`/recap`、
+`/side`、`/clear`、`/resume`、`/fork`、`/rename`、`/archive`、`/delete`、`/rewind`、`/diff`、
 `/review`、`/image`、`/mention`、`/open`、`/init`、
 `/cost`、`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
@@ -1198,6 +1200,17 @@ profile: fast
 
 审查可以跑在另一个模型上：`model.review_model` 写它的名字，`model.routing.review`
 压过它。两个都没写就还是会话自己的模型。这一轮的用途写在日志里，以后能翻出来。
+
+### 总结，和岔开的对话
+
+`/recap` 把到现在的对话总结一遍，把总结给你看：目标、发现、决定、动过的文件、
+还没解决的问题、下一步。什么都不会被丢掉，也不会被压缩，总结本身也不进模型的
+上下文——模型看到的还是整段对话。这是一份给你看的报告。总结要花一次模型调用，
+这笔钱记在会话上，用途是 `recap`。
+
+`/side <问题>` 在一段自己的对话里问问题。那段对话是当前会话的一份拷贝，有自己的
+日志：问题和回答记在当前会话里，所以 agent 不会丢掉干活的线索，但也只有这些。岔开的
+那段对话用的工具算在岔开的会话上，它花的钱记在当前会话上，用途是 `side`。
 
 ### 你提到的文件
 

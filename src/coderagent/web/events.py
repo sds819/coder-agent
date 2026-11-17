@@ -68,6 +68,10 @@ def normalize(event: Event) -> list[dict]:
         return [{"kind": "state", **{key: value for key, value in payload.items() if value is not None}}]
     if event.type == EventType.COMPACTION:
         return [{"kind": "compaction", "tokens": payload.get("tokens", 0), "cost": payload.get("cost", 0.0)}]
+    if event.type == EventType.RECAP:
+        return [{"kind": "recap", "text": payload.get("text", ""), "cost": payload.get("cost", 0.0)}]
+    if event.type == EventType.SIDE_CONVERSATION:
+        return [{"kind": "side_conversation", "question": payload.get("question", "")}]
     if event.type == EventType.VERIFY:
         return [
             {

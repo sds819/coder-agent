@@ -42,6 +42,9 @@ class CommandContext:
     The second argument is the purpose of the turn: it says which model
     answers it. It is empty for the main model.
     """
+    submit_side: Callable[[str, Session], None] | None = None
+    """Run a turn in a session of its own, and come back. None when the
+    interface cannot run one."""
     quit: Callable[[], None] | None = None
     """How to leave the interface. None when there is nothing to leave."""
 

@@ -595,6 +595,20 @@ they are in the summary.
 
 `/compact` compacts now.
 
+`/recap` summarizes the conversation without changing it: nothing is dropped and
+nothing is compressed, the summary does not go into the context of the model. It
+is a report for you, not a step of the work.
+
+`/side <question>` asks a question in a conversation that goes aside: it has its
+own session and its own log, and the conversation you are in is not touched. The
+question and the answer are recorded in your session, so the agent does not lose
+the thread of the work.
+
+```bash
+/recap
+/side what does the retry logic of the client do?
+```
+
 ### The memory
 
 At the end of a session the agent asks the model what is worth remembering.

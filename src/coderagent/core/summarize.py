@@ -85,6 +85,32 @@ class Summary:
             "errors_seen": self.errors_seen,
         }
 
+    def to_text(self) -> str:
+        """The summary as plain text, for the user to read."""
+        lines = []
+        if self.goal:
+            lines.append(f"goal: {self.goal}")
+        for label, items in (
+            ("findings", self.findings),
+            ("decisions", self.decisions),
+            ("open_questions", self.open_questions),
+            ("next_steps", self.next_steps),
+            ("errors_seen", self.errors_seen),
+        ):
+            if items:
+                lines.append(f"{label}:")
+                lines += [f"- {item}" for item in items]
+        if self.files_touched:
+            lines.append("files_touched:")
+            lines += [
+                f"- {item.get('path', '?')} ({item.get('state', 'modified')}): {item.get('change', '')}"
+                for item in self.files_touched
+            ]
+        if self.recent_errors:
+            lines.append("recent_errors:")
+            lines += [f"- {item}" for item in self.recent_errors]
+        return "\n".join(lines)
+
     def render(self) -> str:
         lines = [
             "<session_summary>",
@@ -255,7 +281,14 @@ def _unique(items: list[str]) -> list[str]:
     return result
 
 
-def conservative_summary(messages: list[dict]) -> Summary:
+COMPACTED_GOAL = "the earlier part of the conversation was compacted"
+"""What a summary says when the messages it replaces are gone."""
+
+RECAP_GOAL = "a recap of the conversation so far"
+"""What a summary says when the messages are still there."""
+
+
+def conservative_summary(messages: list[dict], goal: str = COMPACTED_GOAL) -> Summary:
     """Fallback when the model does not return a usable summary."""
     findings = []
     for message in messages[-CONSERVATIVE_MESSAGES:]:
@@ -263,7 +296,7 @@ def conservative_summary(messages: list[dict]) -> Summary:
         if content:
             findings.append(f"{message.get('role', '?')}: {content[:400]}")
     return Summary(
-        goal="the earlier part of the conversation was compacted",
+        goal=goal,
         findings=findings,
         next_steps=["re-read the files that were mentioned to recover the details"],
     )

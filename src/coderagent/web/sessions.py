@@ -191,11 +191,32 @@ class SessionRuntime:
             mcp=loop.mcp,
             output=lambda text: self.emit({"kind": "command_output", "text": text}),
             submit=self._run_turn,
+            submit_side=self._run_side,
         )
         run_command(context, line)
         if loop.session.id != self.session.id:
             self.switch_to(loop.session)
         self.emit({"kind": "command_end"})
+
+    def _run_side(self, text: str, session: Session) -> None:
+        """Run a turn in a conversation that goes aside. This one is not touched."""
+        loop = self.loop()
+        self.cancel.clear()
+        loop.cancel = self.cancel.is_set
+        try:
+            result = loop.run_turn(text, "side", session)
+        except Exception as error:
+            self.emit({"kind": "error", "error": f"{type(error).__name__}: {error}"})
+            return
+        self.emit(
+            {
+                "kind": "turn_end",
+                "stop_reason": result.stop_reason,
+                "cost": result.cost,
+                "session_cost": loop.session.total_cost,
+                "error": result.error,
+            }
+        )
 
     def switch_to(self, session: Session) -> None:
         """The session changed: the registry gets a new key for this runtime."""
