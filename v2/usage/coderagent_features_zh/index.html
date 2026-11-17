@@ -5929,6 +5929,11 @@ cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span
   的结果，所以会话还能接着聊。<code>/rewind</code> 退回去把结果退掉了，也是这么修的。</li>
 <li><strong>检查点</strong>——每次写文件之前存一份快照，<code>/rewind</code> 能退回去。</li>
 <li><strong><code>/clear</code></strong>——开一个新会话，旧的留在日志里。</li>
+<li><strong>有名字、能收起来、也能删掉</strong>——<code>/rename</code>、<code>/archive</code>、<code>/delete</code>。收起来的
+  会话不在 <code>/resume</code> 的列表里，但它还在盘上。</li>
+<li><strong>历史可以留，也可以不留</strong>——<code>history.persistence: save-none</code> 把会话留在
+  内存里，<code>history.max_bytes</code> 在历史超过它的时候删掉最老的那些。正在跑的那个
+  会话永远不在其中。</li>
 <li><strong>花了多少钱</strong>——每个会话的 token 和花费，在状态栏、在 <code>/cost</code>、在
   追踪文件里。</li>
 <li><strong>追踪</strong>——<code>coder export --format json|otel</code> 把会话导出来，给看板或者
@@ -6467,6 +6472,8 @@ $ python -m pytest -q
 <li><strong>答案是 Markdown</strong>——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；<code>ui.markdown: false</code> 可以让它一直是纯文本。</li>
 <li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。</li>
+<li><strong>文件在你的编辑器里打开</strong>——<code>/open src/app.py</code> 用 <code>ui.file_opener</code> 指定的
+  程序打开它（<code>vscode</code>、<code>cursor</code>、<code>windsurf</code>，或者你自己的命令）。</li>
 <li><strong><code>ctrl+c</code> 能停掉正在跑的工具</strong>——不只是这一轮：shell 里跑着的命令会被停掉，
   它自己起的那些进程也一样。</li>
 </ul>
@@ -6747,7 +6754,7 @@ $ python -m pytest -q
   后面的赢。</li>
 <li><strong>有哪些段</strong>——<code>model</code>、<code>agent</code>、<code>tools</code>、<code>permissions</code>、<code>context</code>、
   <code>memory</code>、<code>checkpoint</code>、<code>mcp</code>、<code>hooks</code>、<code>ui</code>、<code>sandbox</code>、<code>verify</code>、<code>telemetry</code>、
-  <code>shell_environment</code>，还有 <code>profiles</code> 和 <code>profile</code>。</li>
+  <code>shell_environment</code>、<code>history</code>，还有 <code>profiles</code> 和 <code>profile</code>。</li>
 <li><strong>路径</strong>——<code>MSWEA_CODER_HOME</code> 可以把用户级文件挪到别处。</li>
 <li><strong>设置页只写用户级文件</strong>——项目级那份在仓库里，永远不写。</li>
 </ul>
@@ -6840,7 +6847,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>、<code>notifications</code>、<code>notify_command</code>、<code>markdown</code></td>
+<td><code>approval_timeout</code>、<code>notifications</code>、<code>notify_command</code>、<code>markdown</code>、<code>file_opener</code></td>
 </tr>
 <tr>
 <td><code>shell_environment</code></td>
@@ -6857,6 +6864,10 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tr>
 <td><code>telemetry</code></td>
 <td><code>otel_endpoint</code>、<code>otel_headers</code>、<code>otel_timeout</code></td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td><code>persistence</code>、<code>max_bytes</code></td>
 </tr>
 <tr>
 <td><code>profiles</code></td>
@@ -6911,8 +6922,9 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tbody>
 </table>
 <h2 id="_42">命令</h2>
-<p>二十九个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
-<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rewind</code>、<code>/diff</code>、<code>/review</code>、<code>/image</code>、<code>/mention</code>、<code>/init</code>、
+<p>三十三个内置命令：<code>/help</code>、<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/compact</code>、
+<code>/clear</code>、<code>/resume</code>、<code>/fork</code>、<code>/rename</code>、<code>/archive</code>、<code>/delete</code>、<code>/rewind</code>、<code>/diff</code>、
+<code>/review</code>、<code>/image</code>、<code>/mention</code>、<code>/open</code>、<code>/init</code>、
 <code>/cost</code>、<code>/todos</code>、<code>/mcp</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/agents</code>、<code>/skills</code>、
 <code>/plugins</code>、<code>/trust</code>、<code>/memory</code>、<code>/status</code>、<code>/sandbox</code>、<code>/export</code>、<code>/context</code>、
 <code>/exit</code>（别名 <code>/quit</code>）。</p>

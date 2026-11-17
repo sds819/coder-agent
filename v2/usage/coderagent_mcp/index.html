@@ -1511,6 +1511,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-calls-of-one-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two calls of one server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3938,6 +3949,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-calls-of-one-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two calls of one server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-servers-and-the-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4043,6 +4065,10 @@ See <a href="../coderagent/#the-code-of-a-project">The code of a project</a>.</p
 <td><code>tool_timeout</code></td>
 <td>The seconds one call of this server may take. Zero means: the timeout of <code>mcp</code></td>
 </tr>
+<tr>
+<td><code>supports_parallel_tool_calls</code></td>
+<td>Whether two calls of this server may run at the same time. <code>true</code> by default</td>
+</tr>
 </tbody>
 </table>
 <p>The <code>timeout</code> is not a key of a server: it belongs to <code>mcp</code>, next to
@@ -4130,6 +4156,18 @@ says so itself, and one server cannot hold up the others:</p>
 long one call may take. A call that takes longer fails with an error, and the
 model gets the error instead of a turn that never ends.</p>
 <p>Both are seconds. Zero — the default — means the timeout of <code>mcp</code>.</p>
+<h2 id="two-calls-of-one-server">Two calls of one server</h2>
+<p>The agent may call two tools of the same server at the same time, when the model
+asks for both in one turn. A server that cannot take two calls at once says so
+with <code>supports_parallel_tool_calls: false</code>, and its calls wait for each other:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">servers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-postgres</span>
+<span class="w">      </span><span class="nt">supports_parallel_tool_calls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<p>The flag belongs to the server, not to the session: the calls of one server wait
+for each other, the calls of the other servers do not.</p>
 <h2 id="the-servers-and-the-session">The servers and the session</h2>
 <p>The servers are started when the session starts, one thread each. A server
 that does not start is skipped, the reason is in the log and <code>/mcp</code> shows it.

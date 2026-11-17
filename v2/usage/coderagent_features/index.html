@@ -5970,6 +5970,12 @@ cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span
 <li><strong>Checkpoints</strong> — a snapshot of the file before every write. <code>/rewind</code> rolls
   back to one.</li>
 <li><strong><code>/clear</code></strong> — starts a new session and keeps the old one in the log.</li>
+<li><strong>A name, a place to put it, a way to remove it</strong> — <code>/rename</code>, <code>/archive</code>
+  and <code>/delete</code>. An archived session is not in the list of <code>/resume</code>, but it is
+  still there.</li>
+<li><strong>The history may be kept or not</strong> — <code>history.persistence: save-none</code> keeps
+  the sessions in the memory, <code>history.max_bytes</code> deletes the oldest ones when
+  the history grows over it. The running session is never one of them.</li>
 <li><strong>The money</strong> — tokens and cost per session, in the status bar, in <code>/cost</code>
   and in the trace.</li>
 <li><strong>The trace</strong> — <code>coder export --format json|otel</code> writes the session out,
@@ -6542,6 +6548,9 @@ $ python -m pytest -q
   is rendered when it is complete; <code>ui.markdown: false</code> keeps it plain.</li>
 <li><strong>A picture can be sent</strong> — <code>/image shot.png what is this</code> sends the picture
   with the text that goes with it.</li>
+<li><strong>A file opens in your editor</strong> — <code>/open src/app.py</code> opens it in the program
+  of <code>ui.file_opener</code> (<code>vscode</code>, <code>cursor</code>, <code>windsurf</code>, or a command of your own).
+  A project may not choose the editor.</li>
 <li><strong><code>ctrl+c</code> stops the tool that is running</strong> — not only the turn: a command that
   runs in the shell is stopped, together with the processes it started.</li>
 </ul>
@@ -6834,7 +6843,7 @@ server warns:</p>
   (<code>-c key=value</code>). The later wins.</li>
 <li><strong>The sections</strong> — <code>model</code>, <code>agent</code>, <code>tools</code>, <code>permissions</code>, <code>context</code>,
   <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code>, <code>verify</code>,
-  <code>telemetry</code> and <code>shell_environment</code>, plus <code>profiles</code> and <code>profile</code>.</li>
+  <code>telemetry</code>, <code>shell_environment</code> and <code>history</code>, plus <code>profiles</code> and <code>profile</code>.</li>
 <li><strong>The paths</strong> — <code>MSWEA_CODER_HOME</code> moves the user level files somewhere
   else.</li>
 <li><strong>The settings page writes the user file only</strong> — the project file is in
@@ -6932,7 +6941,7 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 </tr>
 <tr>
 <td><code>ui</code></td>
-<td><code>approval_timeout</code>, <code>notifications</code>, <code>notify_command</code>, <code>markdown</code></td>
+<td><code>approval_timeout</code>, <code>notifications</code>, <code>notify_command</code>, <code>markdown</code>, <code>file_opener</code></td>
 </tr>
 <tr>
 <td><code>shell_environment</code></td>
@@ -6949,6 +6958,10 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 <tr>
 <td><code>telemetry</code></td>
 <td><code>otel_endpoint</code>, <code>otel_headers</code>, <code>otel_timeout</code></td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td><code>persistence</code>, <code>max_bytes</code></td>
 </tr>
 <tr>
 <td><code>profiles</code></td>
@@ -7003,9 +7016,10 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 </tbody>
 </table>
 <h2 id="the-commands">The commands</h2>
-<p>Twenty-nine built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
-<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
-<code>/image</code>, <code>/mention</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
+<p>Thirty-three built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rename</code>, <code>/archive</code>, <code>/delete</code>,
+<code>/rewind</code>, <code>/diff</code>, <code>/review</code>,
+<code>/image</code>, <code>/mention</code>, <code>/open</code>, <code>/init</code>, <code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>,
 <code>/skills</code>, <code>/plugins</code>, <code>/trust</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>,
 <code>/context</code> and <code>/exit</code> (also <code>/quit</code>).</p>
 <p>Your own commands live in <code>.coderagent/commands/*.md</code> and in

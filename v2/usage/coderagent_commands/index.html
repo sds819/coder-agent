@@ -1349,6 +1349,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-life-of-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The life of a session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-file-of-the-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The file of the user
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#your-own-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3894,6 +3916,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-life-of-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The life of a session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-file-of-the-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The file of the user
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#your-own-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3998,6 +4042,21 @@ does not run. Wait for the turn to end, or press <code>ctrl+c</code> to stop the
 <td><code>[session-id]</code></td>
 </tr>
 <tr>
+<td><code>/rename</code></td>
+<td>Give the session a name</td>
+<td><code>[name]</code></td>
+</tr>
+<tr>
+<td><code>/archive</code></td>
+<td>Put a session away, or take it out again</td>
+<td><code>[session-id]</code></td>
+</tr>
+<tr>
+<td><code>/delete</code></td>
+<td>Remove a session and everything in it</td>
+<td><code>&lt;session-id&gt;</code></td>
+</tr>
+<tr>
 <td><code>/rewind</code></td>
 <td>Show the checkpoints or roll back to one</td>
 <td><code>[checkpoint-id]</code></td>
@@ -4021,6 +4080,11 @@ does not run. Wait for the turn to end, or press <code>ctrl+c</code> to stop the
 <td><code>/mention</code></td>
 <td>Send a file to the agent, with its content</td>
 <td><code>&lt;path&gt; [what to do with it]</code></td>
+</tr>
+<tr>
+<td><code>/open</code></td>
+<td>Open a file in the editor of the user</td>
+<td><code>&lt;path&gt;</code></td>
 </tr>
 <tr>
 <td><code>/init</code></td>
@@ -4142,6 +4206,31 @@ says that the agent may not read it.</p>
 <p><code>/exit</code> closes the terminal interface, the same way <code>ctrl+q</code> does. In the
 browser there is nothing to close, so it says that the server keeps running:
 stop it with <code>ctrl+c</code> in the terminal that started it.</p>
+<h2 id="the-life-of-a-session">The life of a session</h2>
+<p>A session has a name, it can be put away, and it can be removed:</p>
+<div class="highlight"><pre><span></span><code>/rename<span class="w"> </span>the<span class="w"> </span>bug<span class="w"> </span>of<span class="w"> </span>monday<span class="w">   </span><span class="c1"># the name of the session you are in</span>
+/archive<span class="w">                    </span><span class="c1"># put this session away</span>
+/archive<span class="w"> </span>&lt;session-id&gt;<span class="w">       </span><span class="c1"># put another one away</span>
+/delete<span class="w"> </span>&lt;session-id&gt;<span class="w">        </span><span class="c1"># remove it and everything in it</span>
+</code></pre></div>
+<p>A session that is put away is not in the list of <code>/resume</code> any more, but it is
+still on the disk and <code>/resume &lt;session-id&gt;</code> opens it. <code>/archive</code> on a session
+that is already away takes it out again.</p>
+<p><code>/delete</code> needs the id of the session, and it never deletes the session you are
+in: start a new one with <code>/clear</code> first. Everything the session holds — the log
+of the events and the file with its metadata — goes with it.</p>
+<h2 id="the-file-of-the-user">The file of the user</h2>
+<p><code>/open</code> opens a file in the editor of the user:</p>
+<div class="highlight"><pre><span></span><code>/open<span class="w"> </span>src/app.py
+</code></pre></div>
+<p>The editor comes from the configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">ui</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file_opener</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vscode</span>
+</code></pre></div>
+<p><code>vscode</code>, <code>cursor</code> and <code>windsurf</code> are known by name. A command of your own
+works too, with <code>{file}</code> where the file goes: <code>my-editor {file} --wait</code>. The
+file has to be inside the working directory, and a project may not choose the
+editor: that program runs on the machine of the user.</p>
 <h2 id="your-own-commands">Your own commands</h2>
 <p>A command is a markdown file in <code>.coderagent/commands</code>. The file starts with a
 front matter, the way Claude Code does it:</p>

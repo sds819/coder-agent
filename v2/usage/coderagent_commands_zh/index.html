@@ -1122,6 +1122,28 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
+        会话的一生
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用户自己的文件
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         自己的命令
       
     </span>
@@ -3899,6 +3921,28 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
+        会话的一生
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        用户自己的文件
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         自己的命令
       
     </span>
@@ -3998,6 +4042,21 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <td><code>[session-id]</code></td>
 </tr>
 <tr>
+<td><code>/rename</code></td>
+<td>给会话起个名字</td>
+<td><code>[name]</code></td>
+</tr>
+<tr>
+<td><code>/archive</code></td>
+<td>把会话收起来，或者再拿出来</td>
+<td><code>[session-id]</code></td>
+</tr>
+<tr>
+<td><code>/delete</code></td>
+<td>删掉一个会话和它的全部内容</td>
+<td><code>&lt;session-id&gt;</code></td>
+</tr>
+<tr>
 <td><code>/rewind</code></td>
 <td>列出检查点，或者退回去一个</td>
 <td><code>[checkpoint-id]</code></td>
@@ -4021,6 +4080,11 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <td><code>/mention</code></td>
 <td>给 agent 发一个文件，带着内容</td>
 <td><code>&lt;path&gt; [要它做什么]</code></td>
+</tr>
+<tr>
+<td><code>/open</code></td>
+<td>在用户自己的编辑器里打开一个文件</td>
+<td><code>&lt;path&gt;</code></td>
 </tr>
 <tr>
 <td><code>/init</code></td>
@@ -4131,7 +4195,30 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 消息里写的是「agent 读不了这个文件」。</p>
 <p><code>/exit</code> 关掉终端界面，和 <code>ctrl+q</code> 一样。浏览器里没有东西可关，所以它会说
 服务还在跑：要停掉它，得在启动它的那个终端里按 <code>ctrl+c</code>。</p>
-<h2 id="_4">自己的命令</h2>
+<h2 id="_4">会话的一生</h2>
+<p>会话有名字，可以收起来，也可以删掉：</p>
+<div class="highlight"><pre><span></span><code>/rename<span class="w"> </span>monday<span class="w"> </span>那个<span class="w"> </span>bug<span class="w">   </span><span class="c1"># 给当前会话起个名字</span>
+/archive<span class="w">                 </span><span class="c1"># 把这个会话收起来</span>
+/archive<span class="w"> </span>&lt;session-id&gt;<span class="w">    </span><span class="c1"># 把另一个收起来</span>
+/delete<span class="w"> </span>&lt;session-id&gt;<span class="w">     </span><span class="c1"># 删掉它和它的全部内容</span>
+</code></pre></div>
+<p>收起来的会话不再出现在 <code>/resume</code> 的列表里，但它还在盘上，
+<code>/resume &lt;session-id&gt;</code> 照样能打开。已经收起来的会话再跑一次 <code>/archive</code>
+就又拿出来了。</p>
+<p><code>/delete</code> 要会话的 id，而且<strong>不删你正待着的那个会话</strong>：先 <code>/clear</code> 开一个新的。
+会话里的一切——事件日志和它的元数据文件——一起没了。</p>
+<h2 id="_5">用户自己的文件</h2>
+<p><code>/open</code> 在用户自己的编辑器里打开一个文件：</p>
+<div class="highlight"><pre><span></span><code>/open<span class="w"> </span>src/app.py
+</code></pre></div>
+<p>编辑器由配置决定：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">ui</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file_opener</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vscode</span>
+</code></pre></div>
+<p><code>vscode</code>、<code>cursor</code>、<code>windsurf</code> 这些名字是认识的。用户自己的命令也行，
+用 <code>{file}</code> 告诉它文件放在哪：<code>my-editor {file} --wait</code>。文件必须在工作目录
+里面，而且<strong>项目不能挑编辑器</strong>——那个程序跑在用户的机器上，这个选择归用户。</p>
+<h2 id="_6">自己的命令</h2>
 <p>一个命令就是 <code>.coderagent/commands</code> 里的一个 markdown 文件。文件开头是 front
 matter，和 Claude Code 一个写法：</p>
 <div class="highlight"><pre><span></span><code>---

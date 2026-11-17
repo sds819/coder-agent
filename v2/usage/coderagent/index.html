@@ -4742,6 +4742,17 @@ a broken session. <code>ui.notifications: false</code> turns the notifications o
 naming it in the question:</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
 </code></pre></div>
+<p>A file opens in your editor with <code>/open</code>:</p>
+<div class="highlight"><pre><span></span><code>/open<span class="w"> </span>src/app.py
+</code></pre></div>
+<p>The editor is the one you named in the configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">ui</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file_opener</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vscode</span>
+</code></pre></div>
+<p><code>vscode</code>, <code>cursor</code> and <code>windsurf</code> are known by name; a command of your own works
+too, with <code>{file}</code> where the file goes: <code>my-editor {file} --wait</code>. The file has to
+be inside the working directory. A project may not choose the editor: that
+program runs on your machine, so the choice is yours.</p>
 <h2 id="the-web-interface">The web interface</h2>
 <p>The same agent, in the browser:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[web]"</span>
@@ -5430,6 +5441,42 @@ coder<span class="w"> </span>--fork<span class="w"> </span>&lt;id&gt;<span class
 </code></pre></div>
 <p>Inside the interface, <code>/clear</code> starts a new session, <code>/resume</code> and <code>/fork</code> do
 the same as on the command line.</p>
+<p>A session has a life of its own:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/rename &lt;name&gt;</code></td>
+<td>Give the session a name</td>
+</tr>
+<tr>
+<td><code>/archive [session-id]</code></td>
+<td>Put a session away, or take it out again</td>
+</tr>
+<tr>
+<td><code>/delete &lt;session-id&gt;</code></td>
+<td>Remove a session and everything in it</td>
+</tr>
+</tbody>
+</table>
+<p>A session that is put away is not in the list of <code>/resume</code>, but it is still there
+and <code>/resume &lt;id&gt;</code> opens it. The session you are in cannot be deleted: start a
+new one (<code>/clear</code>) first. The name of a session is in <code>/status</code> and in the list
+of <code>coder --list</code>.</p>
+<p>The history of the sessions grows with every session. Two settings say how much
+of it is kept:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">history</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">persistence</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">save-all</span><span class="w">   </span><span class="c1"># or save-none: nothing is written to the disk</span>
+<span class="w">  </span><span class="nt">max_bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">            </span><span class="c1"># the bytes the history may take, 0 is no limit</span>
+</code></pre></div>
+<p>With a limit, the oldest sessions are deleted when the history grows over it.
+The session that is running is never one of them. A project may not touch these
+settings: the history belongs to you.</p>
 <p>A session that was killed in the middle of a tool call can still be continued:
 the call whose result never came back is given a result that says so, so the
 history the model sees stays whole. The same happens after a <code>/rewind</code> that

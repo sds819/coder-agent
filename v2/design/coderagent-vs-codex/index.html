@@ -3904,6 +3904,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#98-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.8 第 12 步：会话的生命周期和历史的保留 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4566,6 +4577,17 @@
     <span class="md-ellipsis">
       
         9.7 第 11 步：做掉的那些 ✅ 已修
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.8 第 12 步：会话的生命周期和历史的保留 ✅ 已修
       
     </span>
   </a>
@@ -5321,10 +5343,17 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 <td>~~<strong>第三轮的差距（§9.6）</strong>~~ ✅</td>
 <td>两个安全向的先做（环境变量、工具输出上限），再把小的补齐</td>
 </tr>
+<tr>
+<td>12</td>
+<td>~~<strong>第三轮剩下的差距（§9.6）</strong>~~ ✅</td>
+<td>会话的生命周期和历史的保留策略，加上两个小的</td>
+</tr>
 </tbody>
 </table>
-<p>第 11 步做掉了 §9.6 里六个小的和两个中的。剩下的还记在 §9.6：
-<code>file_opener</code>、<code>supports_parallel_tool_calls</code>，以及大的那三组。</p>
+<p>第 12 步做掉了 §9.6 里剩下的<strong>两个中的</strong>（<code>file_opener</code>、
+<code>supports_parallel_tool_calls</code>）和<strong>两个大的</strong>（会话的生命周期、历史的保留策略）。
+§9.6 里只剩 <code>/side</code> 和 <code>/recap</code> 没做——那两个要的是<strong>新的会话形态</strong>，
+不是加一条命令。</p>
 <hr>
 <h2 id="9">9. 第二轮对照：又找到的差距</h2>
 <p>第一轮读的是 Codex 文档里最显眼的几页（沙箱、审批、命令集、多模态）。
@@ -5448,7 +5477,8 @@ coderagent 的 <code>bypass</code> 模式语义类似，但它建立在「所有
 CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<strong>没有马上做</strong>——
 它们要么是锦上添花，要么该等第 10 步的提交落地之后再挑。这节只作记录。</p>
 <blockquote>
-<p>第 11 步之后，这一节里<strong>六个小的和两个中的都做掉了</strong>（见 §9.7），
+<p>第 11 步之后，这一节里<strong>六个小的和两个中的都做掉了</strong>（见 §9.7）；
+第 12 步之后，<strong>两个中的和两个大的也做掉了</strong>（见 §9.8），
 表里打 ✅ 的就是它们。</p>
 </blockquote>
 <p><strong>已经有的、不用再抄的</strong>（对过命令表和配置 schema）：<code>/diff</code>、<code>/init</code>、<code>/status</code>、
@@ -5529,15 +5559,15 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 <td>一条十万字符的输出会当场顶爆预算</td>
 </tr>
 <tr>
-<td><code>file_opener</code></td>
+<td><code>file_opener</code> ✅</td>
 <td>文件引用点开 vscode / cursor / windsurf</td>
-<td>纯文本</td>
+<td><code>ui.file_opener</code> + <code>/open &lt;路径&gt;</code></td>
 <td>纯终端的友好度</td>
 </tr>
 <tr>
-<td><code>supports_parallel_tool_calls</code></td>
+<td><code>supports_parallel_tool_calls</code> ✅</td>
 <td>按 MCP 服务器放开并行调用</td>
-<td>全部串行</td>
+<td><code>mcp.servers[].supports_parallel_tool_calls</code>，默认 <code>true</code></td>
 <td>慢</td>
 </tr>
 </tbody>
@@ -5557,16 +5587,16 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 <td><code>/side</code>（临时岔开聊）、<code>/recap</code>（只总结不压缩）</td>
 <td>有</td>
 <td>没有</td>
-<td>要新的会话形态，不是加一条命令</td>
+<td><strong>没做</strong>：要新的会话形态，不是加一条命令</td>
 </tr>
 <tr>
-<td><code>/rename</code> / <code>/archive</code> / <code>/delete</code></td>
+<td><code>/rename</code> / <code>/archive</code> / <code>/delete</code> ✅</td>
 <td>会话生命周期</td>
 <td>只有新建 / 恢复 / 分叉</td>
 <td>要动会话存储</td>
 </tr>
 <tr>
-<td><code>history.persistence</code> / <code>max_bytes</code></td>
+<td><code>history.persistence</code> / <code>max_bytes</code> ✅</td>
 <td>历史保留策略</td>
 <td>一直留着</td>
 <td>长期跑会一直涨</td>
@@ -5574,7 +5604,7 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 </tbody>
 </table>
 <p><strong>挑的时候</strong>：先 <code>[shell_environment_policy]</code>（安全）和 <code>tool_output_token_limit</code>
-（会炸预算），这两个的代价和收益都比别的高。</p>
+（会炸预算），这两个的代价和收益都比别的高——第 11 步做的正是这两个。</p>
 <h3 id="97-11">9.7 第 11 步：做掉的那些 ✅ 已修</h3>
 <p><strong>怎么做的</strong>：</p>
 <ul>
@@ -5599,6 +5629,31 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 <li><strong><code>tools.max_output_tokens</code></strong>（默认 8000）：<strong>每一个</strong>工具的结果都裁，不只是 bash。
   裁的时候留头和尾，中间写明裁掉了什么；<strong>完整的结果还留在事件日志里</strong>。</li>
 </ul>
+<h3 id="98-12">9.8 第 12 步：会话的生命周期和历史的保留 ✅ 已修</h3>
+<p><strong>怎么做的</strong>：</p>
+<ul>
+<li><strong><code>ui.file_opener</code> + <code>/open &lt;路径&gt;</code></strong>：<code>vscode</code>、<code>cursor</code>、<code>windsurf</code> 是认得的名字，
+  也可以是用户自己的命令（<code>my-editor {file} --wait</code>）。文件得在<strong>工作目录里面</strong>
+  （走 <code>within_bounds</code>），不然 <code>/open</code> 会说它在边界外。
+  <strong>项目不能挑编辑器</strong>——那个程序跑在用户的机器上，<code>core/trust.py</code> 把项目层的
+  <code>ui.file_opener</code> 丢掉。</li>
+<li><strong><code>supports_parallel_tool_calls</code></strong>（<code>mcp.servers[]</code> 上，默认 <code>true</code>）：
+  一轮里模型可以同时调两个工具，MCP 的工具本来就在线程池里跑。
+  所以这个开关<strong>不是</strong>「要不要并行」，而是「<strong>这个服务器扛不扛得住两个调用</strong>」：
+  设成 <code>false</code>，<strong>这个服务器的调用彼此排队</strong>，别的服务器照旧并行。</li>
+<li><strong><code>/rename</code> / <code>/archive</code> / <code>/delete</code></strong>：名字和「收起来了」这两个状态
+  <strong>写在事件日志里</strong>（<code>STATE_CHANGE</code> 事件），和「事件是唯一的事实」这条一致——
+  会话靠重放日志重建，重建出来的名字和归档状态也是对的。
+  收起来的会话不在 <code>/resume</code> 的列表里，但还在盘上；<code>/archive</code> 再跑一次就拿出来。
+  <code>/delete</code> 要 id，而且<strong>不删你正待着的那个会话</strong>。</li>
+<li><strong><code>history.persistence</code> / <code>history.max_bytes</code></strong>：<code>save-none</code> 让会话只活在内存里
+  （盘上什么都不写）；<code>save-none</code> 之外的默认值是 <code>save-all</code>。
+  <code>max_bytes</code> 是<strong>全部会话的历史</strong>能占的字节数，超了就<strong>从最老的开始删</strong>，
+  <strong>正在跑的那个会话永远不在被删的里头</strong>。</li>
+</ul>
+<p><strong>没做的</strong>：<code>/side</code> 和 <code>/recap</code> 还在 §9.6 里。它们要的是<strong>新的会话形态</strong>
+（岔出去聊一条，回头再合并；只总结、不动上下文），不是加一条命令——
+留在那儿，等有人真的需要它们。</p>
 <hr>
 <h2 id="_1">附录：这份清单是怎么来的</h2>
 <ol>
@@ -5618,7 +5673,9 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮<str
 再逐条对 coderagent 的源码。第一轮读的是最显眼的几页，第二轮读的是全部。</p>
 <p><strong>第三轮</strong>（§9.6）第 10 步落地之后又拉了一份全量清单，对完源码，
 剩下的差距<strong>只记录、没做</strong>——这一节就是那份记录。
-第 11 步做掉了其中<strong>八个</strong>（六个小的 + 两个中的），见 §9.7。</p>
+第 11 步做掉了其中<strong>八个</strong>（六个小的 + 两个中的），见 §9.7；
+第 12 步做掉了<strong>四个</strong>（两个中的 + 两个大的），见 §9.8。
+剩下的 <code>/side</code> 和 <code>/recap</code> <strong>没做</strong>——它们要的是新的会话形态。</p>
 <p>本文中标注「真 bug」的两条（3.4、3.5）已经在写这份文档时用源码确认过，
 也都修了：3.4 让一个文件只出一段（<code>core/instructions.py</code> 的 <code>once_per_file()</code>），
 3.5 把 http 传输和 <code>headers</code> 实现了（<code>tools/mcp.py</code>）。两条都有回归测试。</p>
