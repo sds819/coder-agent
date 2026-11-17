@@ -97,6 +97,22 @@ The turns of a sub agent are not the turns of the main agent: they do not count
 towards `agent.max_turns`. The money is shared, though — the cost of a sub agent
 is part of the bill of the session, so `cost_limit` and `token_limit` hold it.
 
+## The context of a sub agent
+
+A sub agent works in the same project as the main agent, so it sees the rules of
+the project: `AGENTS.md`, the memory of the project and the memory of the user
+are part of its system prompt, next to its own prompt and the note about the
+permission mode.
+
+Its context is its own, and it manages it alone. A sub agent has no summary
+step, so it does not summarize: **it forgets instead**. When the request would
+not fit into the window of its model, the oldest turn goes — the tool result
+goes with the turn that asked for it.
+
+When the provider says that the context is too long, the sub agent drops its
+oldest turn and asks again, instead of failing. A sub agent that ran out of
+window is not an error, it is a sub agent that forgot something.
+
 ## Where a sub agent is looked for
 
 | Where | What |

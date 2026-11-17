@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from coderagent.config.schema import HookCommand, HookConfig, HookMatcher
+from coderagent.config.schema import ContextConfig, HookCommand, HookConfig, HookMatcher
 from coderagent.core.events import EventType
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import (
@@ -95,6 +95,50 @@ def test_a_project_sub_agent_wins_over_a_builtin_one(tmp_path):
     specs = load_subagents(tmp_path)
     assert specs["verifier"].description == "Mine."
     assert specs["verifier"].system_prompt == "Do it my way."
+
+
+def test_the_sub_agent_sees_the_rules_of_the_project(tmp_path):
+    """The sub agent works in the same project: it has to know the rules of it."""
+    (tmp_path / "AGENTS.md").write_text("never write to the secrets", encoding="utf-8")
+    model = ScriptedModel([{"role": "assistant", "content": "ok"}])
+    _runner(model, tmp_path, user_home=tmp_path / "home").run(_spec(), "Find", "Look")
+    assert "never write to the secrets" in model.calls[0][0]["content"]
+
+
+def test_the_sub_agent_survives_a_context_that_is_too_big(tmp_path):
+    """The provider says the context is too long: the oldest turn goes, and the call is made again."""
+
+    def flaky(messages):
+        if len(model.calls) == 2:
+            raise RuntimeError("maximum context length exceeded")
+        if len(model.calls) == 1:
+            return {"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]}
+        return {"role": "assistant", "content": "Found it."}
+
+    model = ScriptedModel(side_effect=flaky)
+    result = _runner(model, tmp_path).run(_spec(tools=["read"]), "Find", "Look")
+    assert result["status"] == "completed"
+    assert result["summary"] == "Found it."
+    assert len(model.calls) == 3
+    """The result of the tool went with the turn that asked for it."""
+    assert [message["role"] for message in model.calls[2]] == ["system", "user", "assistant", "tool"]
+    assert "not finished" in model.calls[2][-1]["content"]
+
+
+def test_the_sub_agent_makes_room_before_the_window_is_full(tmp_path):
+    """The sub agent forgets its oldest turns instead of running into the wall."""
+    (tmp_path / "big.txt").write_text("the big content\n" * 2000, encoding="utf-8")
+    model = ScriptedModel(
+        [
+            {"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "big.txt"})]},
+            {"role": "assistant", "content": "I could not read all of it."},
+        ]
+    )
+    runner = _runner(model, tmp_path, context_config=ContextConfig(context_window=4000, reserved_output=0))
+    result = runner.run(_spec(tools=["read"], max_turns=2), "Find", "Look")
+    assert result["status"] == "completed"
+    assert "the big content" not in json.dumps(model.calls[1])
+    """The result of the tool did not fit, so it went."""
 
 
 def test_the_sub_agent_does_not_see_the_conversation_of_the_main_agent(tmp_path):

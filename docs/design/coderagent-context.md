@@ -178,12 +178,21 @@ for index in 候选轮边界:
 最后还有一条**硬上限**兜底：
 
 ```
-target = guard.target() - estimate_tokens(摘要本身) - estimate_tokens(工具 schema)
+target = guard.target() - estimate_tokens(固定前缀) - estimate_tokens(工具 schema)
 while estimate_tokens(messages[cut:]) > target:
     cut = 下一个轮边界；没有轮边界了就切进最后一轮里
 ```
 
-即「留下的原文 + 摘要 + 工具 schema」也不能超预算。宁可多切一轮，也不能让这一次请求直接被 provider 拒掉。
+「固定前缀」= 每次请求都一样的那部分（`context.py` 的 `_prefix_messages()`）：
+system prompt + 权限模式说明 + 项目指令 / 记忆 / todo + 上一份摘要。
+工具 schema 也在每次请求里（`tools` 参数），所以一并扣掉。
+
+即「留下的原文 + 固定前缀 + 摘要 + 工具 schema」也不能超预算。宁可多切一轮，
+也不能让这一次请求直接被 provider 拒掉。
+
+**为什么必须扣前缀**：前缀不是历史的一部分，但它**在每次请求里**。
+不扣的话，一次「原文 30k + 前缀 20k」的会话压完还是 50k，照样溢出——
+切点算得再准，请求还是被拒。
 
 **`keep_recent_turns` 是目标，不是承诺**：轮数还没攒够 `keep_recent_turns` 时，上面的兜底照样生效——
 窗口满了就压，哪怕只聊了三轮。反过来，轮数攒够了但窗口还很空，也不压。
@@ -272,27 +281,32 @@ while estimate_tokens(messages[cut:]) > target:
 
 见 §4.2。工具结果与它的请求不分家。
 
-### 5.3 摘要失败不许通过
+### 5.3 摘要失败不许通过，但也不全丢
 
-`_summarize()`（`context.py:284-306`）的判定链（重试的循环在 `_ask()`，`context.py:308-318`）：
+`_summarize()`（`context.py`）的判定链（重试的循环在 `_ask()`）：
 
 ```
 for _ in range(2):                      # 最多两次
     text = summary_model.complete(...)   # 抛异常就 continue
     summary = parse_summary(text)
-    if summary is not None and (summary.files_touched or not expect_files):
-        break                           # 过了
-    summary = None                      # 没过
-if summary is None:
-    summary = conservative_summary(payload)
+    if summary is None:                  # 不是 JSON / 不是 dict
+        continue
+    if summary.files_touched or 没有写操作:
+        return summary                   # 过了
+    usable = summary                     # 有内容，只是没交代文件
+if usable is not None:
+    usable.files_touched = 从消息里读出来的文件   # 用事实补上
+    return usable
+return None                              # 两次都不行
 ```
 
-`expect_files` = 被压缩的部分里有没有 `write` / `edit` / `multi_edit`（`context.py:359-365`）。
+被压缩的部分里有写操作，但摘要的 `files_touched` 是空的 → 模型没交代它改过文件。
+这时**重试一次**；还是不行，但摘要本身有内容（goal / findings），就**留下它**，
+把文件列表**从消息里补上**（`write` / `edit` / `multi_edit` / `apply_patch` 的参数——
+消息是事实，模型的说法不是）。
 
-**关键判定**：压缩掉的段落里有写操作，但摘要的 `files_touched` 是空的 → **算失败**。
-模型没交代它改过文件，说明它没读懂被压缩的内容。这时不能接受，重试一次。
-
-两次都失败才用 `conservative_summary()` 兜底（`summarize.py:257-269`）：
+**兜底也不许丢上一份摘要**：`_fallback()` 把 `conservative_summary()`（`summarize.py`）
+和**上一份摘要**合并起来：
 
 ```python
 Summary(
@@ -302,7 +316,9 @@ Summary(
 )
 ```
 
-**宁可给模型一句笨话，也不要假装压缩成功了。**
+合并后的摘要里，上一份的 goal / findings / 决定**原样还在**。
+**摘要器坏一次，不该抹掉这个会话的结构化记忆**——旧的做法会，
+因为兜底摘要只描述「刚刚被压缩掉的那 5 条消息」。
 
 ### 5.4 摘要链不断
 
@@ -447,6 +463,9 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
 12. **恢复出来的会话知道上次压到哪一轮**。`COMPACTION` 事件带 `turn`，`restore()` 把它读回
     `last_compact_turn`：恢复后的会话不会因为「不知道上次什么时候压的」而马上再压一次，
     也不会因为计数归零而永远不压。
+13. **子 agent 忘事，而不是摘要**。子 agent 没有摘要这一步，上下文装不下时它丢掉最早的一轮
+    （`core/subagent.py` 的 `_trim()` / `_shrink()`）。provider 报溢出时它也走这条路：
+    丢掉最早的一轮再问一次，而不是整个失败。便宜，但结论里可能少一块。
 
 ---
 

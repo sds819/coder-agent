@@ -158,7 +158,9 @@ def test_the_summary_model_is_used_and_the_fallback_takes_over_when_it_fails(tmp
     assert engine.summary.findings
 
 
-def test_a_summary_without_the_touched_files_is_rejected(tmp_path):
+def test_a_summary_without_the_touched_files_is_completed(tmp_path):
+    """The summary is not thrown away: the files are added from the messages."""
+
     class EmptyModel:
         def __init__(self) -> None:
             self.calls = 0
@@ -181,7 +183,63 @@ def test_a_summary_without_the_touched_files_is_rejected(tmp_path):
     engine.append({"role": "user", "content": "and now"})
     assert engine.compact()
     assert model.calls == 2
-    assert engine.summary.goal != "g"
+    assert engine.summary.goal == "g"
+    assert [item["path"] for item in engine.summary.files_touched] == ["a.py"]
+    """The file comes from the messages, which know the truth."""
+
+
+def test_the_files_of_a_patch_are_taken_from_the_patch(tmp_path):
+    """A patch has no path: the files are in the patch itself."""
+
+    class EmptyModel:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def complete(self, messages, **kwargs) -> str:
+            self.calls += 1
+            return '{"goal": "g", "files_touched": []}'
+
+    model = EmptyModel()
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0)
+    engine = make_engine(tmp_path, model=model, config=config)
+    engine.append({"role": "user", "content": "fix it"})
+    engine.append(
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "1",
+                    "function": {
+                        "name": "apply_patch",
+                        "arguments": json.dumps(
+                            {"patch": "*** Begin Patch\n*** Update File: a.py\n@@\n-old\n+new\n*** End Patch"}
+                        ),
+                    },
+                }
+            ],
+        }
+    )
+    engine.append({"role": "user", "content": "and now"})
+    assert engine.compact()
+    assert [item["path"] for item in engine.summary.files_touched] == ["a.py"]
+
+
+def test_the_previous_summary_survives_a_failed_summarizer(tmp_path):
+    """A bad day of the summarizer must not wipe the memory of the session."""
+
+    class BrokenModel:
+        def complete(self, messages, **kwargs) -> str:
+            raise RuntimeError("no summary for you")
+
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0)
+    engine = make_engine(tmp_path, model=BrokenModel(), config=config)
+    engine.summaries = [Summary(goal="the old goal", findings=["the old finding"], files_touched=[{"path": "a.py"}])]
+    fill(engine, 4)
+    assert engine.compact()
+    assert engine.summary.goal == "the earlier part of the conversation was compacted"
+    assert "the old finding" in engine.summary.findings
+    assert [item["path"] for item in engine.summary.files_touched] == ["a.py"]
 
 
 def test_maybe_compact_triggers_on_the_budget(tmp_path):
@@ -224,6 +282,20 @@ def test_the_schemas_of_the_tools_leave_less_room_for_the_history(tmp_path):
     assert plain.compact()
     assert with_tools.compact()
     assert len(with_tools.history.messages) < len(plain.history.messages)
+
+
+def test_the_fixed_part_of_the_request_leaves_less_room_for_the_history(tmp_path):
+    """The system prompt and the instructions are in every request: they take their share."""
+    config = ContextConfig(context_window=1000, reserved_output=0, compact_threshold=0.5, keep_recent_turns=1)
+    plain = make_engine(tmp_path / "plain", config=config)
+    with_prompt = make_engine(tmp_path / "prompt", config=config, system_prompt="the system prompt " * 100)
+    for engine in (plain, with_prompt):
+        for index in range(20):
+            engine.append({"role": "user", "content": f"question {index} " + "x" * 60})
+            engine.append({"role": "assistant", "content": f"answer {index} " + "y" * 60})
+    assert plain.compact()
+    assert with_prompt.compact()
+    assert len(with_prompt.history.messages) < len(plain.history.messages)
 
 
 def test_a_restored_session_knows_when_it_compacted_last(tmp_path):

@@ -8,6 +8,7 @@ The history holds everything since the last compaction. Compaction replaces the
 older part of it with a structured summary, so nothing is ever dropped silently.
 """
 
+import json
 import time
 from functools import partial
 from pathlib import Path
@@ -200,6 +201,14 @@ class ContextEngine:
 
     def build_messages(self, *, tools: list[dict] | None = None) -> list[dict]:
         """The messages to send to the model."""
+        return self._prefix_messages() + repair_tool_calls(self.history.messages)
+
+    def _prefix_messages(self) -> list[dict]:
+        """The part of the context that is the same for every request.
+
+        The system prompt, the mode, the instructions, the memory and the summary.
+        The history is not in here: it is the part that grows and that is compacted.
+        """
         messages = []
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
@@ -212,7 +221,6 @@ class ContextEngine:
         summary = self._summary_text()
         if summary:
             messages.append({"role": "user", "content": summary})
-        messages.extend(repair_tool_calls(self.history.messages))
         return messages
 
     def _policy_text(self) -> str:
@@ -402,8 +410,9 @@ class ContextEngine:
             return 0
         candidates = [0, *starts]
         earliest = starts[max(0, len(starts) - self.config.keep_recent_turns)]
-        target = self.guard.target() - estimate_tokens(self._summary_messages()) - estimate_tokens([], self.tools)
-        """The schemas of the tools are in every request, so they take their share."""
+        target = self.guard.target() - estimate_tokens(self._prefix_messages()) - estimate_tokens([], self.tools)
+        """The fixed part of the request and the schemas of the tools are in every
+        request, so the kept window only gets what is left of the budget."""
         if force:
             """The provider refused the context: only the last turn is kept."""
             cut = starts[-1]
@@ -422,10 +431,6 @@ class ContextEngine:
             cut = later[0]
         return cut
 
-    def _summary_messages(self) -> list[dict]:
-        text = self._summary_text()
-        return [{"role": "user", "content": text}] if text else []
-
     def _summarize(self, messages: list[dict], compacted: bool = True) -> Summary:
         """Summarize the compacted part.
 
@@ -441,31 +446,45 @@ class ContextEngine:
         chunks = chunk_messages(messages, self._summary_limit())
         if len(chunks) <= 1:
             payload = list(chunks[0]) if chunks else []
-            if previous:
-                payload.append({"role": "user", "content": previous.render()})
-            summary = self._ask(summarize_prompt, payload, _writes(messages)) or conservative_summary(payload, goal)
+            asked = payload + [{"role": "user", "content": previous.render()}] if previous else payload
+            summary = self._ask(summarize_prompt, asked, _written_files(messages)) or _fallback(payload, previous, goal)
         else:
             parts = [
-                self._ask(summarize_prompt, chunk, _writes(chunk)) or conservative_summary(chunk, goal)
+                self._ask(summarize_prompt, chunk, _written_files(chunk)) or conservative_summary(chunk, goal)
                 for chunk in chunks
             ]
-            summary = self._ask(partial(merge_prompt, previous=self._summary_text()), parts, _writes(messages)) or (
-                merge_summaries([previous, *parts] if previous else parts)
-            )
+            summary = self._ask(
+                partial(merge_prompt, previous=self._summary_text()), parts, _written_files(messages)
+            ) or (merge_summaries([previous, *parts] if previous else parts))
         summary.recent_errors = recent_errors(messages)
         return summary
 
-    def _ask(self, prompt, payload, expect_files: bool) -> Summary | None:
-        """Ask the model for a summary. None when it does not deliver a usable one."""
+    def _ask(self, prompt, payload, files: list[str]) -> Summary | None:
+        """Ask the model for a summary. None when it does not deliver a usable one.
+
+        A summary that does not name the files that were touched is not thrown
+        away: the files are added from the messages, which know the truth. A bad
+        day of the summarizer must not wipe the memory of the session.
+        """
+        usable: Summary | None = None
         for _ in range(2):
             try:
                 text = self.summary_model.complete([{"role": "user", "content": prompt(payload)}])
             except Exception:
                 continue
             summary = parse_summary(text)
-            if summary is not None and (summary.files_touched or not expect_files):
+            if summary is None:
+                continue
+            if summary.files_touched or not files:
                 return summary
-        return None
+            if summary.goal or summary.findings:
+                usable = summary
+        if usable is None:
+            return None
+        usable.files_touched = [
+            {"path": path, "change": "the change is not described any more", "state": "modified"} for path in files
+        ]
+        return usable
 
     def _summary_limit(self) -> int:
         """How many tokens the summarizer may take in one prompt."""
@@ -532,10 +551,50 @@ def _suffix_sizes(messages: list[dict]) -> list[int]:
     return sizes
 
 
-def _writes(messages: list[dict]) -> bool:
-    """Whether the messages contain a call that changed a file."""
-    return any(
-        call.get("function", {}).get("name") in ("write", "edit", "multi_edit", "apply_patch")
-        for message in messages
-        for call in message.get("tool_calls") or []
-    )
+def _fallback(payload: list[dict], previous: Summary | None, goal: str) -> Summary:
+    """The summary when the model does not deliver one.
+
+    The previous summary is kept whole: the summarizer had a bad day, the memory
+    of the session does not go with it.
+    """
+    conservative = conservative_summary(payload, goal)
+    return merge_summaries([previous, conservative]) if previous else conservative
+
+
+def _written_files(messages: list[dict]) -> list[str]:
+    """The files the messages changed. The truth about the files, not a guess."""
+    paths = []
+    for message in messages:
+        for call in message.get("tool_calls") or []:
+            function = call.get("function") or {}
+            name = function.get("name")
+            if name not in ("write", "edit", "multi_edit", "apply_patch"):
+                continue
+            arguments = _arguments(function.get("arguments"))
+            if name == "apply_patch":
+                paths.extend(_patch_files(str(arguments.get("patch") or "")))
+                continue
+            path = arguments.get("path")
+            if path:
+                paths.append(str(path))
+    return paths
+
+
+def _arguments(arguments) -> dict:
+    """The arguments of a tool call. Empty when they cannot be read."""
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments or "{}")
+        except json.JSONDecodeError:
+            return {}
+    return arguments if isinstance(arguments, dict) else {}
+
+
+def _patch_files(text: str) -> list[str]:
+    """The files a patch touches."""
+    from coderagent.tools.builtin.patch import PatchError, parse_patch
+
+    try:
+        return [patch.path for patch in parse_patch(text)]
+    except PatchError:
+        return []

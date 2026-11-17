@@ -619,7 +619,8 @@ context:
 | 你看到的 | 什么意思 | 怎么办 |
 |---|---|---|
 | `... (nothing left to compact)` | 这一轮因为上下文太大而失败，而且已经没什么可缩的了。 | 调大 `context.context_window`，调小 `context.reserved_output`，或者 `/clear` 重来。 |
-| 摘要是个兜底版本，不是真的摘要 | 模型没按摘要的 JSON 回答。试两次之后就用保守摘要：最后五条消息，`next_steps` 是 `["re-read the files that were mentioned to recover the details"]`。 | 不用管，会话继续走。再问模型一次那些细节。 |
+| 摘要是个兜底版本，不是真的摘要 | 模型没按摘要的 JSON 回答。试两次之后就用保守摘要：最后五条消息，`next_steps` 是 `["re-read the files that were mentioned to recover the details"]`。上一轮的摘要会合并进来，所以会话不会把记忆丢了。 | 不用管，会话继续走。再问模型一次那些细节。 |
+| 摘要里没说改过哪些文件 | 模型没说它动过什么。文件列表从消息里取——消息才是事实。 | 不用管。 |
 | `recent_errors` 是空的，但会话里明明有错 | 只有以 `Error:` 开头的工具消息会被收集，而且只留最后三条。 | 不用管。 |
 
 token 的计数：装了 tiktoken 是精确的，没装是估的

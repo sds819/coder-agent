@@ -275,6 +275,9 @@ def build_loop(
         schema_budget=budget,
         max_turns=config.agent.subagent_max_turns,
         max_parallel=config.agent.subagent_max_parallel,
+        context_config=context_config,
+        memory_config=config.memory,
+        user_home=user_home,
     )
     if "task" in config.tools.enabled and "task" not in config.tools.disabled:
         registry.register(TaskTool(runner, specs))

@@ -24,8 +24,14 @@ from pathlib import Path
 
 import yaml
 
+from coderagent.config.schema import ContextConfig, MemoryConfig
+from coderagent.core.budget import context_window_for
+from coderagent.core.context import repair_tool_calls
 from coderagent.core.events import EventBus
+from coderagent.core.memory import project_text
 from coderagent.core.os_sandbox import sandbox_block
+from coderagent.core.tokens import estimate_tokens
+from coderagent.models.gateway import is_context_overflow
 from coderagent.paths import config_home
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.permissions import mode_block, network_block
@@ -138,6 +144,9 @@ class SubAgentRunner:
         schema_budget: int | None = None,
         max_turns: int = 0,
         max_parallel: int = 0,
+        context_config: ContextConfig | None = None,
+        memory_config: MemoryConfig | None = None,
+        user_home: Path | None = None,
     ) -> None:
         self.gateway = gateway
         self.registry = registry
@@ -163,6 +172,11 @@ class SubAgentRunner:
         """The ceiling of the turns of every sub agent. 0 means no ceiling."""
         self.max_parallel = max_parallel
         """How many sub agents may run at the same time. 0 means no limit."""
+        self.context_config = context_config or ContextConfig()
+        """The window of the context of the sub agent. It follows the model it runs on."""
+        self.memory_config = memory_config or MemoryConfig()
+        self.user_home = user_home
+        """The root of the user level data. The sub agent reads the instructions of the user too."""
         self._slots = threading.Semaphore(max_parallel) if max_parallel > 0 else None
 
     def run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
@@ -217,20 +231,30 @@ class SubAgentRunner:
         if block:
             """The sub agent shares the permission mode, so it has to know about it too."""
             system = f"{system}\n\n{block}"
+        rules = self._project_rules()
+        if rules:
+            """The sub agent works in the same project: it has to know the rules of it."""
+            system = f"{system}\n\n{rules}"
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": f"{description}\n\n{prompt}".strip()},
         ]
         schemas = registry.schemas(self.schema_budget)
+        budget = self._budget(gateway)
         turns = 0
         touched: list[str] = []
         summary = ""
         status = "completed"
         limit = effective_turns(spec, self.max_turns)
         while not limit or turns < limit:
+            _trim(messages, schemas, budget)
             try:
-                response = gateway.query(messages, tools=schemas)
+                response = gateway.query(repair_tool_calls(messages), tools=schemas)
             except Exception as e:
+                if is_context_overflow(e) and _shrink(messages):
+                    """The provider says the context is too big: the oldest turns go,
+                    and the call is made again."""
+                    continue
                 return self._result("error", f"{type(e).__name__}: {e}", [], [], gateway, before, turns)
             turns += 1
             messages.append(response)
@@ -245,6 +269,25 @@ class SubAgentRunner:
         else:
             status = "max_turns"
         return self._result(status, summary, _findings(summary), touched, gateway, before, turns)
+
+    def _project_rules(self) -> str:
+        """The instructions and the memory of the project, for the sub agent too."""
+        return project_text(
+            self.ctx_factory().cwd,
+            self.user_home,
+            self.memory_config,
+            self.context_config.project_doc_max_bytes,
+        )
+
+    def _budget(self, gateway) -> int:
+        """The tokens the messages of the sub agent may take.
+
+        The window belongs to the model the sub agent runs on: it may be a
+        different one than the main agent.
+        """
+        name = getattr(getattr(gateway, "backend", None), "model_name", "")
+        window = context_window_for(name, default=self.context_config.context_window)
+        return max(1000, window - self.context_config.reserved_output)
 
     def _restricted(self, spec: SubagentSpec) -> ToolRegistry:
         """The registry with only the tools of the white list."""
@@ -292,6 +335,33 @@ class SubAgentRunner:
             "tokens_out": tokens_out,
             "turns": turns,
         }
+
+
+def _trim(messages: list[dict], schemas: list[dict], budget: int) -> None:
+    """Make room: the oldest turns go until the request fits into the window.
+
+    A sub agent has no summary, so it forgets instead of summarizing.
+    """
+    while estimate_tokens(messages, schemas) > budget and _shrink(messages):
+        pass
+
+
+def _shrink(messages: list[dict]) -> bool:
+    """Drop the oldest turn of a sub agent. True when something was dropped.
+
+    The tool results go with the message that asked for them: a result without its
+    call is a history that the provider refuses. When only the last turn is left,
+    its results go and the calls are repaired into results that say they did not
+    finish.
+    """
+    starts = [index for index, message in enumerate(messages) if message.get("role") == "assistant"]
+    if len(starts) > 1:
+        del messages[starts[0] : starts[1]]
+        return True
+    if starts and len(messages) > starts[0] + 1:
+        del messages[starts[0] + 1 :]
+        return True
+    return False
 
 
 def _paths_of(calls: list[dict]) -> list[str]:

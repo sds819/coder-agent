@@ -675,7 +675,8 @@ The summary is a JSON object with these keys:
 | What you see | What it means | What to do |
 |---|---|---|
 | `... (nothing left to compact)` | The turn failed because the context was too big and there was nothing left to shorten. | Raise `context.context_window`, lower `context.reserved_output`, or `/clear` and start over. |
-| The summary is a fallback instead of the real thing | The model answered with something that is not the JSON of the summary. It is tried twice, and the second time a conservative summary is used: the last five messages, with `next_steps: ["re-read the files that were mentioned to recover the details"]`. | Nothing to do — the session continues. Ask the model again for the details it lost. |
+| The summary is a fallback instead of the real thing | The model answered with something that is not the JSON of the summary. It is tried twice, and the second time a conservative summary is used: the last five messages, with `next_steps: ["re-read the files that were mentioned to recover the details"]`. The summary of the round before is merged into it, so the session does not lose its memory. | Nothing to do — the session continues. Ask the model again for the details it lost. |
+| The summary does not name the files that were changed | The model did not say what it touched. The files are taken from the messages instead, which know the truth. | Nothing to do. |
 | `recent_errors` is empty although the session had errors | Only the tool messages that start with `Error:` are collected, and only the last three of them. | Nothing to do. |
 
 The token count is exact with tiktoken and an estimate without it:
