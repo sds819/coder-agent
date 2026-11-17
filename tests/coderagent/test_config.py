@@ -101,6 +101,34 @@ def test_a_thinking_budget_that_does_not_exist_is_refused(tmp_path, monkeypatch)
         load_config(["model.reasoning_effort=huge"], cwd=tmp_path)
 
 
+def test_the_history_of_the_sessions_is_kept_by_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    config = load_config([], cwd=tmp_path)
+    assert config.history.persistence == "save-all"
+    assert config.history.max_bytes == 0
+
+
+def test_the_history_may_not_be_saved(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    assert load_config(["history.persistence=save-none"], cwd=tmp_path).history.persistence == "save-none"
+
+
+def test_a_persistence_that_does_not_exist_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    with pytest.raises(ValidationError, match="unknown persistence"):
+        load_config(["history.persistence=maybe"], cwd=tmp_path)
+
+
+def test_the_history_may_have_a_limit(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    assert load_config(["history.max_bytes=1000"], cwd=tmp_path).history.max_bytes == 1000
+
+
+def test_the_file_opener_is_read_from_the_configuration(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    assert load_config(["ui.file_opener=vscode"], cwd=tmp_path).ui.file_opener == "vscode"
+
+
 def test_the_keys_that_nobody_reads_are_gone():
     """The settings that nothing reads are not settings any more."""
     assert not hasattr(Config().ui, "theme")

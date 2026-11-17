@@ -46,3 +46,66 @@ def test_the_events_are_on_the_disk_right_away(tmp_path):
     store.append(session.id, _message(session.id, "hello"))
 
     assert store.events(session.id)[-1].payload["content"] == "hello"
+
+
+def test_a_session_can_be_named(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+
+    assert store.rename(session.id, "the bug of monday")
+    assert store.rebuild(session.id).name == "the bug of monday"
+
+
+def test_a_session_that_is_not_there_cannot_be_named(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    assert store.rename("nope", "the bug of monday") is False
+
+
+def test_a_session_can_be_put_away_and_taken_out(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+
+    assert store.archive(session.id)
+    assert store.rebuild(session.id).archived is True
+    assert store.list(archived=False) == []
+    assert [item.id for item in store.list(archived=True)] == [session.id]
+
+    assert store.archive(session.id, False)
+    assert store.rebuild(session.id).archived is False
+    assert [item.id for item in store.list()] == [session.id]
+
+
+def test_a_session_can_be_deleted(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(session.id, _message(session.id, "hello"))
+
+    assert store.delete(session.id)
+    assert store.events(session.id) == []
+    assert store.list() == []
+    assert not store.meta_path(session.id).exists()
+
+
+def test_a_session_that_is_not_there_cannot_be_deleted(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    assert store.delete("nope") is False
+
+
+def test_the_history_is_not_written_when_it_is_not_saved(tmp_path):
+    store = SessionStore(tmp_path / "sessions", persist=False)
+    session = store.create(tmp_path)
+    store.append(session.id, _message(session.id, "hello"))
+
+    assert store.events(session.id) == []
+    assert list((tmp_path / "sessions").glob("*")) == []
+
+
+def test_the_oldest_sessions_are_deleted_when_the_history_is_too_big(tmp_path):
+    store = SessionStore(tmp_path / "sessions", max_bytes=400)
+    old = store.create(tmp_path)
+    store.append(old.id, _message(old.id, "old"))
+    new = store.create(tmp_path)
+    store.append(new.id, _message(new.id, "new" * 200))
+
+    assert store.events(old.id) == []
+    assert store.events(new.id)

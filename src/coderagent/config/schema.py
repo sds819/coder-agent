@@ -5,6 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from coderagent.core.os_sandbox import MODES
+from coderagent.core.session import PERSISTENCES
 from coderagent.core.shell_env import INHERITS
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
@@ -179,6 +180,8 @@ class MCPServerConfig(BaseModel):
     """The seconds the server may take to start. Zero means: the timeout of the section."""
     tool_timeout: int = 0
     """The seconds one call of this server may take. Zero means: the timeout of the section."""
+    supports_parallel_tool_calls: bool = True
+    """Whether two calls of this server may run at the same time."""
 
 
 class MCPConfig(BaseModel):
@@ -211,8 +214,27 @@ class UIConfig(BaseModel):
     """Tell the terminal when a turn is over. The terminal may not show it."""
     notify_command: str = ""
     """A program that tells the user that the turn is over. It gets the title and the body."""
+    file_opener: str = ""
+    """The program that opens a file: vscode, cursor, windsurf, or a command with {file}."""
     markdown: bool = True
     """Render the answer of the agent as Markdown. The text stays plain while it arrives."""
+
+
+class HistoryConfig(BaseModel):
+    persistence: str = "save-all"
+    """One of save-all, save-none. Whether the history of the sessions is written to the disk."""
+    max_bytes: int = 0
+    """The bytes the history of all the sessions may take. 0 means no limit.
+
+    The oldest sessions are deleted when the history grows over it.
+    """
+
+    @field_validator("persistence")
+    @classmethod
+    def _known_persistence(cls, value: str) -> str:
+        if value not in PERSISTENCES:
+            raise ValueError(f"unknown persistence '{value}'. Use one of: {', '.join(PERSISTENCES)}.")
+        return value
 
 
 class SandboxConfig(BaseModel):
@@ -267,6 +289,7 @@ class Config(BaseModel):
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     hooks: HookConfig = Field(default_factory=HookConfig)
     ui: UIConfig = Field(default_factory=UIConfig)
+    history: HistoryConfig = Field(default_factory=HistoryConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)

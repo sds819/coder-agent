@@ -6,8 +6,8 @@ from coderagent.core.session import Session, SessionStore
 
 
 def list_sessions(store: SessionStore, cwd: Path | None = None) -> list[Session]:
-    """The sessions of this project, newest first."""
-    return store.list(cwd)
+    """The sessions of this project that are not put away, newest first."""
+    return store.list(cwd, archived=False)
 
 
 def latest_session(store: SessionStore, cwd: Path | None = None) -> Session | None:

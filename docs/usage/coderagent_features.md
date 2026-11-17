@@ -537,6 +537,12 @@ cat /etc/passwd              # refused
 - **Checkpoints** — a snapshot of the file before every write. `/rewind` rolls
   back to one.
 - **`/clear`** — starts a new session and keeps the old one in the log.
+- **A name, a place to put it, a way to remove it** — `/rename`, `/archive`
+  and `/delete`. An archived session is not in the list of `/resume`, but it is
+  still there.
+- **The history may be kept or not** — `history.persistence: save-none` keeps
+  the sessions in the memory, `history.max_bytes` deletes the oldest ones when
+  the history grows over it. The running session is never one of them.
 - **The money** — tokens and cost per session, in the status bar, in `/cost`
   and in the trace.
 - **The trace** — `coder export --format json|otel` writes the session out,
@@ -1009,6 +1015,9 @@ $ python -m pytest -q
   is rendered when it is complete; `ui.markdown: false` keeps it plain.
 - **A picture can be sent** — `/image shot.png what is this` sends the picture
   with the text that goes with it.
+- **A file opens in your editor** — `/open src/app.py` opens it in the program
+  of `ui.file_opener` (`vscode`, `cursor`, `windsurf`, or a command of your own).
+  A project may not choose the editor.
 - **`ctrl+c` stops the tool that is running** — not only the turn: a command that
   runs in the shell is stopped, together with the processes it started.
 
@@ -1160,7 +1169,7 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
   (`-c key=value`). The later wins.
 - **The sections** — `model`, `agent`, `tools`, `permissions`, `context`,
   `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox`, `verify`,
-  `telemetry` and `shell_environment`, plus `profiles` and `profile`.
+  `telemetry`, `shell_environment` and `history`, plus `profiles` and `profile`.
 - **The paths** — `MSWEA_CODER_HOME` moves the user level files somewhere
   else.
 - **The settings page writes the user file only** — the project file is in
@@ -1239,11 +1248,12 @@ The sections and what they hold:
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`, `notifications`, `notify_command`, `markdown` |
+| `ui` | `approval_timeout`, `notifications`, `notify_command`, `markdown`, `file_opener` |
 | `shell_environment` | `inherit`, `exclude`, `include`, `set` |
 | `sandbox` | `type`, `mode` and the options of the environment |
 | `verify` | `commands`, `max_rounds`, `timeout` |
 | `telemetry` | `otel_endpoint`, `otel_headers`, `otel_timeout` |
+| `history` | `persistence`, `max_bytes` |
 | `profiles` | The named pieces of configuration. `--profile` picks one of them |
 | `profile` | The name of the profile that is in effect |
 
@@ -1260,9 +1270,10 @@ The sections and what they hold:
 
 ## The commands
 
-Twenty-nine built-in commands: `/help`, `/model`, `/mode`, `/plan`,
-`/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/review`,
-`/image`, `/mention`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
+Thirty-three built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+`/compact`, `/clear`, `/resume`, `/fork`, `/rename`, `/archive`, `/delete`,
+`/rewind`, `/diff`, `/review`,
+`/image`, `/mention`, `/open`, `/init`, `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`,
 `/skills`, `/plugins`, `/trust`, `/memory`, `/status`, `/sandbox`, `/export`,
 `/context` and `/exit` (also `/quit`).
 

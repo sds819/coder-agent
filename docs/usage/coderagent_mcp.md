@@ -40,6 +40,7 @@ See [The code of a project](coderagent.md#the-code-of-a-project).
 | `disabled_tools` | The tools of this server the agent may not call |
 | `startup_timeout` | The seconds this server may take to start. Zero means: the timeout of `mcp` |
 | `tool_timeout` | The seconds one call of this server may take. Zero means: the timeout of `mcp` |
+| `supports_parallel_tool_calls` | Whether two calls of this server may run at the same time. `true` by default |
 
 The `timeout` is not a key of a server: it belongs to `mcp`, next to
 `servers`, and it is how long the agent waits for a server.
@@ -152,6 +153,23 @@ long one call may take. A call that takes longer fails with an error, and the
 model gets the error instead of a turn that never ends.
 
 Both are seconds. Zero — the default — means the timeout of `mcp`.
+
+## Two calls of one server
+
+The agent may call two tools of the same server at the same time, when the model
+asks for both in one turn. A server that cannot take two calls at once says so
+with `supports_parallel_tool_calls: false`, and its calls wait for each other:
+
+```yaml
+mcp:
+  servers:
+    - name: database
+      command: npx -y @modelcontextprotocol/server-postgres
+      supports_parallel_tool_calls: false
+```
+
+The flag belongs to the server, not to the session: the calls of one server wait
+for each other, the calls of the other servers do not.
 
 ## The servers and the session
 

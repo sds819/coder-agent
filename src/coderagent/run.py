@@ -138,6 +138,14 @@ def _confinement(config: Config, environment: Any, cwd: Path) -> Confinement | N
     return os_sandbox.build(config.sandbox.mode, cwd, config.permissions.include_dirs, config.permissions.network)
 
 
+def build_store(config: Config) -> SessionStore:
+    """The store of the sessions, with the history policy of the configuration."""
+    return SessionStore(
+        persist=config.history.persistence != "save-none",
+        max_bytes=config.history.max_bytes,
+    )
+
+
 def build_loop(
     config: Config,
     cwd: Path,
@@ -151,7 +159,7 @@ def build_loop(
     user_home: Path | None = None,
     output_schema: dict | None = None,
 ) -> AgentLoop:
-    store = store or SessionStore()
+    store = store or build_store(config)
     session = session or store.create(cwd)
     user_home = user_home or config_home()
     """The root of the user level data: the agents, the skills, the plugins, the memory."""

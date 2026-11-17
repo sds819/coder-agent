@@ -70,6 +70,8 @@ class MCPClient:
         self._ready = threading.Event()
         self._stop = threading.Event()
         self._tools: list[MCPTool] = []
+        self._lock = None if config.supports_parallel_tool_calls else threading.Lock()
+        """The lock of a server that takes one call at a time."""
 
     @property
     def tools(self) -> list[MCPTool]:
@@ -104,6 +106,13 @@ class MCPClient:
 
         A broken connection is tried once more with a new one.
         """
+        if self._lock is None:
+            return self._call_once(name, arguments)
+        with self._lock:
+            """The server takes one call at a time, so the calls wait for each other."""
+            return self._call_once(name, arguments)
+
+    def _call_once(self, name: str, arguments: dict) -> ToolResult:
         if self._session is None:
             return ToolResult(content=f"Error: the MCP server '{self.config.name}' is not connected.", is_error=True)
         try:

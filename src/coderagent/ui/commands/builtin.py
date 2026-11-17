@@ -155,6 +155,61 @@ def _fork(context: CommandContext, argument: str) -> None:
     context.say(f"Forked {session_id} into {session.id}")
 
 
+def _rename(context: CommandContext, argument: str) -> None:
+    """Give the session a name."""
+    if not argument:
+        context.say(f"name: {context.session.name or '(none)'}")
+        return
+    if not context.store.persist:
+        context.say("The history is not saved, so the session has no name.")
+        return
+    if not context.store.rename(context.session.id, argument):
+        context.say("The session is not on the disk, so it has no name.")
+        return
+    context.session.name = argument
+    context.say(f"name: {argument}")
+
+
+def _archive(context: CommandContext, argument: str) -> None:
+    """Put a session away, or take it out again."""
+    session_id = argument or context.session.id
+    session = context.store.rebuild(session_id)
+    if not context.store.archive(session_id, not session.archived):
+        context.say(f"No session '{session_id}'.")
+        return
+    context.say(f"{'Took out' if session.archived else 'Archived'} {session_id}.")
+
+
+def _delete(context: CommandContext, argument: str) -> None:
+    """Remove a session and everything in it."""
+    if not argument:
+        context.say("Which session? Run /delete <session-id>.")
+        return
+    if argument == context.session.id:
+        context.say("You are in this session. Start a new one (/clear) before you delete it.")
+        return
+    if not context.store.delete(argument):
+        context.say(f"No session '{argument}'.")
+        return
+    context.say(f"Deleted {argument}.")
+
+
+def _open(context: CommandContext, argument: str) -> None:
+    """Open a file in the editor of the user."""
+    from coderagent.ui.open_file import open_path
+
+    if not argument:
+        context.say("Which file? Try /open <path>.")
+        return
+    path = Path(argument).expanduser()
+    if not path.is_absolute():
+        path = context.cwd / path
+    if not context.policy.within_bounds(str(path)):
+        context.say(f"'{path}' is outside the working directory {context.cwd}.")
+        return
+    context.say(open_path(argument, context.config.ui.file_opener, context.cwd))
+
+
 def _rewind(context: CommandContext, argument: str) -> None:
     if context.checkpoints is None:
         context.say("Checkpoints are not available.")
@@ -433,6 +488,7 @@ def _status(context: CommandContext, argument: str) -> None:
     session = context.session
     context.say(
         f"session: {session.id}\n"
+        f"name: {session.name or '(none)'}\n"
         f"state: {session.state.value}\n"
         f"turns: {session.turn_count}\n"
         f"cost: ${session.total_cost:.4f}\n"
@@ -496,6 +552,31 @@ register(Command(name="compact", description="Compact the conversation now", han
 register(Command(name="clear", description="Start a new session", handler=_clear))
 register(Command(name="resume", description="List the sessions or resume one", handler=_resume, usage="[session-id]"))
 register(Command(name="fork", description="Copy the session into a new one", handler=_fork, usage="[session-id]"))
+register(Command(name="rename", description="Give the session a name", handler=_rename, usage="[name]"))
+register(
+    Command(
+        name="archive",
+        description="Put a session away, or take it out again",
+        handler=_archive,
+        usage="[session-id]",
+    )
+)
+register(
+    Command(
+        name="delete",
+        description="Remove a session and everything in it",
+        handler=_delete,
+        usage="<session-id>",
+    )
+)
+register(
+    Command(
+        name="open",
+        description="Open a file in the editor of the user",
+        handler=_open,
+        usage="<path>",
+    )
+)
 register(
     Command(
         name="rewind",

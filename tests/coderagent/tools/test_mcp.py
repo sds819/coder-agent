@@ -5,6 +5,7 @@ import socket
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -65,6 +66,32 @@ def shout(text: str) -> str:
 server.run()
 """
 
+
+SLOW_SERVER = """
+import time
+from pathlib import Path
+
+from mcp.server.mcpserver import MCPServer
+
+log = Path(__LOG__)
+
+server = MCPServer("slow")
+
+
+@server.tool()
+def slow(text: str) -> str:
+    "Take a while."
+    with log.open("a", encoding="utf-8") as handle:
+        handle.write(f"start {time.time()}\\n")
+    time.sleep(0.5)
+    with log.open("a", encoding="utf-8") as handle:
+        handle.write(f"end {time.time()}\\n")
+    return f"slow: {text}"
+
+
+server.run()
+"""
+
 RECORDER = """
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -102,6 +129,13 @@ def _server(tmp_path) -> str:
 
 def _config(tmp_path, **kwargs) -> MCPServerConfig:
     return MCPServerConfig(name="echo", command=_server(tmp_path), **kwargs)
+
+
+def _slow_server(tmp_path, log) -> str:
+    """A server whose tool takes a while, so that the calls may be seen to overlap."""
+    path = tmp_path / "slow.py"
+    path.write_text(SLOW_SERVER.replace("__LOG__", repr(str(log))), encoding="utf-8")
+    return f"{sys.executable} {path}"
 
 
 def _two_tools(tmp_path, **kwargs) -> MCPServerConfig:
@@ -363,3 +397,41 @@ def test_the_manager_can_be_used_without_the_sdk(tmp_path, monkeypatch):
     client = MCPClient(_config(tmp_path))
     assert client.start() == []
     assert client.error
+
+
+def _overlap(log) -> bool:
+    """Whether the two calls of the server were at the same time."""
+    events = [line.split() for line in log.read_text(encoding="utf-8").splitlines()]
+    starts = [float(value) for kind, value in events if kind == "start"]
+    ends = [float(value) for kind, value in events if kind == "end"]
+    return len(starts) == 2 and len(ends) == 2 and max(starts) < min(ends)
+
+
+def _two_calls_at_once(client) -> None:
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        list(pool.map(lambda text: client.call("slow", {"text": text}), ["a", "b"]))
+
+
+def test_two_calls_of_a_server_may_run_at_the_same_time(tmp_path):
+    log = tmp_path / "log.txt"
+    client = MCPClient(MCPServerConfig(name="slow", command=_slow_server(tmp_path, log)), timeout=30)
+    client.start()
+    try:
+        _two_calls_at_once(client)
+    finally:
+        client.stop()
+    assert _overlap(log) is True
+
+
+def test_a_server_that_takes_one_call_at_a_time_makes_them_wait(tmp_path):
+    log = tmp_path / "log.txt"
+    client = MCPClient(
+        MCPServerConfig(name="slow", command=_slow_server(tmp_path, log), supports_parallel_tool_calls=False),
+        timeout=30,
+    )
+    client.start()
+    try:
+        _two_calls_at_once(client)
+    finally:
+        client.stop()
+    assert _overlap(log) is False

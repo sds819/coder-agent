@@ -493,6 +493,11 @@ cat /etc/passwd              # 拒绝
   的结果，所以会话还能接着聊。`/rewind` 退回去把结果退掉了，也是这么修的。
 - **检查点**——每次写文件之前存一份快照，`/rewind` 能退回去。
 - **`/clear`**——开一个新会话，旧的留在日志里。
+- **有名字、能收起来、也能删掉**——`/rename`、`/archive`、`/delete`。收起来的
+  会话不在 `/resume` 的列表里，但它还在盘上。
+- **历史可以留，也可以不留**——`history.persistence: save-none` 把会话留在
+  内存里，`history.max_bytes` 在历史超过它的时候删掉最老的那些。正在跑的那个
+  会话永远不在其中。
 - **花了多少钱**——每个会话的 token 和花费，在状态栏、在 `/cost`、在
   追踪文件里。
 - **追踪**——`coder export --format json|otel` 把会话导出来，给看板或者
@@ -931,6 +936,8 @@ $ python -m pytest -q
 - **答案是 Markdown**——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；`ui.markdown: false` 可以让它一直是纯文本。
 - **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。
+- **文件在你的编辑器里打开**——`/open src/app.py` 用 `ui.file_opener` 指定的
+  程序打开它（`vscode`、`cursor`、`windsurf`，或者你自己的命令）。
 - **`ctrl+c` 能停掉正在跑的工具**——不只是这一轮：shell 里跑着的命令会被停掉，
   它自己起的那些进程也一样。
 
@@ -1070,7 +1077,7 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
   后面的赢。
 - **有哪些段**——`model`、`agent`、`tools`、`permissions`、`context`、
   `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`、`telemetry`、
-  `shell_environment`，还有 `profiles` 和 `profile`。
+  `shell_environment`、`history`，还有 `profiles` 和 `profile`。
 - **路径**——`MSWEA_CODER_HOME` 可以把用户级文件挪到别处。
 - **设置页只写用户级文件**——项目级那份在仓库里，永远不写。
 
@@ -1144,11 +1151,12 @@ profile: fast
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
 | `hooks` | `events` |
-| `ui` | `approval_timeout`、`notifications`、`notify_command`、`markdown` |
+| `ui` | `approval_timeout`、`notifications`、`notify_command`、`markdown`、`file_opener` |
 | `shell_environment` | `inherit`、`exclude`、`include`、`set` |
 | `sandbox` | `type`、`mode` 和环境的那些选项 |
 | `verify` | `commands`、`max_rounds`、`timeout` |
 | `telemetry` | `otel_endpoint`、`otel_headers`、`otel_timeout` |
+| `history` | `persistence`、`max_bytes` |
 | `profiles` | 有名字的几段配置，`--profile` 从里面挑一个 |
 | `profile` | 生效的那个 profile 的名字 |
 
@@ -1165,8 +1173,9 @@ profile: fast
 
 ## 命令
 
-二十九个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
-`/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/review`、`/image`、`/mention`、`/init`、
+三十三个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+`/clear`、`/resume`、`/fork`、`/rename`、`/archive`、`/delete`、`/rewind`、`/diff`、
+`/review`、`/image`、`/mention`、`/open`、`/init`、
 `/cost`、`/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
 `/plugins`、`/trust`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
 `/exit`（别名 `/quit`）。

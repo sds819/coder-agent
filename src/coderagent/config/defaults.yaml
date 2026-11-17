@@ -68,7 +68,12 @@ ui:
   approval_timeout: 0
   notifications: true
   notify_command: ""
+  file_opener: ""
   markdown: true
+
+history:
+  persistence: save-all
+  max_bytes: 0
 
 sandbox:
   type: local

@@ -19,7 +19,7 @@ from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
-from coderagent.run import build_loop
+from coderagent.run import build_loop, build_store
 from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.commands import CommandContext
 from coderagent.ui.commands import run as run_command
@@ -121,7 +121,7 @@ class CoderApp(App):
         self.cwd = Path(cwd)
         self.bus = bus or EventBus()
         self.approver = approver or TUIAprover(self.bus, config.ui.approval_timeout)
-        self.store = store or SessionStore()
+        self.store = store or build_store(config)
         self.loop = loop or build_loop(
             config, self.cwd, bus=self.bus, approver=self.approver, store=self.store, session=session
         )

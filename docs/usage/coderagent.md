@@ -172,6 +172,24 @@ naming it in the question:
 /mention src/app.py what does this do?
 ```
 
+A file opens in your editor with `/open`:
+
+```bash
+/open src/app.py
+```
+
+The editor is the one you named in the configuration:
+
+```yaml
+ui:
+  file_opener: vscode
+```
+
+`vscode`, `cursor` and `windsurf` are known by name; a command of your own works
+too, with `{file}` where the file goes: `my-editor {file} --wait`. The file has to
+be inside the working directory. A project may not choose the editor: that
+program runs on your machine, so the choice is yours.
+
 ## The web interface
 
 The same agent, in the browser:
@@ -811,6 +829,32 @@ coder --fork <id>         # continue a copy of one of them
 
 Inside the interface, `/clear` starts a new session, `/resume` and `/fork` do
 the same as on the command line.
+
+A session has a life of its own:
+
+| Command | What it does |
+|---|---|
+| `/rename <name>` | Give the session a name |
+| `/archive [session-id]` | Put a session away, or take it out again |
+| `/delete <session-id>` | Remove a session and everything in it |
+
+A session that is put away is not in the list of `/resume`, but it is still there
+and `/resume <id>` opens it. The session you are in cannot be deleted: start a
+new one (`/clear`) first. The name of a session is in `/status` and in the list
+of `coder --list`.
+
+The history of the sessions grows with every session. Two settings say how much
+of it is kept:
+
+```yaml
+history:
+  persistence: save-all   # or save-none: nothing is written to the disk
+  max_bytes: 0            # the bytes the history may take, 0 is no limit
+```
+
+With a limit, the oldest sessions are deleted when the history grows over it.
+The session that is running is never one of them. A project may not touch these
+settings: the history belongs to you.
 
 A session that was killed in the middle of a tool call can still be continued:
 the call whose result never came back is given a result that says so, so the

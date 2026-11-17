@@ -14,7 +14,7 @@ import typer
 from coderagent.config.loader import load_config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
-from coderagent.run import build_loop, run_turn
+from coderagent.run import build_loop, build_store, run_turn
 from coderagent.ui.render import last_message, render
 
 # litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
@@ -82,7 +82,7 @@ def pick_session(
     if fork:
         return store.fork(fork)
     if continue_last:
-        sessions = store.list(cwd)
+        sessions = store.list(cwd, archived=False)
         return sessions[0] if sessions else None
     return None
 
@@ -120,6 +120,8 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
             [
                 {
                     "id": session.id,
+                    "name": session.name,
+                    "archived": session.archived,
                     "cwd": str(session.cwd),
                     "created_at": session.created_at,
                     "turns": session.turn_count,
@@ -133,7 +135,9 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
     if not sessions:
         return "no sessions yet"
     return "\n".join(
-        f"{session.id}  {session.turn_count:>3} turns  ${session.total_cost:.4f}  {session.cwd}" for session in sessions
+        f"{session.id}  {session.name or '-'}  {session.turn_count:>3} turns  ${session.total_cost:.4f}  {session.cwd}"
+        + ("  (archived)" if session.archived else "")
+        for session in sessions
     )
 
 
@@ -167,7 +171,7 @@ def main(
     config = load_config(config_spec + ([f"profile={profile}"] if profile else []), cwd=cwd)
     if model_name:
         config.model.model_name = model_name
-    store = SessionStore()
+    store = build_store(config)
     if list_sessions:
         typer.echo(render_sessions(store.list(cwd), output_format))
         return

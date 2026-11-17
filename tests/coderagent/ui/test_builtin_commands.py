@@ -1,5 +1,6 @@
 """The built-in slash commands."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -474,3 +475,79 @@ def test_quit_is_an_alias_of_exit(tmp_path):
     context.quit = lambda: left.append(True)
     _run(context, output, "/quit")
     assert left == [True]
+
+
+def test_the_session_can_be_named(tmp_path):
+    context, output = _context(tmp_path)
+    assert "name: the bug" in _run(context, output, "/rename the bug")
+    assert context.session.name == "the bug"
+    assert context.store.rebuild(context.session.id).name == "the bug"
+
+
+def test_the_name_of_the_session_is_shown(tmp_path):
+    context, output = _context(tmp_path)
+    _run(context, output, "/rename the bug")
+    assert "the bug" in _run(context, output, "/rename")
+
+
+def test_a_session_can_be_put_away_and_taken_out(tmp_path):
+    context, output = _context(tmp_path)
+    assert "Archived" in _run(context, output, "/archive")
+    assert context.store.rebuild(context.session.id).archived is True
+    assert "Took out" in _run(context, output, "/archive")
+    assert context.store.rebuild(context.session.id).archived is False
+
+
+def test_a_session_that_is_not_there_cannot_be_put_away(tmp_path):
+    context, output = _context(tmp_path)
+    assert "No session" in _run(context, output, "/archive nope")
+
+
+def test_a_session_can_be_deleted(tmp_path):
+    context, output = _context(tmp_path)
+    other = context.store.create(tmp_path)
+    assert f"Deleted {other.id}" in _run(context, output, f"/delete {other.id}")
+    assert context.store.events(other.id) == []
+
+
+def test_the_session_you_are_in_cannot_be_deleted(tmp_path):
+    context, output = _context(tmp_path)
+    assert "You are in this session" in _run(context, output, f"/delete {context.session.id}")
+
+
+def test_a_session_that_is_not_there_cannot_be_deleted(tmp_path):
+    context, output = _context(tmp_path)
+    assert "No session" in _run(context, output, "/delete nope")
+
+
+def test_the_delete_command_says_which_session_it_wants(tmp_path):
+    context, output = _context(tmp_path)
+    assert "/delete <session-id>" in _run(context, output, "/delete")
+
+
+def test_a_file_is_opened_in_the_editor_of_the_user(tmp_path):
+    context, output = _context(tmp_path)
+    seen = tmp_path / "seen.txt"
+    script = tmp_path / "opener.py"
+    script.write_text(
+        "import sys\nfrom pathlib import Path\nPath(sys.argv[1]).write_text(sys.argv[2], encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    context.config.ui.file_opener = f"{sys.executable} {script} {seen}"
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+
+    assert "Opened" in _run(context, output, "/open a.py")
+
+
+def test_a_file_outside_the_working_directory_is_not_opened(tmp_path):
+    context, output = _context(tmp_path)
+    context.config.ui.file_opener = "vscode"
+    outside = tmp_path.parent / "outside.py"
+    outside.write_text("x = 1\n", encoding="utf-8")
+    assert "outside the working directory" in _run(context, output, f"/open {outside}")
+
+
+def test_without_an_opener_the_file_is_not_opened(tmp_path):
+    context, output = _context(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    assert "No file opener" in _run(context, output, "/open a.py")

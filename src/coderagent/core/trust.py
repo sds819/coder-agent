@@ -191,6 +191,12 @@ def tightened(project: dict) -> dict:
         telemetry.pop("otel_headers", None)
     permissions = result.get("permissions")
     shell = result.get("shell_environment")
+    ui = result.get("ui")
+    if isinstance(ui, dict):
+        """A project may not choose the program that runs on the machine of the user."""
+        ui.pop("file_opener", None)
+    result.pop("history", None)
+    """The history belongs to the user: a project may neither hide it nor delete it."""
     if isinstance(shell, dict):
         """A project may hide more of the environment, never show what the user hid."""
         shell.pop("include", None)

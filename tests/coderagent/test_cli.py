@@ -257,6 +257,23 @@ def test_the_last_answer_is_written_to_a_file(tmp_path, monkeypatch):
     assert target.read_text(encoding="utf-8") == "the work is done"
 
 
+def test_the_history_is_not_written_when_it_is_not_saved(tmp_path, monkeypatch):
+    """`history.persistence: save-none` keeps the session in the memory."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    config = load_config(["history.persistence=save-none"], cwd=tmp_path)
+    model = ScriptedModel([{"role": "assistant", "content": "hello", "tool_calls": [], "extra": {"cost": 0.0}}])
+    main_impl("hi", config, tmp_path, "text", model=model)
+    assert list((tmp_path / "home" / "sessions").glob("*")) == []
+
+
+def test_the_history_is_written_by_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    config = load_config([], cwd=tmp_path)
+    model = ScriptedModel([{"role": "assistant", "content": "hello", "tool_calls": [], "extra": {"cost": 0.0}}])
+    main_impl("hi", config, tmp_path, "text", model=model)
+    assert list((tmp_path / "home" / "sessions").glob("*.jsonl"))
+
+
 def test_the_option_is_in_the_help():
     result = CliRunner().invoke(app, ["--help"])
     assert "--output-last-message" in result.output

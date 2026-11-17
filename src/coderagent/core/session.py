@@ -15,6 +15,9 @@ from coderagent.paths import config_home
 
 logger = logging.getLogger("coderagent.core.session")
 
+PERSISTENCES = ("save-all", "save-none")
+"""How the history of the sessions is kept: on the disk, or nowhere."""
+
 
 class SessionState(str, Enum):
     IDLE = "idle"
@@ -38,6 +41,10 @@ class Session:
     total_cost: float = 0.0
     total_tokens: int = 0
     """The tokens of the session, in and out. The budget of a model that has no price."""
+    name: str = ""
+    """The name the user gave to the session."""
+    archived: bool = False
+    """Whether the session is put away. An archived session is not in the list."""
     metadata: dict = field(default_factory=dict)
 
 
@@ -49,8 +56,16 @@ def default_root() -> Path:
 class SessionStore:
     """Append-only JSONL event log. Replaying the log rebuilds the session."""
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(self, root: Path | None = None, *, persist: bool = True, max_bytes: int = 0) -> None:
         self.root = Path(root) if root else default_root()
+        self.persist = persist
+        """Whether the history is written to the disk. When it is not, the session lives in memory."""
+        self.max_bytes = max_bytes
+        """The bytes the history of all the sessions may take. 0 means no limit."""
+        self._size = 0
+        """The bytes the history takes, as far as it is known."""
+        self._measured = False
+        """Whether the size of the history has been measured on the disk."""
 
     def create(self, cwd: Path) -> Session:
         session = Session(
@@ -59,6 +74,9 @@ class SessionStore:
             created_at=time.time(),
             updated_at=time.time(),
         )
+        if not self.persist:
+            """The history is not kept, so there is nothing to write."""
+            return session
         self.root.mkdir(parents=True, exist_ok=True)
         self._write_meta(session)
         self.append(
@@ -79,11 +97,21 @@ class SessionStore:
         return self.root / f"{session_id}.meta.json"
 
     def append(self, session_id: str, event: Event) -> None:
+        if not self.persist:
+            return
         self.root.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(event.to_dict(), ensure_ascii=False) + "\n"
         with self.path(session_id).open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+            f.write(line)
             f.flush()
             os.fsync(f.fileno())
+        self._size += len(line.encode("utf-8"))
+        if self.max_bytes:
+            if not self._measured:
+                self._size = self._total_size()
+                self._measured = True
+            if self._size > self.max_bytes:
+                self._prune(session_id)
 
     def events(self, session_id: str) -> list[Event]:
         path = self.path(session_id)
@@ -118,6 +146,10 @@ class SessionStore:
                     session.model_name = payload["model_name"]
                 if "permission_mode" in payload:
                     session.permission_mode = payload["permission_mode"]
+                if "name" in payload:
+                    session.name = payload["name"]
+                if "archived" in payload:
+                    session.archived = bool(payload["archived"])
             elif event.type == EventType.USER_MESSAGE:
                 session.turn_count += 1
             elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
@@ -131,8 +163,12 @@ class SessionStore:
         session.total_tokens = metrics.total_tokens_in + metrics.total_tokens_out
         return session
 
-    def list(self, cwd: Path | None = None) -> list[Session]:
-        """All sessions, newest first. Optionally restricted to a working directory."""
+    def list(self, cwd: Path | None = None, archived: bool | None = None) -> list[Session]:
+        """All sessions, newest first. Optionally restricted to a working directory.
+
+        `archived` says which ones are wanted: the ones that are put away, the ones
+        that are not, or all of them.
+        """
         if not self.root.exists():
             return []
         sessions = []
@@ -144,7 +180,10 @@ class SessionStore:
                 continue
             if cwd is not None and Path(meta.get("cwd", "")) != Path(cwd):
                 continue
-            sessions.append(self.rebuild(meta["id"]))
+            session = self.rebuild(meta["id"])
+            if archived is not None and session.archived != archived:
+                continue
+            sessions.append(session)
         return sorted(sessions, key=lambda s: s.created_at, reverse=True)
 
     def fork(self, session_id: str) -> Session:
@@ -196,3 +235,57 @@ class SessionStore:
         temporary = path.with_name(f"{path.name}.tmp")
         temporary.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
         os.replace(temporary, path)
+
+    # -- the life of a session ---------------------------------------------
+
+    def rename(self, session_id: str, name: str) -> bool:
+        """Give a session a name. Returns whether there is such a session."""
+        return self._state_event(session_id, {"name": name})
+
+    def archive(self, session_id: str, archived: bool = True) -> bool:
+        """Put a session away, or take it out again. Returns whether there is such a session."""
+        return self._state_event(session_id, {"archived": archived})
+
+    def delete(self, session_id: str) -> bool:
+        """Remove a session and everything in it. Returns whether there was such a session."""
+        path = self.path(session_id)
+        if not path.exists():
+            return False
+        path.unlink()
+        meta = self.meta_path(session_id)
+        if meta.exists():
+            meta.unlink()
+        return True
+
+    def _state_event(self, session_id: str, payload: dict) -> bool:
+        """Write a state of the session into its log."""
+        if not self.path(session_id).exists():
+            return False
+        self.append(
+            session_id,
+            Event(
+                type=EventType.STATE_CHANGE,
+                session_id=session_id,
+                timestamp=time.time(),
+                payload=payload,
+            ),
+        )
+        return True
+
+    def _total_size(self) -> int:
+        """The bytes the history of all the sessions takes."""
+        return sum(path.stat().st_size for path in self.root.glob("*.jsonl"))
+
+    def _prune(self, keep: str) -> None:
+        """Delete the oldest sessions until the history fits into the limit."""
+        logs = sorted(self.root.glob("*.jsonl"), key=lambda path: path.stat().st_mtime)
+        total = sum(path.stat().st_size for path in logs)
+        for path in logs:
+            if total <= self.max_bytes:
+                break
+            if path.stem == keep:
+                continue
+            """The session that is running is never deleted."""
+            total -= path.stat().st_size
+            self.delete(path.stem)
+        self._size = total

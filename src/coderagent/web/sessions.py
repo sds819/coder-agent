@@ -18,7 +18,7 @@ from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
-from coderagent.run import build_loop, settle
+from coderagent.run import build_loop, build_store, settle
 from coderagent.tools.permissions import PermissionMode
 from coderagent.web.approver import WebApprover
 from coderagent.web.events import TRANSIENT_KINDS, normalize
@@ -47,7 +47,7 @@ class SessionRuntime:
     ) -> None:
         self.config = config
         self.cwd = Path(cwd)
-        self.store = store or SessionStore()
+        self.store = store or build_store(config)
         self.bus = EventBus()
         self.session = session or self.store.create(self.cwd)
         self.registry = registry
@@ -289,7 +289,7 @@ class SessionRegistry:
     ) -> None:
         self.config = config
         self.cwd = Path(cwd)
-        self.store = store or SessionStore()
+        self.store = store or build_store(config)
         self._model = model
         self.permission_mode = permission_mode
         """The mode the server was started with. It wins over the files."""

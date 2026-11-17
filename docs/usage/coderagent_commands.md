@@ -33,11 +33,15 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | `/clear` | Start a new session | |
 | `/resume` | List the sessions or resume one | `[session-id]` |
 | `/fork` | Copy the session into a new one | `[session-id]` |
+| `/rename` | Give the session a name | `[name]` |
+| `/archive` | Put a session away, or take it out again | `[session-id]` |
+| `/delete` | Remove a session and everything in it | `<session-id>` |
 | `/rewind` | Show the checkpoints or roll back to one | `[checkpoint-id]` |
 | `/diff` | Show the changes in the working tree | |
 | `/review` | Review the changes, or the changes of a range | `[main..HEAD]` |
 | `/image` | Send an image to the agent | `<path> [what to do with it]` |
 | `/mention` | Send a file to the agent, with its content | `<path> [what to do with it]` |
+| `/open` | Open a file in the editor of the user | `<path>` |
 | `/init` | Write an `AGENTS.md` for this project | |
 | `/cost` | The tokens and the money spent | |
 | `/todos` | The task list of the agent | |
@@ -106,6 +110,45 @@ says that the agent may not read it.
 `/exit` closes the terminal interface, the same way `ctrl+q` does. In the
 browser there is nothing to close, so it says that the server keeps running:
 stop it with `ctrl+c` in the terminal that started it.
+
+## The life of a session
+
+A session has a name, it can be put away, and it can be removed:
+
+```bash
+/rename the bug of monday   # the name of the session you are in
+/archive                    # put this session away
+/archive <session-id>       # put another one away
+/delete <session-id>        # remove it and everything in it
+```
+
+A session that is put away is not in the list of `/resume` any more, but it is
+still on the disk and `/resume <session-id>` opens it. `/archive` on a session
+that is already away takes it out again.
+
+`/delete` needs the id of the session, and it never deletes the session you are
+in: start a new one with `/clear` first. Everything the session holds — the log
+of the events and the file with its metadata — goes with it.
+
+## The file of the user
+
+`/open` opens a file in the editor of the user:
+
+```bash
+/open src/app.py
+```
+
+The editor comes from the configuration:
+
+```yaml
+ui:
+  file_opener: vscode
+```
+
+`vscode`, `cursor` and `windsurf` are known by name. A command of your own
+works too, with `{file}` where the file goes: `my-editor {file} --wait`. The
+file has to be inside the working directory, and a project may not choose the
+editor: that program runs on the machine of the user.
 
 ## Your own commands
 

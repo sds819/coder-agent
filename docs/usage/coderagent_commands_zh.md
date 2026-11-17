@@ -31,11 +31,15 @@ agent 正在干活的时候敲命令会被拒绝：它会说
 | `/clear` | 开一个新会话 | |
 | `/resume` | 列出会话，或者续接一个 | `[session-id]` |
 | `/fork` | 把会话复制成一个新会话 | `[session-id]` |
+| `/rename` | 给会话起个名字 | `[name]` |
+| `/archive` | 把会话收起来，或者再拿出来 | `[session-id]` |
+| `/delete` | 删掉一个会话和它的全部内容 | `<session-id>` |
 | `/rewind` | 列出检查点，或者退回去一个 | `[checkpoint-id]` |
 | `/diff` | 看工作区里的改动 | |
 | `/review` | 审查改动，或者审查一个范围的改动 | `[main..HEAD]` |
 | `/image` | 给 agent 发一张图片 | `<path> [要它做什么]` |
 | `/mention` | 给 agent 发一个文件，带着内容 | `<path> [要它做什么]` |
+| `/open` | 在用户自己的编辑器里打开一个文件 | `<path>` |
 | `/init` | 给这个项目写一个 `AGENTS.md` | |
 | `/cost` | 已经花掉的 token 和钱 | |
 | `/todos` | agent 的任务清单 | |
@@ -93,6 +97,43 @@ agent 正在干活的时候敲命令会被拒绝：它会说
 
 `/exit` 关掉终端界面，和 `ctrl+q` 一样。浏览器里没有东西可关，所以它会说
 服务还在跑：要停掉它，得在启动它的那个终端里按 `ctrl+c`。
+
+## 会话的一生
+
+会话有名字，可以收起来，也可以删掉：
+
+```bash
+/rename monday 那个 bug   # 给当前会话起个名字
+/archive                 # 把这个会话收起来
+/archive <session-id>    # 把另一个收起来
+/delete <session-id>     # 删掉它和它的全部内容
+```
+
+收起来的会话不再出现在 `/resume` 的列表里，但它还在盘上，
+`/resume <session-id>` 照样能打开。已经收起来的会话再跑一次 `/archive`
+就又拿出来了。
+
+`/delete` 要会话的 id，而且**不删你正待着的那个会话**：先 `/clear` 开一个新的。
+会话里的一切——事件日志和它的元数据文件——一起没了。
+
+## 用户自己的文件
+
+`/open` 在用户自己的编辑器里打开一个文件：
+
+```bash
+/open src/app.py
+```
+
+编辑器由配置决定：
+
+```yaml
+ui:
+  file_opener: vscode
+```
+
+`vscode`、`cursor`、`windsurf` 这些名字是认识的。用户自己的命令也行，
+用 `{file}` 告诉它文件放在哪：`my-editor {file} --wait`。文件必须在工作目录
+里面，而且**项目不能挑编辑器**——那个程序跑在用户的机器上，这个选择归用户。
 
 ## 自己的命令
 
