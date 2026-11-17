@@ -148,6 +148,26 @@ def test_the_file_of_the_user_is_still_an_instruction_when_the_memory_is_off(tmp
     assert "always answer in German" in engine._instruction_text()
 
 
+def test_a_memory_file_that_is_too_long_is_cut_short(tmp_path):
+    """The memory of the project may not take the whole context either."""
+    memory_dir = tmp_path / ".coderagent" / "memory"
+    memory_dir.mkdir(parents=True)
+    (memory_dir / "notes.md").write_text("x" * 5000, encoding="utf-8")
+    engine = make_engine(tmp_path, config=ContextConfig(project_doc_max_bytes=1000), memory_config=MemoryConfig())
+    assert "the rest of it is not shown" in engine._instruction_text()
+
+
+def test_the_file_of_the_user_is_cut_short_as_well(tmp_path):
+    """The file of the user is read once, so the limit of the instructions holds for it."""
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / "CLAUDE.md").write_text("x" * 5000, encoding="utf-8")
+    engine = make_engine(tmp_path, config=ContextConfig(project_doc_max_bytes=1000), memory_config=MemoryConfig())
+    text = engine._instruction_text()
+    assert "the rest of it is not shown" in text
+    assert text.count("x" * 1000) == 1
+
+
 def test_restore_rebuilds_the_history_from_the_events(tmp_path):
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)

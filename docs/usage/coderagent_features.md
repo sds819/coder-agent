@@ -637,7 +637,7 @@ memory of the session keeps what was learned before the failure.
   todo list, the summary of the session, then the history.
 - **The instruction files are cut** — one file may take 32768 bytes
   (`context.project_doc_max_bytes`). A longer file is cut short, and the agent
-  is told that it did not see all of it.
+  is told that it did not see all of it. The memory files are cut the same way.
 
 ### Example
 
@@ -691,8 +691,10 @@ the compression, so installing tiktoken is worth it for a long session.
   preferences of the user.
 - **Preferences wait for a confirmation** — they land in
   `pending-memory.md` first, and `/memory confirm` writes them.
-- **The instruction files** — `AGENTS.md` and `CLAUDE.md` of the project, and
-  the `CLAUDE.md` of the user, are read by the agent.
+- **The instruction files** — `AGENTS.md` and `CLAUDE.md` of the repository and
+  of the project, and the `CLAUDE.md` of the user, are read by the agent. The
+  rules of the repository are read even when the agent starts in a
+  subdirectory of it.
 - **It can be switched off** — `memory.enabled`.
 
 ### Example
@@ -1296,6 +1298,11 @@ than 60000 characters is cut, and the model is told to read the files itself.
 
 The review is a turn of the current session, with a prompt of its own that says
 not to change any file. The answer stays in the conversation.
+
+The diff does not stay in the context: the model reads it during the turn, and
+afterwards it is replaced by a note that says the changes are not there any
+more and the files have to be read again. A review of a big diff would
+otherwise cost the whole session its window.
 
 The review may run on a model of its own: `model.review_model` names it, and
 `model.routing.review` wins over that. Without either one the review runs on

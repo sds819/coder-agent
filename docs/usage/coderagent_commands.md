@@ -75,7 +75,8 @@ reviews that range. The files that are new and not in the diff yet are named, so
 the agent reads them when they matter. The review is a turn of the current
 session: the answer stays in the conversation, and you can act on it right away
 ("fix the second one"). The agent is told not to change any file while it
-reviews.
+reviews. The diff itself does not stay in the context: after the turn it is
+replaced by a note, so that a big diff does not cost the session its window.
 
 The review may run on a model of its own: `model.review_model` names it, and
 `model.routing.review` wins over that. Without either one the review runs on

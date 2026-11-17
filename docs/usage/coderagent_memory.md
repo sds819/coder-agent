@@ -12,16 +12,24 @@ conversation, in this order:
 | Where | What it is |
 |---|---|
 | `~/.coderagent/CLAUDE.md` | The instructions and the preferences of the user |
-| `AGENTS.md` | The instructions of the project |
-| `CLAUDE.md` | The instructions of the project |
+| `AGENTS.md`, `CLAUDE.md` of the repository | The instructions of the repository |
+| `AGENTS.md`, `CLAUDE.md` of the project | The instructions of the project |
 | `.coderagent/memory/*.md` | What the agent learned about the project |
 
 An `AGENTS.md` in a subdirectory is read when the agent touches something in
 it, and not before.
 
+The rules of the repository are read even when the agent starts in a
+subdirectory of it, and they come before the rules of the directory: the rules
+of the directory win when the two say different things.
+
 The file of the user is read once: it is the instructions of the user and the
 memory of the user at the same time. It is read again in every round, so the
 preferences that `/memory confirm` writes are known right away.
+
+Every file is cut short at `context.project_doc_max_bytes` (32 KB by default),
+the memory files included: one long file may not take the whole context. The
+rest of it is not shown, and the agent is told so.
 
 The project memory is every markdown file of `.coderagent/memory/`, so you
 may write `conventions.md` or `architecture.md` next to the file the agent

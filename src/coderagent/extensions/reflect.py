@@ -99,13 +99,19 @@ def known_memory(cwd: Path, config: MemoryConfig) -> str:
 
 
 def _conversation(messages: list[dict]) -> str:
-    """The messages as text the model can read."""
+    """The messages as text the model can read.
+
+    An answer that only calls a tool says nothing, so the name of the tool is
+    what is left of it.
+    """
     lines = []
     for message in messages:
         role = message.get("role", "")
         content = message.get("content")
         if not isinstance(content, str):
-            calls = message.get("tool_calls") or []
+            content = ""
+        calls = message.get("tool_calls") or []
+        if not content.strip() and calls:
             content = ", ".join((call.get("function") or {}).get("name", "") for call in calls)
         if content:
             lines.append(f"{role}: {content}")

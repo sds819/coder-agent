@@ -50,7 +50,7 @@
 2. `auto_compact` 为真，**且**距上次压缩超过 `compact_every_turns`（默认 40）轮；
 3. provider 报上下文溢出 → 走另一条路 `force_compact()` 强制压一次再重试（它不受 `auto_compact` 开关约束）。
 
-**注意**：`auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`（`core/context.py:202`），
+**注意**：`auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`（`core/context.py:305-306`），
 所以条件 2 永远不会单独成立——想「只按轮数压」是做不到的，`auto_compact` 是总开关。
 
 **切点**在 `ContextEngine._cut_index()`：
@@ -82,7 +82,8 @@
 
 **结论**：`core/instructions.py`。
 
-- `load_instructions(cwd, user_home)` 按顺序加载：用户 `CLAUDE.md` → 项目 `AGENTS.md` → 项目 `CLAUDE.md`。渲染成 `<project_instructions source="AGENTS.md">…</project_instructions>` 块。
+- `load_instructions(cwd, user_home)` 按顺序加载：用户 `CLAUDE.md` → **仓库根**的 `AGENTS.md` 和 `CLAUDE.md` → 当前目录的 `AGENTS.md` 和 `CLAUDE.md`。仓库根是往上找 `.git` 找到的（`project_root()`），所以从子目录启动时仓库的规矩照样读得到，而且排在目录的规矩前面。渲染成 `<project_instructions source="AGENTS.md">…</project_instructions>` 块。
+- **每个文件只读一次**：用户的 `CLAUDE.md` 既是指令又是记忆，同一轮读两遍是白读；记忆那份还**不设上限**，一个长文件能把上下文吃掉。现在记忆文件跟指令文件一样受 `context.project_doc_max_bytes` 限制。
 - **子目录惰性加载**：`subdirectory_instructions(path, cwd)` 从 `cwd` 往 `path` 逐层走，**由深到浅**加载每层的 `AGENTS.md`（子目录只认 `AGENTS.md`，不认 `CLAUDE.md`）。不在 `cwd` 底下就返回空。
 - **触发时机**：不是预先全读，而是**agent 碰某个路径时**才加载——`ToolExecutor` 对每个带 `path` 参数的工具调 `on_path(path)`（`run.py` 里接的是 `context.note_path`）。同一路径只加载一次。
 
@@ -213,9 +214,9 @@
 
 **结论**：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。
 
-1. **取**：`core/loop.py:206` 从 assistant 消息里取 `tool_calls`。没有 `tool_calls` 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。
+1. **取**：`core/loop.py:299` 从 assistant 消息里取 `tool_calls`。没有 `tool_calls` 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。
 2. **规整**：`executor.plan()`（`executor.py:51`）把原始 tool call 变成统一形状：`{"tool", "tool_call_id", "args", "raw"}`。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是**对象**，就在这里记下 `error`，**不会走到执行**。
-3. **记账**：`loop.py:225` 发一个 `TOOL_CALL` 事件，**在执行之前**。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。
+3. **记账**：`loop.py:334` 发一个 `TOOL_CALL` 事件，**在执行之前**。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。
 4. **准备**：`executor._prepare()`（`executor.py:93`）对每个 action 依次做四件事：
    - **查注册表**：`registry.get(name)`，找不到就直接记错（见 b10）；
    - **PreToolUse hook**：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；
@@ -431,6 +432,7 @@
   - **用户偏好**不直接写：要么 `/memory confirm` 确认后写进用户 `CLAUDE.md` 的 `## Preferences` 段，要么落到 `<cwd>/.coderagent/pending-memory.md` 等确认；
   - `/memory forget <文本>` 可以从项目记忆或待确认文件里删掉一行。
 - 整个 `settle()` **吞掉所有异常**——「这里的失败不能毁掉这一轮运行」。
+- 反思看到的对话里，**只会调工具的 assistant 消息**保留工具名——那句话本身是空的，不留名字那一步就凭空消失了。
 - 反思的成本会记成一条 `EventType.REFLECTION` 事件，并加进会话总账。
 
 **为什么**：项目事实可以直接写，用户偏好必须确认。用户偏好会永久改变 agent 的行为，不该由一次会话自己决定。

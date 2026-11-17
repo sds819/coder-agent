@@ -692,12 +692,17 @@ coder --task "/init"   # write an AGENTS.md for this project
 `/init` writes a template with the layout of the directory; the model is not
 asked. It does nothing when the file already exists.
 
-The user file `~/.coderagent/CLAUDE.md` comes first, then the project. An
-`AGENTS.md` in a subdirectory is read when the agent touches something in it.
+The user file `~/.coderagent/CLAUDE.md` comes first, then the repository, then
+the project. An `AGENTS.md` in a subdirectory is read when the agent touches
+something in it.
+
+The rules of the repository are read even when the agent starts in a
+subdirectory of it, and they come before the rules of the directory.
 
 One instruction file may take 32768 bytes (`context.project_doc_max_bytes`).
 A longer file is cut short, and the agent is told that it did not see all of
-it — a huge `AGENTS.md` does not eat the whole window.
+it — a huge `AGENTS.md` does not eat the whole window. The memory files are
+cut the same way.
 
 ## What the agent can delegate
 

@@ -139,6 +139,42 @@ def test_a_file_that_fits_is_not_cut(tmp_path):
     assert load_instructions(tmp_path, tmp_path / "home", 1000)[0].content == "the rules"
 
 
+def test_the_rules_of_the_repository_are_found_from_a_subdirectory(tmp_path):
+    """An agent that starts in a subdirectory still has to see the rules of the repository."""
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "AGENTS.md").write_text("the rules of the repository", encoding="utf-8")
+    sub = tmp_path / "src" / "core"
+    sub.mkdir(parents=True)
+    blocks = load_instructions(sub, tmp_path / "home")
+    assert [block.content for block in blocks] == ["the rules of the repository"]
+
+
+def test_the_rules_of_the_repository_come_before_the_rules_of_the_directory(tmp_path):
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "AGENTS.md").write_text("the rules of the repository", encoding="utf-8")
+    sub = tmp_path / "src"
+    sub.mkdir()
+    (sub / "AGENTS.md").write_text("the rules of the directory", encoding="utf-8")
+    blocks = load_instructions(sub, tmp_path / "home")
+    assert [block.content for block in blocks] == [
+        "the rules of the repository",
+        "the rules of the directory",
+    ]
+
+
+def test_a_directory_outside_a_repository_is_its_own_root(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("the rules", encoding="utf-8")
+    blocks = load_instructions(tmp_path, tmp_path / "home")
+    assert [block.content for block in blocks] == ["the rules"]
+
+
+def test_the_rules_of_the_root_are_not_read_twice(tmp_path):
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "AGENTS.md").write_text("the rules", encoding="utf-8")
+    blocks = load_instructions(tmp_path, tmp_path / "home")
+    assert [block.content for block in blocks] == ["the rules"]
+
+
 def test_the_limit_of_the_configuration_holds(tmp_path):
     (tmp_path / "AGENTS.md").write_text("x" * 5000, encoding="utf-8")
     engine = _engine(tmp_path, ContextConfig(project_doc_max_bytes=1000))

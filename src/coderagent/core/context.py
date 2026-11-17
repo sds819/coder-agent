@@ -124,6 +124,8 @@ class ContextEngine:
         model has to see the new one.
         """
         self.memory_config = memory_config or MemoryConfig()
+        self.ephemeral: list[tuple[dict, str]] = []
+        """The messages that do not stay in the context, and the note that replaces them."""
         self.guard = BudgetGuard(
             context_window=config.context_window,
             reserved_output=config.reserved_output,
@@ -161,15 +163,30 @@ class ContextEngine:
         self.history = History(messages)
         self.summaries = summaries
 
-    def append(self, message: dict, original: str = "") -> None:
+    def append(self, message: dict, original: str = "", ephemeral: str = "") -> None:
         """Add a message to the history and record it in the event log.
 
         `original` is what the user typed, when a hook rewrote the prompt. The
         log keeps the prompt the model saw, so that a replay says the same
         thing, and the original beside it.
+
+        `ephemeral` is a note that takes the place of the message when the turn
+        is over: a diff that is read once does not have to stay in the context.
         """
         self.history.append(message)
-        self._record(message, original)
+        self._record(message, original, ephemeral)
+        if ephemeral:
+            self.ephemeral.append((message, ephemeral))
+
+    def forget_ephemeral(self) -> None:
+        """The ephemeral messages are replaced by their note.
+
+        The message itself stays in the history: the turn that follows it still
+        knows that it happened, only its bulk is gone.
+        """
+        for message, note in self.ephemeral:
+            message["content"] = note
+        self.ephemeral.clear()
 
     def extend(self, messages: list[dict]) -> None:
         """Add tool results to the history and record them in the event log."""
@@ -177,12 +194,12 @@ class ContextEngine:
         for message in messages:
             self._record(message)
 
-    def _record(self, message: dict, original: str = "") -> None:
+    def _record(self, message: dict, original: str = "", ephemeral: str = "") -> None:
         """The event log is the source of truth, so every message goes into it."""
         role = message.get("role")
         if role == "user":
             event_type = EventType.USER_MESSAGE
-            payload = {"content": message.get("content", "")}
+            payload = {"content": ephemeral or message.get("content", "")}
             if original:
                 payload["original"] = original
         elif role == "assistant":
@@ -253,17 +270,18 @@ class ContextEngine:
     def _instruction_text(self) -> str:
         """The instructions and the memory, one block per file.
 
-        The file of the user is both an instruction and a memory, so it is read
-        twice and shown once. The memory wins: it is read again every round.
+        Every file is read once and cut short when it is too long: the file of
+        the user is both an instruction and a memory, and the instructions of
+        the repository are read before the ones of the directory.
         """
         blocks = list(self.instruction_blocks)
         if self.reload_instructions:
             """The instruction files are read again, so a change of the project counts."""
             blocks = load_instructions(self.cwd, self.user_home, self.config.project_doc_max_bytes) + blocks
         if self.memory_config.enabled:
-            blocks += load_project_memory(self.cwd, self.memory_config)
-            user_memory = load_user_memory(self.memory_config, self.user_home)
-            if user_memory:
+            blocks += load_project_memory(self.cwd, self.memory_config, self.config.project_doc_max_bytes)
+            user_memory = load_user_memory(self.memory_config, self.user_home, self.config.project_doc_max_bytes)
+            if user_memory and user_memory.path not in {block.path for block in blocks}:
                 blocks.append(user_memory)
         todos = self.session.metadata.get("todos") or []
         parts = [block.render() for block in once_per_file(blocks)]

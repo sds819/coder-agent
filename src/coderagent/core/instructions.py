@@ -50,11 +50,33 @@ def once_per_file(blocks: list[InstructionBlock]) -> list[InstructionBlock]:
     return list(by_path.values())
 
 
+def project_root(cwd: Path) -> Path:
+    """The root of the repository the directory belongs to.
+
+    A directory that is not in a repository is its own root.
+    """
+    directory = Path(cwd).resolve()
+    for candidate in (directory, *directory.parents):
+        if (candidate / ".git").exists():
+            """A worktree has a file there, a clone has a directory. Both count."""
+            return candidate
+    return directory
+
+
 def load_instructions(cwd: Path, user_home: Path | None = None, max_bytes: int = 0) -> list[InstructionBlock]:
-    """The user level and the project level instructions, in that order."""
+    """The user level and the project level instructions, in that order.
+
+    The rules of the repository come before the rules of the directory, so that
+    the ones of the directory win when they are read.
+    """
     blocks = []
     home = Path(user_home) if user_home else config_home()
-    for path in (home / USER_FILE, Path(cwd) / "AGENTS.md", Path(cwd) / "CLAUDE.md"):
+    root = project_root(cwd)
+    paths = [home / USER_FILE]
+    if root != Path(cwd).resolve():
+        paths += [root / "AGENTS.md", root / "CLAUDE.md"]
+    paths += [Path(cwd) / "AGENTS.md", Path(cwd) / "CLAUDE.md"]
+    for path in paths:
         block = read_block(path, max_bytes)
         if block:
             blocks.append(block)

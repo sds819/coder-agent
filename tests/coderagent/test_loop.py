@@ -196,6 +196,33 @@ def test_model_error_is_reported(tmp_path):
     assert store.rebuild(session.id).state == SessionState.ERROR
 
 
+def test_the_diff_of_a_review_does_not_stay_in_the_context(tmp_path):
+    """The diff is read once. The rest of the session does not have to carry it."""
+    loop, store, session, _ = _loop(tmp_path, [_assistant(content="the review")])
+    loop.run_turn("the diff of the changes", purpose="review")
+    assert "the diff of the changes" not in json.dumps(loop.messages)
+    assert "not in the context anymore" in loop.messages[0]["content"]
+
+
+def test_the_model_sees_the_diff_of_the_review(tmp_path):
+    loop, _, _, _ = _loop(tmp_path, [_assistant(content="the review")])
+    loop.run_turn("the diff of the changes", purpose="review")
+    assert "the diff of the changes" in json.dumps(loop.model.backend.calls[0])
+
+
+def test_the_diff_of_a_review_is_not_in_the_log(tmp_path):
+    loop, store, session, _ = _loop(tmp_path, [_assistant(content="the review")])
+    loop.run_turn("the diff of the changes", purpose="review")
+    events = [event for event in store.events(session.id) if event.type == EventType.USER_MESSAGE]
+    assert "the diff of the changes" not in json.dumps(events[0].payload)
+
+
+def test_an_ordinary_message_stays_in_the_context(tmp_path):
+    loop, _, _, _ = _loop(tmp_path, [_assistant(content="done")])
+    loop.run_turn("say hello")
+    assert loop.messages[0]["content"] == "say hello"
+
+
 def test_conversation_is_restored_from_the_event_log(tmp_path):
     loop, store, session, _ = _loop(tmp_path, [_assistant(content="done", cost=0.5)])
     loop.run_turn("first question")

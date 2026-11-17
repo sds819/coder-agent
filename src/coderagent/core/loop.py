@@ -28,6 +28,9 @@ VERIFY_OUTPUT_TOKENS = 2000
 MAX_SCHEMA_ATTEMPTS = 2
 """How many answers the model may give for a schema. Two means: one answer and one try again."""
 
+REVIEW_NOTE = "[the changes that were reviewed are not in the context anymore: read the files again]"
+"""What takes the place of the diff of a review when the turn is over."""
+
 
 def _answer_of(messages: list[dict]) -> str:
     """What the agent answered."""
@@ -246,7 +249,9 @@ class AgentLoop:
                 prompt = with_text(prompt, f"{text_of(prompt)}\n\n[hook] {hook.additional_context}")
         prompt = with_text(prompt, expand_mentions(text_of(prompt), self.session.cwd, self.policy))
         """The files the user mentions go into the message, with their content."""
-        self.context.append({"role": "user", "content": prompt}, original=original)
+        ephemeral = REVIEW_NOTE if self.purpose == "review" else ""
+        """The diff of a review is read once. It does not have to stay in the context."""
+        self.context.append({"role": "user", "content": prompt}, original=original, ephemeral=ephemeral)
         turn_messages.append({"role": "user", "content": prompt})
         self.session.turn_count += 1
         self._set_state(SessionState.THINKING)
@@ -332,6 +337,8 @@ class AgentLoop:
             turn_messages.extend(observations)
             self._set_state(SessionState.THINKING)
 
+        self.context.forget_ephemeral()
+        """The diff of a review is gone from the context. The rest of the session is not."""
         # What the turn cost: everything the agent spent, the sub agents and the summaries included.
         cost = self.session.total_cost - base
         self._publish(

@@ -45,6 +45,12 @@ def test_the_prompt_holds_the_conversation():
     assert "done" in prompt
 
 
+def test_an_answer_that_only_calls_a_tool_is_in_the_conversation():
+    """The name of the tool is all that is left of such an answer."""
+    prompt = reflect_prompt([{"role": "assistant", "content": "", "tool_calls": [{"function": {"name": "bash"}}]}])
+    assert "bash" in prompt
+
+
 def test_the_answer_of_the_model_is_read():
     reflection = parse_reflection(
         _answer(project_facts=["the tests need pytest -m slow"], user_preferences=["Chinese comments"])

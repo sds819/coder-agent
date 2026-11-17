@@ -164,7 +164,9 @@ sandbox:
   「**Do not change any file**: this is a review, not a fix」——
   审查只出结论，不动代码（要改的话走正常的审批门）；
 - diff 超过 60000 字符会被截断，并告诉模型「the diff is cut here, read the files yourself」；
-- 审查轮在**当前会话**里跑，结果留在对话里，用户可以接着说「把第二条改掉」。
+- 审查轮在**当前会话**里跑，结果留在对话里，用户可以接着说「把第二条改掉」；
+- **diff 只在这一轮里**：轮结束就换成一句提示（「改动不在上下文里了，自己再读一遍」），
+  否则一次大审查就把整个会话的窗口吃掉了。
 
 **实现要点**：命令自己不跑模型，它把提示词交给界面的 `submit` 回调——
 `CommandContext` 多了一个 `submit` 字段（TUI → 工作线程，网页版 → 会话线程，
@@ -211,13 +213,13 @@ CLI → `render(loop.run_turn(...))`）。界面不能跑轮时（`submit is Non
 
 **原来**：
 
-- `src/coderagent/core/instructions.py:39` — `load_instructions()` 读
-  `home / USER_FILE`，`USER_FILE = "CLAUDE.md"`（`instructions.py:13`），
+- `src/coderagent/core/instructions.py:66` — `load_instructions()` 读
+  `home / USER_FILE`，`USER_FILE = "CLAUDE.md"`（`instructions.py:12`），
   于是读的是 `~/.coderagent/CLAUDE.md`；
-- `src/coderagent/core/memory.py:32` — `load_user_memory()` 读
+- `src/coderagent/core/memory.py:36` — `load_user_memory()` 读
   `home / Path(config.user_path).name`，而 `user_path` 的默认值就是
   `~/.coderagent/CLAUDE.md`（`src/coderagent/config/schema.py:108`）；
-- 这两块在 `src/coderagent/core/context.py:215-220` 被**同时**拼进指令段。
+- 这两块在 `src/coderagent/core/context.py:270-293` 被**同时**拼进指令段。
 
 **影响**：用户级的 `CLAUDE.md` 每次组消息都**出现两遍**，白烧 token；
 更要紧的是，如果用户在这份文件里写了「每次回答都要先说 X」这类自我约束，
@@ -258,7 +260,7 @@ if not server.enabled or not server.command:
 | 4.1 | **没有图片/音频输入** ✅ | 消息只有文本：`core/context.py` 的 `build_messages()` 拼的是 `{"role","content"}` 字符串，没有多模态分支 | `/image` 附件（0.167/0.168 起支持图像与音频） | 中 |
 | 4.2 | **没有输入历史** ✅ | TUI 的 `Input` 部件没有历史栈（`src/coderagent/ui/tui.py` 里没有相关实现），上下键只能移动光标 | 上下键翻历史 | 小 |
 | 4.3 | **回答不渲染 Markdown** ✅ | TUI 直接把原文塞进 `Static`（`tui.py:197`），代码块、表格、标题都是平的 | 富渲染 | 中 |
-| 4.4 | **中断的粒度是「轮」** ✅ | `loop.cancel` 只在**每轮模型调用之前**检查（`src/coderagent/core/loop.py:179-181`），`tools/executor.py` 里没有取消检查——**一条跑着的 `bash` 停不下来**，只能等它自己结束 | 能中断正在跑的工具 | 中 |
+| 4.4 | **中断的粒度是「轮」** ✅ | `loop.cancel` 只在**每轮模型调用之前**检查（`src/coderagent/core/loop.py:272`），`tools/executor.py` 里没有取消检查——**一条跑着的 `bash` 停不下来**，只能等它自己结束 | 能中断正在跑的工具 | 中 |
 | 4.5 | **没有 @ 提及文件** ✅ | 输入框里 `@foo.py` 不会被展开成路径 | `@` 补全文件 | 小 |
 | 4.6 | **TUI 没有文件树** ✅ | 文件树只在网页版左栏（`src/coderagent/web/`）；终端里只能靠 `ls` 工具 | 侧栏文件树 | 中 |
 | 4.7 | **TUI 没有会话切换器** ✅ | 终端里切会话要 `/resume`（`builtin.py:437`），是一个列表文本 | 会话切换面板 | 小 |
@@ -402,8 +404,8 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
 
 ### 5.3 `AGENTS.md` 会话中途改了不生效 ✅ 已修
 
-`src/coderagent/core/context.py:109-110` 在 `ContextEngine` 构造时读一次指令文件，
-之后只追加**子目录**的指令（`context.py:392-395`）。项目根目录的 `AGENTS.md`
+`src/coderagent/core/context.py:118-120` 在 `ContextEngine` 构造时读一次指令文件，
+之后只追加**子目录**的指令（`context.py:532-544`）。项目根目录的 `AGENTS.md`
 在会话开始后被修改，模型这一轮还看的是旧内容。
 
 Codex 的做法是每次会话开始、每次 compact 之后重读。**工作量：小**（把「读指令」
@@ -418,7 +420,7 @@ Codex 的做法是每次会话开始、每次 compact 之后重读。**工作量
 ### 5.4 hook 事件只有 6 个 ✅ 已修
 
 现在有：`PreToolUse`、`PostToolUse`、`UserPromptSubmit`、`Stop`、`SessionStart`、`SessionEnd`
-（`src/coderagent/tools/executor.py:104,169`、`src/coderagent/core/loop.py:145,364,372,376`）。
+（`src/coderagent/tools/executor.py:104,169`、`src/coderagent/core/loop.py:232,301,491,495`）。
 
 Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 对本项目特别有用——
 压缩是 coderagent 的核心机制之一（见[上下文专题](coderagent-context.md)），

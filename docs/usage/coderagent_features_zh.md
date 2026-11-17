@@ -582,7 +582,7 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
   整段对话。
 - **消息的顺序**——系统提示词、指令文件、todo、会话摘要，然后是历史。
 - **指令文件会裁**——一个文件最多 32768 字节（`context.project_doc_max_bytes`）。
-  太长的裁短，而且告诉 agent 它没看全。
+  太长的裁短，而且告诉 agent 它没看全。记忆文件同样裁。
 
 ### 用法例子
 
@@ -633,8 +633,8 @@ token 的计数：装了 tiktoken 是精确的，没装是估的
 - **用户记忆**——`~/.coderagent/CLAUDE.md`，记用户的偏好。
 - **偏好要等人确认**——先落在 `pending-memory.md`，`/memory confirm` 才写
   进去。
-- **指令文件**——项目的 `AGENTS.md` 和 `CLAUDE.md`、用户的 `CLAUDE.md`，
-  agent 都读。
+- **指令文件**——仓库和项目的 `AGENTS.md` 与 `CLAUDE.md`、用户的 `CLAUDE.md`，
+  agent 都读。从子目录里启动，仓库根的规则照样读得到。
 - **可以关掉**——`memory.enabled`。
 
 ### 用法例子

@@ -19,7 +19,12 @@ class ScriptedModel:
         self.calls: list[list[dict]] = []
 
     def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:
-        self.calls.append(list(messages))
+        """The call is recorded as it was: the messages are copied, not shared.
+
+        The caller changes the history in place, and the record has to show what
+        the model saw, not what the history looks like later.
+        """
+        self.calls.append([dict(message) for message in messages])
         if self.side_effect is not None:
             return self.side_effect(messages)
         if not self.responses:

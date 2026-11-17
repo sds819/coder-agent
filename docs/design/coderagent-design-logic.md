@@ -70,12 +70,12 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 
 - `SessionStore.rebuild()` 重放全部事件，重建 `state` / `turn_count` / `cwd` / `todos`
   （`src/coderagent/core/session.py:105`）。
-- `ContextEngine.restore()` 重放日志，重建历史和摘要（`src/coderagent/core/context.py:87`）。
+- `ContextEngine.restore()` 重放日志，重建历史和摘要（`src/coderagent/core/context.py:143`）。
 - `telemetry.collect()` 重放日志，算出成本和指标（`src/coderagent/core/telemetry.py:68`）。
 
 **代价**：日志里同一条 TOOL_RESULT 会被写**两次**——`ToolExecutor._publish()` 写一次
 （带 diff，`src/coderagent/tools/executor.py:181`），`ContextEngine._record()` 又写一次
-（带 messages，`src/coderagent/core/context.py:123`）。看起来是冗余，其实是两种用途：
+（带 messages，`src/coderagent/core/context.py:197`）。看起来是冗余，其实是两种用途：
 前者给 UI（要 diff），后者给重放（要 messages）。两个 payload 结构不同，不能合成一条。
 
 **收益**：新增一个 UI（web 版就是这样加的）**不需要碰核心**；fork 就是复制事件文件
@@ -90,7 +90,7 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 
 **问题**：terminal、headless、web 三种界面，如果各写一套循环，就是三份会漂移的实现。
 
-**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:139`），
+**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:186`），
 它是同步函数。界面通过 `EventBus` 订阅事件（`src/coderagent/core/events.py:65`）。
 
 TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 版额外起一个工作线程
@@ -102,7 +102,7 @@ TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 
 心 async 化。
 
 **关键细节**：`_publish()` = 广播 + 写日志（持久），`_notify()` = 只广播（瞬时）
-（`src/coderagent/core/loop.py:413` 和 `:409`）。所有需要重放的东西走 `_publish`，
+（`src/coderagent/core/loop.py:553` 和 `:549`）。所有需要重放的东西走 `_publish`，
 流式增量走 `_notify`。这两个函数的区别，就是「2.1 那条决策」在代码里的落点。
 
 **EventBus 是宽容的**：一个订阅者抛异常，只会被记日志，不会影响发布者
@@ -121,7 +121,7 @@ hook(PreToolUse) → 权限求值 → ask/deny → 执行
 ```
 
 而且**执行器是唯一的执行路径**——`AgentLoop` 只调 `executor.plan()` 和
-`executor.execute()`（`src/coderagent/core/loop.py:224-226`），自己不碰工具。
+`executor.execute()`（`src/coderagent/core/loop.py:335`），自己不碰工具。
 
 **为什么 hook 在权限之前**：hook 可以改参数（`updated_input`），**被改写之后的那条命令**
 才是被批准/被拒的那条。反过来就不成立了。
@@ -150,7 +150,7 @@ observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不�
    │                       tools/executor.py:51
    │
    ├─ _publish(TOOL_CALL)  ← 执行之前。全部 action 和它们的参数
-   │                       core/loop.py:225
+   │                       core/loop.py:334
    │
    ├─ _prepare()           查注册表 → PreToolUse hook → 权限 → 审批
    │                       tools/executor.py:93
@@ -249,12 +249,12 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
   `collect(events).total_cost`（`src/coderagent/core/session.py:130`），
   不是某个计数器累加出来的。子 agent 的成本会**记回主 gateway**
   （`src/coderagent/core/subagent.py:220`），压缩摘要如果用了另一个模型也会记回主 gateway
-  （`src/coderagent/core/context.py:225`）。所以 `/cost`、`coder export`、session 总额
+  （`src/coderagent/core/context.py:341`）。所以 `/cost`、`coder export`、session 总额
   报的是同一个数。
 - 模式（mode）是**共享的可变对象**。`web` 的 `set_mode()` 直接改
   `loop.executor.policy.mode`（`src/coderagent/web/sessions.py:271`），**立刻生效**，
   不需要重建会话。因为执行器问的就是这个对象。
-- 同时，`_mode_text()` **每次组上下文都重新读**权限模式（`src/coderagent/core/context.py:162`），
+- 同时，`_mode_text()` **每次组上下文都重新读**权限模式（`src/coderagent/core/context.py:243`），
   所以模型每轮都被告知当前模式。模式不是写死在 system prompt 里的。
 
 ### 3.3 fail-open 与 fail-closed 的分界
@@ -302,7 +302,7 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 「不许动这些路径」，不该被仓库里的一份配置覆盖掉。仓库可能是别人 clone 下来的。
 
 指令文件也是用户优先：`~/.coderagent/CLAUDE.md` 在前，项目 `AGENTS.md`/`CLAUDE.md` 在后
-（`src/coderagent/core/instructions.py:35`）。
+（`src/coderagent/core/instructions.py:66`）。
 
 ### 4.2 `within_bounds()` 不接受 `allow` 规则
 
@@ -418,7 +418,7 @@ plan/readonly 模式下写工具 deny，acceptEdits 模式下写工具 allow 而
 **问题**：上下文是有限的，但对话是无界的。
 
 **决策**：**组装的顺序固定**（`build_messages()`，
-`src/coderagent/core/context.py:145`）：
+`src/coderagent/core/context.py:219`）：
 
 ```
 system → 权限模式说明 → 指令+记忆+todos → 摘要 → 历史
@@ -436,10 +436,10 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **为什么结构化**：自由文本摘要会丢掉「改了哪些文件」「还剩什么问题」。
 结构化字段让压缩后的会话**仍然可查询**。而且 `files_touched` 有一个专门的校验：
 如果摘要说没碰过文件，但历史里明明有写操作，就判定摘要失败，改用
-`conservative_summary()`（判定在 `src/coderagent/core/context.py:284-306` 的 `_summarize()`，
+`conservative_summary()`（判定在 `src/coderagent/core/context.py:452-478` 的 `_summarize()`，
 兜底摘要本身在 `src/coderagent/core/summarize.py:257`）。
 
-**切点在轮边界**（`_cut_index()`，`src/coderagent/core/context.py:252`）：
+**切点在轮边界**（`_cut_index()`，`src/coderagent/core/context.py:409`）：
 两个规则取大者——保留最近 N 轮，或保留上下文窗口的 X% 的 token。
 「取大者」是为了兼顾「很多小轮」和「几个大轮」两种情况。
 
@@ -456,10 +456,10 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **模型切换的一个坑**：路由每轮可能重建 backend，所以比较时必须比**解析后的真名**
 而不是别名，否则永远不相等 → 每轮换一次 backend（这个问题真实踩过）。
 现在 `loop._route()` 先 `backend_for(name)` 再比 `backend.model_name`
-（`src/coderagent/core/loop.py:321`）。
+（`src/coderagent/core/loop.py:442`）。
 
 **上下文溢出的兜底**：provider 报 context 超长 → `force_compact()` → 重试一次
-（`src/coderagent/core/loop.py:381` 的 `_query`）。判定靠异常类型 + 文本标记
+（`src/coderagent/core/loop.py:521` 的 `_query`）。判定靠异常类型 + 文本标记
 双保险（`src/coderagent/models/gateway.py:12`）。
 
 ### L5 界面层
@@ -494,27 +494,27 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
 ```
 用户输入
   │
-  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:145
+  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:232
   │    原文被记在 payload["original"] 里，不丢
   │
-  ├─ context.append(user message) → 写日志           core/context.py:107
+  ├─ context.append(user message) → 写日志           core/context.py:166
   │
-  └─ while True:                                    core/loop.py:176
+  └─ while True:                                    core/loop.py:269
        │
-       ├─ maybe_compact()   上下文快满了就压          core/loop.py:191
-       ├─ _route()          这轮用哪个模型            core/loop.py:192
-       ├─ _query()          调模型，超限就压缩重试    core/loop.py:193
+       ├─ maybe_compact()   上下文快满了就压          core/loop.py:284
+       ├─ _route()          这轮用哪个模型            core/loop.py:285
+       ├─ _query()          调模型，超限就压缩重试    core/loop.py:286
        │
        ├─ 有 tool_calls？
        │    ├─ executor.plan()      解析成动作        tools/executor.py:51
-       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:225
+       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:334
        │    ├─ executor.execute()   → _prepare()      tools/executor.py:93
        │    │      查表 → hook → 权限 → ask/deny → 跑
        │    │        拒绝不是异常，是一行 Error:
        │    └─ _publish(TOOL_RESULT) 写日志（带 diff）
        │
        ├─ 没 tool_calls？
-       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:208
+       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:301
        │
        └─ 循环条件：取消 / max_turns / cost_limit
 ```
@@ -522,7 +522,7 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
 有几个地方值得停下来看：
 
 - **循环条件的检查在每一轮的开头**，不在末尾。所以「取消」最多延迟一轮。
-- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:185`）。
+- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:278`）。
   子 agent 花的钱也算在这个会话头上——用户看到的「这次会话花了多少」是完整的。
 - **Stop hook 最多拦 3 次**。拦多了模型会陷入「解释为什么该停」的循环。
 - **审批的等待是在执行器里同步阻塞的**。TUI 是异步的，所以 `TUIAprover` 用
