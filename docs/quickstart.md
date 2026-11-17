@@ -40,7 +40,7 @@
 
     === "pipx (isolated)"
 
-        Use pipx ([installation](https://pipx.pypa.io/stable/installation/)) to directly run the `mini` CLI.
+        Use pipx ([installation](https://pipx.pypa.io/stable/how-to/install-pipx.html)) to directly run the `mini` CLI.
         Use this if you're only interested in the CLI but don't need python bindings (`mini` will be installed in an anonymous virtual environment).
 
         Quick install + run:

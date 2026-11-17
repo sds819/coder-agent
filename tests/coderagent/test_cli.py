@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -71,12 +72,22 @@ def test_text_output_shows_the_assistant_message(tmp_path, monkeypatch):
     assert "stop_reason=end_turn" in output
 
 
-def test_help_is_available():
-    result = CliRunner().invoke(app, ["--help"])
+def _help() -> str:
+    """The help of the app, as the text of it.
+
+    The terminal is made wide and tall on purpose: the options are wrapped
+    and cut away when it is small, and the colors break the names apart.
+    """
+    result = CliRunner().invoke(app, ["--help"], env={"COLUMNS": "200", "LINES": "100"})
     assert result.exit_code == 0
-    assert "--output-format" in result.output
-    assert "--profile" in result.output
-    assert "--output-schema" in result.output
+    return re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+
+
+def test_help_is_available():
+    help_text = _help()
+    assert "--output-format" in help_text
+    assert "--profile" in help_text
+    assert "--output-schema" in help_text
 
 
 def test_the_answer_fits_the_schema(tmp_path, monkeypatch):
@@ -275,8 +286,7 @@ def test_the_history_is_written_by_default(tmp_path, monkeypatch):
 
 
 def test_the_option_is_in_the_help():
-    result = CliRunner().invoke(app, ["--help"])
-    assert "--output-last-message" in result.output
+    assert "--output-last-message" in _help()
 
 
 def test_the_program_of_the_user_is_told_that_the_turn_is_over(tmp_path, monkeypatch):
