@@ -82,7 +82,7 @@ dev = [
 ]
 
 contree = [
-    "contree-sdk>=0.2.0",
+    "contree-sdk>=0.2.0,<0.3",
 ]
 
 web = [
@@ -289,6 +289,8 @@ disable = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+norecursedirs = ["evals", "*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}"]
+# The tasks of the eval harness carry their own tests. They are not ours.
 markers = [
     "slow: marks tests as slow (deselect with '-k \"not slow\"')",
 ]
