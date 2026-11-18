@@ -86,6 +86,10 @@ The model configuration, in a form:
 | Routing rules | `model.routing_rules` |
 | Extra parameters | Everything else of `model.model_kwargs` |
 
+The parameters of the call itself (`model`, `messages`, `tools`, `stream`,
+`stream_options`) belong to the agent: the page refuses them instead of
+writing a file that the agent would not start with.
+
 Under every field is the layer it comes from: `defaults`, `user` or `env`.
 The table at the bottom shows every layer, with the secrets taken out.
 The page reads the **configuration files**; the `-m` and `-c` of the command

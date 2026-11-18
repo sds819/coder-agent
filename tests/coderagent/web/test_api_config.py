@@ -413,3 +413,29 @@ def test_a_permission_that_differs_from_the_default_is_written(make_client):
 
     assert _user_file()["permissions"]["mode"] == "plan"
     assert _user_file()["permissions"]["deny_paths"] == ["/etc"]
+
+
+def test_the_page_refuses_a_parameter_of_the_call(make_client):
+    """The page may not write a file that the agent refuses to start with."""
+    client = make_client()
+
+    response = client.put(
+        "/api/config/model", json={"model_name": "deepseek/deepseek-flash", "model_kwargs": {"model": "other/model"}}
+    )
+
+    assert response.status_code == 400
+    assert "must not have 'model'" in response.json()["detail"]
+    assert "model" not in _user_file()
+
+
+def test_the_test_of_the_connection_reports_a_parameter_of_the_call(make_client):
+    """The panel tries the form out without saving it: it must not crash either."""
+    client = make_client()
+
+    answer = client.post(
+        "/api/config/model/test",
+        json={"model_name": "deepseek/deepseek-flash", "model_kwargs": {"model": "other/model"}},
+    ).json()
+
+    assert answer["ok"] is False
+    assert "must not have 'model'" in answer["error"]

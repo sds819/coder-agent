@@ -267,6 +267,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor empty. | Use `default_end`, or remove the line. |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` is not one of `minimal`, `low`, `medium`, `high`. | Use one of those four, or remove the line for the default of the model. |
 | `unknown verbosity '{level}'` | `verbosity` is not one of `low`, `medium`, `high`. | Use one of those three, or remove the line for the habit of the model. |
+| `'model_kwargs' must not have '{key}'` | `model_kwargs` has a parameter of the call: `model`, `messages`, `tools`, `stream` or `stream_options`. | Remove it: the agent sets those itself. |
 | `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; it is relative to the working directory. |
 | `the file is not valid YAML: {error}` | The alias file cannot be parsed. | Fix the YAML. |
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |

@@ -117,3 +117,34 @@ def test_a_wrong_key_fails_at_once_and_does_not_wait_for_the_retries(monkeypatch
     with pytest.raises(litellm.exceptions.AuthenticationError):
         LiteLLMBackend("test/model")._open_stream([{"role": "user", "content": "hi"}], {})
     assert len(calls) == 1
+
+
+def test_a_parameter_of_the_call_may_not_be_set_by_the_user():
+    """The parameters of the call belong to the agent: a user may not set them."""
+    with pytest.raises(ValueError, match="must not have 'model'"):
+        LiteLLMBackend("test/model", model_kwargs={"model": "other/model"})
+
+
+def test_the_parameters_of_the_alias_file_are_checked_too(tmp_path):
+    path = tmp_path / "litellm_config.yaml"
+    path.write_text(
+        "model_list:\n  - model_name: my-alias\n    litellm_params:\n      model: openai/x\n      stream: false\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="must not have 'stream'"):
+        LiteLLMBackend("my-alias", litellm_config=str(path))
+
+
+def test_the_parameters_of_the_call_are_the_ones_of_the_agent(monkeypatch):
+    """The tools and the stream are the ones of the session, whatever the user wrote."""
+    calls: list[dict] = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        return iter([])
+
+    monkeypatch.setattr(litellm, "completion", completion)
+    backend = LiteLLMBackend("test/model", model_kwargs={"api_key": "sk-x"})
+    list(backend.query_stream([{"role": "user", "content": "hi"}]))
+    assert calls[0]["stream"] is True
+    assert calls[0]["stream_options"] == {"include_usage": True}

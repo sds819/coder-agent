@@ -78,6 +78,23 @@ def test_invalid_value_is_rejected(tmp_path, monkeypatch):
         load_config(["agent.max_turns=not-a-number"], cwd=tmp_path)
 
 
+def test_a_parameter_of_the_call_may_not_be_set_in_the_configuration(tmp_path, monkeypatch):
+    """The model and the messages of the call belong to the agent."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    with pytest.raises(ValidationError, match="must not have 'model'"):
+        load_config(["model.model_kwargs.model=other/model"], cwd=tmp_path)
+
+
+def test_the_error_of_a_bad_parameter_does_not_show_the_key(tmp_path, monkeypatch):
+    """The error goes to a terminal and to a log: the key may not be in it."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    with pytest.raises(ValidationError) as error:
+        load_config(
+            ["model.model_kwargs.api_key=sk-secret-value", "model.model_kwargs.model=other/model"], cwd=tmp_path
+        )
+    assert "sk-secret-value" not in str(error.value)
+
+
 def test_config_defaults_are_valid():
     assert Config().tools.bash_timeout == 120
 

@@ -243,6 +243,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end`，也不是空的。 | 用 `default_end`，或者删掉这一行。 |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` 不是 `minimal`、`low`、`medium`、`high` 里的一个。 | 用那四个里的一个，或者删掉这一行（用模型的默认）。 |
 | `unknown verbosity '{level}'` | `verbosity` 不是 `low`、`medium`、`high` 里的一个。 | 用那三个里的一个，或者删掉这一行（用模型自己的习惯）。 |
+| `'model_kwargs' must not have '{key}'` | `model_kwargs` 里有这次调用的参数：`model`、`messages`、`tools`、`stream` 或 `stream_options`。 | 删掉它：这些是 agent 自己设的。 |
 | `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径，它是相对于工作目录的。 |
 | `the file is not valid YAML: {error}` | 别名文件解析不了。 | 修 YAML。 |
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |

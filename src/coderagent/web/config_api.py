@@ -16,6 +16,7 @@ from litellm.utils import get_llm_provider
 
 from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
 from coderagent.config.schema import ModelConfig, PermissionConfig
+from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
@@ -325,6 +326,8 @@ def write_user_model(payload: dict) -> Path:
             if key in ("api_key", "api_base"):
                 continue
             kwargs[str(key)] = value
+        check_reserved(kwargs)
+        """The page may not write a file that breaks the agent: the agent refuses it at the start."""
 
     if kwargs:
         model["model_kwargs"] = kwargs
@@ -480,15 +483,15 @@ def test_connection(effective: dict) -> dict[str, Any]:
         },
         "file": check_litellm_config(effective.get("litellm_config", ""), effective.get("requested", "")),
     }
-    backend = LiteLLMBackend(
-        name,
-        model_kwargs=kwargs,
-        reasoning_effort=effective.get("reasoning_effort", ""),
-        max_retries=1,
-    )
     """A wrong key should fail right away, not after ten tries."""
     started = time.time()
     try:
+        backend = LiteLLMBackend(
+            name,
+            model_kwargs=kwargs,
+            reasoning_effort=effective.get("reasoning_effort", ""),
+            max_retries=1,
+        )
         message = backend.query([{"role": "user", "content": "ping"}], max_tokens=1)
     except Exception as error:
         report["error"] = f"{type(error).__name__}: {error}"

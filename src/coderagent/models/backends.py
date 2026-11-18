@@ -7,6 +7,7 @@ from typing import Any
 
 import litellm
 
+from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import translate
 from coderagent.models.streaming import ModelEvent, ToolCallAccumulator, message_from_events
@@ -65,7 +66,10 @@ class LiteLLMBackend:
         """The name may be an alias of the model list of a litellm config file."""
         name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
         self.model_name = name
-        self.model_kwargs = params | (model_kwargs or {})
+        merged = params | (model_kwargs or {})
+        check_reserved(merged)
+        """The parameters of the call belong to the agent: a user may not set them."""
+        self.model_kwargs = merged
         if reasoning_effort:
             """The thinking budget, in the words of the provider of this model."""
             for key, value in translate(name, reasoning_effort).items():

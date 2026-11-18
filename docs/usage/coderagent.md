@@ -261,7 +261,10 @@ sandbox:
 ### The model
 
 `model.model_name` is the model of the agent. `model.model_kwargs` goes to the
-provider as it is. `model.routing` maps a purpose to a model:
+provider as it is — except for `model`, `messages`, `tools`, `stream` and
+`stream_options`: those belong to the call of the agent, and a configuration
+that has one of them is refused at the start instead of breaking the call at
+runtime. `model.routing` maps a purpose to a model:
 
 | Purpose | What it is for |
 |---|---|

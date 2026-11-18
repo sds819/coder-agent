@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from coderagent.core.os_sandbox import MODES
 from coderagent.core.session import PERSISTENCES
 from coderagent.core.shell_env import INHERITS
+from coderagent.models.call import check_reserved
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
 
@@ -67,6 +68,13 @@ class ModelConfig(BaseModel):
     def _known_effort(cls, value: str) -> str:
         if value and value not in EFFORTS:
             raise ValueError(f"unknown reasoning effort '{value}'. Use one of: {', '.join(EFFORTS)}.")
+        return value
+
+    @field_validator("model_kwargs")
+    @classmethod
+    def _no_reserved_parameters(cls, value: dict) -> dict:
+        check_reserved(value)
+        """The parameters of the call belong to the agent: a user may not set them."""
         return value
 
     @field_validator("verbosity")
@@ -278,6 +286,9 @@ class TelemetryConfig(BaseModel):
 
 
 class Config(BaseModel):
+    model_config = ConfigDict(hide_input_in_errors=True)
+    """The values that went wrong are not shown: a key may be among them."""
+
     model: ModelConfig = Field(default_factory=ModelConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
     tools: ToolConfig = Field(default_factory=ToolConfig)
