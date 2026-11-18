@@ -124,6 +124,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 
 - **只写用户级文件** `~/.coderagent/config.yaml`（或者 `$MSWEA_CODER_HOME/config.yaml`）。
   项目级的 `.coderagent/config.yaml` **永远不写**——它会进 git。文件里页面不认识的段落原样保留。
+- **默认值不写进文件**。一个设置跟出厂默认一样时，文件里就**没有这一项**——这样以后改了默认，
+  没动过这个设置的用户也能拿到新的默认值。老版本钉在文件里的默认值，下次保存时会被去掉。
 - **对新会话生效**。跑着的服务保留启动时的配置，新会话建 loop 时重新读一遍文件。
   当前这个会话想立刻换模型，用 `/model <名字>`。
 - **环境变量里的 key 也算数**。页面先读配置文件，再读环境：`DEEPSEEK_API_KEY` 这类变量

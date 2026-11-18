@@ -14,7 +14,8 @@ from typing import Any
 import yaml
 from litellm.utils import get_llm_provider
 
-from coderagent.config.loader import config_layers, load_config
+from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
+from coderagent.config.schema import ModelConfig, PermissionConfig
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
@@ -195,11 +196,32 @@ def permissions_view(cwd: Path, *, server_mode: str = "") -> dict[str, Any]:
     }
 
 
+def _default_model() -> dict[str, Any]:
+    """The model settings of a fresh installation: the ones the user never wrote.
+
+    A setting that is this one is not written to the user file: the shipped
+    default may change, and a user who never touched the setting must get the
+    new one.
+    """
+    defaults = yaml.safe_load(DEFAULTS_PATH.read_text(encoding="utf-8")) or {}
+    return {**ModelConfig().model_dump(), **(defaults.get("model") or {})}
+
+
+def _keep(model: dict, key: str, value: Any, default: Any) -> None:
+    """Write a setting, or drop it when it is the default."""
+    if value == default:
+        model.pop(key, None)
+    else:
+        model[key] = value
+
+
 def write_user_permissions(payload: dict) -> Path:
     """Merge the permission settings into the user level configuration file.
 
     The rules are not touched: they are edited by the approvals of the chat
-    page, not here.
+    page, not here. A setting that is the shipped default is not written at
+    all, so that a later change of the default reaches the user who never
+    touched it.
     """
     path = user_config_path()
     data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
@@ -208,23 +230,27 @@ def write_user_permissions(payload: dict) -> Path:
     permissions = data.get("permissions")
     if not isinstance(permissions, dict):
         permissions = {}
+    defaults = PermissionConfig().model_dump()
 
     mode = payload.get("mode")
     if isinstance(mode, str) and mode.strip():
         if mode.strip() not in PERMISSION_MODES:
             raise ValueError(f"unknown permission mode '{mode}'")
-        permissions["mode"] = mode.strip()
+        _keep(permissions, "mode", mode.strip(), defaults["mode"])
     for field in ("deny_paths", "include_dirs"):
         values = payload.get(field)
         if isinstance(values, list):
-            permissions[field] = [str(value).strip() for value in values if str(value).strip()]
+            _keep(permissions, field, [str(value).strip() for value in values if str(value).strip()], defaults[field])
     network = payload.get("network")
     if isinstance(network, str) and network.strip():
         if network.strip() not in NETWORK_POLICIES:
             raise ValueError(f"unknown network policy '{network}'")
-        permissions["network"] = network.strip()
+        _keep(permissions, "network", network.strip(), defaults["network"])
 
-    data["permissions"] = permissions
+    if permissions:
+        data["permissions"] = permissions
+    else:
+        data.pop("permissions", None)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return path
@@ -234,7 +260,9 @@ def write_user_model(payload: dict) -> Path:
     """Merge the model settings into the user level configuration file.
 
     The project level file is never written: it is in the repository. The
-    sections the page does not know about are kept as they are.
+    sections the page does not know about are kept as they are. A setting that
+    is the shipped default is not written at all, so that a later change of the
+    default reaches the user who never touched it.
     """
     path = user_config_path()
     data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
@@ -246,16 +274,14 @@ def write_user_model(payload: dict) -> Path:
     kwargs = model.get("model_kwargs")
     if not isinstance(kwargs, dict):
         kwargs = {}
+    defaults = _default_model()
 
     name = payload.get("model_name")
-    if isinstance(name, str) and name.strip():
-        model["model_name"] = name.strip()
+    if isinstance(name, str):
+        _keep(model, "model_name", name.strip(), defaults["model_name"])
     aliases = payload.get("litellm_config")
     if isinstance(aliases, str):
-        if aliases.strip():
-            model["litellm_config"] = aliases.strip()
-        else:
-            model.pop("litellm_config", None)
+        _keep(model, "litellm_config", aliases.strip(), defaults["litellm_config"])
     base = payload.get("api_base")
     if isinstance(base, str):
         if base.strip():
@@ -270,38 +296,29 @@ def write_user_model(payload: dict) -> Path:
         else:
             kwargs.pop("api_key", None)
     if payload.get("max_retries") is not None:
-        model["max_retries"] = int(payload["max_retries"])
+        _keep(model, "max_retries", int(payload["max_retries"]), defaults["max_retries"])
     cache = payload.get("set_cache_control")
     if cache is not None:
-        model["set_cache_control"] = cache or None
+        _keep(model, "set_cache_control", cache or None, defaults["set_cache_control"])
     effort = payload.get("reasoning_effort")
     if isinstance(effort, str):
         if effort.strip() and effort.strip() not in EFFORTS:
             raise ValueError(f"unknown reasoning effort '{effort}'")
-        if effort.strip():
-            model["reasoning_effort"] = effort.strip()
-        else:
-            model.pop("reasoning_effort", None)
+        _keep(model, "reasoning_effort", effort.strip(), defaults["reasoning_effort"])
     verbosity = payload.get("verbosity")
     if isinstance(verbosity, str):
         if verbosity.strip() and verbosity.strip() not in VERBOSITIES:
             raise ValueError(f"unknown verbosity '{verbosity}'")
-        if verbosity.strip():
-            model["verbosity"] = verbosity.strip()
-        else:
-            model.pop("verbosity", None)
+        _keep(model, "verbosity", verbosity.strip(), defaults["verbosity"])
     review = payload.get("review_model")
     if isinstance(review, str):
-        if review.strip():
-            model["review_model"] = review.strip()
-        else:
-            model.pop("review_model", None)
+        _keep(model, "review_model", review.strip(), defaults["review_model"])
     routing = payload.get("routing")
     if isinstance(routing, dict):
-        model["routing"] = {str(key): str(value) for key, value in routing.items()}
+        _keep(model, "routing", {str(key): str(value) for key, value in routing.items()}, defaults["routing"])
     rules = payload.get("routing_rules")
     if isinstance(rules, list):
-        model["routing_rules"] = [rule for rule in rules if isinstance(rule, dict)]
+        _keep(model, "routing_rules", [rule for rule in rules if isinstance(rule, dict)], defaults["routing_rules"])
     extra = payload.get("model_kwargs")
     if isinstance(extra, dict):
         for key, value in extra.items():
@@ -309,8 +326,14 @@ def write_user_model(payload: dict) -> Path:
                 continue
             kwargs[str(key)] = value
 
-    model["model_kwargs"] = kwargs
-    data["model"] = model
+    if kwargs:
+        model["model_kwargs"] = kwargs
+    else:
+        model.pop("model_kwargs", None)
+    if model:
+        data["model"] = model
+    else:
+        data.pop("model", None)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return path

@@ -128,6 +128,11 @@ result is the same four lines as the test of the form.
 The sections the page does not know about are kept as they are; the comments
 in the file are lost.
 
+A setting that is the shipped default is **not written at all**: a field that
+holds the default is left out of the file, so that a later change of the default
+reaches a user who never touched it. A setting that was pinned in an older
+version is dropped the next time the page is saved.
+
 **A key in the environment is in the page.** The page reads the configuration
 files first and then the environment: a provider key that comes from the
 environment (`DEEPSEEK_API_KEY` and the like) is shown like any other key, and

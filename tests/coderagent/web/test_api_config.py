@@ -1,6 +1,7 @@
 """The model configuration page: the layers, the secrets and the write back."""
 
 import pytest
+import yaml
 
 pytest.importorskip("fastapi")
 
@@ -346,3 +347,69 @@ def test_an_empty_model_of_the_review_removes_it(make_client):
     client.put("/api/config/model", json={"review_model": ""})
 
     assert client.get("/api/config").json()["model"]["review_model"] == ""
+
+
+def _user_file() -> dict:
+    """The configuration file of the user, as it is on the disk."""
+    path = config_home() / "config.yaml"
+    return yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def test_the_defaults_are_not_written_to_the_user_file(make_client):
+    """A setting that is the default must not be pinned: the default may change."""
+    client = make_client()
+
+    client.put(
+        "/api/config/model",
+        json={
+            "model_name": "deepseek/deepseek-flash",
+            "max_retries": 3,
+            "set_cache_control": None,
+            "routing": {},
+            "routing_rules": [],
+            "model_kwargs": {},
+        },
+    )
+
+    assert _user_file()["model"] == {"model_name": "deepseek/deepseek-flash"}
+
+
+def test_a_setting_that_differs_from_the_default_is_written(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"max_retries": 5, "set_cache_control": "default_end"})
+
+    assert _user_file()["model"]["max_retries"] == 5
+    assert _user_file()["model"]["set_cache_control"] == "default_end"
+
+
+def test_a_pinned_default_is_dropped_when_the_setting_goes_back(make_client):
+    """A file of an older version has the defaults written in it: they go away."""
+    user_file = config_home() / "config.yaml"
+    user_file.parent.mkdir(parents=True, exist_ok=True)
+    user_file.write_text("model:\n  max_retries: 9\n", encoding="utf-8")
+    client = make_client()
+
+    client.put("/api/config/model", json={"max_retries": 3})
+
+    assert "max_retries" not in (_user_file().get("model") or {})
+
+
+def test_the_permission_defaults_are_not_written_to_the_user_file(make_client):
+    client = make_client()
+
+    client.put(
+        "/api/config/permissions",
+        json={"mode": "default", "network": "allow", "deny_paths": [], "include_dirs": []},
+    )
+
+    assert "permissions" not in _user_file()
+
+
+def test_a_permission_that_differs_from_the_default_is_written(make_client):
+    client = make_client()
+
+    client.put("/api/config/permissions", json={"mode": "plan", "deny_paths": ["/etc"]})
+
+    assert _user_file()["permissions"]["mode"] == "plan"
+    assert _user_file()["permissions"]["deny_paths"] == ["/etc"]
