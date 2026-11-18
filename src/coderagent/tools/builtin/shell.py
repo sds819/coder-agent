@@ -132,7 +132,10 @@ class BashTool:
         "properties": {
             "command": {"type": "string", "description": "The command to run."},
             "timeout": {"type": "integer", "description": "Timeout in seconds. Defaults to the configured timeout."},
-            "run_in_background": {"type": "boolean", "description": "Start the command and return a task id at once."},
+            "run_in_background": {
+                "type": "boolean",
+                "description": "Start the command and return a task id at once. Only a local environment can do this.",
+            },
         },
         "required": ["command"],
     }
@@ -177,6 +180,20 @@ class BashTool:
         return env.execute({"command": command}, cwd=cwd, timeout=timeout)
 
     def _start_background(self, command: str, ctx: ToolContext) -> ToolResult:
+        """Start a command that goes on while the agent does something else.
+
+        The command runs in the environment of the session. A container cannot
+        start a command in the background, so it is refused there: the command
+        would run on the machine of the user, outside of the boundary of the
+        session.
+        """
+        env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
+        if not isinstance(env, LocalEnvironment):
+            return ToolResult(
+                "Error: a background task cannot run in this environment: it would run outside of it. "
+                "Run the command in the foreground instead.",
+                is_error=True,
+            )
         task_id = uuid.uuid4().hex[:8]
         directory = Path(tempfile.mkdtemp(prefix="coderagent-bg-"))
         log_path = directory / "output.log"
@@ -186,7 +203,7 @@ class BashTool:
             shell=True,
             text=True,
             cwd=str(ctx.cwd),
-            env=ctx.env.environment() if isinstance(ctx.env, LocalEnvironment) else None,
+            env=env.environment(),
             encoding="utf-8",
             errors="replace",
             stdout=handle,

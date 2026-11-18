@@ -1,9 +1,20 @@
+import os
 import time
 
 import pytest
 
 from coderagent.testing.factory import build_context
 from coderagent.tools.builtin.shell import BashKillTool, BashOutputTool, BashTool, CodingEnvironment, trim_output
+
+
+class Container:
+    """An environment that is not local: the commands run somewhere else."""
+
+    def __init__(self, cwd):
+        self.cwd = cwd
+
+    def execute(self, action, cwd="", timeout=30):
+        return {"output": "in the container", "returncode": 0}
 
 
 @pytest.fixture
@@ -73,6 +84,33 @@ def test_a_background_task_can_be_read_and_killed(ctx):
 def test_the_background_tools_reject_unknown_tasks(ctx):
     assert BashOutputTool().run({"task_id": "nope"}, ctx).is_error
     assert BashKillTool().run({"task_id": "nope"}, ctx).is_error
+
+
+def test_a_background_task_does_not_run_outside_the_environment(ctx, tmp_path):
+    """A container cannot start a command in the background, so it is refused.
+
+    Otherwise the command would run on the machine of the user, outside of the
+    boundary of the session.
+    """
+    marker = tmp_path / "marker.txt"
+    ctx.env = Container(tmp_path)
+    result = BashTool().run({"command": f"touch {marker}", "run_in_background": True}, ctx)
+    assert result.is_error
+    assert "outside of it" in result.content
+    time.sleep(0.5)
+    assert not marker.exists()
+
+
+def test_a_background_task_runs_with_the_environment_of_the_session(ctx, tmp_path, monkeypatch):
+    """The command gets the environment of the session, not the one of the user."""
+    monkeypatch.setenv("CODERAGENT_SECRET", "leak")
+    env = CodingEnvironment(cwd=str(tmp_path))
+    env.env_override = {key: value for key, value in os.environ.items() if key != "CODERAGENT_SECRET"}
+    ctx.env = env
+    started = BashTool().run({"command": "echo [$CODERAGENT_SECRET]", "run_in_background": True}, ctx)
+    time.sleep(0.5)
+    output = BashOutputTool().run({"task_id": started.metadata["task_id"]}, ctx).content
+    assert "[]" in output
 
 
 def test_a_running_command_is_stopped_when_the_turn_is_interrupted(ctx):

@@ -422,7 +422,7 @@ The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 | `glob` | The files that match a pattern, e.g. `**/*.py`. |
 | `grep` | Search for a regular expression. `glob` limits the files. |
 | `ls` | List a directory. `depth: -1` lists everything below it. |
-| `bash` | Run a command. `run_in_background` returns a task id at once. |
+| `bash` | Run a command. `run_in_background` returns a task id at once. A local environment only. |
 | `bash_output` | The output of a background command. |
 | `bash_kill` | Stop a background command. |
 | `todo_write` | The task list of the agent. Shown at the bottom of the interface. |

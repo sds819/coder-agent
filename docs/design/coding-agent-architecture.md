@@ -267,7 +267,7 @@ class ToolContext:
 - **`read`**：支持 `offset`/`limit`，默认带行号（`cat -n` 风格），大文件自动截断并提示。
 - **`grep`**：**纯 Python 实现**（不用 `rg`，也不退到 `grep -r`——`rg` 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。
 - **`glob`**：按 pattern 排序返回路径列表，超出上限截断。
-- **`bash`**：默认 timeout 120s（`tools.bash_timeout`）；命令**默认是阻塞的**，跑完（或超时）才返回。要放到后台得让模型显式传 `run_in_background: true`，再用 `bash_output` / `bash_kill` 取回结果与杀掉进程。
+- **`bash`**：默认 timeout 120s（`tools.bash_timeout`）；命令**默认是阻塞的**，跑完（或超时）才返回。要放到后台得让模型显式传 `run_in_background: true`，再用 `bash_output` / `bash_kill` 取回结果与杀掉进程。**后台任务只能在本地环境里起**（它直接 `Popen` 一个进程）：容器里这个调用会被拒绝，否则命令会落到宿主机上，跑到会话的边界外面去。
 - **`todo_write`**：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。
 - **`web_fetch` / `web_search`**：**未实现**（`TRIM_ORDER` 里留了位置，将来加工具时直接可用）。
 

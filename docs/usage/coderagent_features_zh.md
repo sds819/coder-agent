@@ -339,7 +339,9 @@ An error occurred while executing the command: Command 'sleep 60' timed out afte
 ```
 
 放到后台的命令回答 `Started background task {id}: {cmd}`，用 `bash_output`
-读，用 `bash_kill` 杀。
+读，用 `bash_kill` 杀。它跑在会话的环境里，用的也是会话的环境。只有本地
+环境能起后台任务：容器里这个调用会被拒绝，因为命令会跑到用户的机器上，
+跑到会话的边界外面去。
 
 工具的输出会写进会话日志，也会发给模型。里面长得像密钥的东西——API key、
 token、密码、私钥——在写和发之前都会换成 `[redacted]`。带密钥的文件存进

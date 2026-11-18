@@ -365,7 +365,10 @@ An error occurred while executing the command: Command 'sleep 60' timed out afte
 ```
 
 A background command answers with `Started background task {id}: {cmd}` and is
-read with `bash_output`, killed with `bash_kill`.
+read with `bash_output`, killed with `bash_kill`. It runs in the environment of
+the session, with the environment of the session. Only a local environment can
+start one: in a container the call is refused, because the command would run on
+the machine of the user, outside of the boundary of the session.
 
 The output of a tool is written to the log of the session and sent to the
 provider. What looks like a secret in it — an API key, a token, a password, a
