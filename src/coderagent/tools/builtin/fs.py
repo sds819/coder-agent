@@ -161,7 +161,12 @@ class WriteTool:
         lines = len(content.splitlines())
         return ToolResult(
             f"{'Updated' if existed else 'Created'} {path} ({lines} lines)",
-            metadata={"path": str(target), "old_content": old_content, "created": not existed},
+            metadata={
+                "path": str(target),
+                "diff": unified_diff(old_content or "", content, path),
+                "old_content": old_content,
+                "created": not existed,
+            },
         )
 
 

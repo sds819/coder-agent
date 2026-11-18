@@ -368,13 +368,18 @@ A background command answers with `Started background task {id}: {cmd}` and is
 read with `bash_output`, killed with `bash_kill`. It runs in the environment of
 the session, with the environment of the session. Only a local environment can
 start one: in a container the call is refused, because the command would run on
-the machine of the user, outside of the boundary of the session.
+the machine of the user, outside of the boundary of the session. A background
+task belongs to the session: it is stopped when the process of the session
+ends, and its log is removed with it.
 
 The output of a tool is written to the log of the session and sent to the
 provider. What looks like a secret in it — an API key, a token, a password, a
-private key — is replaced with `[redacted]` before either happens. A file that
-holds a secret is stored in a checkpoint without it, and it is not restored by
-`/rewind`: the file is left as it is and the command says which one it was.
+private key — is replaced with `[redacted]` before either happens. The log
+holds the output as the model saw it, cut to the budget of the context, so a
+tool that prints a hundred megabytes does not fill the log of the session. A
+file that holds a secret is stored in a checkpoint without it, and it is not
+restored by `/rewind`: the file is left as it is and the command says which one
+it was.
 
 ## The permissions
 

@@ -1,6 +1,8 @@
 """Shell tool: `bash` plus the background task helpers `bash_output` and `bash_kill`."""
 
+import atexit
 import os
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -17,6 +19,9 @@ from minisweagent.environments.local import LocalEnvironment
 CHARS_PER_TOKEN = 3.5
 POLL_SECONDS = 0.05
 """How often a running command is asked whether the turn is still going on."""
+
+_TASKS: list[dict] = []
+"""The background tasks of this process. None of them outlives it."""
 
 
 class CodingEnvironment(LocalEnvironment):
@@ -101,6 +106,31 @@ def _kill(process) -> None:
             os.killpg(os.getpgid(process.pid), signal.SIGKILL)
         else:
             process.kill()
+
+
+def reap_background(tasks: list[dict]) -> None:
+    """Stop the background tasks and take their logs away.
+
+    A task that still runs is killed, together with the children it started,
+    and the directory of its log goes away with it. A background task belongs
+    to the session that started it: it does not outlive the process.
+    """
+    for task in tasks:
+        if task["process"].poll() is None:
+            _kill(task["process"])
+        try:
+            task["handle"].close()
+        except (OSError, ValueError):
+            """The handle is already closed."""
+            pass
+        shutil.rmtree(task["log"].parent, ignore_errors=True)
+    tasks.clear()
+
+
+@atexit.register
+def _reap_at_exit() -> None:
+    """Nothing of a session stays behind when the process ends."""
+    reap_background(_TASKS)
 
 
 def trim_output(text: str, max_output_tokens: int) -> str:
@@ -210,7 +240,9 @@ class BashTool:
             stderr=subprocess.STDOUT,
             start_new_session=os.name == "posix",
         )
-        ctx.background[task_id] = {"process": process, "handle": handle, "log": log_path, "command": command}
+        task = {"process": process, "handle": handle, "log": log_path, "command": command}
+        ctx.background[task_id] = task
+        _TASKS.append(task)
         return ToolResult(
             f"Started background task {task_id}: {command}\nUse `bash_output` with task_id={task_id} to check it.",
             metadata={"task_id": task_id},

@@ -61,6 +61,13 @@ MODE_NOTES = {
 """What the model is told when the mode takes tools away from it."""
 
 
+MODE_DENY_REASONS = {
+    PermissionMode.PLAN: "The session is in plan mode: only looking around is allowed, changing something is not.",
+    PermissionMode.READONLY: "The session is in read-only mode: nothing may be changed.",
+}
+"""Why the mode itself refuses a call, so that the model knows what to do instead."""
+
+
 def mode_note(mode: PermissionMode) -> str:
     """The note for the model, empty when the mode needs no explanation."""
     return MODE_NOTES.get(PermissionMode(mode), "")
@@ -185,7 +192,11 @@ class PermissionPolicy:
             if self.sandbox_mode == READ_ONLY and tool in WRITE_TOOLS:
                 """The sandbox is read only: a rule cannot open it either."""
                 return Decision("deny", matched, "the sandbox is read only")
-        return Decision(decision, matched, matched.reason if matched else "")
+        reason = matched.reason if matched else ""
+        if decision == "deny" and not reason:
+            """A refusal without a reason leaves the model guessing."""
+            reason = self._default_reason(decision)
+        return Decision(decision, matched, reason)
 
     def _evaluate_bash(self, command: str) -> Decision:
         """The decision for a shell command.
@@ -207,7 +218,7 @@ class PermissionPolicy:
         if self.mode == PermissionMode.BYPASS:
             return Decision("allow", None, "")
         if self.mode in (PermissionMode.PLAN, PermissionMode.READONLY):
-            return Decision("deny", None, "")
+            return Decision("deny", None, MODE_DENY_REASONS.get(self.mode, ""))
         decision = "allow"
         rules: list[Rule] = []
         why = ""
@@ -224,6 +235,9 @@ class PermissionPolicy:
         matched = _strictest_rule(rules)
         """The reason is the one of the rule that decided, or the one of the command."""
         reason = matched.reason if matched and matched.decision == decision else why
+        if decision == "deny" and not reason:
+            """A refusal without a reason leaves the model guessing."""
+            reason = self._default_reason(decision)
         return Decision(decision, matched, reason)
 
     def _restriction_reason(self, tool: str, params: dict) -> str:
@@ -265,6 +279,16 @@ class PermissionPolicy:
         if self.mode == PermissionMode.ACCEPT_EDITS:
             return "allow" if tool in WRITE_TOOLS else "ask"
         return "ask"
+
+    def _default_reason(self, decision: str) -> str:
+        """Why the call is refused when no rule had a say.
+
+        A refusal without a reason leaves the model guessing, and it guesses
+        by trying the same call again.
+        """
+        if decision != "deny":
+            return ""
+        return MODE_DENY_REASONS.get(self.mode, "") or "the rules of the session deny it."
 
     def _matches(self, rule: Rule, tool: str, params: dict) -> bool:
         if rule.tool not in ("*", tool):

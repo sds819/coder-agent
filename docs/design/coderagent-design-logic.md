@@ -74,9 +74,13 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 - `telemetry.collect()` 重放日志，算出成本和指标（`src/coderagent/core/telemetry.py:68`）。
 
 **代价**：日志里同一条 TOOL_RESULT 会被写**两次**——`ToolExecutor._publish()` 写一次
-（带 diff，`src/coderagent/tools/executor.py:181`），`ContextEngine._record()` 又写一次
+（带 diff，`src/coderagent/tools/executor.py:201`），`ContextEngine._record()` 又写一次
 （带 messages，`src/coderagent/core/context.py:197`）。看起来是冗余，其实是两种用途：
 前者给 UI（要 diff），后者给重放（要 messages）。两个 payload 结构不同，不能合成一条。
+
+**写进日志的是模型看到的那一份**：`executor._publish()` 拿的是裁过的输出
+（`trim_text`，按 `tools.max_output_tokens` 裁），不是工具返回的原文。
+不然一个打印了几十 MB 的工具会把会话日志塞满，而日志和模型看到的东西还不是一回事。
 
 **收益**：新增一个 UI（web 版就是这样加的）**不需要碰核心**；fork 就是复制事件文件
 （`src/coderagent/core/session.py:150`）；崩溃恢复就是重放。

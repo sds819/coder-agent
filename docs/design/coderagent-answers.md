@@ -143,7 +143,10 @@
 
 - 工具抛异常 → 变成一条 observation 字符串 `"Error: '<tool>' failed: <Type>: <msg>"`；
 - 参数 JSON 解析失败 → 变成 `"Error: ..."`，并明确告诉模型「请发一个 JSON 对象」；
-- 工具自己返回 `is_error=True`（比如 `old_string` 没找到）→ 同样是给模型看的一段错误文本。
+- 工具自己返回 `is_error=True`（比如 `old_string` 没找到）→ 同样是给模型看的一段错误文本；
+- **被权限拒绝** → `"Error: permission denied for '<tool>'. <理由>"`，**理由不能空**：
+  模式自己拒的（plan / readonly）说清是哪个模式，规则拒的说规则的理由，
+  都没说就兜一句「会话的规则拒绝它」。没有理由的拒绝会让模型原地重试同一个调用。
 
 模型看到的是**正常的 tool result**，只是内容是错误说明，它可以自己改正后重试。
 

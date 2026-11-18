@@ -49,6 +49,20 @@ def test_write_creates_parent_directories_and_records_the_old_content(ctx, tmp_p
     assert again.metadata["old_content"] == "hello\n"
 
 
+def test_write_publishes_a_diff(ctx, tmp_path):
+    """The card of the tool shows what changed, so `write` needs a diff like `edit`."""
+    (tmp_path / "a.txt").write_text("one\n", encoding="utf-8")
+    result = WriteTool().run({"path": "a.txt", "content": "two\n"}, ctx)
+    assert "-one" in result.metadata["diff"]
+    assert "+two" in result.metadata["diff"]
+
+
+def test_the_diff_of_a_new_file_is_all_additions(ctx, tmp_path):
+    result = WriteTool().run({"path": "new.txt", "content": "hello\n"}, ctx)
+    assert "+hello" in result.metadata["diff"]
+    assert "-hello" not in result.metadata["diff"]
+
+
 def test_edit_replaces_a_unique_string(ctx, tmp_path):
     (tmp_path / "a.py").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
     result = EditTool().run({"path": "a.py", "old_string": "beta", "new_string": "delta"}, ctx)

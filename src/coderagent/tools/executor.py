@@ -124,7 +124,7 @@ class ToolExecutor:
                 return action
             answer = self._ask(action, ctx, approver, decision.reason)
             if answer == ApprovalDecision.DENY:
-                action["error"] = f"Error: the user denied '{action['tool']}'."
+                action["error"] = f"Error: the user denied '{action['tool']}'. {decision.reason}".strip()
                 return action
             if answer == ApprovalDecision.ALWAYS:
                 self._remember(action["tool"], action["args"])
@@ -168,19 +168,21 @@ class ToolExecutor:
             return self._observation(
                 action["tool_call_id"], f"Error: '{action['tool']}' failed: {type(e).__name__}: {e}"
             )
-        self._publish(action, result, ctx)
         if result.metadata.get("truncated"):
             ctx.session.metadata.setdefault("truncated_outputs", []).append(result.metadata["truncated"])
         content = trim_text(redact(result.content), ctx.config.max_output_tokens)[0]
         """Every tool result is cut to the budget of the context, not only the output of bash."""
+        is_error = result.is_error
         if self.hooks:
             hook = self.hooks.apply(
                 "PostToolUse", {"tool": action["tool"], "params": action["args"], "result": content}
             )
             if hook.blocked:
                 content = f"Error: the hook blocked '{action['tool']}'. {hook.reason}".strip()
+                is_error = True
             if hook.additional_context:
                 content = f"{content}\n\n[hook] {hook.additional_context}"
+        self._publish(action, result, ctx, content, is_error)
         return self._observation(action["tool_call_id"], content)
 
     def _observation(self, tool_call_id: str, content: str) -> dict:
@@ -198,7 +200,13 @@ class ToolExecutor:
         getter = getattr(tool, "touched_paths", None)
         return list(getter(action["args"])) if getter else []
 
-    def _publish(self, action: dict, result: ToolResult, ctx: ToolContext) -> None:
+    def _publish(self, action: dict, result: ToolResult, ctx: ToolContext, content: str, is_error: bool) -> None:
+        """Put the result of a tool in the log.
+
+        The log holds what the model saw: the content is already cut to the
+        budget of the context, so a tool that prints a hundred megabytes does
+        not fill the store of the session.
+        """
         event = Event(
             type=EventType.TOOL_RESULT,
             session_id=ctx.session.id,
@@ -206,9 +214,9 @@ class ToolExecutor:
             payload={
                 "tool": action["tool"],
                 "tool_call_id": action["tool_call_id"],
-                "content": redact(result.content),
-                "is_error": result.is_error,
-                "diff": redact(result.metadata.get("diff", "")),
+                "content": content,
+                "is_error": is_error,
+                "diff": redact(trim_text(result.metadata.get("diff", ""), ctx.config.max_output_tokens)[0]),
             },
         )
         ctx.bus.publish(event)

@@ -152,3 +152,33 @@ def test_the_output_of_every_tool_is_cut_to_the_budget(tmp_path):
     observations = executor.execute(executor.plan([_call("read", {"path": "big.txt"})]))
     assert "tokens elided" in observations[0]["content"]
     assert len(observations[0]["content"]) < 2000
+
+
+def test_the_log_of_the_session_holds_what_the_model_saw(tmp_path):
+    """The log keeps the result of a tool, but a huge output must not fill the store."""
+    from coderagent.config.schema import ToolConfig
+    from coderagent.core.session import SessionStore
+
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    (tmp_path / "big.txt").write_text("x" * 200000, encoding="utf-8")
+    executor = build_executor(
+        tmp_path,
+        store=store,
+        context=build_context(tmp_path, session=session),
+        config=ToolConfig(max_output_tokens=100),
+    )
+    executor.execute(executor.plan([_call("read", {"path": "big.txt"})]))
+    logged = store.path(session.id).read_text(encoding="utf-8")
+    assert "line truncated" in logged
+    assert len(logged) < 5000
+
+
+def test_the_diff_of_a_write_reaches_the_log(tmp_path):
+    from coderagent.core.session import SessionStore
+
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session))
+    executor.execute(executor.plan([_call("write", {"path": "a.txt", "content": "hello\n"})]))
+    assert "+hello" in store.path(session.id).read_text(encoding="utf-8")

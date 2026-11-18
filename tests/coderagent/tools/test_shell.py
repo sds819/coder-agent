@@ -4,7 +4,15 @@ import time
 import pytest
 
 from coderagent.testing.factory import build_context
-from coderagent.tools.builtin.shell import BashKillTool, BashOutputTool, BashTool, CodingEnvironment, trim_output
+from coderagent.tools.builtin.shell import (
+    BashKillTool,
+    BashOutputTool,
+    BashTool,
+    CodingEnvironment,
+    _reap_at_exit,
+    reap_background,
+    trim_output,
+)
 
 
 class Container:
@@ -79,6 +87,26 @@ def test_a_background_task_can_be_read_and_killed(ctx):
 
     assert "Killed" in BashKillTool().run({"task_id": task_id}, ctx).content
     assert "exited" in BashOutputTool().run({"task_id": task_id}, ctx).content
+
+
+def test_the_background_tasks_are_reaped(ctx):
+    """A background task belongs to the session that started it."""
+    started = BashTool().run({"command": "sleep 30", "run_in_background": True}, ctx)
+    task = ctx.background[started.metadata["task_id"]]
+    directory = task["log"].parent
+    assert directory.exists()
+
+    reap_background([task])
+    assert task["process"].poll() is not None
+    assert not directory.exists()
+
+
+def test_no_background_task_outlives_the_process(ctx):
+    """Nothing of a session stays behind when the process ends."""
+    started = BashTool().run({"command": "sleep 30", "run_in_background": True}, ctx)
+    task = ctx.background[started.metadata["task_id"]]
+    _reap_at_exit()
+    assert task["process"].poll() is not None
 
 
 def test_the_background_tools_reject_unknown_tasks(ctx):

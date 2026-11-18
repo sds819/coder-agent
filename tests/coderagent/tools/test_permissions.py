@@ -125,6 +125,31 @@ def test_evaluate_reports_the_rule_that_was_hit(tmp_path):
     assert decision.rule.reason == "dangerous"
 
 
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [(PermissionMode.PLAN, "plan mode"), (PermissionMode.READONLY, "read-only mode")],
+)
+def test_a_refusal_of_the_mode_says_why(tmp_path, mode, expected):
+    """A refusal without a reason leaves the model guessing, and it guesses by trying again."""
+    policy = PermissionPolicy(mode, [], cwd=tmp_path)
+    assert expected in policy.evaluate("write", {"path": "a.py"}).reason
+    assert expected in policy.evaluate("bash", {"command": "ls"}).reason
+
+
+def test_a_refusal_by_a_rule_without_a_reason_still_says_why(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [Rule(tool="write", pattern="**", decision="deny")], cwd=tmp_path)
+    assert policy.evaluate("write", {"path": "a.py"}).reason
+
+
+def test_a_rule_with_a_reason_keeps_it(tmp_path):
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT,
+        [Rule(tool="write", pattern="**", decision="deny", reason="the project says no")],
+        cwd=tmp_path,
+    )
+    assert policy.evaluate("write", {"path": "a.py"}).reason == "the project says no"
+
+
 def test_glob_to_regex_does_not_let_a_single_star_cross_a_slash():
     assert glob_to_regex("*.py").match("a.py")
     assert not glob_to_regex("*.py").match("dir/a.py")
