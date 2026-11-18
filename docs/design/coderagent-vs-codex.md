@@ -260,7 +260,7 @@ if not server.enabled or not server.command:
 | 4.1 | **没有图片/音频输入** ✅ | 消息只有文本：`core/context.py` 的 `build_messages()` 拼的是 `{"role","content"}` 字符串，没有多模态分支 | `/image` 附件（0.167/0.168 起支持图像与音频） | 中 |
 | 4.2 | **没有输入历史** ✅ | TUI 的 `Input` 部件没有历史栈（`src/coderagent/ui/tui.py` 里没有相关实现），上下键只能移动光标 | 上下键翻历史 | 小 |
 | 4.3 | **回答不渲染 Markdown** ✅ | TUI 直接把原文塞进 `Static`（`tui.py:197`），代码块、表格、标题都是平的 | 富渲染 | 中 |
-| 4.4 | **中断的粒度是「轮」** ✅ | `loop.cancel` 只在**每轮模型调用之前**检查（`src/coderagent/core/loop.py:272`），`tools/executor.py` 里没有取消检查——**一条跑着的 `bash` 停不下来**，只能等它自己结束 | 能中断正在跑的工具 | 中 |
+| 4.4 | **中断的粒度是「轮」** ✅ | `loop.cancel` 只在**每轮模型调用之前**检查（`src/coderagent/core/loop.py:281`），`tools/executor.py` 里没有取消检查——**一条跑着的 `bash` 停不下来**，只能等它自己结束 | 能中断正在跑的工具 | 中 |
 | 4.5 | **没有 @ 提及文件** ✅ | 输入框里 `@foo.py` 不会被展开成路径 | `@` 补全文件 | 小 |
 | 4.6 | **TUI 没有文件树** ✅ | 文件树只在网页版左栏（`src/coderagent/web/`）；终端里只能靠 `ls` 工具 | 侧栏文件树 | 中 |
 | 4.7 | **TUI 没有会话切换器** ✅ | 终端里切会话要 `/resume`（`builtin.py:437`），是一个列表文本 | 会话切换面板 | 小 |
@@ -420,7 +420,7 @@ Codex 的做法是每次会话开始、每次 compact 之后重读。**工作量
 ### 5.4 hook 事件只有 6 个 ✅ 已修
 
 现在有：`PreToolUse`、`PostToolUse`、`UserPromptSubmit`、`Stop`、`SessionStart`、`SessionEnd`
-（`src/coderagent/tools/executor.py:104,169`、`src/coderagent/core/loop.py:232,301,491,495`）。
+（`src/coderagent/tools/executor.py:104,169`、`src/coderagent/core/loop.py:241,495,505,509`）。
 
 Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 对本项目特别有用——
 压缩是 coderagent 的核心机制之一（见[上下文专题](coderagent-context.md)），

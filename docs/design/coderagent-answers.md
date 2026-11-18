@@ -225,9 +225,9 @@
 
 **结论**：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。
 
-1. **取**：`core/loop.py:299` 从 assistant 消息里取 `tool_calls`。没有 `tool_calls` 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。
+1. **取**：`core/loop.py:313` 从 assistant 消息里取 `tool_calls`。没有 `tool_calls` 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。
 2. **规整**：`executor.plan()`（`executor.py:51`）把原始 tool call 变成统一形状：`{"tool", "tool_call_id", "args", "raw"}`。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是**对象**，就在这里记下 `error`，**不会走到执行**。
-3. **记账**：`loop.py:334` 发一个 `TOOL_CALL` 事件，**在执行之前**。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。
+3. **记账**：`loop.py:348` 发一个 `TOOL_CALL` 事件，**在执行之前**。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。
 4. **准备**：`executor._prepare()`（`executor.py:93`）对每个 action 依次做四件事：
    - **查注册表**：`registry.get(name)`，找不到就直接记错（见 b10）；
    - **PreToolUse hook**：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；

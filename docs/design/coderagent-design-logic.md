@@ -94,7 +94,7 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 
 **问题**：terminal、headless、web 三种界面，如果各写一套循环，就是三份会漂移的实现。
 
-**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:190`），
+**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:195`），
 它是同步函数。界面通过 `EventBus` 订阅事件（`src/coderagent/core/events.py:65`）。
 
 TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 版额外起一个工作线程
@@ -106,7 +106,7 @@ TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 
 心 async 化。
 
 **关键细节**：`_publish()` = 广播 + 写日志（持久），`_notify()` = 只广播（瞬时）
-（`src/coderagent/core/loop.py:570` 和 `:566`）。所有需要重放的东西走 `_publish`，
+（`src/coderagent/core/loop.py:575` 和 `:571`）。所有需要重放的东西走 `_publish`，
 流式增量走 `_notify`。这两个函数的区别，就是「2.1 那条决策」在代码里的落点。
 
 **EventBus 是宽容的**：一个订阅者抛异常，只会被记日志，不会影响发布者
@@ -125,7 +125,7 @@ hook(PreToolUse) → 权限求值 → ask/deny → 执行
 ```
 
 而且**执行器是唯一的执行路径**——`AgentLoop` 只调 `executor.plan()` 和
-`executor.execute()`（`src/coderagent/core/loop.py:344`），自己不碰工具。
+`executor.execute()`（`src/coderagent/core/loop.py:349`），自己不碰工具。
 
 **为什么 hook 在权限之前**：hook 可以改参数（`updated_input`），**被改写之后的那条命令**
 才是被批准/被拒的那条。反过来就不成立了。
@@ -156,7 +156,7 @@ observation（`src/coderagent/tools/executor.py:173`）。**工具的错误不�
    │                       tools/executor.py:58
    │
    ├─ _publish(TOOL_CALL)  ← 执行之前。全部 action 和它们的参数
-   │                       core/loop.py:343
+   │                       core/loop.py:348
    │
    ├─ _prepare()           查注册表 → PreToolUse hook → 权限 → 审批
    │                       tools/executor.py:100
@@ -463,10 +463,10 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **模型切换的一个坑**：路由每轮可能重建 backend，所以比较时必须比**解析后的真名**
 而不是别名，否则永远不相等 → 每轮换一次 backend（这个问题真实踩过）。
 现在 `loop._route()` 先 `backend_for(name)` 再比 `backend.model_name`
-（`src/coderagent/core/loop.py:460`）。
+（`src/coderagent/core/loop.py:465`）。
 
 **上下文溢出的兜底**：provider 报 context 超长 → `force_compact()` → 重试一次
-（`src/coderagent/core/loop.py:530` 的 `_query`）。判定靠异常类型 + 文本标记
+（`src/coderagent/core/loop.py:535` 的 `_query`）。判定靠异常类型 + 文本标记
 双保险（`src/coderagent/models/gateway.py:12`）。
 
 ### L5 界面层
@@ -501,28 +501,30 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
 ```
 用户输入
   │
-  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:236
+  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:241
   │    原文被记在 payload["original"] 里，不丢
   │
   ├─ context.append(user message) → 写日志           core/context.py:166
   │
-  └─ while True:                                    core/loop.py:273
+  └─ while True:                                    core/loop.py:278
        │
-       ├─ maybe_compact()   上下文快满了就压          core/loop.py:288
-       ├─ _route()          这轮用哪个模型            core/loop.py:289
-       ├─ _query()          调模型，超限就压缩重试    core/loop.py:291
-       │    └─ 流式事件之间查 cancel → 打断         core/loop.py:557
+       ├─ maybe_compact()   上下文快满了就压          core/loop.py:293
+       ├─ _route()          这轮用哪个模型            core/loop.py:294
+       ├─ _query()          调模型，超限就压缩重试    core/loop.py:296
+       │    └─ 流式事件之间查 cancel → 打断         core/loop.py:562
        │
        ├─ 有 tool_calls？
        │    ├─ executor.plan()      解析成动作        tools/executor.py:58
-       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:343
+       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:348
        │    ├─ executor.execute()   → _prepare()      tools/executor.py:100
        │    │      查表 → hook → 权限 → ask/deny → 跑
        │    │        拒绝不是异常，是一行 Error:
        │    └─ _publish(TOOL_RESULT) 写日志（带 diff）
        │
-       ├─ 没 tool_calls？
-       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:490
+       ├─ 没 tool_calls？模型想收尾了
+       │    ├─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:495
+       │    ├─ verify 命令没过 → 输出还给模型          core/loop.py:318
+       │    └─ 答案不合 schema → 错误还给模型          core/loop.py:331
        │
        └─ 循环条件：取消 / max_turns / cost_limit
 ```
@@ -530,11 +532,16 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
 有几个地方值得停下来看：
 
 - **循环条件的检查在每一轮的开头**，不在末尾。**但取消不只查在轮首**：模型正在流式回答的时候
-  也查（`core/loop.py:557`），所以用户按 ctrl+c 不用等模型把话说完——半句回答被丢掉，
+  也查（`core/loop.py:562`），所以用户按 ctrl+c 不用等模型把话说完——半句回答被丢掉，
   这一轮以 `interrupted` 结束。
-- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:282`）。
+- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:287`）。
   子 agent 花的钱也算在这个会话头上——用户看到的「这次会话花了多少」是完整的。
 - **Stop hook 最多拦 3 次**。拦多了模型会陷入「解释为什么该停」的循环。
+- **收尾有三道闸门，顺序是固定的**：`Stop` hook → verify 命令 → 答案的 schema。
+  第一道拦下了，后两道这一轮就不查（`core/loop.py:318`、`core/loop.py:331`）。
+  每一道没过都是把话还给模型、让它接着干，所以模型是「被叫回去」而不是「被拦住」。
+- **verify 命令不走权限层**：它直接进环境，不查规则、不走 hook、不要审批，
+  也不受 `sandbox.mode` 的限制——那是用户的命令，不是模型写的。
 - **审批的等待是在执行器里同步阻塞的**。TUI 是异步的，所以 `TUIAprover` 用
   `asyncio` 把请求转回主循环；web 是把请求放进队列、用 SSE 回推结果。
 
