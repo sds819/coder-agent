@@ -4070,13 +4070,14 @@ has to be in the <code>prompt</code> of the call.</p>
 </tbody>
 </table>
 <p><code>/agents</code> lists them, with the tools of each one and the turns it may really make:</p>
-<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 turns)
+<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 model calls)
                  Find code: locate a symbol, follow a call chain, explain how a part works.
-verifier         main   read, grep, glob, bash  (20 turns)
+verifier         main   read, grep, glob, bash  (20 model calls)
                  Check a result on its own: run the tests, reproduce the bug.
 </code></pre></div>
-<p>The turns in brackets are the ones that count: the ceiling of the configuration
-holds them down (see <a href="#the-limits">The limits</a>).</p>
+<p>The calls in brackets are the ones that count: the ceiling of the configuration
+holds them down (see <a href="#the-limits">The limits</a>). One call is one question to the
+model — a turn that calls five tools still counts as one.</p>
 <h2 id="writing-your-own">Writing your own</h2>
 <p>A sub agent is a markdown file. The front matter says what it is, the body is
 its system prompt:</p>

@@ -4909,9 +4909,11 @@ return None                              # 两次都不行
 </code></pre></div>
 <p>不问模型。<strong>模型忘了报错，不等于错误消失。</strong> 这条派生字段不受模型输出质量影响。</p>
 <h3 id="56">5.6 工具输出被裁剪时保留头尾</h3>
-<p><code>trim_text</code> / <code>trim_lines</code>（<code>tokens.py:66-118</code>）：保留头 40% + 尾 40%，中间写明省略了多少：</p>
+<p><code>trim_text</code> / <code>trim_lines</code>（<code>tokens.py:66-118</code>）：<strong>预算用满</strong>，头尾各一半，中间写明省略了多少：</p>
 <div class="highlight"><pre><span></span><code>... [120 lines, 980 tokens elided, use grep/offset to view that region] ...
 </code></pre></div>
+<p>省略标记本身<strong>算在预算里</strong>（<code>MARKER_ROOM</code> / <code>MARKER_TOKENS</code>），标记要占的位置先扣掉，剩下的才分给头尾——
+预算小的时候标记最多占四分之一，免得只剩几行正文。</p>
 <p><strong>告诉模型怎么把内容找回来</strong>，而不是默默截断。<code>trim_lines</code> 还额外返回 <code>start_line</code> / <code>end_line</code> / <code>head_lines</code>，
 让调用方把行号对上——否则裁剪之后模型看到的行号全是错的。</p>
 <hr>

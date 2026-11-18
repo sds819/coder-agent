@@ -5097,7 +5097,7 @@
 <h3 id="b3-tool-call">b3 一轮多个 tool call，并行还是串行？</h3>
 <p><strong>结论</strong>：<code>tools/executor.py</code> 的 <code>ToolExecutor.execute()</code>。</p>
 <ul>
-<li><strong>判定</strong>：只要有<strong>任意一个</strong> action 属于 <code>SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}</code>，或者只有一个 action → <strong>串行</strong>按序执行。否则 → <code>ThreadPoolExecutor(max_workers=len(actions))</code> 并行。</li>
+<li><strong>判定</strong>：只要有<strong>任意一个</strong> action 属于 <code>SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}</code>，或者只有一个 action → <strong>串行</strong>按序执行。否则 → <code>ThreadPoolExecutor(max_workers=min(len(actions), MAX_PARALLEL_TOOLS))</code> 并行，<strong>上限 8 个线程</strong>——模型一次要一百个 read，不该换来一百个线程。</li>
 <li><strong>顺序保证</strong>：<code>pool.map</code> 保序，所以结果<strong>永远按模型给定的 tool_call 顺序</strong>返回。</li>
 <li><strong>权限先算</strong>：<code>_prepare()</code> 对<strong>所有</strong> action 先跑一遍（hook → 权限 → 审批），再开始执行。所以被拒的 action 不会执行，但也<strong>不产生</strong> <code>TOOL_RESULT</code> 事件——事件日志里只看到 <code>TOOL_CALL</code>，看不到它的结果。</li>
 </ul>
@@ -5165,6 +5165,9 @@
 </tbody>
 </table>
 <p><strong>审批结果</strong>有三种：<code>allow</code> / <code>deny</code> / <code>always</code>。选 <code>always</code> 会把一条 allow 规则<strong>写进用户规则文件</strong>（<code>rules.add_rule</code>），下次同一类操作不再问。</p>
+<p><strong>切到 <code>bypass</code> 要问一次</strong>：命令行/TUI 是 <code>/mode bypass --yes</code>（不带 <code>--yes</code> 就只说明它会做什么，不切）；
+网页版是弹一次确认框，请求体里带 <code>confirm: true</code>，否则接口回 400。理由：<code>bypass</code> 把护栏全拆了，
+一个手滑不该拆掉。</p>
 <h3 id="b6">b6 规则文件在哪？谁说了算？匹配语义是什么？</h3>
 <p><strong>结论</strong>：<code>tools/rules.py</code>。</p>
 <ul>
@@ -5198,6 +5201,10 @@
 <li><strong><code>multi_edit</code></strong>：<strong>原子</strong>。所有编辑先在内存副本上应用，全部成功才落盘；任何一条失败就返回「Edit #N failed, no changes were written」，文件一个字节都不动。</li>
 <li><strong><code>write</code></strong>：整体覆盖，会建父目录。</li>
 <li><strong>读类工具的输出有上限</strong>：<code>read</code> 默认 2000 行，超过 2000 字符的行会被截断并标出来；<code>glob</code> 最多 200 条路径；<code>grep</code> 最多 100 行内容；<code>bash</code> 输出按 <code>tools.max_output_tokens</code>（默认 8000）裁剪。</li>
+<li><strong>裁剪是「按预算裁」，不是「按比例少给」</strong>：<code>trim_text</code> 把整个预算用满（留出省略标记的位置，头尾各一半），<code>trim_lines</code> 同理。</li>
+<li><strong><code>read</code> 越过文件末尾会明说</strong>：<code>offset</code> 超过行数 → 报错「offset N is past the end of ...: the file has M lines」，而不是回一段空字符串——空字符串会让模型以为文件是空的。</li>
+<li><strong><code>grep</code> / <code>glob</code> 中途能被打断</strong>：每读 64 个文件查一次 <code>cancel()</code>，被打断就返回「the turn was interrupted, so the search did not finish」。</li>
+<li><strong>后台任务的日志只读两头</strong>：<code>bash_output</code> 读日志时只取头尾各一半（中间标「the middle of the log is not shown」），不把整个日志读进内存。</li>
 </ul>
 <p><strong>为什么</strong>：<code>edit</code> 的「唯一匹配」是 agent 改文件时最容易出错的地方（改错位置）。宁可让它失败要求重试，也不要让它猜。</p>
 <h3 id="b9">b9 模型的一次工具调用，是怎么一步步跑下来的？</h3>
@@ -5320,14 +5327,14 @@
 </ul>
 <p><strong>取舍</strong>：<code>max_turns</code> 数模型调用而不是工具调用，因为真正烧钱的是模型调用。</p>
 <h3 id="c4">c4 一轮进行中怎么被打断？</h3>
-<p><strong>结论</strong>：<code>AgentLoop.cancel</code> 是一个<strong>公开扩展点</strong>（<code>self.cancel = None</code>），每轮循环顶部调一次，返回 True 就以 <code>interrupted</code> 结束。</p>
+<p><strong>结论</strong>：<code>AgentLoop.cancel</code> 是一个<strong>公开扩展点</strong>（<code>self.cancel = None</code>），每轮循环顶部调一次，返回 True 就以 <code>interrupted</code> 结束；<strong>模型正在回答的时候也查</strong>——流式事件之间检查一次，返回 True 就抛出 <code>Interrupted</code>，这一轮以 <code>interrupted</code> 结束，<strong>半句回答被丢掉</strong>（不进会话日志）。</p>
 <p>三个使用者：</p>
 <ul>
 <li><strong>TUI</strong>：<code>loop.cancel = self.interrupted.is_set</code>（按 Esc 置位）；</li>
 <li><strong>Web 版</strong>：<code>threading.Event</code>；</li>
 <li><strong>评测</strong>：<code>loop.cancel = lambda: time.monotonic() &gt; deadline</code>，<code>deadline = now + task.timeout</code>（默认 300 秒）。</li>
 </ul>
-<p><strong>为什么</strong>：把「打断」做成一个可注入的回调，而不是在循环里写死某一种中断源——这样同一个循环能同时被界面、网页和评测三种外部节奏驱动。</p>
+<p><strong>为什么</strong>：把「打断」做成一个可注入的回调，而不是在循环里写死某一种中断源——这样同一个循环能同时被界面、网页和评测三种外部节奏驱动。检查放在模型回答<strong>之间</strong>（而不是只在轮次之间），是因为流式回答可能长达几十秒：只在轮次开头查，用户按了 ctrl+c 还要等模型把话说完才停。</p>
 <h3 id="c5-agent-agent">c5 子 agent 怎么调度？和主 agent 什么关系？</h3>
 <p><strong>结论</strong>：<code>core/subagent.py</code> 的 <code>SubAgentRunner</code>，由 <code>task</code> 工具触发。</p>
 <ul>

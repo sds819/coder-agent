@@ -5141,6 +5141,8 @@ project that adds an <code>include</code> is ignored.</p>
 </tbody>
 </table>
 <p>The mode can be changed while the session runs, with <code>/mode</code> or <code>/plan</code>.</p>
+<p><code>bypass</code> takes the guards off, so it asks once: <code>/mode bypass</code> says what it
+would do and changes nothing, <code>/mode bypass --yes</code> switches it on.</p>
 <p>The mode of the <strong>project</strong> may only take tools away: <code>plan</code> and <code>readonly</code> are
 used, the other modes are ignored. The same goes for the rest of the
 permissions — the project may not open directories outside the working

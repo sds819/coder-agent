@@ -4205,6 +4205,8 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 里声明的参数。</p>
 <p><code>/cost</code> 里的钱就是会话的钱。新会话（<code>/clear</code>）从零开始，不管上一个会话花了
 多少。</p>
+<p><code>/mode bypass</code> 把护栏全拆了，所以它要问一次：命令只说会做什么，什么都不改。
+<code>/mode bypass --yes</code> 才真的切过去。</p>
 <p><code>/review</code> 让模型看一遍改动，说出哪里有问题。不带范围时审的是工作区里的改动，
 带范围时（<code>/review main..HEAD</code>）审的是那个范围。新加的、还没进版本库的文件
 会被单独点名，模型觉得重要就自己去读。审查是当前会话里的一轮：结果留在对话里，

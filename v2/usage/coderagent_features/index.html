@@ -5786,6 +5786,8 @@ it was.</p>
 <h2 id="the-permissions">The permissions</h2>
 <ul>
 <li><strong>Five modes</strong> — <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code> and <code>bypass</code>.</li>
+<li><strong><code>bypass</code> asks once</strong> — it takes the guards off, so <code>/mode bypass</code> says what
+  it would do and changes nothing; <code>/mode bypass --yes</code> switches it on.</li>
 <li><strong>The model is told</strong> — in <code>plan</code> and <code>readonly</code> the agent knows that it may
   not change anything, and answers with what it found instead.</li>
 <li><strong>The shell has boundaries</strong> — the commands that only look around go through,
@@ -6595,7 +6597,9 @@ $ python -m pytest -q
   of <code>ui.file_opener</code> (<code>vscode</code>, <code>cursor</code>, <code>windsurf</code>, or a command of your own).
   A project may not choose the editor.</li>
 <li><strong><code>ctrl+c</code> stops the tool that is running</strong> — not only the turn: a command that
-  runs in the shell is stopped, together with the processes it started.</li>
+  runs in the shell is stopped, together with the processes it started. It also
+  cuts the answer of the model short: the turn ends while the model is still
+  writing, and the half answer is not kept.</li>
 </ul>
 <h3 id="example_10">Example</h3>
 <p>The status bar looks like this:</p>

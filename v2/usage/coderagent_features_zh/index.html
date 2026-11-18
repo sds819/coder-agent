@@ -5758,6 +5758,8 @@ token、密码、私钥——在写和发之前都会换成 <code>[redacted]</co
 <h2 id="_11">权限</h2>
 <ul>
 <li><strong>五种模式</strong>——<code>default</code>、<code>acceptEdits</code>、<code>plan</code>、<code>readonly</code>、<code>bypass</code>。</li>
+<li><strong><code>bypass</code> 要问一次</strong>——它把护栏全拆了，所以 <code>/mode bypass</code> 只说会做什么、
+  什么都不改；<code>/mode bypass --yes</code> 才真的切过去。</li>
 <li><strong>模型会知道</strong>——<code>plan</code> 和 <code>readonly</code> 下 agent 知道自己改不了东西，
   于是把看到的说出来，而不是动手。</li>
 <li><strong>规则</strong>——<code>~/.coderagent/rules.yaml</code> 和 <code>.coderagent/rules.yaml</code> 按工具
@@ -6511,7 +6513,8 @@ $ python -m pytest -q
 <li><strong>文件在你的编辑器里打开</strong>——<code>/open src/app.py</code> 用 <code>ui.file_opener</code> 指定的
   程序打开它（<code>vscode</code>、<code>cursor</code>、<code>windsurf</code>，或者你自己的命令）。</li>
 <li><strong><code>ctrl+c</code> 能停掉正在跑的工具</strong>——不只是这一轮：shell 里跑着的命令会被停掉，
-  它自己起的那些进程也一样。</li>
+  它自己起的那些进程也一样。它也能把模型正在写的回答截断：这一轮在模型还在
+  写的时候就结束，写了一半的那段不留下来。</li>
 </ul>
 <h3 id="_34">用法例子</h3>
 <p>状态栏长这样：</p>

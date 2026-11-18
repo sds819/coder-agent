@@ -4070,12 +4070,13 @@
 </tbody>
 </table>
 <p><code>/agents</code> 会列出它们，还有每个的工具和<strong>真正生效的轮数</strong>：</p>
-<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 turns)
+<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 model calls)
                  Find code: locate a symbol, follow a call chain, explain how a part works.
-verifier         main   read, grep, glob, bash  (20 turns)
+verifier         main   read, grep, glob, bash  (20 model calls)
                  Check a result on its own: run the tests, reproduce the bug.
 </code></pre></div>
-<p>括号里的是<strong>算数</strong>的轮数：配置里的天花板会把它压下来（见<a href="#limits">限制</a>）。</p>
+<p>括号里的是<strong>算数</strong>的轮数：配置里的天花板会把它压下来（见<a href="#limits">限制</a>）。
+一次调用就是问模型一次——一轮里调了五个工具，也只算一次。</p>
 <h2 id="_2">自己写一个</h2>
 <p>子 agent 是一个 markdown 文件。front matter 说明它是什么，正文是它的系统提示词：</p>
 <div class="highlight"><pre><span></span><code>---
