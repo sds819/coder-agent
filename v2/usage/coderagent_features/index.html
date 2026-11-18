@@ -5769,7 +5769,10 @@ code is part of the output, as <code>[exit code 1]</code>. A command that runs l
 <div class="highlight"><pre><span></span><code>An error occurred while executing the command: Command 'sleep 60' timed out after 120 seconds
 </code></pre></div>
 <p>A background command answers with <code>Started background task {id}: {cmd}</code> and is
-read with <code>bash_output</code>, killed with <code>bash_kill</code>.</p>
+read with <code>bash_output</code>, killed with <code>bash_kill</code>. It runs in the environment of
+the session, with the environment of the session. Only a local environment can
+start one: in a container the call is refused, because the command would run on
+the machine of the user, outside of the boundary of the session.</p>
 <p>The output of a tool is written to the log of the session and sent to the
 provider. What looks like a secret in it — an API key, a token, a password, a
 private key — is replaced with <code>[redacted]</code> before either happens. A file that

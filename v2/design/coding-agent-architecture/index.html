@@ -5307,7 +5307,7 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <li><strong><code>read</code></strong>：支持 <code>offset</code>/<code>limit</code>，默认带行号（<code>cat -n</code> 风格），大文件自动截断并提示。</li>
 <li><strong><code>grep</code></strong>：<strong>纯 Python 实现</strong>（不用 <code>rg</code>，也不退到 <code>grep -r</code>——<code>rg</code> 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。</li>
 <li><strong><code>glob</code></strong>：按 pattern 排序返回路径列表，超出上限截断。</li>
-<li><strong><code>bash</code></strong>：默认 timeout 120s（<code>tools.bash_timeout</code>）；命令<strong>默认是阻塞的</strong>，跑完（或超时）才返回。要放到后台得让模型显式传 <code>run_in_background: true</code>，再用 <code>bash_output</code> / <code>bash_kill</code> 取回结果与杀掉进程。</li>
+<li><strong><code>bash</code></strong>：默认 timeout 120s（<code>tools.bash_timeout</code>）；命令<strong>默认是阻塞的</strong>，跑完（或超时）才返回。要放到后台得让模型显式传 <code>run_in_background: true</code>，再用 <code>bash_output</code> / <code>bash_kill</code> 取回结果与杀掉进程。<strong>后台任务只能在本地环境里起</strong>（它直接 <code>Popen</code> 一个进程）：容器里这个调用会被拒绝，否则命令会落到宿主机上，跑到会话的边界外面去。</li>
 <li><strong><code>todo_write</code></strong>：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。</li>
 <li><strong><code>web_fetch</code> / <code>web_search</code></strong>：<strong>未实现</strong>（<code>TRIM_ORDER</code> 里留了位置，将来加工具时直接可用）。</li>
 </ul>
