@@ -141,10 +141,7 @@ class AgentLoop:
             cwd=session.cwd,
             policy=self.policy,
         )
-        self.context.system_prompt = system_prompt or self.context.system_prompt
-        if output_schema:
-            """The model is told what its answer has to look like."""
-            self.context.system_prompt = f"{self.context.system_prompt}\n\n{schema.note(output_schema)}".strip()
+        self.context.system_prompt = self._system_prompt(system_prompt or self.context.system_prompt)
         self.context.hooks = self.hooks
         """The context needs the hooks too: it is the one that compresses."""
         self.context.tools = self.tools
@@ -155,6 +152,12 @@ class AgentLoop:
     @property
     def messages(self) -> list[dict]:
         return self.context.history.messages
+
+    def _system_prompt(self, base: str) -> str:
+        """The prompt of the model, with the shape its answer has to have."""
+        if not self.output_schema:
+            return base
+        return f"{base}\n\n{schema.note(self.output_schema)}".strip()
 
     def switch_to(self, session: Session, *, start: bool = True) -> None:
         """Continue in another session, with the history that session already has."""
@@ -175,6 +178,8 @@ class AgentLoop:
         )
         self.context.reload_instructions = True
         """The instruction files of the new directory are read again."""
+        self.context.system_prompt = self._system_prompt(self.context.system_prompt)
+        """The shape of the answer is told again: the new context starts from scratch."""
         self.context.hooks = self.hooks
         self.context.tools = self.tools
         self.context.restore()

@@ -125,6 +125,14 @@ def test_the_model_is_told_about_the_schema(tmp_path):
     assert "<output_schema>" in loop.context.system_prompt
 
 
+def test_the_model_is_told_about_the_schema_after_a_switch(tmp_path):
+    loop = _loop(tmp_path, [_assistant(content='{"answer": "hi"}')])
+    loop.run_turn("do it")
+    loop.switch_to(loop.store.create(tmp_path))
+    assert "<output_schema>" in loop.context.system_prompt
+    assert loop.context.system_prompt.count("<output_schema>") == 1
+
+
 def test_without_a_schema_the_answer_is_not_checked(tmp_path):
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)
