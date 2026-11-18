@@ -410,6 +410,14 @@ agent. The settings of `model.model_kwargs` win over the ones of the alias.
 
 The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 
+An alias only works when the model name is exactly one of the aliases of the file.
+A name that is not in the `model_list` leaves the agent with none of the settings
+of that file, and the agent says so instead of going on without them:
+
+```
+The model 'openai/MiniMax-M2.7' is not one of the aliases of ~/.coderagent/litellm_config.yaml (nengpa/minimax-m2.7): the settings of that file are not used.
+```
+
 ### The tools
 
 | Tool | What it does |

@@ -1,5 +1,7 @@
 """The aliases of a litellm config file name the models."""
 
+import logging
+
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.litellm_config import deployments, resolve
 
@@ -28,6 +30,29 @@ def test_an_alias_names_the_model_and_its_parameters(tmp_path):
 
 def test_a_name_that_is_not_an_alias_stays_as_it_is(tmp_path):
     assert resolve(_write(tmp_path), "openai/gpt-4o") == ("openai/gpt-4o", {})
+
+
+def test_a_name_that_is_not_an_alias_is_told_that_the_file_is_of_no_use(tmp_path, caplog):
+    """The file is silently of no use otherwise: the user does not know why."""
+    with caplog.at_level(logging.WARNING, logger="coderagent.models.litellm_config"):
+        resolve(_write(tmp_path), "openai/gpt-4o")
+    assert [record.getMessage() for record in caplog.records] == [
+        f"The model 'openai/gpt-4o' is not one of the aliases of {_write(tmp_path)} "
+        "(nengpa/minimax-m2.7): the settings of that file are not used."
+    ]
+
+
+def test_a_name_that_is_an_alias_is_not_complained_about(tmp_path, caplog):
+    with caplog.at_level(logging.WARNING, logger="coderagent.models.litellm_config"):
+        resolve(_write(tmp_path), "nengpa/minimax-m2.7")
+    assert caplog.records == []
+
+
+def test_a_file_that_is_not_there_is_not_complained_about(tmp_path, caplog):
+    """There is no file: there is nothing to be of no use."""
+    with caplog.at_level(logging.WARNING, logger="coderagent.models.litellm_config"):
+        resolve(str(tmp_path / "nope.yaml"), "openai/gpt-4o")
+    assert caplog.records == []
 
 
 def test_a_file_that_is_not_there_has_no_aliases(tmp_path):
