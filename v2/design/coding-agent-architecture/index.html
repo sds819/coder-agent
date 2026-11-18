@@ -6012,7 +6012,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <p>沿用 mini 的「YAML + 命令行 key=value 递归合并」，扩展为四层：</p>
 <div class="highlight"><pre><span></span><code>内置 defaults.yaml  &lt;  项目 .coderagent/config.yaml  &lt;  用户 ~/.coderagent/config.yaml  &lt;  CLI 参数
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml（项目的这份不带 model 段）</span>
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">anthropic/claude-sonnet-4-5</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
@@ -6070,6 +6070,9 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <code>include_dirs</code> 也在 <code>permissions</code> 下面（不是 <code>tools</code>）；
 压缩的开关在 <code>context</code> 段（<code>auto_compact</code> / <code>compact_threshold</code>），不在 <code>agent</code> 段；
 <code>agent.max_turns</code> 数的是<strong>模型调用</strong>次数，默认 50。</p>
+<p>实现与草图的差别：<strong>项目层不再有 <code>model</code></strong>。<code>core/trust.py</code> 的 <code>tightened()</code>
+把项目的 <code>model</code> 整段丢掉——项目的端点会把整段对话，连同用户的 key，
+一起送到别处去。模型是用户的决定。</p>
 </blockquote>
 <h3 id="71">7.1 谁可以写配置</h3>
 <table>

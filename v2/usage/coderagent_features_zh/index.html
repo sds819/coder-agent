@@ -5590,7 +5590,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_base<span class="o">=</span>https://api.example.com/v1<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_key<span class="o">=</span>sk-...
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
@@ -7028,8 +7028,10 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <li>生效的 profile，</li>
 <li>命令行的 <code>-c</code>。</li>
 </ol>
-<p>模型名按这个顺序找：命令行的 <code>-c</code>、项目文件、用户文件、
-<code>$MSWEA_MODEL_NAME</code>，最后是 <code>anthropic/claude-sonnet-4-5</code>。</p>
+<p>模型名按这个顺序找：命令行的 <code>-c</code>、生效的 profile、用户文件、
+<code>$MSWEA_MODEL_NAME</code>，最后是 <code>anthropic/claude-sonnet-4-5</code>。
+<strong>项目不能挑模型</strong>：项目的 <code>model</code> 整段被丢掉——项目的端点会把整段对话，
+连同用户的 key，一起送到别处去。</p>
 <h3 id="profile">profile（命名配置）</h3>
 <p>profile 是一段有名字的配置，用 <code>--profile</code>（短写 <code>-p</code>）选它。它压在用户文件
 上面，在命令行的 <code>-c</code> 下面：</p>

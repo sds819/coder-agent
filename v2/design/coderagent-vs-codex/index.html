@@ -5241,7 +5241,7 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 <tr>
 <td><strong>信任边界</strong></td>
 <td>项目配置可以带 MCP server、hook</td>
-<td><strong>项目只能拿走能力，不能给能力</strong>（<code>src/coderagent/core/trust.py</code>）：模式只留 plan/readonly、规则只留 deny、路径取并集、工具取交集</td>
+<td><strong>项目只能拿走能力，不能给能力</strong>（<code>src/coderagent/core/trust.py</code>）：模式只留 plan/readonly、规则只留 deny、路径取并集、工具取交集、<strong><code>model</code> 整段丢掉</strong>（项目的端点会把对话和用户的 key 一起带走）</td>
 </tr>
 <tr>
 <td><strong>路径边界</strong></td>

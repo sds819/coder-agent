@@ -5447,9 +5447,11 @@ the <strong>command</strong> it was made for: a server or a hook whose command c
 thing that has to be trusted again. What is left out is left out entirely, so
 a project that is not trusted does not take the servers of the user away.</p>
 <p>What waits is only the code. The rest of the configuration of the project —
-the model, the instructions — is used as it is, because it says what the agent
-may do, not what it may run. The permissions are the exception: the project
-may only take tools away, never give them.</p>
+the instructions — is used as it is, because it says what the agent may do, not
+what it may run. The permissions are the exception: the project may only take
+tools away, never give them. The model is the other exception: where the
+conversation goes is the decision of the user, so the whole <code>model</code> section of
+a project is dropped.</p>
 <h2 id="the-sessions-and-the-money">The sessions and the money</h2>
 <p>A session is an append-only log of events, and that log is the source of
 truth. The sessions live in <code>~/.coderagent/sessions</code>: one <code>.jsonl</code> file with the

@@ -5612,7 +5612,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_base<span class="o">=</span>https://api.example.com/v1<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_key<span class="o">=</span>sk-...
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
 <span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
@@ -7147,8 +7147,10 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <li>the <code>-c</code> of the command line.</li>
 </ol>
 <p>The model name is looked up in this order: the <code>-c</code> of the command line, the
-project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
-<code>anthropic/claude-sonnet-4-5</code>.</p>
+profile, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
+<code>anthropic/claude-sonnet-4-5</code>. A <strong>project may not choose the model</strong>: the whole
+<code>model</code> section of a project is dropped, because the endpoint of a project
+would take the conversation — and the key of the user with it — somewhere else.</p>
 <h3 id="the-profiles">The profiles</h3>
 <p>A profile is a named piece of configuration. It is chosen with <code>--profile</code> (or
 <code>-p</code>), and it sits above the user file and below the <code>-c</code> of the command line:</p>

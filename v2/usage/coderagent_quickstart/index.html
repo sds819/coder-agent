@@ -4431,13 +4431,7 @@ coder<span class="w"> </span>web
 什么参数（<code>/mode</code> 的几个模式、<code>/rewind</code> 的检查点 id 等）。</p>
 <h2 id="config">给项目写一份配置</h2>
 <p>在项目根目录放 <code>.coderagent/config.yaml</code>，四层配置里它排第二（后面还有用户级的 <code>~/.coderagent/config.yaml</code> 和命令行的 <code>-c key=value</code>，越靠后越优先）：</p>
-<div class="highlight"><pre><span></span><code><span class="nt">model</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
-<span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
-<span class="w">    </span><span class="nt">summarize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
-
-<span class="nt">agent</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">agent</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
 <span class="w">  </span><span class="nt">cost_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
 
@@ -4460,6 +4454,11 @@ coder<span class="w"> </span>web
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
 </code></pre></div>
 <p>每个键的完整说明在<a href="../coderagent/#the-configuration">配置总览</a>。</p>
+<div class="admonition warning">
+<p class="admonition-title">模型不写在项目文件里</p>
+<p>项目的 <code>model</code> 整段会被丢掉——项目的端点会把整段对话，连同用户的 key，
+一起送到别处去。模型写在用户级的 <code>~/.coderagent/config.yaml</code> 里。</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title"><code>tools.enabled</code> 是白名单，会<strong>替换</strong>默认列表</p>
 <p>默认的工具是 <code>read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write, task, skill</code>。
