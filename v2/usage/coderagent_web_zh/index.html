@@ -4443,6 +4443,8 @@ coder<span class="w"> </span>web
 </tr>
 </tbody>
 </table>
+<p>这次调用自己的参数（<code>model</code>、<code>messages</code>、<code>tools</code>、<code>stream</code>、<code>stream_options</code>）是 agent 设的：
+页面直接拒绝，不写进一个 agent 起不来的文件。</p>
 <p>每个字段下面写着它来自哪一层：<code>defaults</code>、<code>user</code> 或 <code>env</code>（项目定不了模型）。
 页面底部的表格列出所有层，含密钥的项都被抹成 <code>***</code>。页面读的是<strong>配置文件</strong>；命令行上的
 <code>-m</code> 和 <code>-c</code> 是给会话用的，所以 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是

@@ -4414,6 +4414,9 @@ what it cost.</p>
 </tr>
 </tbody>
 </table>
+<p>The parameters of the call itself (<code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code>,
+<code>stream_options</code>) belong to the agent: the page refuses them instead of
+writing a file that the agent would not start with.</p>
 <p>Under every field is the layer it comes from: <code>defaults</code>, <code>user</code> or <code>env</code>.
 The table at the bottom shows every layer, with the secrets taken out.
 The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command

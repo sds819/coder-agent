@@ -5650,6 +5650,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td>用那三个里的一个，或者删掉这一行（用模型自己的习惯）。</td>
 </tr>
 <tr>
+<td><code>'model_kwargs' must not have '{key}'</code></td>
+<td><code>model_kwargs</code> 里有这次调用的参数：<code>model</code>、<code>messages</code>、<code>tools</code>、<code>stream</code> 或 <code>stream_options</code>。</td>
+<td>删掉它：这些是 agent 自己设的。</td>
+</tr>
+<tr>
 <td><code>the file does not exist</code></td>
 <td><code>model.litellm_config</code> 指的文件不在。</td>
 <td>改路径，它是相对于工作目录的。</td>

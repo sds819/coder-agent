@@ -4814,7 +4814,10 @@ running. The pages, the API and the security model are in
 </code></pre></div>
 <h3 id="the-model">The model</h3>
 <p><code>model.model_name</code> is the model of the agent. <code>model.model_kwargs</code> goes to the
-provider as it is. <code>model.routing</code> maps a purpose to a model:</p>
+provider as it is — except for <code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code> and
+<code>stream_options</code>: those belong to the call of the agent, and a configuration
+that has one of them is refused at the start instead of breaking the call at
+runtime. <code>model.routing</code> maps a purpose to a model:</p>
 <table>
 <thead>
 <tr>

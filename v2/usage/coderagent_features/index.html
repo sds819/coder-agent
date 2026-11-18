@@ -5672,6 +5672,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td>Use one of those three, or remove the line for the habit of the model.</td>
 </tr>
 <tr>
+<td><code>'model_kwargs' must not have '{key}'</code></td>
+<td><code>model_kwargs</code> has a parameter of the call: <code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code> or <code>stream_options</code>.</td>
+<td>Remove it: the agent sets those itself.</td>
+</tr>
+<tr>
 <td><code>the file does not exist</code></td>
 <td><code>model.litellm_config</code> points at a file that is not there.</td>
 <td>Fix the path; it is relative to the working directory.</td>
