@@ -92,9 +92,10 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 | Routing rules | `model.routing_rules`，一行一个 `when: purpose` |
 | Extra parameters | `model.model_kwargs` 的其余部分（YAML，原样传给厂商） |
 
-每个字段下面写着它来自哪一层：`defaults`、`project`、`user` 或 `env`。页面底部的表格列出
-所有层，含密钥的项都被抹成 `***`。页面读的是**配置文件**；命令行上的 `-m` 和 `-c` 是给
-会话用的，所以 `coder web -m deepseek/deepseek-flash` 时页面显示的还是文件里的那个模型。
+每个字段下面写着它来自哪一层：`defaults`、`user` 或 `env`（项目定不了模型）。
+页面底部的表格列出所有层，含密钥的项都被抹成 `***`。页面读的是**配置文件**；命令行上的
+`-m` 和 `-c` 是给会话用的，所以 `coder web -m deepseek/deepseek-flash` 时页面显示的还是
+文件里的那个模型。
 
 `Test the connection` 用表单里的设置发一次最便宜的调用，测通了再 `Save`。它报五件事：
 

@@ -29,11 +29,11 @@ def test_model_name_falls_back_to_env_var(tmp_path, monkeypatch):
 
 
 def test_config_file_wins_over_env_var(tmp_path, monkeypatch):
-    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
     monkeypatch.setenv("MSWEA_MODEL_NAME", "deepseek/deepseek-flash")
-    project = tmp_path / ".coderagent" / "config.yaml"
-    project.parent.mkdir(parents=True)
-    project.write_text("model:\n  model_name: openai/gpt-5\n", encoding="utf-8")
+    (home / "config.yaml").write_text("model:\n  model_name: openai/gpt-5\n", encoding="utf-8")
     assert load_config([], cwd=tmp_path).model.model_name == "openai/gpt-5"
 
 

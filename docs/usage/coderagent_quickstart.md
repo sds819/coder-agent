@@ -243,12 +243,6 @@ rules:
 在项目根目录放 `.coderagent/config.yaml`，四层配置里它排第二（后面还有用户级的 `~/.coderagent/config.yaml` 和命令行的 `-c key=value`，越靠后越优先）：
 
 ```yaml
-model:
-  model_name: deepseek/deepseek-flash
-  routing:
-    cheap: deepseek/deepseek-flash
-    summarize: deepseek/deepseek-flash
-
 agent:
   max_turns: 50
   cost_limit: 5.0
@@ -273,6 +267,10 @@ sandbox:
 ```
 
 每个键的完整说明在[配置总览](coderagent.md#the-configuration)。
+
+!!! warning "模型不写在项目文件里"
+    项目的 `model` 整段会被丢掉——项目的端点会把整段对话，连同用户的 key，
+    一起送到别处去。模型写在用户级的 `~/.coderagent/config.yaml` 里。
 
 !!! warning "`tools.enabled` 是白名单，会**替换**默认列表"
     默认的工具是 `read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write, task, skill`。

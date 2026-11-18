@@ -836,7 +836,7 @@ src/coderagent/
 ```
 
 ```yaml
-# .coderagent/config.yaml
+# ~/.coderagent/config.yaml（项目的这份不带 model 段）
 model:
   model_name: anthropic/claude-sonnet-4-5
   routing:
@@ -894,6 +894,10 @@ sandbox:
 > `include_dirs` 也在 `permissions` 下面（不是 `tools`）；
 > 压缩的开关在 `context` 段（`auto_compact` / `compact_threshold`），不在 `agent` 段；
 > `agent.max_turns` 数的是**模型调用**次数，默认 50。
+>
+> 实现与草图的差别：**项目层不再有 `model`**。`core/trust.py` 的 `tightened()`
+> 把项目的 `model` 整段丢掉——项目的端点会把整段对话，连同用户的 key，
+> 一起送到别处去。模型是用户的决定。
 
 ### 7.1 谁可以写配置
 

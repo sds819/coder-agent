@@ -837,9 +837,11 @@ thing that has to be trusted again. What is left out is left out entirely, so
 a project that is not trusted does not take the servers of the user away.
 
 What waits is only the code. The rest of the configuration of the project —
-the model, the instructions — is used as it is, because it says what the agent
-may do, not what it may run. The permissions are the exception: the project
-may only take tools away, never give them.
+the instructions — is used as it is, because it says what the agent may do, not
+what it may run. The permissions are the exception: the project may only take
+tools away, never give them. The model is the other exception: where the
+conversation goes is the decision of the user, so the whole `model` section of
+a project is dropped.
 
 ## The sessions and the money
 

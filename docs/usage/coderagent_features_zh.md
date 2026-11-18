@@ -201,7 +201,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 ```
 
 ```yaml
-# .coderagent/config.yaml
+# ~/.coderagent/config.yaml
 model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
@@ -1192,8 +1192,10 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 4. 生效的 profile，
 5. 命令行的 `-c`。
 
-模型名按这个顺序找：命令行的 `-c`、项目文件、用户文件、
+模型名按这个顺序找：命令行的 `-c`、生效的 profile、用户文件、
 `$MSWEA_MODEL_NAME`，最后是 `anthropic/claude-sonnet-4-5`。
+**项目不能挑模型**：项目的 `model` 整段被丢掉——项目的端点会把整段对话，
+连同用户的 key，一起送到别处去。
 
 ### profile（命名配置）
 

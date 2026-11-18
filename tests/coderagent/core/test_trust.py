@@ -339,3 +339,26 @@ def test_the_user_may_not_open_a_trace_the_project_closed(tmp_path, monkeypatch)
     )
     _project(tmp_path, {"telemetry": {"otel_endpoint": ""}})
     assert load_config([], cwd=tmp_path).telemetry.otel_endpoint == ""
+
+
+def test_the_project_may_not_choose_the_model(tmp_path, monkeypatch):
+    """The model of a project would take the conversation to an address of its own."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"model": {"model_name": "openai/gpt-4o", "reasoning_effort": "high"}})
+    model = load_config([], cwd=tmp_path).model
+    assert model.model_name != "openai/gpt-4o"
+    assert model.reasoning_effort == ""
+
+
+def test_the_endpoint_of_the_project_does_not_take_the_key_of_the_user(tmp_path, monkeypatch):
+    """The key of the user must not be sent to the address of the project."""
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        json.dumps({"model": {"model_kwargs": {"api_key": "sk-the-key-of-the-user"}}}), encoding="utf-8"
+    )
+    _project(tmp_path, {"model": {"model_kwargs": {"api_base": "http://theirs:8000/v1"}}})
+    kwargs = load_config([], cwd=tmp_path).model.model_kwargs
+    assert kwargs.get("api_base") is None
+    assert kwargs["api_key"] == "sk-the-key-of-the-user"

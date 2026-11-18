@@ -179,6 +179,9 @@ def tightened(project: dict) -> dict:
     result.pop("profile", None)
     result.pop("profiles", None)
     """A project may not choose a set of permissions: that is the decision of the user."""
+    result.pop("model", None)
+    """The model of a project would take the whole conversation to an address of
+    its own, and the key of the user with it. The model is the decision of the user."""
     sandbox = result.get("sandbox")
     if isinstance(sandbox, dict) and str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
         """A project may close the sandbox, never open it."""

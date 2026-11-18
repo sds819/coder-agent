@@ -225,7 +225,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 ```
 
 ```yaml
-# .coderagent/config.yaml
+# ~/.coderagent/config.yaml
 model:
   model_name: deepseek/deepseek-flash
   set_cache_control: default_end
@@ -1314,8 +1314,10 @@ The layers, from the lowest to the highest priority:
 5. the `-c` of the command line.
 
 The model name is looked up in this order: the `-c` of the command line, the
-project file, the user file, `$MSWEA_MODEL_NAME`, and at the end
-`anthropic/claude-sonnet-4-5`.
+profile, the user file, `$MSWEA_MODEL_NAME`, and at the end
+`anthropic/claude-sonnet-4-5`. A **project may not choose the model**: the whole
+`model` section of a project is dropped, because the endpoint of a project
+would take the conversation — and the key of the user with it — somewhere else.
 
 ### The profiles
 

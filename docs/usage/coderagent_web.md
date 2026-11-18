@@ -86,8 +86,8 @@ The model configuration, in a form:
 | Routing rules | `model.routing_rules` |
 | Extra parameters | Everything else of `model.model_kwargs` |
 
-Under every field is the layer it comes from: `defaults`, `project`, `user` or
-`env`. The table at the bottom shows every layer, with the secrets taken out.
+Under every field is the layer it comes from: `defaults`, `user` or `env`.
+The table at the bottom shows every layer, with the secrets taken out.
 The page reads the **configuration files**; the `-m` and `-c` of the command
 line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the
 page still shows the model of the files.
