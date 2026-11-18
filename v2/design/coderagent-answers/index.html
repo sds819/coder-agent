@@ -5166,14 +5166,14 @@
 <p><strong>结论</strong>：<code>tools/rules.py</code>。</p>
 <ul>
 <li><strong>位置</strong>：项目 <code>&lt;project&gt;/.coderagent/rules.yaml</code> 和用户 <code>&lt;config_home&gt;/rules.yaml</code>。</li>
-<li><strong>优先级</strong>：<strong>项目规则先、用户规则后，后写的赢</strong>。也就是说用户可以覆盖项目的同名规则。</li>
+<li><strong>优先级</strong>：<strong>项目规则先、用户规则后</strong>。在 <code>allow</code> / <code>ask</code> 之间<strong>后写的赢</strong>，也就是说用户可以覆盖项目的同名规则；但 <strong><code>deny</code> 不会被后面的规则盖掉</strong>——项目的 <code>deny</code> 挡住的就是用户也挡不住的。</li>
 <li><strong>格式</strong>：<code>{"rules": [{tool, pattern, decision, reason}]}</code>。只认这四个键，多一个就抛 <code>RuleError</code>（带文件名和行号）。<code>decision</code> 只能是 <code>allow</code> / <code>ask</code> / <code>deny</code>。</li>
 <li><strong>匹配语义</strong>（<code>Rule.pattern</code>）：</li>
 <li><strong>路径类工具</strong>：<code>pattern</code> 是 <strong>glob</strong>，用 <code>glob_to_regex</code> 转成正则，对<strong>相对 cwd 的路径</strong>匹配。<code>*</code> 不跨 <code>/</code>，<code>**</code> 跨。</li>
 <li><strong><code>bash</code></strong>：<code>pattern</code> 是<strong>正则</strong>，而且必须匹配<strong>整段的开头</strong>（<code>git push</code> 不会匹配 <code>echo "git push"</code>）。</li>
 <li><strong>其他工具</strong>：<code>pattern</code> 是工具名，或者 <code>*</code>。</li>
-<li><strong>求值顺序</strong>：非 bash 工具是「按顺序遍历所有规则，<strong>最后一条匹配的赢</strong>」；bash 是「<strong>分段</strong>判，每段最后一条匹配的赢，整条命令取<strong>最严</strong>的段」。这两处「最后一条赢」的作用域不同，是个容易看错的地方。</li>
-<li><strong>deny 不一定赢</strong>：<code>_strictest()</code>（<code>allow(0) &lt; ask(1) &lt; deny(2)</code>）<strong>只用在 bash 的分段上</strong>（<code>permissions.py:173,179,182</code>）。路径类工具是「最后一条匹配的规则赢」——所以一条<strong>写在后面的</strong> <code>allow</code> 能盖掉前面的 <code>deny</code>。唯一的例外是 <code>deny_paths</code>／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 <code>bypass</code>）都拦。</li>
+<li><strong>求值顺序</strong>：所有工具都走<strong>「最严的匹配规则赢」</strong>（<code>permissions._strictest_rule</code>）：<strong><code>deny</code> 永远赢</strong>；在 <code>allow</code> / <code>ask</code> 之间<strong>后写的赢</strong>。bash 还要<strong>分段</strong>判，每段各取最严的匹配规则，整条命令再取<strong>最严</strong>的段。</li>
+<li><strong>deny 一定赢</strong>：<code>_strictest_rule()</code> 让 <code>deny</code> 一旦命中就不再让位，所以一条<strong>写在后面的</strong> <code>allow</code> 盖不掉前面的 <code>deny</code>——项目的 <code>deny</code> 用户也开不了。剩下的两个例外是 <code>deny_paths</code>／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 <code>bypass</code>）都拦。</li>
 </ul>
 <h3 id="b7-bash">b7 <code>bash</code> 这种命令怎么管？</h3>
 <p><strong>结论</strong>：<code>tools/bash_policy.py</code> + <code>permissions.py</code> 的 <code>_evaluate_bash()</code>。</p>
@@ -5233,7 +5233,7 @@
 </tr>
 <tr>
 <td>规则文件</td>
-<td>项目 / 用户的 <code>rules.yaml</code> 可以对具体工具 + 路径给 allow / ask / deny；bash 取最严的段，路径类工具<strong>最后一条匹配的规则赢</strong>（不是 deny 永远赢）</td>
+<td>项目 / 用户的 <code>rules.yaml</code> 可以对具体工具 + 路径给 allow / ask / deny；<strong><code>deny</code> 永远赢</strong>，bash 取最严的段</td>
 </tr>
 <tr>
 <td>越界检查</td>
@@ -5796,7 +5796,7 @@
 <li><strong>相邻的两条 user 消息</strong>：权限模式说明和摘要被组装成两条连续的 <code>user</code> 消息，中间没有 assistant。合法但不是自然对话形态。</li>
 <li><strong><code>stop_reason</code> 的 docstring 过期</strong>：<code>TurnResult.stop_reason</code> 只列了 5 种，实际有 7 种（漏了 <code>interrupted</code> 和 <code>verify_failed</code>）。</li>
 <li><strong><code>_cut_index</code> 用的是 <code>config.context_window</code> 而不是 <code>guard.limit()</code></strong>：两者差一个 <code>reserved_output</code>，极端情况下会切得偏保守。</li>
-<li><strong>「最后一条规则赢」有两个作用域</strong>：路径类工具是「所有规则里最后一条匹配的赢」，bash 是「每段最后一条匹配的赢，再取最严的段」。</li>
+<li><strong><code>deny</code> 没有解禁口</strong>：一条 <code>deny</code> 命中了，后面的 <code>allow</code> 也开不了——只能去改那份规则文件。而项目的规则文件往往在仓库里，是别人写的。</li>
 <li><strong><code>model.max_retries</code> 没接进 backend</strong>：只有 <code>coder web</code> 读它；终端里想缩短重试只能用环境变量 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>。</li>
 <li><strong>子 agent 的 tool call 事件不进会话日志</strong>：只发总线，所以日志里看不到它「打算调什么」；不过它 <code>edit</code>/<code>multi_edit</code> 的<strong>结果事件（含 diff）会落进日志</strong>，<code>write</code> 不会。想知道它动过哪些文件，看结果 JSON 里的 <code>files_touched</code> 最准。</li>
 <li><strong><code>core/memory.py</code> 是只读的，但「memory 特性」不是</strong>——写入发生在 <code>extensions/reflect.py</code>，由 <code>settle_session()</code> 驱动。</li>

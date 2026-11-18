@@ -5165,18 +5165,19 @@ decision:</p>
 <p>The pattern is a glob for the tools that touch a path (<code>read</code>, <code>write</code>,
 <code>edit</code>, <code>multi_edit</code>, <code>glob</code>, <code>grep</code>, <code>ls</code>) and a regular expression for
 <code>bash</code>, where it is matched against the beginning of each part of the command.
-The decision is <code>allow</code>, <code>ask</code> or <code>deny</code>. For the path tools the last rule that
-matches wins. A command is judged part by part and the strictest part wins, so
-an allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
+The decision is <code>allow</code>, <code>ask</code> or <code>deny</code>. Among the rules that match, the
+strictest one wins: a <code>deny</code> is never undone by a later <code>allow</code>, and between
+<code>allow</code> and <code>ask</code> the last one wins. A command is judged part by part and the
+strictest part wins, so an allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
 <p><code>apply_patch</code> has no path of its own — it changes several files at once — so a
 rule about it is about the whole call. Every file it touches is checked against
 the bounds of the session anyway: a patch that reaches outside the working
 directory is refused.</p>
 <p>The rules of the project live in <code>.coderagent/rules.yaml</code>, the rules of the
 user in <code>~/.coderagent/rules.yaml</code>. Both are read, in that order, so a rule of
-the user beats a rule of the project with the same tool and pattern. The rules
-of the project may only <strong>deny</strong>: a project cannot allow itself something the
-user has to be asked for.</p>
+the user beats a rule of the project with the same tool and pattern — except
+that a <code>deny</code> is never beaten by anything. The rules of the project may only
+<strong>deny</strong>: a project cannot allow itself something the user has to be asked for.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/rules.yaml</span>
 <span class="nt">rules</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>

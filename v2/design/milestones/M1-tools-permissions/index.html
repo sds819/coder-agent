@@ -4896,14 +4896,14 @@ Include more surrounding context to make it unique, or set replace_all=true.
 <p><strong>求值顺序</strong></p>
 <ol>
 <li><code>mode</code> 决定默认值（见 2.4 表）</li>
-<li>遍历规则，<strong>最后命中者生效</strong>（后写规则覆盖先写）</li>
+<li>遍历匹配的规则，<strong>最严的赢</strong>：<strong><code>deny</code> 永远赢</strong>，<code>allow</code> / <code>ask</code> 之间<strong>后写规则覆盖先写</strong></li>
 <li>路径类工具在规则之后还要过一次<strong>越界检查</strong>，越界一律 <code>deny</code></li>
 </ol>
 <blockquote>
-<p><strong>简化决策</strong>：采用「最后命中者生效」，规则顺序即优先级。文档中明确「把 deny 规则放在文件末尾可覆盖前面的 allow」。这比「deny 优先」更可预测，也更符合 Claude Code 的 <code>.claude/settings.json</code> 语义（后写覆盖）。</p>
+<p><strong>简化决策</strong>：匹配到的规则里最严的赢。这比「谁写在后面谁赢」安全——项目的 <code>deny</code>
+是用户的安全边界，不该被仓库里的一份配置打开。代价是 <code>deny</code> 没有解禁口，只能去改那份规则文件。</p>
 <p><strong>一个例外</strong>：<code>bash</code> 命令按<strong>段</strong>判断，每段各取一条规则，然后<strong>取最严的那一段</strong>
-（<code>allow &lt; ask &lt; deny</code>）。所以 <code>git push</code> 被 <code>allow</code> 放行，不等于同一条命令里的 <code>rm</code> 也放行。
-路径类工具没有这个「取最严」：<strong>最后一条匹配的规则赢</strong>。</p>
+（<code>allow &lt; ask &lt; deny</code>）。所以 <code>git push</code> 被 <code>allow</code> 放行，不等于同一条命令里的 <code>rm</code> 也放行。</p>
 <p><strong>越界检查不是规则</strong>：不管哪条规则写了 <code>allow</code>，落在工作目录之外的路径一律 <code>deny</code>
 （<code>permissions.py</code> 的 <code>within_bounds</code>）。要放开某些目录，用 <code>permissions.include_dirs</code>。</p>
 </blockquote>
@@ -5140,7 +5140,7 @@ Include more surrounding context to make it unique, or set replace_all=true.
 <li>[x] 路径越界检测（<code>cwd</code> 外默认 deny）</li>
 <li>[x] <code>check</code> 返回命中规则（供 UI 解释「为什么被拦」）</li>
 </ul>
-<p><strong>验收</strong>：<code>test_permissions.py</code> — 参数化覆盖五种 mode × 六类工具；规则「后写覆盖」语义；<code>deny</code> 命中。</p>
+<p><strong>验收</strong>：<code>test_permissions.py</code> — 参数化覆盖五种 mode × 六类工具；规则「最严的赢、<code>deny</code> 不可覆盖」语义；<code>deny</code> 命中。</p>
 <h3 id="t18">T1.8 规则文件加载</h3>
 <ul>
 <li>[x] <code>rules.py::load_rules(project_dir, user_home) -&gt; list[Rule]</code></li>

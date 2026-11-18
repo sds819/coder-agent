@@ -4364,8 +4364,9 @@ coder<span class="w"> </span>web
 <span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"tests/**"</span>
 <span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
 </code></pre></div>
-<p><code>decision</code> 是 <code>allow</code> / <code>ask</code> / <code>deny</code>：路径类工具最后一条匹配上的规则赢，
-命令则是分段判断、最严的那段说了算。</p>
+<p><code>decision</code> 是 <code>allow</code> / <code>ask</code> / <code>deny</code>：匹配上的规则里最严的赢——<code>deny</code> 不会被
+后面的 <code>allow</code> 盖掉，<code>allow</code> 和 <code>ask</code> 之间是最后一条赢；命令则是分段判断、
+最严的那段说了算。</p>
 <h2 id="commands">常用命令</h2>
 <p>会话里以 <code>/</code> 开头的是命令，其余都是给 agent 的话。常用的几个：</p>
 <table>

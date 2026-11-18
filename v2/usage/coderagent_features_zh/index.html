@@ -5759,8 +5759,8 @@ checkpoint 时会被去掉密钥，<code>/rewind</code> 也不会把它恢复回
 <li><strong>模型会知道</strong>——<code>plan</code> 和 <code>readonly</code> 下 agent 知道自己改不了东西，
   于是把看到的说出来，而不是动手。</li>
 <li><strong>规则</strong>——<code>~/.coderagent/rules.yaml</code> 和 <code>.coderagent/rules.yaml</code> 按工具
-  和模式决定放不放行。<strong>用户级那份赢</strong>。项目里的规则<strong>只能拒绝</strong>：项目不能
-  自己给自己开权限。</li>
+  和模式决定放不放行。<strong>用户级那份赢</strong>，但 <code>deny</code> 谁也盖不掉。项目里的规则
+  <strong>只能拒绝</strong>：项目不能自己给自己开权限。</li>
 <li><strong><code>Always allow</code></strong>——审批卡片上的这个按钮会写一条规则，以后<strong>同一个调用</strong>
   （同一个文件、同一条命令）直接放行。</li>
 <li><strong>禁止的路径</strong>——<code>permissions.deny_paths</code>，agent 不许碰的路径。</li>
@@ -5917,6 +5917,9 @@ decides<span class="w"> </span>whether<span class="w"> </span>it<span class="w">
 <p><code>decision: allow</code> 的规则<strong>不会</strong>把整块磁盘打开：工作目录以外的路径还是
 碰不到，除非它在 <code>permissions.include_dirs</code> 里。用户级的规则也不能放宽这个
 边界。</p>
+<p>匹配上的规则里<strong>最严的赢</strong>：<code>deny</code> 不会被后面的 <code>allow</code> 盖掉——项目级的规则
+只能拒绝，那个拒绝也挡得住用户级的规则；<code>allow</code> 和 <code>ask</code> 之间是最后一条
+匹配的赢。</p>
 <p><code>permissions.deny_paths</code> 加的是一条「全部拒绝」的规则，它在规则文件之后
 生效，所以同样路径上的 <code>allow</code> 打不过它。</p>
 <h3 id="cli">命令行</h3>

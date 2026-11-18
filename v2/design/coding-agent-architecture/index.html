@@ -5330,13 +5330,14 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PermissionPolicy</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""规则求值顺序：路径类工具「最后一条匹配的赢」，bash「每段取最严」。"""</span>
+<span class="w">    </span><span class="sd">"""规则求值顺序：匹配到的规则里最严的赢，`deny` 永远赢。"""</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">PermissionMode</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Rule</span><span class="p">]):</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""返回 allow / ask / deny。"""</span>
 </code></pre></div>
 <p>规则来源分层（后者覆盖前者）：
 <code>配置文件里的 permissions.rules</code> → <code>项目级 .coderagent/rules.yaml</code> → <code>用户级 ~/.coderagent/rules.yaml</code>；
+覆盖只在 <code>allow</code> / <code>ask</code> 之间生效，<strong><code>deny</code> 谁也盖不掉</strong>。
 最后 <code>permissions.deny_paths</code> 里的路径一律 deny（越界路径在任何模式下都挡）。
 <strong>没有内置默认规则集</strong>（<code>defaults.yaml</code> 里 <code>rules: []</code>）。</p>
 <p>「总是允许」需要持久化到<strong>用户级</strong>规则文件——这是 Claude Code 体验的关键。
@@ -6361,7 +6362,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <tr>
 <td><code>PermissionPolicy.check</code></td>
 <td>M1</td>
-<td>返回 <code>allow</code>/<code>ask</code>/<code>deny</code> 三态；规则「后写覆盖」</td>
+<td>返回 <code>allow</code>/<code>ask</code>/<code>deny</code> 三态；规则里最严的赢，<code>deny</code> 不可被覆盖</td>
 </tr>
 <tr>
 <td><code>ToolExecutor.execute</code></td>

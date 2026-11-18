@@ -5787,8 +5787,8 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
   the ones that destroy something or send it out ask, and a path outside the
   working directory is refused.</li>
 <li><strong>Rules</strong> — <code>~/.coderagent/rules.yaml</code> and <code>.coderagent/rules.yaml</code> decide
-  per tool and per pattern. The user level file wins. The rules of the project
-  may only deny.</li>
+  per tool and per pattern. The user level file wins, except that a <code>deny</code> is
+  never beaten. The rules of the project may only deny.</li>
 <li><strong><code>Always allow</code></strong> — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.</li>
 <li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
@@ -5951,6 +5951,10 @@ decides<span class="w"> </span>whether<span class="w"> </span>it<span class="w">
 <p>A rule with <code>decision: allow</code> does <strong>not</strong> open the disk: a path outside the
 working directory stays outside, unless it is in <code>permissions.include_dirs</code>.
 The rules of the user cannot widen the bounds.</p>
+<p>Among the rules that match, the <strong>strictest</strong> one wins. A <code>deny</code> is never
+undone by a later <code>allow</code> — the rules of the project may only deny, and that
+deny holds against the rules of the user. Between <code>allow</code> and <code>ask</code> the last
+matching rule wins.</p>
 <p><code>permissions.deny_paths</code> adds a rule that denies everything that matches, and
 it is applied after the rule files, so it wins over an <code>allow</code> of the same
 path.</p>

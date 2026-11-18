@@ -5396,10 +5396,10 @@ include_dirs / source / server_mode。<code>source</code> 按 <code>config_layer
 <h3 id="91">9.1 路径安全三层</h3>
 <div class="highlight"><pre><span></span><code>Path.resolve()  →  边界检查（必须在 cwd 或 permissions.include_dirs 里）  →  工具自身的 resolve_path
 </code></pre></div>
-<p>越界 → <strong>403</strong>，文案沿用 <code>tools/permissions.py:235</code> 的写法。</p>
+<p>越界 → <strong>403</strong>，文案沿用 <code>tools/permissions.py:302</code> 的写法。</p>
 <blockquote>
 <p><strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>——<code>evaluate</code> 走的是规则，
-而规则<strong>不能</strong>放宽边界（<code>tools/permissions.py:223-233</code> 的 <code>within_bounds</code> 写着
+而规则<strong>不能</strong>放宽边界（<code>tools/permissions.py:290-300</code> 的 <code>within_bounds</code> 写着
 「The rules of the user cannot widen this」）。但 <code>evaluate</code> 的语义是「这条调用
 允不允许」，不是「这个路径在不在范围内」，用它当边界检查会把
 「规则放行」和「路径越界」两件事混在一起。<strong>必须直接用边界检查</strong>。</p>
