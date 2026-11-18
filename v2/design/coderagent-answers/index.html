@@ -5107,7 +5107,10 @@
 <ul>
 <li>工具抛异常 → 变成一条 observation 字符串 <code>"Error: '&lt;tool&gt;' failed: &lt;Type&gt;: &lt;msg&gt;"</code>；</li>
 <li>参数 JSON 解析失败 → 变成 <code>"Error: ..."</code>，并明确告诉模型「请发一个 JSON 对象」；</li>
-<li>工具自己返回 <code>is_error=True</code>（比如 <code>old_string</code> 没找到）→ 同样是给模型看的一段错误文本。</li>
+<li>工具自己返回 <code>is_error=True</code>（比如 <code>old_string</code> 没找到）→ 同样是给模型看的一段错误文本；</li>
+<li><strong>被权限拒绝</strong> → <code>"Error: permission denied for '&lt;tool&gt;'. &lt;理由&gt;"</code>，<strong>理由不能空</strong>：
+  模式自己拒的（plan / readonly）说清是哪个模式，规则拒的说规则的理由，
+  都没说就兜一句「会话的规则拒绝它」。没有理由的拒绝会让模型原地重试同一个调用。</li>
 </ul>
 <p>模型看到的是<strong>正常的 tool result</strong>，只是内容是错误说明，它可以自己改正后重试。</p>
 <p><strong>为什么</strong>：让工具错误成为<strong>模型可读的信息</strong>而不是异常，是 agent 能自我纠错的前提。</p>

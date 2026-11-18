@@ -4820,9 +4820,12 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 <li><code>telemetry.collect()</code> 重放日志，算出成本和指标（<code>src/coderagent/core/telemetry.py:68</code>）。</li>
 </ul>
 <p><strong>代价</strong>：日志里同一条 TOOL_RESULT 会被写<strong>两次</strong>——<code>ToolExecutor._publish()</code> 写一次
-（带 diff，<code>src/coderagent/tools/executor.py:181</code>），<code>ContextEngine._record()</code> 又写一次
+（带 diff，<code>src/coderagent/tools/executor.py:201</code>），<code>ContextEngine._record()</code> 又写一次
 （带 messages，<code>src/coderagent/core/context.py:197</code>）。看起来是冗余，其实是两种用途：
 前者给 UI（要 diff），后者给重放（要 messages）。两个 payload 结构不同，不能合成一条。</p>
+<p><strong>写进日志的是模型看到的那一份</strong>：<code>executor._publish()</code> 拿的是裁过的输出
+（<code>trim_text</code>，按 <code>tools.max_output_tokens</code> 裁），不是工具返回的原文。
+不然一个打印了几十 MB 的工具会把会话日志塞满，而日志和模型看到的东西还不是一回事。</p>
 <p><strong>收益</strong>：新增一个 UI（web 版就是这样加的）<strong>不需要碰核心</strong>；fork 就是复制事件文件
 （<code>src/coderagent/core/session.py:150</code>）；崩溃恢复就是重放。</p>
 <p><strong>边界</strong>：<code>TEXT_DELTA</code> 和 <code>REASONING</code> <strong>不进日志</strong>（<code>src/coderagent/core/events.py:15-17</code>

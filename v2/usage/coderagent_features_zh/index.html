@@ -5748,11 +5748,13 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <p>放到后台的命令回答 <code>Started background task {id}: {cmd}</code>，用 <code>bash_output</code>
 读，用 <code>bash_kill</code> 杀。它跑在会话的环境里，用的也是会话的环境。只有本地
 环境能起后台任务：容器里这个调用会被拒绝，因为命令会跑到用户的机器上，
-跑到会话的边界外面去。</p>
+跑到会话的边界外面去。后台任务属于这个会话：会话的进程结束时它会被停掉，
+它的日志也一起删掉。</p>
 <p>工具的输出会写进会话日志，也会发给模型。里面长得像密钥的东西——API key、
-token、密码、私钥——在写和发之前都会换成 <code>[redacted]</code>。带密钥的文件存进
-checkpoint 时会被去掉密钥，<code>/rewind</code> 也不会把它恢复回去：文件保持原样，
-命令会告诉你是哪一个。</p>
+token、密码、私钥——在写和发之前都会换成 <code>[redacted]</code>。日志里存的是模型看到
+的那一份输出，按上下文的预算裁过，所以一个打印了几十 MB 的工具不会把会话
+日志塞满。带密钥的文件存进 checkpoint 时会被去掉密钥，<code>/rewind</code> 也不会把
+它恢复回去：文件保持原样，命令会告诉你是哪一个。</p>
 <h2 id="_11">权限</h2>
 <ul>
 <li><strong>五种模式</strong>——<code>default</code>、<code>acceptEdits</code>、<code>plan</code>、<code>readonly</code>、<code>bypass</code>。</li>

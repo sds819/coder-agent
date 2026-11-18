@@ -5772,12 +5772,17 @@ code is part of the output, as <code>[exit code 1]</code>. A command that runs l
 read with <code>bash_output</code>, killed with <code>bash_kill</code>. It runs in the environment of
 the session, with the environment of the session. Only a local environment can
 start one: in a container the call is refused, because the command would run on
-the machine of the user, outside of the boundary of the session.</p>
+the machine of the user, outside of the boundary of the session. A background
+task belongs to the session: it is stopped when the process of the session
+ends, and its log is removed with it.</p>
 <p>The output of a tool is written to the log of the session and sent to the
 provider. What looks like a secret in it — an API key, a token, a password, a
-private key — is replaced with <code>[redacted]</code> before either happens. A file that
-holds a secret is stored in a checkpoint without it, and it is not restored by
-<code>/rewind</code>: the file is left as it is and the command says which one it was.</p>
+private key — is replaced with <code>[redacted]</code> before either happens. The log
+holds the output as the model saw it, cut to the budget of the context, so a
+tool that prints a hundred megabytes does not fill the log of the session. A
+file that holds a secret is stored in a checkpoint without it, and it is not
+restored by <code>/rewind</code>: the file is left as it is and the command says which one
+it was.</p>
 <h2 id="the-permissions">The permissions</h2>
 <ul>
 <li><strong>Five modes</strong> — <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code> and <code>bypass</code>.</li>
