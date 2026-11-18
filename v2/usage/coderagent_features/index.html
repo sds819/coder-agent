@@ -1302,6 +1302,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The shape of the answer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-checked-and-what-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is checked, and what is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-the-answer-out-of-the-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the answer out of the text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-two-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two answers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -4565,6 +4604,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The shape of the answer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-checked-and-what-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is checked, and what is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-the-answer-out-of-the-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the answer out of the text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-two-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two answers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -5339,8 +5417,86 @@ answer is simply not validated against that part.</p>
 is <strong>given back to it</strong> with the errors, so that it can try again. It gets two
 answers; when the second one does not fit either, the turn stops with
 <code>stop_reason</code> <code>schema_invalid</code> and the errors are in <code>error</code>.</p>
-<p>The answer is read out of the text of the model: a code fence around the JSON
-is fine, and so is a sentence in front of it.</p>
+<h4 id="what-is-checked-and-what-is-not">What is checked, and what is not</h4>
+<p>The check is done by a small validator of the agent, not by the provider. The
+model is only <strong>asked</strong> for JSON that fits the schema — the schema is in the
+system prompt — and the answer is checked afterwards. The provider never sees
+the schema, so a model that ignores the request costs one retry.</p>
+<p>The validator knows these keywords and nothing else:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>One name or a list of names: <code>string</code>, <code>integer</code>, <code>number</code>, <code>boolean</code>, <code>object</code>, <code>array</code>, <code>null</code></td>
+</tr>
+<tr>
+<td><code>properties</code></td>
+<td>The type of a field, checked in place</td>
+</tr>
+<tr>
+<td><code>required</code></td>
+<td>The field has to be there</td>
+</tr>
+<tr>
+<td><code>additionalProperties: false</code></td>
+<td>A field that is not in the schema is an error</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>The elements of an array, checked one by one</td>
+</tr>
+<tr>
+<td><code>enum</code></td>
+<td>The value has to be one of the list</td>
+</tr>
+<tr>
+<td><code>nullable</code></td>
+<td><code>null</code> is allowed</td>
+</tr>
+</tbody>
+</table>
+<p>Every other keyword (<code>anyOf</code>, <code>$ref</code>, <code>pattern</code>, <code>minimum</code>, …) is <strong>ignored</strong>:
+the part of the schema that uses it is not checked, and the answer is not
+refused either. A schema that relies on them looks strict and is not.</p>
+<p>Two things the validator is strict about:</p>
+<ul>
+<li>a boolean is not a number — <code>{"count": true}</code> does not fit
+  <code>{"count": {"type": "integer"}}</code>;</li>
+<li><code>nullable</code> only adds <code>null</code> to the values that are allowed, it does not
+  loosen the type — <code>{"type": "integer", "nullable": true}</code> still refuses <code>""</code>.</li>
+</ul>
+<p>The errors say where the answer is wrong, so the model knows what to fix:
+<code>'files[1]' must be string</code>, <code>the answer is missing 'files'</code>, <code>the answer has
+the unknown field 'extra'</code>.</p>
+<h4 id="reading-the-answer-out-of-the-text">Reading the answer out of the text</h4>
+<p>The answer of the model is text, and the JSON is taken out of it:</p>
+<ol>
+<li>the whole text is JSON — it is used as it is;</li>
+<li>the text is wrapped in a code fence — the fence is taken off;</li>
+<li>there is a sentence in front of the JSON — the part between the first <code>{</code>
+   and the last <code>}</code> is used.</li>
+</ol>
+<p>A top-level <strong>array</strong> is read when it is the whole answer. An array with a
+sentence around it is not read as an array: the third rule looks for braces,
+so it takes the part between the first <code>{</code> and the last <code>}</code> — the object
+<em>inside</em> the array. The check then says the answer is not an array, and the
+model is asked again.</p>
+<h4 id="the-two-answers">The two answers</h4>
+<p>The model gets two answers. The first one that does not fit is <strong>given back</strong>
+to it, with the errors, as a new message — the agent is called back, not
+blocked. When the second one does not fit either, the turn ends with
+<code>stop_reason</code> <code>schema_invalid</code>, the errors are in <code>error</code> and <code>output</code> stays
+<code>null</code>.</p>
+<p>The shape is the last of the three gates: the <code>Stop</code> hook and the verification
+commands come first, so a turn that one of them sends back never reaches the
+check. The shape belongs to the loop, not to one conversation: switching
+sessions keeps it.</p>
 <h3 id="when-something-goes-wrong">When something goes wrong</h3>
 <table>
 <thead>
@@ -5390,6 +5546,11 @@ is fine, and so is a sentence in front of it.</p>
 <td><code>stop_reason</code> is <code>schema_invalid</code></td>
 <td>The model did not answer with JSON that fits the schema, twice.</td>
 <td>The errors are in <code>error</code>; the messages of the turn say what the model was told.</td>
+</tr>
+<tr>
+<td>The answer passes the check but is not what you expected</td>
+<td>The schema uses a keyword the validator does not know (<code>anyOf</code>, <code>$ref</code>, …), so that part was not checked at all.</td>
+<td>Write the schema with the keywords above, and read the answer in <code>output</code>.</td>
 </tr>
 <tr>
 <td><code>Unknown format 'xml'. Use json or otel.</code></td>
