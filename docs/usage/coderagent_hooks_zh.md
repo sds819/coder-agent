@@ -117,6 +117,51 @@ if payload.get("tool") == "bash" and "rm -rf" in payload["params"].get("command"
 
 `PreToolUse` 的 hook 跑在**权限检查之前**，所以被批准的是被改写之后的那条命令。
 
+## Stop hook
+
+`Stop` hook 只被问一个问题：agent 现在能停吗？agent 想停的时候，是它回答里没有
+工具调用的时候。hook 从 `last_message` 里读到那段回答，答 `block`（或 `deny`）就
+是让它回去接着干。
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+payload = json.load(sys.stdin)
+if "TODO" in payload.get("last_message", ""):
+    print(json.dumps({"decision": "block", "reason": "还有 TODO 没处理完，先处理它们。"}))
+```
+
+理由会作为一条 **user** 消息回到模型那里，前面带着 `[hook]`。这是建议，不是命令：
+模型可以再停一次。所以这个 hook **一轮最多被问三次**——过了三次，agent 停不停
+由它自己定，这一轮里也不会再问这个 hook 了。
+
+`Stop` 上各个键的作用：
+
+| 键 | 在 `Stop` 上的作用 |
+|---|---|
+| `decision` | 只有 `block` 和 `deny` 有用。`allow` 什么也不做 |
+| `reason` | 作为一条新消息回到模型那里 |
+| `additionalContext` | **没有作用**——只用了理由 |
+| `updatedInput` | **没有作用**——这里没有东西可以改写 |
+
+几件容易让人意外的事：
+
+- **`matcher` 必须留空。** matcher 是拿工具名去匹配的，而 `Stop` 的内容里没有工具。
+  像 `bash` 这样的 matcher 什么也匹配不上，于是这个 hook 永远不会被调用——而且没有
+  任何提示。留空（或者写 `.*`）。
+- **子 agent 不受它管。** `Stop` hook 只有主 agent 会问。子 agent 想停就停了；
+  `SubagentStop` 是个通知，改不了什么。
+- **它排在另外两道闸门前面。** 顺序是 `Stop`、然后是校验的命令、然后是答案的
+  schema。被 hook 拦下的那次停，两个都不查。
+- **每拦一次，模型就多调一次。** 拦停会把 agent 送回模型，而这一轮的限额
+  （`max_turns`、`cost_limit`、`token_limit`）在下次调用之前会重新判一遍。老是拦的
+  hook 能把一轮变成 `max_turns`。
+- **三次是这一轮的。** 用户下一个提问，又是三次。
+- **`strict: true` 能让 agent 停不下来。** 以非零退出码结束的 `Stop` hook 会拒绝这次
+  停，于是坏掉的 hook 让 agent 一直干活——直到第三次拦停，之后 agent 还是会停。
+
 ## 一个改写提问的 hook
 
 ```python

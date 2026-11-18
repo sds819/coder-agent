@@ -131,6 +131,59 @@ concatenated and the last `updatedInput` wins.
 The `PreToolUse` hook runs **before** the permission check, so the command
 that is approved is the command that was rewritten.
 
+## The Stop hook
+
+The `Stop` hook is asked one question: may the agent stop now? The agent wants
+to stop when it answers without a tool call. The hook reads the text of that
+answer in `last_message` and answers `block` (or `deny`) to send the agent
+back to work.
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+payload = json.load(sys.stdin)
+if "TODO" in payload.get("last_message", ""):
+    print(json.dumps({"decision": "block", "reason": "There are TODOs left. Do them first."}))
+```
+
+The reason goes back to the model as a **user** message, prefixed with
+`[hook]`. It is advice, not an order: the model may stop again. So the hook is
+asked at most **three times per turn** — after that the agent stops whatever
+the hook says, and the hook is not called again in that turn.
+
+What the answer does at `Stop`:
+
+| Key | Effect at `Stop` |
+|---|---|
+| `decision` | Only `block` and `deny` do anything. `allow` has no effect |
+| `reason` | Goes back to the model as a new message |
+| `additionalContext` | **No effect** — only the reason is used |
+| `updatedInput` | **No effect** — there is nothing to rewrite |
+
+A few things that surprise people:
+
+- **The matcher has to be empty.** The matcher is matched against the name of a
+  tool, and the payload of `Stop` has no tool in it. A matcher like `bash`
+  matches nothing, so the hook is never called — without a word of warning.
+  Leave it empty (or `.*`).
+- **A sub agent is not stopped by it.** The `Stop` hook is asked by the main
+  agent only. A sub agent that wants to stop simply stops; `SubagentStop` is a
+  notification and changes nothing.
+- **It comes before the other two gates.** The order is `Stop`, then the
+  commands of the verification, then the schema of the answer. A stop that the
+  hook blocks skips the other two.
+- **Every block costs another call of the model.** A blocked stop sends the
+  agent back to the model, and the limits of the turn (`max_turns`,
+  `cost_limit`, `token_limit`) are checked again before that call. A hook that
+  blocks every time can turn a turn into `max_turns`.
+- **The three blocks belong to the turn.** The next question of the user starts
+  with three again.
+- **`strict: true` can keep the agent from stopping.** A `Stop` hook that ends
+  with a non-zero exit code denies the stop, so a broken hook keeps the agent
+  at work — until the third block, and then the agent stops anyway.
+
 ## A hook that rewrites the prompt
 
 ```python

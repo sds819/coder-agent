@@ -967,12 +967,51 @@ environment: local/workspace-write
 - **The agent has to make the check pass** — when the model wants to stop, the
   commands run; if one of them fails, the agent gets the output and tries again.
 - **The commands run in the session** — they are your commands, not the agent's,
-  so they run as you and outside the sandbox of the operating system. They do
-  not ask for approval.
+  so they run as you, without a permission check and without an approval.
 - **A bounded number of rounds** — `verify.max_rounds` (3 by default). When the
   rounds are used up, the turn ends with `stop_reason: verify_failed`.
 - **The result is in the log** — an event of the type `verify` holds the commands
   and the ones that did not pass.
+
+### When the commands run
+
+The commands run when the agent wants to stop: it answers without a tool call.
+They do not run after every tool call, so an agent that keeps working is never
+checked. The order of the gates is the `Stop` hook, then these commands, then
+the schema of the answer.
+
+The commands are the **user's**, not the agent's, so they run:
+
+- without a permission check — the rules of `permissions` do not see them,
+- without a hook — `PreToolUse` and `PostToolUse` are not called for them,
+- without an approval — nobody is asked,
+- without the confinement of `sandbox.mode` — that one reaches the `bash` tool
+  only; the commands go straight to the environment of the session.
+
+They run in the environment of the session. With `sandbox.type: local` that is
+the working directory of the session; with a container it is the working
+directory of the environment, which is `/` unless the environment is given
+another one. A container or a bubblewrap still holds them: there the
+environment is the boundary, not `sandbox.mode`.
+
+A verification command of a **project** waits for a decision of the user, like
+the other code of a project. An untrusted one is left out of the
+configuration, so the verification does not happen at all — and nothing says so.
+
+### The rounds
+
+`verify.max_rounds` (3 by default) is the number of times the commands run.
+The agent is told about a failure and gets to fix it, so with three rounds it
+is corrected twice; when the third run fails too, the turn ends with
+`stop_reason: verify_failed` and the message is in `error`.
+
+The commands all run, one after the other, and every one that failed is
+reported. A command that times out counts as a failure, with the exit code
+`-1`.
+
+The output of a command is trimmed to 2000 tokens before it goes back to the
+model: the head and the tail are kept, the middle is elided, and a marker says
+how much is missing.
 
 ### Example
 
