@@ -5692,6 +5692,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td>Use one of the aliases, or drop <code>litellm_config</code>.</td>
 </tr>
 <tr>
+<td><code>The model '{name}' is not one of the aliases of {file}</code></td>
+<td>The model name is not in the <code>model_list</code> of the alias file, so not one setting of that file is used.</td>
+<td>Use one of the aliases, or drop <code>litellm_config</code>.</td>
+</tr>
+<tr>
 <td><code>BadRequestError</code></td>
 <td>The provider refused the request (a wrong key, a wrong name, a wrong parameter).</td>
 <td>It is <strong>not</strong> retried; the message of the provider is the answer.</td>

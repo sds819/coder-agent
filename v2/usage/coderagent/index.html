@@ -4989,6 +4989,11 @@ it. The other parameters of the entry go to litellm as they are, so the key of a
 third party endpoint stays in that one file instead of the configuration of the
 agent. The settings of <code>model.model_kwargs</code> win over the ones of the alias.</p>
 <p>The <code>api_base</code> stops at <code>/v1</code>: litellm appends <code>/chat/completions</code> to it.</p>
+<p>An alias only works when the model name is exactly one of the aliases of the file.
+A name that is not in the <code>model_list</code> leaves the agent with none of the settings
+of that file, and the agent says so instead of going on without them:</p>
+<div class="highlight"><pre><span></span><code>The model 'openai/MiniMax-M2.7' is not one of the aliases of ~/.coderagent/litellm_config.yaml (nengpa/minimax-m2.7): the settings of that file are not used.
+</code></pre></div>
 <h3 id="the-tools">The tools</h3>
 <table>
 <thead>

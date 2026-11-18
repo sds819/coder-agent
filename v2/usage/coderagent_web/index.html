@@ -4488,6 +4488,10 @@ result is the same four lines as the test of the form.</p>
 (<code>.coderagent/config.yaml</code>) is <strong>never</strong> written — it is in the repository.
 The sections the page does not know about are kept as they are; the comments
 in the file are lost.</p>
+<p>A setting that is the shipped default is <strong>not written at all</strong>: a field that
+holds the default is left out of the file, so that a later change of the default
+reaches a user who never touched it. A setting that was pinned in an older
+version is dropped the next time the page is saved.</p>
 <p><strong>A key in the environment is in the page.</strong> The page reads the configuration
 files first and then the environment: a provider key that comes from the
 environment (<code>DEEPSEEK_API_KEY</code> and the like) is shown like any other key, and

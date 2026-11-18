@@ -5670,6 +5670,11 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <td>用列表里的别名，或者去掉 <code>litellm_config</code>。</td>
 </tr>
 <tr>
+<td><code>The model '{name}' is not one of the aliases of {file}</code></td>
+<td>模型名不在这个文件的 <code>model_list</code> 里，所以这个文件的设置一个都没用上。</td>
+<td>用列表里的别名，或者去掉 <code>litellm_config</code>。</td>
+</tr>
+<tr>
 <td><code>BadRequestError</code></td>
 <td>厂商拒绝了请求（key 不对、名字不对、参数不对）。</td>
 <td><strong>不会</strong>重试，厂商的报错就是答案。</td>

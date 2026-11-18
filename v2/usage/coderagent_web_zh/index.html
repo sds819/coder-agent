@@ -4508,6 +4508,8 @@ coder<span class="w"> </span>web
 <ul>
 <li><strong>只写用户级文件</strong> <code>~/.coderagent/config.yaml</code>（或者 <code>$MSWEA_CODER_HOME/config.yaml</code>）。
   项目级的 <code>.coderagent/config.yaml</code> <strong>永远不写</strong>——它会进 git。文件里页面不认识的段落原样保留。</li>
+<li><strong>默认值不写进文件</strong>。一个设置跟出厂默认一样时，文件里就<strong>没有这一项</strong>——这样以后改了默认，
+  没动过这个设置的用户也能拿到新的默认值。老版本钉在文件里的默认值，下次保存时会被去掉。</li>
 <li><strong>对新会话生效</strong>。跑着的服务保留启动时的配置，新会话建 loop 时重新读一遍文件。
   当前这个会话想立刻换模型，用 <code>/model &lt;名字&gt;</code>。</li>
 <li><strong>环境变量里的 key 也算数</strong>。页面先读配置文件，再读环境：<code>DEEPSEEK_API_KEY</code> 这类变量
