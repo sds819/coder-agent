@@ -385,8 +385,8 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
   the ones that destroy something or send it out ask, and a path outside the
   working directory is refused.
 - **Rules** — `~/.coderagent/rules.yaml` and `.coderagent/rules.yaml` decide
-  per tool and per pattern. The user level file wins. The rules of the project
-  may only deny.
+  per tool and per pattern. The user level file wins, except that a `deny` is
+  never beaten. The rules of the project may only deny.
 - **`Always allow`** — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.
 - **Denied paths** — `permissions.deny_paths`, paths the agent may not touch.
@@ -485,6 +485,11 @@ rules:
 A rule with `decision: allow` does **not** open the disk: a path outside the
 working directory stays outside, unless it is in `permissions.include_dirs`.
 The rules of the user cannot widen the bounds.
+
+Among the rules that match, the **strictest** one wins. A `deny` is never
+undone by a later `allow` — the rules of the project may only deny, and that
+deny holds against the rules of the user. Between `allow` and `ask` the last
+matching rule wins.
 
 `permissions.deny_paths` adds a rule that denies everything that matches, and
 it is applied after the rule files, so it wins over an `allow` of the same

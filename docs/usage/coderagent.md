@@ -516,9 +516,10 @@ permissions:
 The pattern is a glob for the tools that touch a path (`read`, `write`,
 `edit`, `multi_edit`, `glob`, `grep`, `ls`) and a regular expression for
 `bash`, where it is matched against the beginning of each part of the command.
-The decision is `allow`, `ask` or `deny`. For the path tools the last rule that
-matches wins. A command is judged part by part and the strictest part wins, so
-an allowed `pytest` does not carry a `rm` along with it.
+The decision is `allow`, `ask` or `deny`. Among the rules that match, the
+strictest one wins: a `deny` is never undone by a later `allow`, and between
+`allow` and `ask` the last one wins. A command is judged part by part and the
+strictest part wins, so an allowed `pytest` does not carry a `rm` along with it.
 
 `apply_patch` has no path of its own — it changes several files at once — so a
 rule about it is about the whole call. Every file it touches is checked against
@@ -527,9 +528,9 @@ directory is refused.
 
 The rules of the project live in `.coderagent/rules.yaml`, the rules of the
 user in `~/.coderagent/rules.yaml`. Both are read, in that order, so a rule of
-the user beats a rule of the project with the same tool and pattern. The rules
-of the project may only **deny**: a project cannot allow itself something the
-user has to be asked for.
+the user beats a rule of the project with the same tool and pattern — except
+that a `deny` is never beaten by anything. The rules of the project may only
+**deny**: a project cannot allow itself something the user has to be asked for.
 
 ```yaml
 # .coderagent/rules.yaml

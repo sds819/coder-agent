@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from coderagent.tools.permissions import Rule
+from coderagent.tools.permissions import PermissionMode, PermissionPolicy, Rule
 from coderagent.tools.rules import RuleError, add_rule, load_rules, load_rules_file
 
 
@@ -72,6 +72,15 @@ def test_the_deny_of_the_project_is_used(tmp_path):
     _write(home / "rules.yaml", "rules:\n  - tool: bash\n    pattern: ls\n    decision: allow\n")
     rules = load_rules(tmp_path, home)
     assert [(rule.tool, rule.decision) for rule in rules] == [("bash", "deny"), ("bash", "allow")]
+
+
+def test_the_deny_of_the_project_holds_against_the_allow_of_the_user(tmp_path):
+    """The deny of the project is not undone by a rule of the user."""
+    _write(tmp_path / ".coderagent" / "rules.yaml", "rules:\n  - tool: bash\n    pattern: rm\n    decision: deny\n")
+    home = tmp_path / "home"
+    _write(home / "rules.yaml", "rules:\n  - tool: bash\n    pattern: rm\n    decision: allow\n")
+    policy = PermissionPolicy(PermissionMode.DEFAULT, load_rules(tmp_path, home), cwd=tmp_path)
+    assert policy.check("bash", {"command": "rm -rf build"}) == "deny"
 
 
 def test_a_missing_rule_file_is_not_an_error(tmp_path):

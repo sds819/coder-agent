@@ -292,7 +292,7 @@ class Rule:
 
 
 class PermissionPolicy:
-    """规则求值顺序：路径类工具「最后一条匹配的赢」，bash「每段取最严」。"""
+    """规则求值顺序：匹配到的规则里最严的赢，`deny` 永远赢。"""
     def __init__(self, mode: PermissionMode, rules: list[Rule]): ...
     def check(self, tool: str, params: dict) -> str:
         """返回 allow / ask / deny。"""
@@ -300,6 +300,7 @@ class PermissionPolicy:
 
 规则来源分层（后者覆盖前者）：
 `配置文件里的 permissions.rules` → `项目级 .coderagent/rules.yaml` → `用户级 ~/.coderagent/rules.yaml`；
+覆盖只在 `allow` / `ask` 之间生效，**`deny` 谁也盖不掉**。
 最后 `permissions.deny_paths` 里的路径一律 deny（越界路径在任何模式下都挡）。
 **没有内置默认规则集**（`defaults.yaml` 里 `rules: []`）。
 
@@ -1024,7 +1025,7 @@ model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的
 | `Event` / `EventBus` | M0 | 字段只增不改；未知事件类型 `rebuild` 时跳过 |
 | `Session` / `SessionStore` | M0 | JSONL 追加写；`rebuild` 幂等 |
 | `Tool` / `ToolResult` / `ToolContext` | M1 | 工具失败返回 `is_error=True`，不抛异常 |
-| `PermissionPolicy.check` | M1 | 返回 `allow`/`ask`/`deny` 三态；规则「后写覆盖」 |
+| `PermissionPolicy.check` | M1 | 返回 `allow`/`ask`/`deny` 三态；规则里最严的赢，`deny` 不可被覆盖 |
 | `ToolExecutor.execute` | M1 | 返回顺序必须与输入 tool_call 顺序一致 |
 | `ContextEngine.build_messages` | M2 | 消息顺序固定：system → instructions → summary → history |
 | `ModelGateway.query_stream` | M3 | 产出 `ModelEvent` 序列；工具调用在 `tool_call_done` 时完整 |

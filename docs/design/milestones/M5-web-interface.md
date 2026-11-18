@@ -318,10 +318,10 @@ include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判�
 Path.resolve()  →  边界检查（必须在 cwd 或 permissions.include_dirs 里）  →  工具自身的 resolve_path
 ```
 
-越界 → **403**，文案沿用 `tools/permissions.py:235` 的写法。
+越界 → **403**，文案沿用 `tools/permissions.py:302` 的写法。
 
 > **不能用 `policy.evaluate("read", ...)` 当边界检查**——`evaluate` 走的是规则，
-> 而规则**不能**放宽边界（`tools/permissions.py:223-233` 的 `within_bounds` 写着
+> 而规则**不能**放宽边界（`tools/permissions.py:290-300` 的 `within_bounds` 写着
 > 「The rules of the user cannot widen this」）。但 `evaluate` 的语义是「这条调用
 > 允不允许」，不是「这个路径在不在范围内」，用它当边界检查会把
 > 「规则放行」和「路径越界」两件事混在一起。**必须直接用边界检查**。

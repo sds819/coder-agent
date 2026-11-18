@@ -42,7 +42,7 @@ def test_bypass_allows_everything(tmp_path):
     assert policy.check("write", {"path": "a.py"}) == "allow"
 
 
-def test_the_last_matching_rule_wins(tmp_path):
+def test_the_strictest_matching_rule_wins(tmp_path):
     rules = [
         Rule(tool="bash", pattern="git status", decision="allow"),
         Rule(tool="bash", pattern="git .*", decision="deny"),
@@ -51,13 +51,35 @@ def test_the_last_matching_rule_wins(tmp_path):
     assert policy.check("bash", {"command": "git status"}) == "deny"
 
 
-def test_a_deny_rule_can_be_overridden_by_a_later_allow(tmp_path):
+def test_a_deny_rule_is_not_overridden_by_a_later_allow(tmp_path):
     rules = [
-        Rule(tool="write", pattern="**/secrets/**", decision="deny"),
+        Rule(tool="write", pattern="**/secrets/**", decision="deny", reason="the project says no"),
         Rule(tool="write", pattern="**/secrets/**", decision="allow", reason="explicitly allowed"),
     ]
     policy = PermissionPolicy(PermissionMode.DEFAULT, rules, cwd=tmp_path)
-    assert policy.check("write", {"path": "secrets/key.txt"}) == "allow"
+    decision = policy.evaluate("write", {"path": "secrets/key.txt"})
+    assert decision.decision == "deny"
+    assert decision.reason == "the project says no"
+
+
+def test_a_deny_rule_of_a_command_is_not_overridden_by_a_later_allow(tmp_path):
+    rules = [
+        Rule(tool="bash", pattern="git push", decision="deny", reason="no pushing"),
+        Rule(tool="bash", pattern="git .*", decision="allow", reason="git is fine"),
+    ]
+    policy = PermissionPolicy(PermissionMode.DEFAULT, rules, cwd=tmp_path)
+    decision = policy.evaluate("bash", {"command": "git push origin main"})
+    assert decision.decision == "deny"
+    assert decision.reason == "no pushing"
+
+
+def test_a_later_allow_still_overrides_an_earlier_ask(tmp_path):
+    rules = [
+        Rule(tool="bash", pattern="pytest", decision="ask", reason="ask first"),
+        Rule(tool="bash", pattern="pytest .*", decision="allow", reason="allowed"),
+    ]
+    policy = PermissionPolicy(PermissionMode.DEFAULT, rules, cwd=tmp_path)
+    assert policy.check("bash", {"command": "pytest -q"}) == "allow"
 
 
 def test_path_rules_are_matched_against_the_path_relative_to_the_working_directory(tmp_path):

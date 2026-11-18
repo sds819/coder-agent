@@ -212,8 +212,9 @@ rules:
     decision: allow
 ```
 
-`decision` 是 `allow` / `ask` / `deny`：路径类工具最后一条匹配上的规则赢，
-命令则是分段判断、最严的那段说了算。
+`decision` 是 `allow` / `ask` / `deny`：匹配上的规则里最严的赢——`deny` 不会被
+后面的 `allow` 盖掉，`allow` 和 `ask` 之间是最后一条赢；命令则是分段判断、
+最严的那段说了算。
 
 ## 常用命令 {#commands}
 

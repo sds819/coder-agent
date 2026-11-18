@@ -184,7 +184,7 @@ observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不�
 | 情形 | 落点 | 代码 |
 |---|---|---|
 | **造工具**（名字不在注册表里） | observation = `Error: unknown tool 'xxx'. Available tools: ...`，工具不执行 | `tools/executor.py:97` |
-| **乱调**（调了不该调的） | 权限层判：模式 → 规则 → 越界检查 | `tools/permissions.py:137` |
+| **乱调**（调了不该调的） | 权限层判：模式 → 规则 → 越界检查 | `tools/permissions.py:133` |
 | **参数不对** | 工具自己抛类型错误 → 兜成 `Error: ...` | `tools/builtin/fs.py:81`、`tools/executor.py:160` |
 
 **为什么是「给模型一句话」而不是「报错」**：模型能读懂错误文本并自己改正；异常只会
@@ -266,8 +266,8 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 | Hook 崩溃 / 超时 / 返回非 JSON | **fail-open**（放行） | hook 是增强，不是闸门。它挂了不该拦住正常工作 |
 | Hook 明确返回 deny | **fail-closed**（拦截） | 明确的拒绝不能被忽略 |
 | Hook 非零退出码 | 只在 `strict: true` 时拒绝 | 默认不信任退出码，只信任 JSON 里的 `decision` |
-| 路径越界 | **fail-closed** | `within_bounds()` **不能被 `allow` 规则放宽**（`src/coderagent/tools/permissions.py:223`） |
-| 没有人能审批（headless） | **fail-closed** | `HeadlessApprover` 直接 DENY，并把原因回传给模型（`src/coderagent/tools/permissions.py:80`） |
+| 路径越界 | **fail-closed** | `within_bounds()` **不能被 `allow` 规则放宽**（`src/coderagent/tools/permissions.py:290`） |
+| 没有人能审批（headless） | **fail-closed** | `HeadlessApprover` 直接 DENY，并把原因回传给模型（`src/coderagent/tools/permissions.py:99`） |
 
 `within_bounds()` 那条特别值得强调：一条 `allow` 规则**能**让模型读工作目录外的文件，
 那等于把整块磁盘交给一个浏览器能驱动的 agent。权限规则的匹配和路径边界检查是
@@ -307,8 +307,8 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 ### 4.2 `within_bounds()` 不接受 `allow` 规则
 
 见 §3.3。这是**故意的**——注释里直说了
-（`src/coderagent/tools/permissions.py:223`）。代码上表现为**边界检查在规则之后**
-（`src/coderagent/tools/permissions.py:147-151`）：
+（`src/coderagent/tools/permissions.py:290`）。代码上表现为**边界检查在规则之后**
+（`src/coderagent/tools/permissions.py:180-184`）：
 
 ```python
 if tool in PATH_TOOLS:
@@ -391,20 +391,21 @@ singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。
 怎么统一管？
 
 **决策**：工具本身**只管做事**，不做权限判断。所有权限集中在
-`PermissionPolicy.evaluate()`（`src/coderagent/tools/permissions.py:137`），
+`PermissionPolicy.evaluate()`（`src/coderagent/tools/permissions.py:170`），
 所有 hook 集中在执行器的前后。
 
-**求值逻辑**：按顺序遍历规则，**后写的赢**（所以用户规则后加载 → 用户赢）。
+**求值逻辑**：匹配到的规则里**最严的赢**——**`deny` 永远赢**，`allow` / `ask` 之间
+**后写的赢**（所以用户规则后加载 → 用户能覆盖项目的 `allow`，但覆盖不了项目的 `deny`）。
 三种模式的选择语义在 `_default_decision()`：read 类工具在所有模式下都 allow，
 plan/readonly 模式下写工具 deny，acceptEdits 模式下写工具 allow 而 bash 仍 ask。
 
 **匹配方式不一样**：路径类工具用 **glob**（`glob_to_regex`，`*` 不跨 `/`，`**` 跨，
-`src/coderagent/tools/permissions.py:90`），bash 用 **正则**（且必须对上每一段的**开头**——
+`src/coderagent/tools/permissions.py:109`），bash 用 **正则**（且必须对上每一段的**开头**——
 `git push` 能对上 `git push origin main`，对不上 `echo "git push"`）。
 因为「允许 `src/**/*.py`」和「允许 `npm test`」是两种形状。
 
 **代价**：模式本身就是一个小语言，需要文档，也会有边界情况
-（正则写错会被静默当作不匹配，`src/coderagent/tools/permissions.py:265-266` 的
+（正则写错会被静默当作不匹配，`src/coderagent/tools/permissions.py:347` 的
 `except re.error: return False`）。
 
 **工具层拦得住「乱调」，拦不住「调错」**：权限层能判「这个工具在这个模式下允不允许」，

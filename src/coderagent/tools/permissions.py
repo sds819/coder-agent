@@ -175,12 +175,8 @@ class PermissionPolicy:
             return Decision("deny", None, reason)
         if tool == "bash":
             return self._evaluate_bash(str(params.get("command", "")))
-        decision = self._default_decision(tool)
-        matched: Rule | None = None
-        for rule in self.rules:
-            if self._matches(rule, tool, params):
-                decision = rule.decision
-                matched = rule
+        matched = _strictest_rule([rule for rule in self.rules if self._matches(rule, tool, params)])
+        decision = matched.decision if matched else self._default_decision(tool)
         if tool in PATH_TOOLS:
             path = str(params.get("path", ""))
             if path and not self.within_bounds(path):
@@ -212,20 +208,22 @@ class PermissionPolicy:
             return Decision("allow", None, "")
         if self.mode in (PermissionMode.PLAN, PermissionMode.READONLY):
             return Decision("deny", None, "")
-        decision, matched, reason = "allow", None, ""
+        decision = "allow"
+        rules: list[Rule] = []
+        why = ""
         for segment in bash_policy.segments(command):
             rule = self._bash_rule(segment)
             if rule is not None:
+                rules.append(rule)
                 decision = _strictest(decision, rule.decision)
-                matched = rule
-                reason = rule.reason or reason
                 continue
-            kind, why = bash_policy.classify_segment(segment)
-            if kind == "dangerous":
+            kind, reason = bash_policy.classify_segment(segment)
+            if kind in ("dangerous", "unknown"):
                 decision = _strictest(decision, "ask")
-                reason = reason or why
-            elif kind == "unknown":
-                decision = _strictest(decision, "ask")
+                why = why or reason
+        matched = _strictest_rule(rules)
+        """The reason is the one of the rule that decided, or the one of the command."""
+        reason = matched.reason if matched and matched.decision == decision else why
         return Decision(decision, matched, reason)
 
     def _restriction_reason(self, tool: str, params: dict) -> str:
@@ -252,14 +250,10 @@ class PermissionPolicy:
         return "" if pattern in ("*", tool) else f"the command may only use '{pattern}'"
 
     def _bash_rule(self, segment: str) -> Rule | None:
-        """The last rule that matches a part of the command."""
-        matched = None
-        for rule in self.rules:
-            if rule.tool not in ("*", "bash"):
-                continue
-            if _matches_bash(rule.pattern, segment):
-                matched = rule
-        return matched
+        """The rule that wins for a part of the command."""
+        return _strictest_rule(
+            [rule for rule in self.rules if rule.tool in ("*", "bash") and _matches_bash(rule.pattern, segment)]
+        )
 
     def _default_decision(self, tool: str) -> str:
         if self.mode == PermissionMode.BYPASS:
@@ -319,6 +313,21 @@ def pattern_for(tool: str, params: dict[str, Any]) -> str:
         parts = bash_policy.segments(str(params.get("command", "")))
         return re.escape(parts[0]) if parts else "*"
     return tool
+
+
+def _strictest_rule(rules: list[Rule]) -> Rule | None:
+    """The rule that wins among the ones that match.
+
+    A deny is not undone by a later rule: it holds in every mode, so a rule of
+    the project cannot be opened by a rule of the user. Among the other
+    decisions the last rule wins, so a rule of the user overrides a rule of the
+    project.
+    """
+    matched: Rule | None = None
+    for rule in rules:
+        if rule.decision == "deny" or matched is None or matched.decision != "deny":
+            matched = rule
+    return matched
 
 
 def _matches_bash(pattern: str, segment: str) -> bool:

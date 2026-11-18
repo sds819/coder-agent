@@ -176,14 +176,14 @@ class PermissionPolicy:
 **求值顺序**
 
 1. `mode` 决定默认值（见 2.4 表）
-2. 遍历规则，**最后命中者生效**（后写规则覆盖先写）
+2. 遍历匹配的规则，**最严的赢**：**`deny` 永远赢**，`allow` / `ask` 之间**后写规则覆盖先写**
 3. 路径类工具在规则之后还要过一次**越界检查**，越界一律 `deny`
 
-> **简化决策**：采用「最后命中者生效」，规则顺序即优先级。文档中明确「把 deny 规则放在文件末尾可覆盖前面的 allow」。这比「deny 优先」更可预测，也更符合 Claude Code 的 `.claude/settings.json` 语义（后写覆盖）。
+> **简化决策**：匹配到的规则里最严的赢。这比「谁写在后面谁赢」安全——项目的 `deny`
+> 是用户的安全边界，不该被仓库里的一份配置打开。代价是 `deny` 没有解禁口，只能去改那份规则文件。
 >
 > **一个例外**：`bash` 命令按**段**判断，每段各取一条规则，然后**取最严的那一段**
 > （`allow < ask < deny`）。所以 `git push` 被 `allow` 放行，不等于同一条命令里的 `rm` 也放行。
-> 路径类工具没有这个「取最严」：**最后一条匹配的规则赢**。
 >
 > **越界检查不是规则**：不管哪条规则写了 `allow`，落在工作目录之外的路径一律 `deny`
 > （`permissions.py` 的 `within_bounds`）。要放开某些目录，用 `permissions.include_dirs`。
@@ -406,7 +406,7 @@ rules:
 - [x] 路径越界检测（`cwd` 外默认 deny）
 - [x] `check` 返回命中规则（供 UI 解释「为什么被拦」）
 
-**验收**：`test_permissions.py` — 参数化覆盖五种 mode × 六类工具；规则「后写覆盖」语义；`deny` 命中。
+**验收**：`test_permissions.py` — 参数化覆盖五种 mode × 六类工具；规则「最严的赢、`deny` 不可覆盖」语义；`deny` 命中。
 
 ### T1.8 规则文件加载
 - [x] `rules.py::load_rules(project_dir, user_home) -> list[Rule]`

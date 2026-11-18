@@ -174,14 +174,14 @@
 **结论**：`tools/rules.py`。
 
 - **位置**：项目 `<project>/.coderagent/rules.yaml` 和用户 `<config_home>/rules.yaml`。
-- **优先级**：**项目规则先、用户规则后，后写的赢**。也就是说用户可以覆盖项目的同名规则。
+- **优先级**：**项目规则先、用户规则后**。在 `allow` / `ask` 之间**后写的赢**，也就是说用户可以覆盖项目的同名规则；但 **`deny` 不会被后面的规则盖掉**——项目的 `deny` 挡住的就是用户也挡不住的。
 - **格式**：`{"rules": [{tool, pattern, decision, reason}]}`。只认这四个键，多一个就抛 `RuleError`（带文件名和行号）。`decision` 只能是 `allow` / `ask` / `deny`。
 - **匹配语义**（`Rule.pattern`）：
   - **路径类工具**：`pattern` 是 **glob**，用 `glob_to_regex` 转成正则，对**相对 cwd 的路径**匹配。`*` 不跨 `/`，`**` 跨。
   - **`bash`**：`pattern` 是**正则**，而且必须匹配**整段的开头**（`git push` 不会匹配 `echo "git push"`）。
   - **其他工具**：`pattern` 是工具名，或者 `*`。
-- **求值顺序**：非 bash 工具是「按顺序遍历所有规则，**最后一条匹配的赢**」；bash 是「**分段**判，每段最后一条匹配的赢，整条命令取**最严**的段」。这两处「最后一条赢」的作用域不同，是个容易看错的地方。
-- **deny 不一定赢**：`_strictest()`（`allow(0) < ask(1) < deny(2)`）**只用在 bash 的分段上**（`permissions.py:173,179,182`）。路径类工具是「最后一条匹配的规则赢」——所以一条**写在后面的** `allow` 能盖掉前面的 `deny`。唯一的例外是 `deny_paths`／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 `bypass`）都拦。
+- **求值顺序**：所有工具都走**「最严的匹配规则赢」**（`permissions._strictest_rule`）：**`deny` 永远赢**；在 `allow` / `ask` 之间**后写的赢**。bash 还要**分段**判，每段各取最严的匹配规则，整条命令再取**最严**的段。
+- **deny 一定赢**：`_strictest_rule()` 让 `deny` 一旦命中就不再让位，所以一条**写在后面的** `allow` 盖不掉前面的 `deny`——项目的 `deny` 用户也开不了。剩下的两个例外是 `deny_paths`／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 `bypass`）都拦。
 
 ### b7 `bash` 这种命令怎么管？
 
@@ -241,7 +241,7 @@
 | 层 | 挡住什么 |
 |---|---|
 | 权限模式 | `plan` / `readonly` 下写类工具**直接 deny**；`default` 下写类工具要 ask；`bypass` 下才全放行 |
-| 规则文件 | 项目 / 用户的 `rules.yaml` 可以对具体工具 + 路径给 allow / ask / deny；bash 取最严的段，路径类工具**最后一条匹配的规则赢**（不是 deny 永远赢） |
+| 规则文件 | 项目 / 用户的 `rules.yaml` 可以对具体工具 + 路径给 allow / ask / deny；**`deny` 永远赢**，bash 取最严的段 |
 | 越界检查 | `within_bounds()` 在**任何模式**（含 `bypass`）下都挡住工作目录之外的路径 |
 
 **bash 的特殊处理**：命令按 `&&` / `||` / `;` / `|` / 换行切段（尊重引号），逐段判定，整条命令取**最严**的一段。所以 `echo hi && rm -rf /` 不会因为前半段安全就放行。
@@ -675,7 +675,7 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 1. **相邻的两条 user 消息**：权限模式说明和摘要被组装成两条连续的 `user` 消息，中间没有 assistant。合法但不是自然对话形态。
 2. **`stop_reason` 的 docstring 过期**：`TurnResult.stop_reason` 只列了 5 种，实际有 7 种（漏了 `interrupted` 和 `verify_failed`）。
 3. **`_cut_index` 用的是 `config.context_window` 而不是 `guard.limit()`**：两者差一个 `reserved_output`，极端情况下会切得偏保守。
-4. **「最后一条规则赢」有两个作用域**：路径类工具是「所有规则里最后一条匹配的赢」，bash 是「每段最后一条匹配的赢，再取最严的段」。
+4. **`deny` 没有解禁口**：一条 `deny` 命中了，后面的 `allow` 也开不了——只能去改那份规则文件。而项目的规则文件往往在仓库里，是别人写的。
 5. **`model.max_retries` 没接进 backend**：只有 `coder web` 读它；终端里想缩短重试只能用环境变量 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`。
 6. **子 agent 的 tool call 事件不进会话日志**：只发总线，所以日志里看不到它「打算调什么」；不过它 `edit`/`multi_edit` 的**结果事件（含 diff）会落进日志**，`write` 不会。想知道它动过哪些文件，看结果 JSON 里的 `files_touched` 最准。
 7. **`core/memory.py` 是只读的，但「memory 特性」不是**——写入发生在 `extensions/reflect.py`，由 `settle_session()` 驱动。
