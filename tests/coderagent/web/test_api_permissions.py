@@ -148,10 +148,21 @@ def test_the_mode_of_a_session_that_has_not_run_yet_changes(make_client):
     client = make_client()
     session_id = client.post("/api/sessions").json()["id"]
 
-    client.post(f"/api/sessions/{session_id}/mode", json={"mode": "bypass"})
+    client.post(f"/api/sessions/{session_id}/mode", json={"mode": "bypass", "confirm": True})
 
     assert client.get(f"/api/sessions/{session_id}/status").json()["mode"] == "bypass"
     """The mode of a session without a loop is the one it will be started with."""
+
+
+def test_bypass_mode_needs_a_confirmation(make_client):
+    """Bypass takes the guards off: the browser has to say that it is meant."""
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+
+    response = client.post(f"/api/sessions/{session_id}/mode", json={"mode": "bypass"})
+
+    assert response.status_code == 400
+    assert client.get(f"/api/sessions/{session_id}/status").json()["mode"] != "bypass"
 
 
 def test_an_unknown_mode_is_refused_with_400(make_client):

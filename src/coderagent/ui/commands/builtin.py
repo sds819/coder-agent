@@ -100,10 +100,18 @@ def _mode(context: CommandContext, argument: str) -> None:
     if not argument:
         context.say(f"mode: {context.policy.mode.value}\nmodes: {MODES}")
         return
+    name, _, flags = argument.partition(" ")
     try:
-        mode = PermissionMode(argument)
+        mode = PermissionMode(name)
     except ValueError:
-        context.say(f"Unknown mode '{argument}'. Use one of: {', '.join(item.value for item in PermissionMode)}.")
+        context.say(f"Unknown mode '{name}'. Use one of: {', '.join(item.value for item in PermissionMode)}.")
+        return
+    if mode is PermissionMode.BYPASS and "--yes" not in flags.split():
+        """Bypass takes the guards off, so it is not switched on by a slip of the fingers."""
+        context.say(
+            "Bypass mode asks nothing: every tool call goes through, even the ones that destroy "
+            "something. Run /mode bypass --yes to confirm."
+        )
         return
     context.policy.mode = mode
     context.session.permission_mode = mode.value
@@ -421,12 +429,12 @@ def _agents(context: CommandContext, argument: str) -> None:
     lines = []
     for spec in specs.values():
         turns = effective_turns(spec, ceiling)
-        limit = f"{turns} turns" if turns else "no limit"
+        limit = f"{turns} model calls" if turns else "no limit"
         lines.append(
             f"{spec.name:<16} {spec.model_purpose:<6} {', '.join(spec.tools)}  ({limit})\n{'':<16} {spec.description}"
         )
     if ceiling:
-        lines.append(f"The configuration holds every sub agent to {ceiling} turns.")
+        lines.append(f"The configuration holds every sub agent to {ceiling} model calls.")
     context.say("\n".join(lines))
 
 

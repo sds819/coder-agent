@@ -360,7 +360,7 @@ def test_the_agents_show_the_turns_that_count(tmp_path):
     """The turns of the sub agent, held down by the ceiling of the configuration."""
     context, output = _context(tmp_path)
     answer = _run(context, output, "/agents")
-    assert "(15 turns)" in answer
+    assert "(15 model calls)" in answer
     assert "holds every sub agent" not in answer
 
 
@@ -368,8 +368,8 @@ def test_the_ceiling_of_the_configuration_shows_up(tmp_path):
     context, output = _context(tmp_path)
     context.config.agent.subagent_max_turns = 20
     answer = _run(context, output, "/agents")
-    assert "(20 turns)" in answer
-    assert "holds every sub agent to 20 turns" in answer
+    assert "(20 model calls)" in answer
+    assert "holds every sub agent to 20 model calls" in answer
 
 
 def test_a_sub_agent_without_a_limit_shows_no_limit(tmp_path):
@@ -592,3 +592,22 @@ def test_without_an_opener_the_file_is_not_opened(tmp_path):
     context, output = _context(tmp_path)
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
     assert "No file opener" in _run(context, output, "/open a.py")
+
+
+def test_bypass_mode_asks_before_it_is_switched_on(tmp_path):
+    """Bypass takes the guards off: it is not switched on by a slip of the fingers."""
+    context, output = _context(tmp_path)
+
+    answer = _run(context, output, "/mode bypass")
+
+    assert context.policy.mode == PermissionMode.DEFAULT
+    assert "/mode bypass --yes" in answer
+
+
+def test_bypass_mode_is_switched_on_when_it_is_confirmed(tmp_path):
+    context, output = _context(tmp_path)
+
+    _run(context, output, "/mode bypass --yes")
+
+    assert context.policy.mode == PermissionMode.BYPASS
+    assert context.session.permission_mode == "bypass"

@@ -487,6 +487,9 @@ The mode decides what the agent may do without asking:
 
 The mode can be changed while the session runs, with `/mode` or `/plan`.
 
+`bypass` takes the guards off, so it asks once: `/mode bypass` says what it
+would do and changes nothing, `/mode bypass --yes` switches it on.
+
 The mode of the **project** may only take tools away: `plan` and `readonly` are
 used, the other modes are ignored. The same goes for the rest of the
 permissions — the project may not open directories outside the working

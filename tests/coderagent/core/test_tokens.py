@@ -73,3 +73,23 @@ def test_short_line_lists_are_not_trimmed():
     trimmed, info = trim_lines(lines, 1000)
     assert trimmed == lines
     assert info == {}
+
+
+def test_the_whole_budget_is_used():
+    """The old trim kept 80% of the budget: the model got less than it was promised."""
+    text = "x" * 100000
+    trimmed, _ = trim_text(text, 1000)
+    assert len(trimmed) >= 1000 * 3.6 * 0.9
+
+
+def test_the_marker_is_part_of_the_budget():
+    trimmed, _ = trim_text("x" * 100000, 1000)
+    assert len(trimmed) <= 1000 * 3.6 + 200
+
+
+def test_the_lines_use_the_whole_budget():
+    """The old trim kept 80% of the budget: the model got less than it was promised."""
+    lines = [f"line{i}" for i in range(5000)]
+    trimmed, _ = trim_lines(lines, 1000)
+    kept = [line for line in trimmed if "lines elided" not in line]
+    assert len(kept) > 310

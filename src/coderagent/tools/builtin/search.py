@@ -15,6 +15,13 @@ from coderagent.tools.permissions import glob_to_regex
 IGNORED_DIRS = {".git", "node_modules", "__pycache__", ".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
 GLOB_LIMIT = 200
 GREP_LIMIT = 100
+CANCEL_EVERY = 64
+"""How many files a search reads before it asks whether the turn is still going on."""
+
+
+def _interrupted(ctx: ToolContext) -> bool:
+    """Whether the turn was stopped while the search was running."""
+    return ctx.cancel is not None and ctx.cancel()
 
 
 def _iter_files(root: Path):
@@ -54,7 +61,13 @@ class GlobTool:
 
         matcher = glob_to_regex(pattern)
         matches = []
-        for path in _iter_files(root):
+        for index, path in enumerate(_iter_files(root)):
+            if index % CANCEL_EVERY == 0 and _interrupted(ctx):
+                """A search of a big tree takes a while: the turn may be stopped in the middle."""
+                return ToolResult(
+                    "Error: the turn was interrupted, so the search did not finish.",
+                    is_error=True,
+                )
             relative = path.relative_to(root).as_posix()
             if matcher.match(relative):
                 matches.append(relative)
@@ -122,7 +135,13 @@ class GrepTool:
         files: list[str] = []
         counts: list[str] = []
         total = 0
-        for path in candidates:
+        for index, path in enumerate(candidates):
+            if index % CANCEL_EVERY == 0 and _interrupted(ctx):
+                """A search of a big tree takes a while: the turn may be stopped in the middle."""
+                return ToolResult(
+                    "Error: the turn was interrupted, so the search did not finish.",
+                    is_error=True,
+                )
             if root.is_dir() and _is_ignored(path, root):
                 continue
             if path.is_symlink() and not ctx.policy.within_bounds(str(path)):

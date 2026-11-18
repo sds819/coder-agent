@@ -138,6 +138,30 @@ def trim_output(text: str, max_output_tokens: int) -> str:
     return trim_text(text, max_output_tokens)[0]
 
 
+def read_head_and_tail(path: Path, limit: int) -> str:
+    """The head and the tail of a file, without reading all of it.
+
+    A background task may print a lot. Its log is not read into memory just to
+    show the ends of it.
+    """
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return ""
+    if size <= limit:
+        return path.read_text(encoding="utf-8", errors="replace")
+    half = limit // 2
+    with path.open("rb") as handle:
+        head = handle.read(half)
+        handle.seek(-half, os.SEEK_END)
+        tail = handle.read()
+    return (
+        f"{head.decode('utf-8', 'replace')}\n"
+        f"... [the middle of the log is not shown] ...\n"
+        f"{tail.decode('utf-8', 'replace')}"
+    )
+
+
 def _confined(command: str, ctx: ToolContext) -> str:
     """The command with the sandbox of the operating system in front of it.
 
@@ -265,7 +289,8 @@ class BashOutputTool:
         if task is None:
             return ToolResult(f"Error: unknown task id '{params.get('task_id')}'.", is_error=True)
         process = task["process"]
-        output = task["log"].read_text(encoding="utf-8", errors="replace")
+        limit = int(ctx.config.max_output_tokens * CHARS_PER_TOKEN)
+        output = read_head_and_tail(task["log"], limit)
         status = "running" if process.poll() is None else f"exited with code {process.returncode}"
         content = trim_output(output, ctx.config.max_output_tokens)
         return ToolResult(f"{content}\n[status: {status}]", metadata={"status": status})

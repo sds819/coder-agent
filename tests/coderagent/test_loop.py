@@ -292,21 +292,53 @@ def test_a_command_that_is_interrupted_ends_the_turn(tmp_path):
     from coderagent.config.schema import Config
     from coderagent.run import build_loop
 
+    marker = tmp_path / "started"
     loop = build_loop(
         Config(),
         tmp_path,
-        model=ScriptedModel([_assistant(tool_calls=[_bash_call("sleep 30")])]),
+        model=ScriptedModel([_assistant(tool_calls=[_bash_call(f"touch {marker}; sleep 30")])]),
         permission_mode="bypass",
     )
-    seen: list[int] = []
 
     def cancel() -> bool:
-        seen.append(1)
-        """The loop asks first, then the tool asks while it runs."""
-        return len(seen) > 2
+        """The turn is stopped once the command runs, not before it starts."""
+        return marker.exists()
 
     loop.cancel = cancel
     result = loop.run_turn("run something long")
 
     assert result.stop_reason == "interrupted"
     assert "[interrupted]" in result.messages[-1]["content"]
+
+
+def test_the_turn_is_stopped_while_the_model_answers(tmp_path):
+    """Ctrl+C cuts the answer of the model short: the user does not wait for the rest."""
+    from coderagent.models.streaming import ModelEvent
+
+    class Chatty:
+        model_name = "chatty"
+
+        def query_stream(self, messages, tools=None, **kwargs):
+            for index in range(5):
+                yield ModelEvent(type="text", content=f"part {index} ")
+
+        def get_template_vars(self):
+            return {"model_name": "chatty"}
+
+    store = SessionStore(tmp_path)
+    session = store.create(tmp_path)
+    bus = EventBus()
+    executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session, bus=bus))
+    loop = AgentLoop(ModelGateway(Chatty()), executor, session, store, bus, tools=executor.registry.schemas())
+    seen: list[int] = []
+
+    def cancel() -> bool:
+        seen.append(1)
+        return len(seen) > 1
+
+    loop.cancel = cancel
+    result = loop.run_turn("say hello")
+
+    assert result.stop_reason == "interrupted"
+    assert not any(message.get("role") == "assistant" for message in result.messages)
+    """The half answer is not kept: the model has to answer again."""

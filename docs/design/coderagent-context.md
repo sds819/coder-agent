@@ -358,11 +358,14 @@ summary.recent_errors = errors[-3:]
 
 ### 5.6 工具输出被裁剪时保留头尾
 
-`trim_text` / `trim_lines`（`tokens.py:66-118`）：保留头 40% + 尾 40%，中间写明省略了多少：
+`trim_text` / `trim_lines`（`tokens.py:66-118`）：**预算用满**，头尾各一半，中间写明省略了多少：
 
 ```
 ... [120 lines, 980 tokens elided, use grep/offset to view that region] ...
 ```
+
+省略标记本身**算在预算里**（`MARKER_ROOM` / `MARKER_TOKENS`），标记要占的位置先扣掉，剩下的才分给头尾——
+预算小的时候标记最多占四分之一，免得只剩几行正文。
 
 **告诉模型怎么把内容找回来**，而不是默默截断。`trim_lines` 还额外返回 `start_line` / `end_line` / `head_lines`，
 让调用方把行号对上——否则裁剪之后模型看到的行号全是错的。

@@ -115,3 +115,19 @@ def test_ls_shows_the_size_of_the_link_not_the_one_of_the_target(ctx, tree, tmp_
     secret.write_text("x" * 500, encoding="utf-8")
     (tree / "link.txt").symlink_to(secret)
     assert "500 B" not in LsTool().run({"path": "."}, ctx).content
+
+
+def test_a_search_stops_when_the_turn_is_interrupted(ctx, tree):
+    """A search of a big tree takes a while: the turn may be stopped in the middle."""
+    for index in range(200):
+        (tree / f"file{index}.txt").write_text("x", encoding="utf-8")
+    ctx.cancel = lambda: True
+
+    assert "interrupted" in GlobTool().run({"pattern": "*.txt"}, ctx).content
+    assert "interrupted" in GrepTool().run({"pattern": "x"}, ctx).content
+
+
+def test_a_search_runs_when_the_turn_goes_on(ctx, tree):
+    ctx.cancel = lambda: False
+    assert GlobTool().run({"pattern": "**/*.py"}, ctx).metadata["count"] == 2
+    assert GrepTool().run({"pattern": "value"}, ctx).content == "README.md:2:value here"

@@ -182,3 +182,45 @@ def test_the_diff_of_a_write_reaches_the_log(tmp_path):
     executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session))
     executor.execute(executor.plan([_call("write", {"path": "a.txt", "content": "hello\n"})]))
     assert "+hello" in store.path(session.id).read_text(encoding="utf-8")
+
+
+def test_the_tools_do_not_run_in_an_endless_number_of_threads(tmp_path):
+    """A model that asks for a hundred reads does not get a hundred threads."""
+    import threading
+    import time
+
+    from coderagent.tools.base import ToolResult
+    from coderagent.tools.executor import MAX_PARALLEL_TOOLS, ToolExecutor
+    from coderagent.tools.registry import ToolRegistry
+
+    running = 0
+    highest = 0
+    lock = threading.Lock()
+
+    class Slow:
+        name = "slow"
+        description = "Takes a moment."
+        parameters = {"type": "object", "properties": {}}
+
+        def run(self, params: dict, ctx) -> ToolResult:
+            nonlocal running, highest
+            with lock:
+                running += 1
+                highest = max(highest, running)
+            time.sleep(0.05)
+            with lock:
+                running -= 1
+            return ToolResult("done")
+
+    ctx = build_context(tmp_path)
+    executor = ToolExecutor(ToolRegistry([Slow()]), ctx.policy, lambda: ctx)
+    calls = [
+        {"id": f"call_{index}", "type": "function", "function": {"name": "slow", "arguments": "{}"}}
+        for index in range(20)
+    ]
+
+    observations = executor.execute(executor.plan(calls))
+
+    assert len(observations) == 20
+    assert highest > 1
+    assert highest <= MAX_PARALLEL_TOOLS

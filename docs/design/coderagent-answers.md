@@ -131,7 +131,7 @@
 
 **结论**：`tools/executor.py` 的 `ToolExecutor.execute()`。
 
-- **判定**：只要有**任意一个** action 属于 `SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}`，或者只有一个 action → **串行**按序执行。否则 → `ThreadPoolExecutor(max_workers=len(actions))` 并行。
+- **判定**：只要有**任意一个** action 属于 `SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}`，或者只有一个 action → **串行**按序执行。否则 → `ThreadPoolExecutor(max_workers=min(len(actions), MAX_PARALLEL_TOOLS))` 并行，**上限 8 个线程**——模型一次要一百个 read，不该换来一百个线程。
 - **顺序保证**：`pool.map` 保序，所以结果**永远按模型给定的 tool_call 顺序**返回。
 - **权限先算**：`_prepare()` 对**所有** action 先跑一遍（hook → 权限 → 审批），再开始执行。所以被拒的 action 不会执行，但也**不产生** `TOOL_RESULT` 事件——事件日志里只看到 `TOOL_CALL`，看不到它的结果。
 
@@ -172,6 +172,10 @@
 
 **审批结果**有三种：`allow` / `deny` / `always`。选 `always` 会把一条 allow 规则**写进用户规则文件**（`rules.add_rule`），下次同一类操作不再问。
 
+**切到 `bypass` 要问一次**：命令行/TUI 是 `/mode bypass --yes`（不带 `--yes` 就只说明它会做什么，不切）；
+网页版是弹一次确认框，请求体里带 `confirm: true`，否则接口回 400。理由：`bypass` 把护栏全拆了，
+一个手滑不该拆掉。
+
 ### b6 规则文件在哪？谁说了算？匹配语义是什么？
 
 **结论**：`tools/rules.py`。
@@ -210,6 +214,10 @@
 - **`multi_edit`**：**原子**。所有编辑先在内存副本上应用，全部成功才落盘；任何一条失败就返回「Edit #N failed, no changes were written」，文件一个字节都不动。
 - **`write`**：整体覆盖，会建父目录。
 - **读类工具的输出有上限**：`read` 默认 2000 行，超过 2000 字符的行会被截断并标出来；`glob` 最多 200 条路径；`grep` 最多 100 行内容；`bash` 输出按 `tools.max_output_tokens`（默认 8000）裁剪。
+- **裁剪是「按预算裁」，不是「按比例少给」**：`trim_text` 把整个预算用满（留出省略标记的位置，头尾各一半），`trim_lines` 同理。
+- **`read` 越过文件末尾会明说**：`offset` 超过行数 → 报错「offset N is past the end of ...: the file has M lines」，而不是回一段空字符串——空字符串会让模型以为文件是空的。
+- **`grep` / `glob` 中途能被打断**：每读 64 个文件查一次 `cancel()`，被打断就返回「the turn was interrupted, so the search did not finish」。
+- **后台任务的日志只读两头**：`bash_output` 读日志时只取头尾各一半（中间标「the middle of the log is not shown」），不把整个日志读进内存。
 
 **为什么**：`edit` 的「唯一匹配」是 agent 改文件时最容易出错的地方（改错位置）。宁可让它失败要求重试，也不要让它猜。
 
@@ -311,7 +319,7 @@
 
 ### c4 一轮进行中怎么被打断？
 
-**结论**：`AgentLoop.cancel` 是一个**公开扩展点**（`self.cancel = None`），每轮循环顶部调一次，返回 True 就以 `interrupted` 结束。
+**结论**：`AgentLoop.cancel` 是一个**公开扩展点**（`self.cancel = None`），每轮循环顶部调一次，返回 True 就以 `interrupted` 结束；**模型正在回答的时候也查**——流式事件之间检查一次，返回 True 就抛出 `Interrupted`，这一轮以 `interrupted` 结束，**半句回答被丢掉**（不进会话日志）。
 
 三个使用者：
 
@@ -319,7 +327,7 @@
 - **Web 版**：`threading.Event`；
 - **评测**：`loop.cancel = lambda: time.monotonic() > deadline`，`deadline = now + task.timeout`（默认 300 秒）。
 
-**为什么**：把「打断」做成一个可注入的回调，而不是在循环里写死某一种中断源——这样同一个循环能同时被界面、网页和评测三种外部节奏驱动。
+**为什么**：把「打断」做成一个可注入的回调，而不是在循环里写死某一种中断源——这样同一个循环能同时被界面、网页和评测三种外部节奏驱动。检查放在模型回答**之间**（而不是只在轮次之间），是因为流式回答可能长达几十秒：只在轮次开头查，用户按了 ctrl+c 还要等模型把话说完才停。
 
 ### c5 子 agent 怎么调度？和主 agent 什么关系？
 

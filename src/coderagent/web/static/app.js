@@ -581,8 +581,15 @@ function wire() {
         modeSelect.value = previous || "default";
         return;
       }
+      if (mode === "bypass" && !window.confirm(t("bypass_confirm"))) {
+        modeSelect.value = previous || "default";
+        return;
+      }
       try {
-        await api(`/api/sessions/${state.sessionId}/mode`, { method: "POST", body: { mode } });
+        await api(`/api/sessions/${state.sessionId}/mode`, {
+          method: "POST",
+          body: { mode, confirm: mode === "bypass" },
+        });
         showMode(mode);
       } catch (error) {
         modeSelect.value = previous || "default";

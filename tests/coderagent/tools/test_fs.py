@@ -38,6 +38,21 @@ def test_read_rejects_missing_files_directories_and_binaries(ctx, tmp_path):
     assert ReadTool().run({"path": "nope.py"}, ctx).is_error
 
 
+def test_read_says_when_the_offset_is_past_the_end(ctx, tmp_path):
+    """An empty answer leaves the model guessing: it reads the file again and again."""
+    (tmp_path / "a.py").write_text("one\ntwo\n", encoding="utf-8")
+    result = ReadTool().run({"path": "a.py", "offset": 10}, ctx)
+    assert result.is_error
+    assert "past the end" in result.content
+    assert "2 lines" in result.content
+
+
+def test_read_says_that_a_file_is_empty(ctx, tmp_path):
+    (tmp_path / "a.py").write_text("", encoding="utf-8")
+    result = ReadTool().run({"path": "a.py"}, ctx)
+    assert "is empty" in result.content
+
+
 def test_write_creates_parent_directories_and_records_the_old_content(ctx, tmp_path):
     result = WriteTool().run({"path": "nested/dir/a.txt", "content": "hello\n"}, ctx)
     assert result.content.startswith("Created")

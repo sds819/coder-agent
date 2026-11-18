@@ -74,7 +74,7 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 - `telemetry.collect()` 重放日志，算出成本和指标（`src/coderagent/core/telemetry.py:68`）。
 
 **代价**：日志里同一条 TOOL_RESULT 会被写**两次**——`ToolExecutor._publish()` 写一次
-（带 diff，`src/coderagent/tools/executor.py:201`），`ContextEngine._record()` 又写一次
+（带 diff，`src/coderagent/tools/executor.py:209`），`ContextEngine._record()` 又写一次
 （带 messages，`src/coderagent/core/context.py:197`）。看起来是冗余，其实是两种用途：
 前者给 UI（要 diff），后者给重放（要 messages）。两个 payload 结构不同，不能合成一条。
 
@@ -94,7 +94,7 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 
 **问题**：terminal、headless、web 三种界面，如果各写一套循环，就是三份会漂移的实现。
 
-**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:186`），
+**决策**：`AgentLoop.run_turn()` 是**唯一**的执行路径（`src/coderagent/core/loop.py:190`），
 它是同步函数。界面通过 `EventBus` 订阅事件（`src/coderagent/core/events.py:65`）。
 
 TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 版额外起一个工作线程
@@ -106,7 +106,7 @@ TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 
 心 async 化。
 
 **关键细节**：`_publish()` = 广播 + 写日志（持久），`_notify()` = 只广播（瞬时）
-（`src/coderagent/core/loop.py:553` 和 `:549`）。所有需要重放的东西走 `_publish`，
+（`src/coderagent/core/loop.py:570` 和 `:566`）。所有需要重放的东西走 `_publish`，
 流式增量走 `_notify`。这两个函数的区别，就是「2.1 那条决策」在代码里的落点。
 
 **EventBus 是宽容的**：一个订阅者抛异常，只会被记日志，不会影响发布者
@@ -118,27 +118,29 @@ TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 
 如果每条路径各自实现权限检查，漏一条就是漏一个洞。
 
 **决策**：**所有工具调用都过 `ToolExecutor._prepare()`**
-（`src/coderagent/tools/executor.py:93`）。顺序是固定的：
+（`src/coderagent/tools/executor.py:100`）。顺序是固定的：
 
 ```
 hook(PreToolUse) → 权限求值 → ask/deny → 执行
 ```
 
 而且**执行器是唯一的执行路径**——`AgentLoop` 只调 `executor.plan()` 和
-`executor.execute()`（`src/coderagent/core/loop.py:335`），自己不碰工具。
+`executor.execute()`（`src/coderagent/core/loop.py:344`），自己不碰工具。
 
 **为什么 hook 在权限之前**：hook 可以改参数（`updated_input`），**被改写之后的那条命令**
 才是被批准/被拒的那条。反过来就不成立了。
 
 **兜底**：`plan()` 负责把模型的 tool_call 解析成动作，解析失败变成 `error` 字符串
-（`src/coderagent/tools/executor.py:51`）。`_run()` 里的异常也变成 `Error: ...` 的
-observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不是异常，是给模型
+（`src/coderagent/tools/executor.py:58`）。`_run()` 里的异常也变成 `Error: ...` 的
+observation（`src/coderagent/tools/executor.py:173`）。**工具的错误不是异常，是给模型
 看的一行文本**——这是整个 agent 与语言模型交互的基本语法。
 
 **并行但有序**：多个 tool_call 可以并行执行，但结果**按原顺序**重排返回
-（`src/coderagent/tools/executor.py:91`）。但只要这一批里有 `bash`/`write`/`edit`/
-`multi_edit`（`SEQUENTIAL_TOOLS`，`src/coderagent/tools/executor.py:20`），整批就串行。
+（`src/coderagent/tools/executor.py:95`）。但只要这一批里有 `bash`/`write`/`edit`/
+`multi_edit`（`SEQUENTIAL_TOOLS`，`src/coderagent/tools/executor.py:21`），整批就串行。
 理由：写操作之间有顺序依赖，且 bash 的 cwd 语义在并发下会打架。
+并行的**线程数有上限**（`MAX_PARALLEL_TOOLS`，默认 8）：模型一次要一百个 read，
+不该换来一百个线程。
 
 ### 2.4 一次工具调用分两半：先记「想做什么」，再执行
 
@@ -151,16 +153,16 @@ observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不�
 模型返回 tool_calls
    │
    ├─ plan()               规整参数：不是合法 JSON / 不是对象 → 记 error，不往下走
-   │                       tools/executor.py:51
+   │                       tools/executor.py:58
    │
    ├─ _publish(TOOL_CALL)  ← 执行之前。全部 action 和它们的参数
-   │                       core/loop.py:334
+   │                       core/loop.py:343
    │
    ├─ _prepare()           查注册表 → PreToolUse hook → 权限 → 审批
-   │                       tools/executor.py:93
+   │                       tools/executor.py:100
    │
    ├─ _run()               on_path → before_write（checkpoint）→ 执行
-   │                       tools/executor.py:149
+   │                       tools/executor.py:156
    │
    └─ _publish(TOOL_RESULT) + observation（带 tool_call_id）
 ```
@@ -171,7 +173,7 @@ observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不�
   没有这条，一次 `Error: permission denied` 只说明「有个动作被拒了」，不说明「它想干什么」。
 - `_prepare()` 在执行之前 → 被拒绝的工具**不会真的动过文件**。权限不是「执行时检查一下」，
   是「执行前就不让它发生」。
-- observation 一定带 `tool_call_id`（`tools/executor.py:178`）→ 模型才能把结果对上号。
+- observation 一定带 `tool_call_id`（`tools/executor.py:195`）→ 模型才能把结果对上号。
   少了它，模型看到的是一串没有来源的文本。
 
 **代价**：日志里 TOOL_CALL 和 TOOL_RESULT 可能**不成对**——被拒的 action 只有前者。
@@ -187,9 +189,9 @@ observation（`src/coderagent/tools/executor.py:160`）。**工具的错误不�
 
 | 情形 | 落点 | 代码 |
 |---|---|---|
-| **造工具**（名字不在注册表里） | observation = `Error: unknown tool 'xxx'. Available tools: ...`，工具不执行 | `tools/executor.py:97` |
+| **造工具**（名字不在注册表里） | observation = `Error: unknown tool 'xxx'. Available tools: ...`，工具不执行 | `tools/executor.py:104` |
 | **乱调**（调了不该调的） | 权限层判：模式 → 规则 → 越界检查 | `tools/permissions.py:133` |
-| **参数不对** | 工具自己抛类型错误 → 兜成 `Error: ...` | `tools/builtin/fs.py:81`、`tools/executor.py:160` |
+| **参数不对** | 工具自己抛类型错误 → 兜成 `Error: ...` | `tools/builtin/fs.py:81`、`tools/executor.py:173` |
 
 **为什么是「给模型一句话」而不是「报错」**：模型能读懂错误文本并自己改正；异常只会
 把「一次回答里的一行字」升级成「进程崩溃」（§3.1）。
@@ -282,7 +284,7 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 `SessionStore.append()` **没有锁**（`src/coderagent/core/session.py:81`）。这是有意的：
 一个会话同一时刻只有一个 worker 线程在写。web 里如果上一轮还没跑完就再发消息，
 `submit()` 抛 `SessionBusy`（`src/coderagent/web/sessions.py:129`），API 把它变成
-**409**（`src/coderagent/web/api.py:219`）。
+**409**（`src/coderagent/web/api.py:213`）。
 
 加锁会掩盖「两个写入者」的逻辑错误；让它显式失败，反而逼着上层把并发语义说清楚。
 
@@ -461,10 +463,10 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **模型切换的一个坑**：路由每轮可能重建 backend，所以比较时必须比**解析后的真名**
 而不是别名，否则永远不相等 → 每轮换一次 backend（这个问题真实踩过）。
 现在 `loop._route()` 先 `backend_for(name)` 再比 `backend.model_name`
-（`src/coderagent/core/loop.py:442`）。
+（`src/coderagent/core/loop.py:460`）。
 
 **上下文溢出的兜底**：provider 报 context 超长 → `force_compact()` → 重试一次
-（`src/coderagent/core/loop.py:521` 的 `_query`）。判定靠异常类型 + 文本标记
+（`src/coderagent/core/loop.py:530` 的 `_query`）。判定靠异常类型 + 文本标记
 双保险（`src/coderagent/models/gateway.py:12`）。
 
 ### L5 界面层
@@ -481,7 +483,7 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessApprover` 直接拒。
 
 **web 的额外设计**：SSE 而不是 WebSocket（单向推送，自带重连）；
-写接口要 `X-Coder-Client: 1` 头（`src/coderagent/web/api.py:49`，
+写接口要 `X-Coder-Client: 1` 头（`src/coderagent/web/api.py:43`，
 跨站浏览器发不出这个头）；**没有认证**（单用户本机工具，加 token 反而挡了脚本化调用，
 这是明写在决策表里的取舍）；`/items` 和 `/stream` 共用一个 `seq` 空间
 （`src/coderagent/web/sessions.py:64`），所以客户端可以用一个整数表达「我看到哪儿了」。
@@ -499,35 +501,38 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
 ```
 用户输入
   │
-  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:232
+  ├─ hook(UserPromptSubmit) 可能改写 prompt        core/loop.py:236
   │    原文被记在 payload["original"] 里，不丢
   │
   ├─ context.append(user message) → 写日志           core/context.py:166
   │
-  └─ while True:                                    core/loop.py:269
+  └─ while True:                                    core/loop.py:273
        │
-       ├─ maybe_compact()   上下文快满了就压          core/loop.py:284
-       ├─ _route()          这轮用哪个模型            core/loop.py:285
-       ├─ _query()          调模型，超限就压缩重试    core/loop.py:286
+       ├─ maybe_compact()   上下文快满了就压          core/loop.py:288
+       ├─ _route()          这轮用哪个模型            core/loop.py:289
+       ├─ _query()          调模型，超限就压缩重试    core/loop.py:291
+       │    └─ 流式事件之间查 cancel → 打断         core/loop.py:557
        │
        ├─ 有 tool_calls？
-       │    ├─ executor.plan()      解析成动作        tools/executor.py:51
-       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:334
-       │    ├─ executor.execute()   → _prepare()      tools/executor.py:93
+       │    ├─ executor.plan()      解析成动作        tools/executor.py:58
+       │    ├─ _publish(TOOL_CALL)   写日志（在执行之前）core/loop.py:343
+       │    ├─ executor.execute()   → _prepare()      tools/executor.py:100
        │    │      查表 → hook → 权限 → ask/deny → 跑
        │    │        拒绝不是异常，是一行 Error:
        │    └─ _publish(TOOL_RESULT) 写日志（带 diff）
        │
        ├─ 没 tool_calls？
-       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:301
+       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:490
        │
        └─ 循环条件：取消 / max_turns / cost_limit
 ```
 
 有几个地方值得停下来看：
 
-- **循环条件的检查在每一轮的开头**，不在末尾。所以「取消」最多延迟一轮。
-- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:278`）。
+- **循环条件的检查在每一轮的开头**，不在末尾。**但取消不只查在轮首**：模型正在流式回答的时候
+  也查（`core/loop.py:557`），所以用户按 ctrl+c 不用等模型把话说完——半句回答被丢掉，
+  这一轮以 `interrupted` 结束。
+- **成本检查用的是 `session.total_cost`，不是本轮的花费**（`core/loop.py:282`）。
   子 agent 花的钱也算在这个会话头上——用户看到的「这次会话花了多少」是完整的。
 - **Stop hook 最多拦 3 次**。拦多了模型会陷入「解释为什么该停」的循环。
 - **审批的等待是在执行器里同步阻塞的**。TUI 是异步的，所以 `TUIAprover` 用

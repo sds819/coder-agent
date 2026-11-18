@@ -384,6 +384,8 @@ it was.
 ## The permissions
 
 - **Five modes** — `default`, `acceptEdits`, `plan`, `readonly` and `bypass`.
+- **`bypass` asks once** — it takes the guards off, so `/mode bypass` says what
+  it would do and changes nothing; `/mode bypass --yes` switches it on.
 - **The model is told** — in `plan` and `readonly` the agent knows that it may
   not change anything, and answers with what it found instead.
 - **The shell has boundaries** — the commands that only look around go through,
@@ -1037,7 +1039,9 @@ $ python -m pytest -q
   of `ui.file_opener` (`vscode`, `cursor`, `windsurf`, or a command of your own).
   A project may not choose the editor.
 - **`ctrl+c` stops the tool that is running** — not only the turn: a command that
-  runs in the shell is stopped, together with the processes it started.
+  runs in the shell is stopped, together with the processes it started. It also
+  cuts the answer of the model short: the turn ends while the model is still
+  writing, and the half answer is not kept.
 
 ### Example
 

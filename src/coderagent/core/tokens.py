@@ -13,6 +13,15 @@ from coderagent.core.content import image_tokens, text_of
 CHARS_PER_TOKEN = 3.6
 MESSAGE_OVERHEAD = 4
 
+MARKER_ROOM = 160
+"""The room the marker of an elision takes, in characters.
+
+The marker is part of the budget: what the model reads has to fit in it.
+"""
+
+MARKER_TOKENS = 16
+"""The tokens the marker of an elision takes in a list of lines."""
+
 try:  # pragma: no cover - depends on the environment
     import tiktoken
 except ImportError:  # pragma: no cover
@@ -70,8 +79,10 @@ def trim_text(text: str, max_tokens: int) -> tuple[str, dict]:
     """Keep the head and the tail of long text, elide the middle."""
     if count_text_tokens(text) <= max_tokens:
         return text, {}
-    head = int(max_tokens * 0.4 * CHARS_PER_TOKEN)
-    tail = int(max_tokens * 0.4 * CHARS_PER_TOKEN)
+    budget = int(max_tokens * CHARS_PER_TOKEN)
+    room = max(0, budget - min(MARKER_ROOM, budget // 4))
+    head = room // 2
+    tail = room - head
     head_text, tail_text = text[:head], text[-tail:] if tail else ""
     elided_characters = max(0, len(text) - len(head_text) - len(tail_text))
     elided_lines = max(0, text.count("\n") - head_text.count("\n") - tail_text.count("\n"))
@@ -93,7 +104,7 @@ def trim_lines(lines: list[str], max_tokens: int) -> tuple[list[str], dict]:
     """
     if count_text_tokens("\n".join(lines)) <= max_tokens:
         return lines, {}
-    budget = max(1.0, max_tokens * 0.4)
+    budget = max(1.0, (max_tokens - MARKER_TOKENS) / 2)
     head_end = 0
     used = 0.0
     while head_end < len(lines):

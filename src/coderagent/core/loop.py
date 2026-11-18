@@ -40,6 +40,10 @@ def _answer_of(messages: list[dict]) -> str:
     return ""
 
 
+class Interrupted(Exception):
+    """The turn was stopped while the model was answering."""
+
+
 @dataclass
 class TurnResult:
     session_id: str
@@ -283,7 +287,12 @@ class AgentLoop:
                 break
             self.context.maybe_compact()
             self._route()
-            response, error = self._query()
+            try:
+                response, error = self._query()
+            except Interrupted:
+                """The user stopped the turn while the model was answering."""
+                stop_reason = "interrupted"
+                break
             before = self._bill(before)
             if response is None:
                 self._publish(EventType.ERROR, {"error": error})
@@ -522,6 +531,9 @@ class AgentLoop:
         """Ask the model. When the provider says the context is too big, compact and try once more."""
         try:
             return self._collect(), ""
+        except Interrupted:
+            """The turn was stopped: this is not an error of the provider."""
+            raise
         except Exception as e:
             if not is_context_overflow(e):
                 return None, f"{type(e).__name__}: {e}"
@@ -529,6 +541,8 @@ class AgentLoop:
                 return None, f"{type(e).__name__}: {e} (nothing left to compact)"
             try:
                 return self._collect(), ""
+            except Interrupted:
+                raise
             except Exception as retry_error:
                 return None, f"{type(retry_error).__name__}: {retry_error}"
 
@@ -540,6 +554,9 @@ class AgentLoop:
     def _announce(self, events) -> Iterator[ModelEvent]:
         """Publish the pieces of the answer, so the UI can show them while they arrive."""
         for event in events:
+            if self.cancel is not None and self.cancel():
+                """The answer is cut short: the user does not wait for the rest of it."""
+                raise Interrupted()
             if event.type == "text":
                 self._notify(EventType.TEXT_DELTA, {"content": event.content})
             elif event.type == "reasoning":

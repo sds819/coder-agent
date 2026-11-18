@@ -28,13 +28,14 @@
 `/agents` 会列出它们，还有每个的工具和**真正生效的轮数**：
 
 ```
-code-explorer    cheap  read, grep, glob, ls  (15 turns)
+code-explorer    cheap  read, grep, glob, ls  (15 model calls)
                  Find code: locate a symbol, follow a call chain, explain how a part works.
-verifier         main   read, grep, glob, bash  (20 turns)
+verifier         main   read, grep, glob, bash  (20 model calls)
                  Check a result on its own: run the tests, reproduce the bug.
 ```
 
 括号里的是**算数**的轮数：配置里的天花板会把它压下来（见[限制](#limits)）。
+一次调用就是问模型一次——一轮里调了五个工具，也只算一次。
 
 ## 自己写一个
 

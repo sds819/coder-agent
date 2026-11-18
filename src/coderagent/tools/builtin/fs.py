@@ -94,6 +94,14 @@ class ReadTool:
         lines = content.splitlines()
         offset = max(1, int(params.get("offset") or 1))
         limit = max(1, int(params.get("limit") or DEFAULT_READ_LIMIT))
+        if not lines:
+            return ToolResult(f"{path} is empty.")
+        if offset > len(lines):
+            """An offset past the end says nothing: the model has to know that it is over."""
+            return ToolResult(
+                f"Error: offset {offset} is past the end of {path}: the file has {len(lines)} lines.",
+                is_error=True,
+            )
         selected = lines[offset - 1 : offset - 1 + limit]
         truncated, info = trim_lines(selected, ctx.config.max_output_tokens)
         head = info.get("head_lines", len(truncated))

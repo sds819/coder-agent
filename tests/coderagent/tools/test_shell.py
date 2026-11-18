@@ -163,3 +163,17 @@ def test_the_output_of_a_command_that_is_not_interrupted_is_kept(ctx):
     result = BashTool().run({"command": "echo before"}, ctx)
     assert "before" in result.content
     assert "[interrupted]" not in result.content
+
+
+def test_only_the_ends_of_the_log_of_a_background_task_are_read(ctx):
+    """A background task may print a lot: its log is not read into memory as a whole."""
+    started = BashTool().run({"command": "sleep 30", "run_in_background": True}, ctx)
+    task_id = started.metadata["task_id"]
+    ctx.background[task_id]["log"].write_text("HEAD\n" + "x" * 200000 + "\nTAIL\n", encoding="utf-8")
+
+    output = BashOutputTool().run({"task_id": task_id}, ctx).content
+
+    assert "HEAD" in output
+    assert "TAIL" in output
+    assert "the middle of the log is not shown" in output
+    assert len(output) < 40000

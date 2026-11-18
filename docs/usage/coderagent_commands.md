@@ -69,6 +69,9 @@ too, with the arguments their file declares.
 The money of `/cost` is the money of the session. A new session (`/clear`) starts
 at zero, whatever the session before it spent.
 
+`/mode bypass` takes the guards off, so it asks once: the command says what it
+would do and changes nothing. `/mode bypass --yes` switches the mode on.
+
 `/review` asks the model to look at the changes and say what is wrong with them.
 Without a range it reviews the working tree; with one (`/review main..HEAD`) it
 reviews that range. The files that are new and not in the diff yet are named, so

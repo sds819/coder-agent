@@ -353,6 +353,8 @@ token、密码、私钥——在写和发之前都会换成 `[redacted]`。日�
 ## 权限
 
 - **五种模式**——`default`、`acceptEdits`、`plan`、`readonly`、`bypass`。
+- **`bypass` 要问一次**——它把护栏全拆了，所以 `/mode bypass` 只说会做什么、
+  什么都不改；`/mode bypass --yes` 才真的切过去。
 - **模型会知道**——`plan` 和 `readonly` 下 agent 知道自己改不了东西，
   于是把看到的说出来，而不是动手。
 - **规则**——`~/.coderagent/rules.yaml` 和 `.coderagent/rules.yaml` 按工具
@@ -950,7 +952,8 @@ $ python -m pytest -q
 - **文件在你的编辑器里打开**——`/open src/app.py` 用 `ui.file_opener` 指定的
   程序打开它（`vscode`、`cursor`、`windsurf`，或者你自己的命令）。
 - **`ctrl+c` 能停掉正在跑的工具**——不只是这一轮：shell 里跑着的命令会被停掉，
-  它自己起的那些进程也一样。
+  它自己起的那些进程也一样。它也能把模型正在写的回答截断：这一轮在模型还在
+  写的时候就结束，写了一半的那段不留下来。
 
 ### 用法例子
 

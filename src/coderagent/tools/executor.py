@@ -20,6 +20,12 @@ from coderagent.tools.registry import ToolRegistry
 
 SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit", "apply_patch"}
 
+MAX_PARALLEL_TOOLS = 8
+"""How many tools may run at the same time.
+
+A model that asks for a hundred reads does not get a hundred threads.
+"""
+
 
 class ToolExecutor:
     def __init__(
@@ -88,7 +94,7 @@ class ToolExecutor:
         prepared = [self._prepare(action, ctx) for action in actions]
         if any(action["tool"] in SEQUENTIAL_TOOLS for action in prepared) or len(prepared) == 1:
             return [self._run(action, ctx) for action in prepared]
-        with ThreadPoolExecutor(max_workers=len(prepared)) as pool:
+        with ThreadPoolExecutor(max_workers=min(len(prepared), MAX_PARALLEL_TOOLS)) as pool:
             return list(pool.map(lambda action: self._run(action, ctx), prepared))
 
     def _prepare(self, action: dict, ctx: ToolContext) -> dict:

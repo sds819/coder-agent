@@ -240,6 +240,9 @@ def set_mode(session_id: str, body: dict, request: Request, _: None = Depends(re
         mode = PermissionMode(value)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"unknown permission mode '{value}'")
+    if mode is PermissionMode.BYPASS and not body.get("confirm"):
+        """Bypass takes the guards off: the browser has to say that it is meant."""
+        raise HTTPException(status_code=400, detail="bypass mode needs a confirmation")
     runtime.set_mode(mode)
     return {"ok": True, "mode": mode.value}
 

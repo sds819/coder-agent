@@ -30,14 +30,15 @@ has to be in the `prompt` of the call.
 `/agents` lists them, with the tools of each one and the turns it may really make:
 
 ```
-code-explorer    cheap  read, grep, glob, ls  (15 turns)
+code-explorer    cheap  read, grep, glob, ls  (15 model calls)
                  Find code: locate a symbol, follow a call chain, explain how a part works.
-verifier         main   read, grep, glob, bash  (20 turns)
+verifier         main   read, grep, glob, bash  (20 model calls)
                  Check a result on its own: run the tests, reproduce the bug.
 ```
 
-The turns in brackets are the ones that count: the ceiling of the configuration
-holds them down (see [The limits](#the-limits)).
+The calls in brackets are the ones that count: the ceiling of the configuration
+holds them down (see [The limits](#the-limits)). One call is one question to the
+model — a turn that calls five tools still counts as one.
 
 ## Writing your own
 
