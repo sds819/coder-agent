@@ -1197,6 +1197,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stop-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#hook_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3951,6 +3962,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stop-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#hook_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4239,6 +4261,64 @@
 </tbody>
 </table>
 <p><code>PreToolUse</code> 的 hook 跑在<strong>权限检查之前</strong>，所以被批准的是被改写之后的那条命令。</p>
+<h2 id="stop-hook">Stop hook</h2>
+<p><code>Stop</code> hook 只被问一个问题：agent 现在能停吗？agent 想停的时候，是它回答里没有
+工具调用的时候。hook 从 <code>last_message</code> 里读到那段回答，答 <code>block</code>（或 <code>deny</code>）就
+是让它回去接着干。</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">)</span>
+<span class="k">if</span> <span class="s2">"TODO"</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"last_message"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"decision"</span><span class="p">:</span> <span class="s2">"block"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"还有 TODO 没处理完，先处理它们。"</span><span class="p">}))</span>
+</code></pre></div>
+<p>理由会作为一条 <strong>user</strong> 消息回到模型那里，前面带着 <code>[hook]</code>。这是建议，不是命令：
+模型可以再停一次。所以这个 hook <strong>一轮最多被问三次</strong>——过了三次，agent 停不停
+由它自己定，这一轮里也不会再问这个 hook 了。</p>
+<p><code>Stop</code> 上各个键的作用：</p>
+<table>
+<thead>
+<tr>
+<th>键</th>
+<th>在 <code>Stop</code> 上的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>decision</code></td>
+<td>只有 <code>block</code> 和 <code>deny</code> 有用。<code>allow</code> 什么也不做</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>作为一条新消息回到模型那里</td>
+</tr>
+<tr>
+<td><code>additionalContext</code></td>
+<td><strong>没有作用</strong>——只用了理由</td>
+</tr>
+<tr>
+<td><code>updatedInput</code></td>
+<td><strong>没有作用</strong>——这里没有东西可以改写</td>
+</tr>
+</tbody>
+</table>
+<p>几件容易让人意外的事：</p>
+<ul>
+<li><strong><code>matcher</code> 必须留空。</strong> matcher 是拿工具名去匹配的，而 <code>Stop</code> 的内容里没有工具。
+  像 <code>bash</code> 这样的 matcher 什么也匹配不上，于是这个 hook 永远不会被调用——而且没有
+  任何提示。留空（或者写 <code>.*</code>）。</li>
+<li><strong>子 agent 不受它管。</strong> <code>Stop</code> hook 只有主 agent 会问。子 agent 想停就停了；
+  <code>SubagentStop</code> 是个通知，改不了什么。</li>
+<li><strong>它排在另外两道闸门前面。</strong> 顺序是 <code>Stop</code>、然后是校验的命令、然后是答案的
+  schema。被 hook 拦下的那次停，两个都不查。</li>
+<li><strong>每拦一次，模型就多调一次。</strong> 拦停会把 agent 送回模型，而这一轮的限额
+  （<code>max_turns</code>、<code>cost_limit</code>、<code>token_limit</code>）在下次调用之前会重新判一遍。老是拦的
+  hook 能把一轮变成 <code>max_turns</code>。</li>
+<li><strong>三次是这一轮的。</strong> 用户下一个提问，又是三次。</li>
+<li><strong><code>strict: true</code> 能让 agent 停不下来。</strong> 以非零退出码结束的 <code>Stop</code> hook 会拒绝这次
+  停，于是坏掉的 hook 让 agent 一直干活——直到第三次拦停，之后 agent 还是会停。</li>
+</ul>
 <h2 id="hook_1">一个改写提问的 hook</h2>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>

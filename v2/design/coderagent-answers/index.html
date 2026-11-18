@@ -5210,9 +5210,9 @@
 <h3 id="b9">b9 模型的一次工具调用，是怎么一步步跑下来的？</h3>
 <p><strong>结论</strong>：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。</p>
 <ol>
-<li><strong>取</strong>：<code>core/loop.py:299</code> 从 assistant 消息里取 <code>tool_calls</code>。没有 <code>tool_calls</code> 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。</li>
+<li><strong>取</strong>：<code>core/loop.py:313</code> 从 assistant 消息里取 <code>tool_calls</code>。没有 <code>tool_calls</code> 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。</li>
 <li><strong>规整</strong>：<code>executor.plan()</code>（<code>executor.py:51</code>）把原始 tool call 变成统一形状：<code>{"tool", "tool_call_id", "args", "raw"}</code>。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是<strong>对象</strong>，就在这里记下 <code>error</code>，<strong>不会走到执行</strong>。</li>
-<li><strong>记账</strong>：<code>loop.py:334</code> 发一个 <code>TOOL_CALL</code> 事件，<strong>在执行之前</strong>。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。</li>
+<li><strong>记账</strong>：<code>loop.py:348</code> 发一个 <code>TOOL_CALL</code> 事件，<strong>在执行之前</strong>。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。</li>
 <li><strong>准备</strong>：<code>executor._prepare()</code>（<code>executor.py:93</code>）对每个 action 依次做四件事：</li>
 <li><strong>查注册表</strong>：<code>registry.get(name)</code>，找不到就直接记错（见 b10）；</li>
 <li><strong>PreToolUse hook</strong>：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；</li>

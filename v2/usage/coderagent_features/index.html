@@ -1667,6 +1667,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#when-the-commands-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the commands run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-rounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The rounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_9" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4908,6 +4930,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#when-the-commands-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the commands run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-rounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The rounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_9" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6508,13 +6552,44 @@ environment: local/workspace-write
 <li><strong>The agent has to make the check pass</strong> — when the model wants to stop, the
   commands run; if one of them fails, the agent gets the output and tries again.</li>
 <li><strong>The commands run in the session</strong> — they are your commands, not the agent's,
-  so they run as you and outside the sandbox of the operating system. They do
-  not ask for approval.</li>
+  so they run as you, without a permission check and without an approval.</li>
 <li><strong>A bounded number of rounds</strong> — <code>verify.max_rounds</code> (3 by default). When the
   rounds are used up, the turn ends with <code>stop_reason: verify_failed</code>.</li>
 <li><strong>The result is in the log</strong> — an event of the type <code>verify</code> holds the commands
   and the ones that did not pass.</li>
 </ul>
+<h3 id="when-the-commands-run">When the commands run</h3>
+<p>The commands run when the agent wants to stop: it answers without a tool call.
+They do not run after every tool call, so an agent that keeps working is never
+checked. The order of the gates is the <code>Stop</code> hook, then these commands, then
+the schema of the answer.</p>
+<p>The commands are the <strong>user's</strong>, not the agent's, so they run:</p>
+<ul>
+<li>without a permission check — the rules of <code>permissions</code> do not see them,</li>
+<li>without a hook — <code>PreToolUse</code> and <code>PostToolUse</code> are not called for them,</li>
+<li>without an approval — nobody is asked,</li>
+<li>without the confinement of <code>sandbox.mode</code> — that one reaches the <code>bash</code> tool
+  only; the commands go straight to the environment of the session.</li>
+</ul>
+<p>They run in the environment of the session. With <code>sandbox.type: local</code> that is
+the working directory of the session; with a container it is the working
+directory of the environment, which is <code>/</code> unless the environment is given
+another one. A container or a bubblewrap still holds them: there the
+environment is the boundary, not <code>sandbox.mode</code>.</p>
+<p>A verification command of a <strong>project</strong> waits for a decision of the user, like
+the other code of a project. An untrusted one is left out of the
+configuration, so the verification does not happen at all — and nothing says so.</p>
+<h3 id="the-rounds">The rounds</h3>
+<p><code>verify.max_rounds</code> (3 by default) is the number of times the commands run.
+The agent is told about a failure and gets to fix it, so with three rounds it
+is corrected twice; when the third run fails too, the turn ends with
+<code>stop_reason: verify_failed</code> and the message is in <code>error</code>.</p>
+<p>The commands all run, one after the other, and every one that failed is
+reported. A command that times out counts as a failure, with the exit code
+<code>-1</code>.</p>
+<p>The output of a command is trimmed to 2000 tokens before it goes back to the
+model: the head and the tail are kept, the middle is elided, and a marker says
+how much is missing.</p>
 <h3 id="example_9">Example</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">verify</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">commands</span><span class="p">:</span>

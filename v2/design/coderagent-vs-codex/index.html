@@ -4939,7 +4939,7 @@ CLI → <code>render(loop.run_turn(...))</code>）。界面不能跑轮时（<co
 <tr>
 <td>4.4</td>
 <td><strong>中断的粒度是「轮」</strong> ✅</td>
-<td><code>loop.cancel</code> 只在<strong>每轮模型调用之前</strong>检查（<code>src/coderagent/core/loop.py:272</code>），<code>tools/executor.py</code> 里没有取消检查——<strong>一条跑着的 <code>bash</code> 停不下来</strong>，只能等它自己结束</td>
+<td><code>loop.cancel</code> 只在<strong>每轮模型调用之前</strong>检查（<code>src/coderagent/core/loop.py:281</code>），<code>tools/executor.py</code> 里没有取消检查——<strong>一条跑着的 <code>bash</code> 停不下来</strong>，只能等它自己结束</td>
 <td>能中断正在跑的工具</td>
 <td>中</td>
 </tr>
@@ -5139,7 +5139,7 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 所以项目中途改了规则，下一轮模型就看见了。</p>
 <h3 id="54-hook-6">5.4 hook 事件只有 6 个 ✅ 已修</h3>
 <p>现在有：<code>PreToolUse</code>、<code>PostToolUse</code>、<code>UserPromptSubmit</code>、<code>Stop</code>、<code>SessionStart</code>、<code>SessionEnd</code>
-（<code>src/coderagent/tools/executor.py:104,169</code>、<code>src/coderagent/core/loop.py:232,301,491,495</code>）。</p>
+（<code>src/coderagent/tools/executor.py:104,169</code>、<code>src/coderagent/core/loop.py:241,495,505,509</code>）。</p>
 <p>Codex 还提供压缩前后、通知、子 agent 停止等事件。<code>PreCompact</code> 对本项目特别有用——
 压缩是 coderagent 的核心机制之一（见<a href="../coderagent-context/">上下文专题</a>），
 压缩前后的钩子是天然的「记录摘要质量」的地方。</p>

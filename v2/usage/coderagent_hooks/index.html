@@ -1539,6 +1539,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-stop-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Stop hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-hook-that-rewrites-the-prompt" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3949,6 +3960,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-stop-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Stop hook
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-hook-that-rewrites-the-prompt" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4250,6 +4272,72 @@ concatenated and the last <code>updatedInput</code> wins.</p>
 </table>
 <p>The <code>PreToolUse</code> hook runs <strong>before</strong> the permission check, so the command
 that is approved is the command that was rewritten.</p>
+<h2 id="the-stop-hook">The Stop hook</h2>
+<p>The <code>Stop</code> hook is asked one question: may the agent stop now? The agent wants
+to stop when it answers without a tool call. The hook reads the text of that
+answer in <code>last_message</code> and answers <code>block</code> (or <code>deny</code>) to send the agent
+back to work.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">)</span>
+<span class="k">if</span> <span class="s2">"TODO"</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"last_message"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"decision"</span><span class="p">:</span> <span class="s2">"block"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"There are TODOs left. Do them first."</span><span class="p">}))</span>
+</code></pre></div>
+<p>The reason goes back to the model as a <strong>user</strong> message, prefixed with
+<code>[hook]</code>. It is advice, not an order: the model may stop again. So the hook is
+asked at most <strong>three times per turn</strong> — after that the agent stops whatever
+the hook says, and the hook is not called again in that turn.</p>
+<p>What the answer does at <code>Stop</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Effect at <code>Stop</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>decision</code></td>
+<td>Only <code>block</code> and <code>deny</code> do anything. <code>allow</code> has no effect</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>Goes back to the model as a new message</td>
+</tr>
+<tr>
+<td><code>additionalContext</code></td>
+<td><strong>No effect</strong> — only the reason is used</td>
+</tr>
+<tr>
+<td><code>updatedInput</code></td>
+<td><strong>No effect</strong> — there is nothing to rewrite</td>
+</tr>
+</tbody>
+</table>
+<p>A few things that surprise people:</p>
+<ul>
+<li><strong>The matcher has to be empty.</strong> The matcher is matched against the name of a
+  tool, and the payload of <code>Stop</code> has no tool in it. A matcher like <code>bash</code>
+  matches nothing, so the hook is never called — without a word of warning.
+  Leave it empty (or <code>.*</code>).</li>
+<li><strong>A sub agent is not stopped by it.</strong> The <code>Stop</code> hook is asked by the main
+  agent only. A sub agent that wants to stop simply stops; <code>SubagentStop</code> is a
+  notification and changes nothing.</li>
+<li><strong>It comes before the other two gates.</strong> The order is <code>Stop</code>, then the
+  commands of the verification, then the schema of the answer. A stop that the
+  hook blocks skips the other two.</li>
+<li><strong>Every block costs another call of the model.</strong> A blocked stop sends the
+  agent back to the model, and the limits of the turn (<code>max_turns</code>,
+  <code>cost_limit</code>, <code>token_limit</code>) are checked again before that call. A hook that
+  blocks every time can turn a turn into <code>max_turns</code>.</li>
+<li><strong>The three blocks belong to the turn.</strong> The next question of the user starts
+  with three again.</li>
+<li><strong><code>strict: true</code> can keep the agent from stopping.</strong> A <code>Stop</code> hook that ends
+  with a non-zero exit code denies the stop, so a broken hook keeps the agent
+  at work — until the third block, and then the agent stops anyway.</li>
+</ul>
 <h2 id="a-hook-that-rewrites-the-prompt">A hook that rewrites the prompt</h2>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
