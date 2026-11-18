@@ -92,7 +92,56 @@ coder --list
 让它改一次。它有两次机会；第二次还是对不上，这一轮就以 `stop_reason`
 `schema_invalid` 停下，错在 `error` 里。
 
-答案从模型的文本里读出来：JSON 外面包一层代码围栏也行，前面有一句话也行。
+#### 查什么，不查什么
+
+检查是 agent 自己那个小校验器做的，不是模型服务端做的。模型只是**被要求**给出对得上
+schema 的 JSON——schema 在系统提示词里——答案出来之后才查。模型服务端从来没见过
+这个 schema，所以模型不听话的代价是一次重试。
+
+校验器只认这几个关键字：
+
+| 关键字 | 做什么 |
+|---|---|
+| `type` | 一个名字或者一串名字：`string`、`integer`、`number`、`boolean`、`object`、`array`、`null` |
+| `properties` | 字段的类型，就地检查 |
+| `required` | 这个字段必须在 |
+| `additionalProperties: false` | schema 里没有的字段算错 |
+| `items` | 数组的元素，逐个查 |
+| `enum` | 值必须是列表里的一个 |
+| `nullable` | 允许 `null` |
+
+其它关键字（`anyOf`、`$ref`、`pattern`、`minimum`……）**一律忽略**：用到它们的那部分
+不检查，答案也不被拒绝。靠它们的 schema 看着很严，其实不严。
+
+校验器在两件事上很严：
+
+- 布尔不是数字——`{"count": true}` 对不上 `{"count": {"type": "integer"}}`；
+- `nullable` 只是把 `null` 加进允许的值里，并不放松类型——
+  `{"type": "integer", "nullable": true}` 照样不接受 `""`。
+
+错误会指出答案错在哪儿，模型才知道该改什么：`'files[1]' must be string`、
+`the answer is missing 'files'`、`the answer has the unknown field 'extra'`。
+
+#### 怎么从文本里读出答案
+
+模型的回答是文本，JSON 是从里面取出来的：
+
+1. 整段就是 JSON——直接用；
+2. 外面包了一层代码围栏——把围栏脱掉；
+3. 前面有一句话——取第一个 `{` 到最后一个 `}` 之间那部分。
+
+顶层是**数组**时，整段就是数组才读得出来。数组外面带一句话的话，它不会被当成数组读：
+第三条规则找的是花括号，于是取到的是第一个 `{` 到最后一个 `}` 之间那部分——数组**里面**
+那个对象。检查会说这不是数组，于是模型被叫回来再答一次。
+
+#### 两次答案
+
+模型有两次机会。第一次对不上，会**连着错在哪儿一起退回去**，作为一条新消息给它——
+所以 agent 是被叫回去，不是被拦住。第二次还是对不上，这一轮就以 `stop_reason`
+`schema_invalid` 结束，错在 `error` 里，`output` 还是 `null`。
+
+这个形状是三道闸门里的最后一道：`Stop` hook 和校验命令排在前面，所以被它们叫回去的
+那一轮根本走不到检查。这个形状属于这个循环，不属于某一段对话：切会话它也还在。
 
 ### 出错时怎么办
 
@@ -106,6 +155,7 @@ coder --list
 | `Invalid value: the schema file is not valid JSON: ...` | `--output-schema` 指的那个文件里不是 JSON。 | 把文件改对，或者去掉这个标志。 |
 | `Invalid value: the schema file cannot be read: ...` | `--output-schema` 指的那个文件不在。 | 检查路径。 |
 | `stop_reason` 是 `schema_invalid` | 模型两次都没给出对得上 schema 的 JSON。 | 错在 `error` 里，这一轮的消息里写了模型被告知了什么。 |
+| 检查过了，但答案不是你要的 | schema 用了校验器不认的关键字（`anyOf`、`$ref`……），那部分根本没查。 | 用上面那几个关键字写 schema，答案在 `output` 里。 |
 | `Unknown format 'xml'. Use json or otel.` | `coder export --format` 只认 `json` 和 `otel`。 | 用 `json` 或 `otel`。 |
 | `no sessions yet` | `--list` 在这个目录里没找到会话。 | 不用管，先跑一轮。 |
 | stderr 上的 `coder web: cannot listen on 127.0.0.1:8765 (Address already in use).`，退出码 1 | 端口被占。服务启动前自己先探一下，因为 uvicorn 自己的报错不告诉你该怎么办。 | 换一个端口：`coder web --port 8766`。 |

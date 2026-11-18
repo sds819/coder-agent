@@ -98,8 +98,67 @@ is **given back to it** with the errors, so that it can try again. It gets two
 answers; when the second one does not fit either, the turn stops with
 `stop_reason` `schema_invalid` and the errors are in `error`.
 
-The answer is read out of the text of the model: a code fence around the JSON
-is fine, and so is a sentence in front of it.
+#### What is checked, and what is not
+
+The check is done by a small validator of the agent, not by the provider. The
+model is only **asked** for JSON that fits the schema — the schema is in the
+system prompt — and the answer is checked afterwards. The provider never sees
+the schema, so a model that ignores the request costs one retry.
+
+The validator knows these keywords and nothing else:
+
+| Keyword | What it does |
+|---|---|
+| `type` | One name or a list of names: `string`, `integer`, `number`, `boolean`, `object`, `array`, `null` |
+| `properties` | The type of a field, checked in place |
+| `required` | The field has to be there |
+| `additionalProperties: false` | A field that is not in the schema is an error |
+| `items` | The elements of an array, checked one by one |
+| `enum` | The value has to be one of the list |
+| `nullable` | `null` is allowed |
+
+Every other keyword (`anyOf`, `$ref`, `pattern`, `minimum`, …) is **ignored**:
+the part of the schema that uses it is not checked, and the answer is not
+refused either. A schema that relies on them looks strict and is not.
+
+Two things the validator is strict about:
+
+- a boolean is not a number — `{"count": true}` does not fit
+  `{"count": {"type": "integer"}}`;
+- `nullable` only adds `null` to the values that are allowed, it does not
+  loosen the type — `{"type": "integer", "nullable": true}` still refuses `""`.
+
+The errors say where the answer is wrong, so the model knows what to fix:
+`'files[1]' must be string`, `the answer is missing 'files'`, `the answer has
+the unknown field 'extra'`.
+
+#### Reading the answer out of the text
+
+The answer of the model is text, and the JSON is taken out of it:
+
+1. the whole text is JSON — it is used as it is;
+2. the text is wrapped in a code fence — the fence is taken off;
+3. there is a sentence in front of the JSON — the part between the first `{`
+   and the last `}` is used.
+
+A top-level **array** is read when it is the whole answer. An array with a
+sentence around it is not read as an array: the third rule looks for braces,
+so it takes the part between the first `{` and the last `}` — the object
+*inside* the array. The check then says the answer is not an array, and the
+model is asked again.
+
+#### The two answers
+
+The model gets two answers. The first one that does not fit is **given back**
+to it, with the errors, as a new message — the agent is called back, not
+blocked. When the second one does not fit either, the turn ends with
+`stop_reason` `schema_invalid`, the errors are in `error` and `output` stays
+`null`.
+
+The shape is the last of the three gates: the `Stop` hook and the verification
+commands come first, so a turn that one of them sends back never reaches the
+check. The shape belongs to the loop, not to one conversation: switching
+sessions keeps it.
 
 ### When something goes wrong
 
@@ -113,6 +172,7 @@ is fine, and so is a sentence in front of it.
 | `Invalid value: the schema file is not valid JSON: ...` | The file of `--output-schema` does not hold JSON. | Fix the file, or drop the flag. |
 | `Invalid value: the schema file cannot be read: ...` | The file of `--output-schema` is not there. | Check the path. |
 | `stop_reason` is `schema_invalid` | The model did not answer with JSON that fits the schema, twice. | The errors are in `error`; the messages of the turn say what the model was told. |
+| The answer passes the check but is not what you expected | The schema uses a keyword the validator does not know (`anyOf`, `$ref`, …), so that part was not checked at all. | Write the schema with the keywords above, and read the answer in `output`. |
 | `Unknown format 'xml'. Use json or otel.` | `coder export --format` accepts only `json` and `otel`. | Use `json` or `otel`. |
 | `no sessions yet` | `--list` found no session in this directory. | Nothing to do; run a turn first. |
 | `coder web: cannot listen on 127.0.0.1:8765 (Address already in use).` on stderr, exit code 1 | The port is taken. The server checks this itself before it starts, because uvicorn's own error does not say what to do. | Use another port: `coder web --port 8766`. |
