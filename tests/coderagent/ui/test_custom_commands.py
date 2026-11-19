@@ -22,6 +22,13 @@ Describe the change of $1.
 Everything else: $ARGUMENTS
 """
 
+COMMAND_WITH_MODEL = """---
+description: Do it
+model: openai/gpt-4o
+---
+Do it.
+"""
+
 
 def _write(tmp_path, name: str = "commit.md", text: str = COMMAND) -> Path:
     directory = tmp_path / ".coderagent" / "commands"
@@ -140,6 +147,21 @@ def test_the_command_of_the_project_wins_over_the_one_of_the_user(tmp_path):
     commands = load_custom_commands(tmp_path, home)
     assert [command.name for command in commands] == ["commit"]
     assert commands[0].description == "Generate a commit message"
+
+
+def test_the_command_of_the_project_may_not_choose_the_model(tmp_path):
+    """The key of the user would go to a model of the project."""
+    home = tmp_path / "home"
+    (home / "commands").mkdir(parents=True)
+    _write(tmp_path, "commit.md", COMMAND_WITH_MODEL)
+    assert load_custom_commands(tmp_path, home)[0].model == ""
+
+
+def test_the_command_of_the_user_may_choose_the_model(tmp_path):
+    home = tmp_path / "home"
+    (home / "commands").mkdir(parents=True)
+    (home / "commands" / "commit.md").write_text(COMMAND_WITH_MODEL, encoding="utf-8")
+    assert load_custom_commands(tmp_path, home)[0].model == "openai/gpt-4o"
 
 
 def test_the_pattern_of_a_tool_limits_what_the_command_may_do(tmp_path):

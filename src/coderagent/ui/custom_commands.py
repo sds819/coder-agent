@@ -76,17 +76,21 @@ def load_custom_commands(cwd: Path, home: Path | None = None) -> list[CustomComm
     """The custom commands of this project and of the user.
 
     The command of the project wins when both have the same name: it is the one
-    that belongs to the work at hand.
+    that belongs to the work at hand. A command of the project may not choose
+    the model: the key of the user would go to a model of the project.
     """
-    directories = [Path(cwd) / COMMANDS_DIR, (Path(home) if home else config_home()) / "commands"]
+    directories = [(Path(cwd) / COMMANDS_DIR, True), ((Path(home) if home else config_home()) / "commands", False)]
     commands: dict[str, CustomCommand] = {}
-    for directory in directories:
+    for directory, of_the_project in directories:
         if not directory.is_dir():
             continue
         for path in sorted(directory.glob("*.md")):
             command = parse_custom_command(path)
-            if command is not None:
-                commands.setdefault(command.name, command)
+            if command is None:
+                continue
+            if of_the_project:
+                command.model = ""
+            commands.setdefault(command.name, command)
     return list(commands.values())
 
 

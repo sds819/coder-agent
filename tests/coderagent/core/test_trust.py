@@ -350,6 +350,21 @@ def test_the_project_may_not_choose_the_model(tmp_path, monkeypatch):
     assert model.reasoning_effort == ""
 
 
+def test_the_project_may_not_choose_the_model_of_the_summary(tmp_path, monkeypatch):
+    """The summary of the context is the conversation: it goes to the model of the user."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"context": {"summarize_model": "openai/gpt-4o"}})
+    assert load_config([], cwd=tmp_path).context.summarize_model == ""
+
+
+def test_the_user_may_choose_the_model_of_the_summary(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"context": {"summarize_model": "openai/gpt-4o"}}), encoding="utf-8")
+    assert load_config([], cwd=tmp_path).context.summarize_model == "openai/gpt-4o"
+
+
 def test_the_endpoint_of_the_project_does_not_take_the_key_of_the_user(tmp_path, monkeypatch):
     """The key of the user must not be sent to the address of the project."""
     home = tmp_path / "home"

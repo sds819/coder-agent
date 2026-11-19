@@ -852,7 +852,9 @@ the instructions — is used as it is, because it says what the agent may do, no
 what it may run. The permissions are the exception: the project may only take
 tools away, never give them. The model is the other exception: where the
 conversation goes is the decision of the user, so the whole `model` section of
-a project is dropped.
+a project is dropped. So are the two other places where a model is named:
+`context.summarize_model` of a project, and the `model` of a command of the
+project. The commands of the user, in `~/.coderagent/commands`, may name one.
 
 ## The sessions and the money
 

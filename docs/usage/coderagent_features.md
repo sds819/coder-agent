@@ -1320,6 +1320,9 @@ profile, the user file, `$MSWEA_MODEL_NAME`, and at the end
 `anthropic/claude-sonnet-4-5`. A **project may not choose the model**: the whole
 `model` section of a project is dropped, because the endpoint of a project
 would take the conversation — and the key of the user with it — somewhere else.
+The same holds for the two other places where a model is named:
+`context.summarize_model` of a project is dropped, and a command of the project
+may not name a model.
 
 ### The profiles
 

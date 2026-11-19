@@ -206,7 +206,9 @@ Everything else: $ARGUMENTS
 - `$1`, `$2`, … become the arguments, one by one.
 - `allowed-tools` limits the tools the command may use. The tools of the
   session are back when the command is done.
-- `model` picks another model for this command.
+- `model` picks another model for this command. A command of the **project**
+  may not: the model is the decision of the user, and the key of the user would
+  go to a model of the project. A command in `~/.coderagent/commands` may.
 
 The part in parentheses is a **pattern of its own**: `bash(git diff:*)` lets
 the command run `git diff` and nothing else, and a tool that is not named is

@@ -1198,6 +1198,8 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 `$MSWEA_MODEL_NAME`，最后是 `anthropic/claude-sonnet-4-5`。
 **项目不能挑模型**：项目的 `model` 整段被丢掉——项目的端点会把整段对话，
 连同用户的 key，一起送到别处去。
+另外两处写了模型名字的地方也一样：项目的 `context.summarize_model` 被丢掉，
+项目里的命令不许写 `model`。
 
 ### profile（命名配置）
 

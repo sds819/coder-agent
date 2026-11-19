@@ -898,6 +898,9 @@ sandbox:
 > 实现与草图的差别：**项目层不再有 `model`**。`core/trust.py` 的 `tightened()`
 > 把项目的 `model` 整段丢掉——项目的端点会把整段对话，连同用户的 key，
 > 一起送到别处去。模型是用户的决定。
+> 另外两处也一样：`context.summarize_model` 被丢掉，
+> `ui/custom_commands.py` 加载**项目**命令时把 `model` 字段清掉
+> （用户命令 `~/.coderagent/commands` 里的可以写）。
 
 ### 7.1 谁可以写配置
 
