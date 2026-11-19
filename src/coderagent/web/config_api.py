@@ -17,6 +17,7 @@ from litellm.utils import get_llm_provider
 from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
 from coderagent.config.schema import ModelConfig, PermissionConfig
 from coderagent.models.call import check_reserved
+from coderagent.models.litellm_config import locate
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
@@ -50,6 +51,9 @@ DIRECT_FIELDS = (
 
 MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")
 """The settings the configuration page shows."""
+
+SECRET_FIELDS = ("api_base", "api_key")
+"""The settings of the model that have a field of their own, next to `model_kwargs`."""
 
 ENV_KEYS = {
     "openai": "OPENAI_API_KEY",
@@ -98,9 +102,12 @@ def _model_of(layer: dict) -> dict:
 
 def _defines(layer: dict, field: str) -> bool:
     model = _model_of(layer)
+    kwargs = model.get("model_kwargs")
+    if field in SECRET_FIELDS:
+        """The field of its own, or the old place of `model_kwargs`."""
+        return field in model or (isinstance(kwargs, dict) and field in kwargs)
     if field in DIRECT_FIELDS:
         return field in model
-    kwargs = model.get("model_kwargs")
     return isinstance(kwargs, dict) and field in kwargs
 
 
@@ -135,7 +142,7 @@ def model_view(cwd: Path) -> dict[str, Any]:
     return {
         "model_name": model.model_name,
         "litellm_config": model.litellm_config,
-        "api_base": str(kwargs.get("api_base") or ""),
+        "api_base": str(model.api_base or kwargs.get("api_base") or ""),
         "api_key_set": bool(api_key),
         "api_key_hint": hint(api_key),
         "max_retries": model.max_retries,
@@ -147,7 +154,9 @@ def model_view(cwd: Path) -> dict[str, Any]:
         "review_model": model.review_model,
         "routing": model.routing,
         "routing_rules": [rule.model_dump() for rule in model.routing_rules],
-        "model_kwargs": {key: value for key, value in kwargs.items() if not is_secret(key)},
+        "model_kwargs": {
+            key: value for key, value in kwargs.items() if not is_secret(key) and key not in SECRET_FIELDS
+        },
     }
 
 
@@ -277,6 +286,12 @@ def write_user_model(payload: dict) -> Path:
         kwargs = {}
     defaults = _default_model()
 
+    for field in SECRET_FIELDS:
+        """The key and the address have a field of their own now: the old place is left."""
+        legacy = kwargs.pop(field, None)
+        if legacy is not None:
+            model.setdefault(field, legacy)
+
     name = payload.get("model_name")
     if isinstance(name, str):
         _keep(model, "model_name", name.strip(), defaults["model_name"])
@@ -286,16 +301,16 @@ def write_user_model(payload: dict) -> Path:
     base = payload.get("api_base")
     if isinstance(base, str):
         if base.strip():
-            kwargs["api_base"] = api_base_of(base)
+            model["api_base"] = api_base_of(base)
         else:
-            kwargs.pop("api_base", None)
+            model.pop("api_base", None)
     key = payload.get("api_key")
     if isinstance(key, str):
         """An empty key removes it, a missing one keeps it."""
         if key.strip():
-            kwargs["api_key"] = key.strip()
+            model["api_key"] = key.strip()
         else:
-            kwargs.pop("api_key", None)
+            model.pop("api_key", None)
     if payload.get("max_retries") is not None:
         _keep(model, "max_retries", int(payload["max_retries"]), defaults["max_retries"])
     cache = payload.get("set_cache_control")
@@ -323,7 +338,7 @@ def write_user_model(payload: dict) -> Path:
     extra = payload.get("model_kwargs")
     if isinstance(extra, dict):
         for key, value in extra.items():
-            if key in ("api_key", "api_base"):
+            if key in SECRET_FIELDS:
                 continue
             kwargs[str(key)] = value
         check_reserved(kwargs)
@@ -363,6 +378,11 @@ def effective_model(cwd: Path, overrides: dict) -> dict:
     """
     config = load_config([], cwd=cwd)
     kwargs = dict(config.model.model_kwargs)
+    if config.model.api_key:
+        kwargs["api_key"] = config.model.api_key
+        """The field of its own wins over the old place of `model_kwargs`."""
+    if config.model.api_base:
+        kwargs["api_base"] = config.model.api_base
     name = config.model.model_name
     aliases = config.model.litellm_config
     if isinstance(overrides.get("model_name"), str) and overrides["model_name"].strip():
@@ -411,7 +431,7 @@ def effective_api_key(cwd: Path) -> str:
     """The key the agent would use: the one of the settings, the one of the alias or the one of the environment."""
     config = load_config([], cwd=cwd)
     name, params = resolve_alias(config.model.litellm_config, config.model.model_name)
-    key = config.model.model_kwargs.get("api_key") or params.get("api_key") or env_api_key(name)
+    key = config.model.api_key or config.model.model_kwargs.get("api_key") or params.get("api_key") or env_api_key(name)
     return str(key or "")
 
 
@@ -419,7 +439,7 @@ def check_litellm_config(path: str, name: str = "") -> dict[str, Any]:
     """The file of the aliases: does it exist, does it parse, what is in it."""
     if not path:
         return {"ok": True, "path": "", "aliases": [], "error": ""}
-    file = Path(path).expanduser()
+    file = locate(path)
     if not file.is_file():
         return {"ok": False, "path": str(file), "aliases": [], "error": "the file does not exist"}
     try:

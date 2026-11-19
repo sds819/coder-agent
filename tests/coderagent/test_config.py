@@ -227,3 +227,26 @@ def test_a_profile_may_not_open_a_sandbox_the_project_closed(tmp_path, monkeypat
     project.parent.mkdir(parents=True)
     project.write_text("sandbox:\n  mode: read-only\n", encoding="utf-8")
     assert load_config(["profile=fast"], cwd=tmp_path).sandbox.mode == "read-only"
+
+
+def test_the_key_of_the_model_has_a_field_of_its_own(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(
+        "model:\n  api_key: sk-secret\n  api_base: https://api.example.com/v1\n", encoding="utf-8"
+    )
+    config = load_config([], cwd=tmp_path)
+    assert config.model.api_key == "sk-secret"
+    assert config.model.api_base == "https://api.example.com/v1"
+
+
+def test_the_key_of_the_model_reaches_the_backend(tmp_path, monkeypatch):
+    from coderagent.run import build_model
+
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text("model:\n  api_key: sk-secret\n", encoding="utf-8")
+    backend = build_model(load_config([], cwd=tmp_path))
+    assert backend.model_kwargs["api_key"] == "sk-secret"

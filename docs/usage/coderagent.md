@@ -220,6 +220,8 @@ A full example:
 ```yaml
 model:
   model_name: deepseek/deepseek-flash
+  api_key: sk-...
+  api_base: https://api.deepseek.com
   model_kwargs:
     temperature: 0.0
   litellm_config: ~/.coderagent/litellm_config.yaml
@@ -260,11 +262,13 @@ sandbox:
 
 ### The model
 
-`model.model_name` is the model of the agent. `model.model_kwargs` goes to the
-provider as it is — except for `model`, `messages`, `tools`, `stream` and
-`stream_options`: those belong to the call of the agent, and a configuration
-that has one of them is refused at the start instead of breaking the call at
-runtime. `model.routing` maps a purpose to a model:
+`model.model_name` is the model of the agent. `model.api_key` and `model.api_base`
+are the key and the address of the provider; they have a field of their own, so
+that a key is not one of the many parameters of the call. `model.model_kwargs`
+goes to the provider as it is — except for `model`, `messages`, `tools`,
+`stream` and `stream_options`: those belong to the call of the agent, and a
+configuration that has one of them is refused at the start instead of breaking
+the call at runtime. `model.routing` maps a purpose to a model:
 
 | Purpose | What it is for |
 |---|---|
@@ -406,10 +410,15 @@ model:
 The alias `nengpa/minimax-m2.7` is then a model like any other: `coder -m
 nengpa/minimax-m2.7 --task "..."` works, and so does the routing.
 
+A relative path is looked for in `~/.coderagent/` first and in the working
+directory after it: the setting lives in a file that does not move, the working
+directory does.
+
 The `model` of an entry is the model litellm calls, with the provider in front of
 it. The other parameters of the entry go to litellm as they are, so the key of a
 third party endpoint stays in that one file instead of the configuration of the
-agent. The settings of `model.model_kwargs` win over the ones of the alias.
+agent. The settings of `model.model_kwargs` win over the ones of the alias, and
+`model.api_key` and `model.api_base` win over both.
 
 The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 

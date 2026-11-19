@@ -439,3 +439,41 @@ def test_the_test_of_the_connection_reports_a_parameter_of_the_call(make_client)
 
     assert answer["ok"] is False
     assert "must not have 'model'" in answer["error"]
+
+
+def test_the_key_and_the_address_are_written_to_their_own_fields(make_client):
+    client = make_client()
+
+    client.put(
+        "/api/config/model",
+        json={"api_key": "sk-secret-value", "api_base": "https://api.nengpa.com/v1"},
+    )
+
+    written = yaml.safe_load((config_home() / "config.yaml").read_text(encoding="utf-8"))
+    assert written["model"]["api_key"] == "sk-secret-value"
+    assert written["model"]["api_base"] == "https://api.nengpa.com/v1"
+    assert "model_kwargs" not in written["model"]
+
+
+def test_the_old_place_of_the_key_is_moved_to_its_own_field(make_client):
+    """The key used to live in `model_kwargs`: the file of the user is not left in the old shape."""
+    client = make_client()
+    user_file = config_home() / "config.yaml"
+    user_file.parent.mkdir(parents=True, exist_ok=True)
+    user_file.write_text("model:\n  model_kwargs:\n    api_key: sk-old\n", encoding="utf-8")
+
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    written = yaml.safe_load(user_file.read_text(encoding="utf-8"))
+    assert written["model"]["api_key"] == "sk-old"
+    assert "api_key" not in (written["model"].get("model_kwargs") or {})
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-old"
+
+
+def test_the_key_of_the_settings_wins_over_the_old_place(make_client):
+    client = make_client()
+    user_file = config_home() / "config.yaml"
+    user_file.parent.mkdir(parents=True, exist_ok=True)
+    user_file.write_text("model:\n  api_key: sk-new\n  model_kwargs:\n    api_key: sk-old\n", encoding="utf-8")
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-new"

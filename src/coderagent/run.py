@@ -65,6 +65,8 @@ def build_model(config: Config, model_name: str = "") -> ModelBackend:
         litellm_config=config.model.litellm_config,
         reasoning_effort=config.model.reasoning_effort,
         max_retries=config.model.max_retries,
+        api_key=config.model.api_key,
+        api_base=config.model.api_base,
     )
 
 

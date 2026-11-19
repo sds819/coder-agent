@@ -75,8 +75,8 @@ The model configuration, in a form:
 |---|---|
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider in front of the name says who is called: `openai/MiniMax-M2.7` for a third party endpoint, `deepseek/deepseek-flash` for DeepSeek |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
-| API base | `model.model_kwargs.api_base` — the address of the provider |
-| API key | `model.model_kwargs.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
+| API base | `model.api_base` — the address of the provider |
+| API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
 | Reasoning effort | `model.reasoning_effort` — how much the model thinks: `minimal`, `low`, `medium`, `high`, or empty for the default of the model |

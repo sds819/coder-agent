@@ -839,6 +839,7 @@ src/coderagent/
 # ~/.coderagent/config.yaml（项目的这份不带 model 段）
 model:
   model_name: anthropic/claude-sonnet-4-5
+  api_key: sk-...
   routing:
     main: anthropic/claude-sonnet-4-5
     cheap: anthropic/claude-haiku-4-5
@@ -917,8 +918,11 @@ Web 设置页是**合并**而不是覆盖：读现有 YAML → 只改用户提�
 ### 7.2 api key 的来源顺序
 
 ```
-model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的环境变量
+model.api_key  >  model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的环境变量
 ```
+
+`model.api_key` 和 `model.api_base` 有自己的字段：key 不是「众多调用参数里的一个」，
+它有专门的落点。`model_kwargs` 里的旧位置仍然认，但新字段赢。
 
 （`openai/…` → `OPENAI_API_KEY`，`deepseek/…` → `DEEPSEEK_API_KEY`，其余同理。）
 设置页读到的也是这个顺序，`sources.api_key` 会报出它来自哪一层；密钥永不明文出服务器。

@@ -112,6 +112,8 @@ class ModelRouter:
             litellm_config=self.config.litellm_config,
             reasoning_effort=self.config.reasoning_effort,
             max_retries=self.config.max_retries,
+            api_key=self.config.api_key,
+            api_base=self.config.api_base,
         )
 
     def _purpose(self, purpose: str, context: dict) -> str:

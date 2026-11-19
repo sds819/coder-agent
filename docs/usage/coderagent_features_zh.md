@@ -196,8 +196,8 @@ coder -t "..." -m deepseek/deepseek-flash
 
 # 一个说 OpenAI 协议的第三方端点。
 coder -t "..." -m openai/MiniMax-M2.7 \
-  -c model.model_kwargs.api_base=https://api.example.com/v1 \
-  -c model.model_kwargs.api_key=sk-...
+  -c model.api_base=https://api.example.com/v1 \
+  -c model.api_key=sk-...
 ```
 
 ```yaml
@@ -244,13 +244,13 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `unknown reasoning effort '{level}'` | `reasoning_effort` 不是 `minimal`、`low`、`medium`、`high` 里的一个。 | 用那四个里的一个，或者删掉这一行（用模型的默认）。 |
 | `unknown verbosity '{level}'` | `verbosity` 不是 `low`、`medium`、`high` 里的一个。 | 用那三个里的一个，或者删掉这一行（用模型自己的习惯）。 |
 | `'model_kwargs' must not have '{key}'` | `model_kwargs` 里有这次调用的参数：`model`、`messages`、`tools`、`stream` 或 `stream_options`。 | 删掉它：这些是 agent 自己设的。 |
-| `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径，它是相对于工作目录的。 |
+| `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径：相对路径先在 `~/.coderagent/` 里找，再在工作目录里找。 |
 | `the file is not valid YAML: {error}` | 别名文件解析不了。 | 修 YAML。 |
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |
 | `'{name}' is not one of the aliases of this file` | 模型名不在这个文件的 `model_list` 里。 | 用列表里的别名，或者去掉 `litellm_config`。 |
 | `The model '{name}' is not one of the aliases of {file}` | 模型名不在这个文件的 `model_list` 里，所以这个文件的设置一个都没用上。 | 用列表里的别名，或者去掉 `litellm_config`。 |
 | `BadRequestError` | 厂商拒绝了请求（key 不对、名字不对、参数不对）。 | **不会**重试，厂商的报错就是答案。 |
-| `AuthenticationError` | key 缺了或者不对。 | 设 `model.model_kwargs.api_key`，或者在别名文件里写端点的 key，或者在环境里放厂商的 key（`openai/…` 找 `OPENAI_API_KEY`）。 |
+| `AuthenticationError` | key 缺了或者不对。 | 设 `model.api_key`，或者在别名文件里写端点的 key，或者在环境里放厂商的 key（`openai/…` 找 `OPENAI_API_KEY`）。 |
 | `ContextWindowExceededError` | 请求比模型的窗口大。 | 调小 `context.context_window`，或者换一个窗口更大的模型。 |
 
 重试和上面的错误是两回事：限流和超时才重试，坏请求不重试。重试次数来自
@@ -1242,7 +1242,7 @@ profile: fast
 
 | 段 | 键 |
 |---|---|
-| `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort`、`verbosity`、`review_model` |
+| `model` | `model_name`、`api_key`、`api_base`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort`、`verbosity`、`review_model` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit`、`subagent_max_turns`、`subagent_max_parallel` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs`、`network` |

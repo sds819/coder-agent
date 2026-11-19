@@ -220,8 +220,8 @@ coder -t "..." -m deepseek/deepseek-flash
 
 # A third party endpoint that speaks the OpenAI protocol.
 coder -t "..." -m openai/MiniMax-M2.7 \
-  -c model.model_kwargs.api_base=https://api.example.com/v1 \
-  -c model.model_kwargs.api_key=sk-...
+  -c model.api_base=https://api.example.com/v1 \
+  -c model.api_key=sk-...
 ```
 
 ```yaml
@@ -268,13 +268,13 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 | `unknown reasoning effort '{level}'` | `reasoning_effort` is not one of `minimal`, `low`, `medium`, `high`. | Use one of those four, or remove the line for the default of the model. |
 | `unknown verbosity '{level}'` | `verbosity` is not one of `low`, `medium`, `high`. | Use one of those three, or remove the line for the habit of the model. |
 | `'model_kwargs' must not have '{key}'` | `model_kwargs` has a parameter of the call: `model`, `messages`, `tools`, `stream` or `stream_options`. | Remove it: the agent sets those itself. |
-| `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; it is relative to the working directory. |
+| `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; a relative one is looked for in `~/.coderagent/` and in the working directory. |
 | `the file is not valid YAML: {error}` | The alias file cannot be parsed. | Fix the YAML. |
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |
 | `'{name}' is not one of the aliases of this file` | The model name is not in the `model_list` of the alias file. | Use one of the aliases, or drop `litellm_config`. |
 | `The model '{name}' is not one of the aliases of {file}` | The model name is not in the `model_list` of the alias file, so not one setting of that file is used. | Use one of the aliases, or drop `litellm_config`. |
 | `BadRequestError` | The provider refused the request (a wrong key, a wrong name, a wrong parameter). | It is **not** retried; the message of the provider is the answer. |
-| `AuthenticationError` | The key is missing or wrong. | Set `model.model_kwargs.api_key`, or the key of the endpoint in the alias file, or the key of the provider in the environment (`OPENAI_API_KEY` for `openai/…`). |
+| `AuthenticationError` | The key is missing or wrong. | Set `model.api_key`, or the key of the endpoint in the alias file, or the key of the provider in the environment (`OPENAI_API_KEY` for `openai/…`). |
 | `ContextWindowExceededError` | The request was larger than the window of the model. | Lower `context.context_window`, or use a model with a bigger window. |
 
 Retries are a separate thing from the errors above: a rate limit or a timeout
@@ -1367,7 +1367,7 @@ The sections and what they hold:
 
 | Section | The keys |
 |---|---|
-| `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort`, `verbosity`, `review_model` |
+| `model` | `model_name`, `api_key`, `api_base`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort`, `verbosity`, `review_model` |
 | `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit`, `subagent_max_turns`, `subagent_max_parallel` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs`, `network` |

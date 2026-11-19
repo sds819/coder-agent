@@ -49,6 +49,10 @@ class ModelConfig(BaseModel):
     model_name: str = ""
     """Model name. Falls back to $MSWEA_MODEL_NAME and then to a built-in default."""
     model_kwargs: dict = Field(default_factory=dict)
+    api_key: str = ""
+    """The key of the provider of the model. It belongs to the user."""
+    api_base: str = ""
+    """The address of the provider of the model."""
     max_retries: int = 3
     litellm_config: str = ""
     """A litellm config file with the model list. Its aliases name the models."""

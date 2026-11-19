@@ -62,6 +62,8 @@ class LiteLLMBackend:
         litellm_config: str = "",
         reasoning_effort: str = "",
         max_retries: int = 0,
+        api_key: str = "",
+        api_base: str = "",
     ) -> None:
         """The name may be an alias of the model list of a litellm config file."""
         name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
@@ -69,6 +71,12 @@ class LiteLLMBackend:
         merged = params | (model_kwargs or {})
         check_reserved(merged)
         """The parameters of the call belong to the agent: a user may not set them."""
+        if api_key:
+            merged["api_key"] = api_key
+            """The key has a field of its own: it wins over the one of `model_kwargs`."""
+        if api_base:
+            merged["api_base"] = api_base
+            """The address has a field of its own: it wins over the one of `model_kwargs`."""
         self.model_kwargs = merged
         if reasoning_effort:
             """The thinking budget, in the words of the provider of this model."""

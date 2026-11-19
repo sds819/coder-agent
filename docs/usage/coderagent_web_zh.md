@@ -81,8 +81,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 |---|---|
 | Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。名字前面那个厂商决定调谁：第三方端点写 `openai/MiniMax-M2.7`，DeepSeek 写 `deepseek/deepseek-flash` |
 | Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
-| API base | `model.model_kwargs.api_base`——第三方模型的地址 |
-| API key | `model.model_kwargs.api_key`。点一下显示，再点一下收起 |
+| API base | `model.api_base`——第三方模型的地址 |
+| API key | `model.api_key`。点一下显示，再点一下收起 |
 | Max retries | `model.max_retries` |
 | Cache control | `model.set_cache_control`（`default_end` 或空） |
 | Reasoning effort | `model.reasoning_effort`——模型想多久：`minimal`、`low`、`medium`、`high`，留空是模型的默认 |

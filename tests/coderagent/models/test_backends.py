@@ -148,3 +148,23 @@ def test_the_parameters_of_the_call_are_the_ones_of_the_agent(monkeypatch):
     list(backend.query_stream([{"role": "user", "content": "hi"}]))
     assert calls[0]["stream"] is True
     assert calls[0]["stream_options"] == {"include_usage": True}
+
+
+def test_the_key_and_the_address_have_a_field_of_their_own():
+    backend = LiteLLMBackend("openai/gpt-4o", api_key="sk-new", api_base="https://api.example.com/v1")
+    assert backend.model_kwargs == {"api_key": "sk-new", "api_base": "https://api.example.com/v1"}
+
+
+def test_the_field_of_its_own_wins_over_the_old_place():
+    backend = LiteLLMBackend(
+        "openai/gpt-4o",
+        model_kwargs={"api_key": "sk-old", "api_base": "https://old/v1"},
+        api_key="sk-new",
+        api_base="https://api.example.com/v1",
+    )
+    assert backend.model_kwargs == {"api_key": "sk-new", "api_base": "https://api.example.com/v1"}
+
+
+def test_the_old_place_is_used_when_the_field_is_empty():
+    backend = LiteLLMBackend("openai/gpt-4o", model_kwargs={"api_key": "sk-old"})
+    assert backend.model_kwargs == {"api_key": "sk-old"}
