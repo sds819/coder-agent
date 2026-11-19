@@ -1399,6 +1399,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1833,7 +1844,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-configuration" class="md-nav__link">
+  <a href="#the-configuration_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         The configuration
@@ -4701,6 +4712,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5135,7 +5157,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-configuration" class="md-nav__link">
+  <a href="#the-configuration_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         The configuration
@@ -5609,8 +5631,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 
 <span class="c1"># A third party endpoint that speaks the OpenAI protocol.</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-m<span class="w"> </span>openai/MiniMax-M2.7<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_base<span class="o">=</span>https://api.example.com/v1<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_key<span class="o">=</span>sk-...
+<span class="w">  </span>-c<span class="w"> </span>model.api_base<span class="o">=</span>https://api.example.com/v1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-c<span class="w"> </span>model.api_key<span class="o">=</span>sk-...
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
 <span class="nt">model</span><span class="p">:</span>
@@ -5679,7 +5701,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tr>
 <td><code>the file does not exist</code></td>
 <td><code>model.litellm_config</code> points at a file that is not there.</td>
-<td>Fix the path; it is relative to the working directory.</td>
+<td>Fix the path; a relative one is looked for in <code>~/.coderagent/</code> and in the working directory.</td>
 </tr>
 <tr>
 <td><code>the file is not valid YAML: {error}</code></td>
@@ -5709,7 +5731,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tr>
 <td><code>AuthenticationError</code></td>
 <td>The key is missing or wrong.</td>
-<td>Set <code>model.model_kwargs.api_key</code>, or the key of the endpoint in the alias file, or the key of the provider in the environment (<code>OPENAI_API_KEY</code> for <code>openai/…</code>).</td>
+<td>Set <code>model.api_key</code>, or the key of the endpoint in the alias file, or the key of the provider in the environment (<code>OPENAI_API_KEY</code> for <code>openai/…</code>).</td>
 </tr>
 <tr>
 <td><code>ContextWindowExceededError</code></td>
@@ -5723,6 +5745,66 @@ is retried, a bad request is not. The number of attempts comes from
 <code>model.max_retries</code> (3 by default) in every interface — the terminal and the
 browser alike. The environment variable <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>
 overrides it, which is handy when a test should not wait.</p>
+<h2 id="the-configuration">The configuration</h2>
+<p>The configuration is read in four layers, the later ones win: the built-in
+defaults, <code>.coderagent/config.yaml</code> of the project, <code>~/.coderagent/config.yaml</code>
+of the user, and the <code>-c key=value</code> overrides of the command line.</p>
+<p>A setting that means nothing is <strong>refused</strong>, not taken silently:</p>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unknown permission mode '{name}'</code></td>
+<td><code>permissions.mode</code> is not one of the five modes.</td>
+<td>Use <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>bypass</code> or <code>readonly</code>.</td>
+</tr>
+<tr>
+<td><code>unknown network policy '{name}'</code></td>
+<td><code>permissions.network</code> is not <code>allow</code> or <code>deny</code>.</td>
+<td>Use one of the two.</td>
+</tr>
+<tr>
+<td><code>unknown tool '{name}'</code></td>
+<td><code>tools.enabled</code> or <code>tools.disabled</code> names a tool that does not exist.</td>
+<td>Use the name of one of the built-in tools.</td>
+</tr>
+<tr>
+<td><code>unknown hook event '{name}'</code></td>
+<td><code>hooks.events</code> names a moment that is not one of the moments of a session.</td>
+<td>Use one of the events of the <a href="../coderagent_hooks/">hooks</a>.</td>
+</tr>
+<tr>
+<td><code>unknown purpose '{name}'</code></td>
+<td><code>model.routing</code> or a routing rule names a job that does not exist.</td>
+<td>Use one of the <a href="../coderagent_routing/">purposes</a>.</td>
+</tr>
+<tr>
+<td><code>'{name}' is not a condition</code></td>
+<td>A routing rule is not a key, an operator and a number.</td>
+<td>Write it as <code>tokens &gt; 50000</code>.</td>
+</tr>
+<tr>
+<td><code>Extra inputs are not permitted</code></td>
+<td>A section or a key is written wrong (<code>permissons</code>).</td>
+<td>Fix the name of the section.</td>
+</tr>
+<tr>
+<td><code>Input should be greater than or equal to 0</code></td>
+<td>A number is negative.</td>
+<td>Use a number of zero or more.</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>project</strong> is treated differently from the user: a repository may not break
+the session, so what it writes wrong is left out, key by key, and the rest of
+its file is kept. The projects may also lower the ceilings of a session, never
+raise them.</p>
 <h2 id="the-tools">The tools</h2>
 <p>The fourteen built-in tools:</p>
 <table>
@@ -6010,7 +6092,10 @@ it was.</p>
   working directory is refused.</li>
 <li><strong>Rules</strong> — <code>~/.coderagent/rules.yaml</code> and <code>.coderagent/rules.yaml</code> decide
   per tool and per pattern. The user level file wins, except that a <code>deny</code> is
-  never beaten. The rules of the project may only deny.</li>
+  never beaten. The rules of the project may only deny. The rules of the
+  configuration file are checked when the configuration is read: a wrong
+  decision or a wrong key stops the session at the start, and a rule of the
+  project that was written wrong is a deny.</li>
 <li><strong><code>Always allow</code></strong> — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.</li>
 <li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
@@ -6177,9 +6262,10 @@ The rules of the user cannot widen the bounds.</p>
 undone by a later <code>allow</code> — the rules of the project may only deny, and that
 deny holds against the rules of the user. Between <code>allow</code> and <code>ask</code> the last
 matching rule wins.</p>
-<p><code>permissions.deny_paths</code> adds a rule that denies everything that matches, and
-it is applied after the rule files, so it wins over an <code>allow</code> of the same
-path.</p>
+<p><code>permissions.deny_paths</code> denies everything that matches, and it is applied
+after the rule files, so it wins over an <code>allow</code> of the same path. A denied
+path is off limits for the shell as well: with <code>*.env</code> denied, <code>cat .env</code> is
+refused just like <code>read .env</code> is.</p>
 <h3 id="the-shell">The shell</h3>
 <p>The <code>bash</code> tool is the one that can do anything, so it has three boundaries.</p>
 <p><strong>The commands that only look around go through.</strong> <code>ls</code>, <code>cat</code>, <code>head</code>, <code>tail</code>,
@@ -6517,7 +6603,9 @@ it found:</p>
 <li><strong>The project may only take tools away</strong> — the mode of a project may only be
   <code>plan</code> or <code>readonly</code>, its rules may only deny, its denied paths are added to
   the ones of the user, and the tools it names may only remove from the tools
-  of the user.</li>
+  of the user. It may also not choose the programs that would run on the
+  machine of the user: the editor, the notifier and the environment of the
+  sandbox are the decision of the user.</li>
 </ul>
 <h3 id="example_7">Example</h3>
 <p>A sub agent, <code>.coderagent/agents/scout.md</code>:</p>
@@ -6833,7 +6921,8 @@ $ python -m pytest -q
   of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
 <li><strong>A program of your own may say it</strong> — <code>ui.notify_command</code> names a program that
   is called with the title and the body of the notification, e.g. <code>notify-send</code>.
-  A program that fails is a warning, not a broken session.</li>
+  A program that fails is a warning, not a broken session. A project may not
+  choose the notifier: that program runs on the machine of the user.</li>
 <li><strong>The answer is Markdown</strong> — the code blocks, the tables and the lists look the
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; <code>ui.markdown: false</code> keeps it plain.</li>
@@ -6994,6 +7083,10 @@ and <code>○</code> (pending).</p>
 <td>Send a message</td>
 </tr>
 <tr>
+<td><code>POST /api/sessions/{id}/review</code></td>
+<td>Review the changes of the project</td>
+</tr>
+<tr>
 <td><code>POST /api/sessions/{id}/interrupt</code></td>
 <td>Interrupt the turn</td>
 </tr>
@@ -7128,7 +7221,7 @@ seconds, and the browser is told <code>timed_out: true</code>.</p>
 server warns:</p>
 <div class="highlight"><pre><span></span><code>The web interface listens on 0.0.0.0: everybody who can reach that address can drive the agent.
 </code></pre></div>
-<h2 id="the-configuration">The configuration</h2>
+<h2 id="the-configuration_1">The configuration</h2>
 <ul>
 <li><strong>Five layers</strong> — the defaults of the package, the project file
   <code>.coderagent/config.yaml</code>, the user file <code>~/.coderagent/config.yaml</code>, the
@@ -7160,7 +7253,21 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 profile, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 <code>anthropic/claude-sonnet-4-5</code>. A <strong>project may not choose the model</strong>: the whole
 <code>model</code> section of a project is dropped, because the endpoint of a project
-would take the conversation — and the key of the user with it — somewhere else.</p>
+would take the conversation — and the key of the user with it — somewhere else.
+The same holds for the two other places where a model is named:
+<code>context.summarize_model</code> of a project is dropped, and a command of the project
+may not name a model.</p>
+<p>A <strong>project may not put variables into the environment of the agent</strong>: the
+<code>shell_environment.set</code> of a project is dropped, because a <code>LD_PRELOAD</code> or a
+<code>PATH</code> of its own would run the code of the repository on the machine of the
+user, in every command the agent runs. A project may not claim a context
+window bigger than the one of the model either. The <strong>ceilings of the
+session</strong> — <code>agent.max_turns</code>, <code>agent.cost_limit</code>, <code>agent.token_limit</code>,
+<code>agent.subagent_max_turns</code>, <code>agent.subagent_max_parallel</code>,
+<code>tools.bash_timeout</code> and <code>tools.max_output_tokens</code> — a project may only
+<strong>lower</strong>: a higher one is given the default instead. A ceiling that you name
+yourself is yours, so your file, a profile and the command line win over the
+project.</p>
 <h3 id="the-profiles">The profiles</h3>
 <p>A profile is a named piece of configuration. It is chosen with <code>--profile</code> (or
 <code>-p</code>), and it sits above the user file and below the <code>-c</code> of the command line:</p>
@@ -7188,7 +7295,9 @@ project are dropped, like every other piece of code that comes with a
 repository. Choosing a set of permissions is the decision of the user.</p>
 <p>The tightening of the project still wins: a project that closes the sandbox
 (<code>sandbox.mode: read-only</code>) keeps it closed, even when the profile says
-<code>full-access</code>.</p>
+<code>full-access</code>. A project may not say <em>where</em> the commands run: the <code>type</code> of
+the sandbox and the options of the environment are dropped from the
+configuration of a project.</p>
 <p>The sections and what they hold:</p>
 <table>
 <thead>
@@ -7200,7 +7309,7 @@ repository. Choosing a set of permissions is the decision of the user.</p>
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code>, <code>verbosity</code>, <code>review_model</code></td>
+<td><code>model_name</code>, <code>api_key</code>, <code>api_base</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code>, <code>verbosity</code>, <code>review_model</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>

@@ -4112,7 +4112,9 @@
 <p><code>permissions.network</code> 是 <code>deny</code> 的时候，网络在操作系统那一层也是关着的：沙箱
 没有出路。</p>
 <p>项目可以关沙箱，不能开沙箱。两档里更紧的那一档算数，所以一个要求
-<code>read-only</code> 的仓库，不管用户那层怎么写，agent 都写不了东西。</p>
+<code>read-only</code> 的仓库，不管用户那层怎么写，agent 都写不了东西。
+项目也不能决定命令<strong>在哪里</strong>跑：沙箱的 <code>type</code> 和环境的那些选项（<code>image</code> 等等）
+都会从项目的配置里被丢掉——项目的环境会把用户的工作目录一起带走。</p>
 <h3 id="_4">沙箱需要什么</h3>
 <table>
 <thead>
@@ -4156,7 +4158,8 @@ environment: swerex_docker
 下面的 <code>run_args</code> 悄无声息地就没了。</p>
 <p>agent 能碰哪些路径是 agent 的属性，不是容器的。它们由权限那一层圈住：
 <code>permissions.deny_paths</code> 是不能碰的路径，<code>permissions.include_dirs</code> 是会话目录
-之外、但允许碰的那些。本地沙箱的那一档，是把同样的事告诉操作系统。</p>
+之外、但允许碰的那些。被禁的路径对命令行也一样：禁掉 <code>*.env</code> 之后，
+<code>cat .env</code> 也被拒。本地沙箱的那一档，是把同样的事告诉操作系统。</p>
 <p>配置里还留着 <code>sandbox.network</code> 或 <code>sandbox.writable_roots</code> 也能跑：它们现在是
 不认识的选项，而不认识的选项会被忽略。</p>
 <h2 id="_7">还是本地的那些</h2>

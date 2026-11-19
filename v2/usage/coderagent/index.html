@@ -1327,6 +1327,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#when-a-setting-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a setting is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4266,6 +4277,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#when-a-setting-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a setting is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4734,7 +4756,9 @@ may say it in the way you want it:</p>
 </code></pre></div>
 <p>The program is called with the title and the body of the notification:
 <code>notify-send coder "the work is done"</code>. A program that fails is a warning, not
-a broken session. <code>ui.notifications: false</code> turns the notifications off.</p>
+a broken session. <code>ui.notifications: false</code> turns the notifications off. A
+project may not choose the notifier either: that program runs on your machine,
+with the answer of the agent in its hands.</p>
 <p>A picture goes to the model with <code>/image</code>:</p>
 <div class="highlight"><pre><span></span><code>/image<span class="w"> </span>screenshot.png<span class="w"> </span>what<span class="w"> </span>is<span class="w"> </span>wrong<span class="w"> </span>with<span class="w"> </span>this<span class="w"> </span>layout?
 </code></pre></div>
@@ -4775,6 +4799,8 @@ running. The pages, the API and the security model are in
 <p>A full example:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
+<span class="w">  </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sk-...</span>
+<span class="w">  </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.deepseek.com</span>
 <span class="w">  </span><span class="nt">model_kwargs</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
 <span class="w">  </span><span class="nt">litellm_config</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.coderagent/litellm_config.yaml</span>
@@ -4812,12 +4838,30 @@ running. The pages, the API and the security model are in
 <span class="nt">sandbox</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
 </code></pre></div>
+<h3 id="when-a-setting-is-wrong">When a setting is wrong</h3>
+<p>A setting that means nothing is refused when the configuration is read, not
+taken silently: a permission mode that is not <code>default</code>, a tool that does not
+exist, a hook event that is not one of the moments of a session, a purpose that
+names no job, a section that is written wrong (<code>permissons</code> instead of
+<code>permissions</code>), a number that is negative or out of range. The command line
+says which setting is wrong and what it should be:</p>
+<div class="highlight"><pre><span></span><code>Invalid value: the configuration is not understood: permissions.mode: unknown permission mode 'dffault'. Use one of: default, acceptEdits, plan, bypass, readonly.
+</code></pre></div>
+<p>The <strong>project</strong> is treated differently from the user. A repository is code that
+the agent may be asked to work in, so it may not break the session: what it
+writes wrong is left out, key by key, and the rest of the file is kept. A
+project that names a tool that does not exist therefore does not empty the set
+of tools — the tool is dropped and the others stay.</p>
+<p>The layers are the same for the numbers: a project may lower the ceilings of a
+session (<code>agent.max_turns</code> and the like), never raise them.</p>
 <h3 id="the-model">The model</h3>
-<p><code>model.model_name</code> is the model of the agent. <code>model.model_kwargs</code> goes to the
-provider as it is — except for <code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code> and
-<code>stream_options</code>: those belong to the call of the agent, and a configuration
-that has one of them is refused at the start instead of breaking the call at
-runtime. <code>model.routing</code> maps a purpose to a model:</p>
+<p><code>model.model_name</code> is the model of the agent. <code>model.api_key</code> and <code>model.api_base</code>
+are the key and the address of the provider; they have a field of their own, so
+that a key is not one of the many parameters of the call. <code>model.model_kwargs</code>
+goes to the provider as it is — except for <code>model</code>, <code>messages</code>, <code>tools</code>,
+<code>stream</code> and <code>stream_options</code>: those belong to the call of the agent, and a
+configuration that has one of them is refused at the start instead of breaking
+the call at runtime. <code>model.routing</code> maps a purpose to a model:</p>
 <table>
 <thead>
 <tr>
@@ -4987,10 +5031,14 @@ names a litellm config file, and the <code>model_list</code> of that file names 
 </code></pre></div>
 <p>The alias <code>nengpa/minimax-m2.7</code> is then a model like any other: <code>coder -m
 nengpa/minimax-m2.7 --task "..."</code> works, and so does the routing.</p>
+<p>A relative path is looked for in <code>~/.coderagent/</code> first and in the working
+directory after it: the setting lives in a file that does not move, the working
+directory does.</p>
 <p>The <code>model</code> of an entry is the model litellm calls, with the provider in front of
 it. The other parameters of the entry go to litellm as they are, so the key of a
 third party endpoint stays in that one file instead of the configuration of the
-agent. The settings of <code>model.model_kwargs</code> win over the ones of the alias.</p>
+agent. The settings of <code>model.model_kwargs</code> win over the ones of the alias, and
+<code>model.api_key</code> and <code>model.api_base</code> win over both.</p>
 <p>The <code>api_base</code> stops at <code>/v1</code>: litellm appends <code>/chat/completions</code> to it.</p>
 <p>An alias only works when the model name is exactly one of the aliases of the file.
 A name that is not in the <code>model_list</code> leaves the agent with none of the settings
@@ -5156,6 +5204,14 @@ used, the other modes are ignored. The same goes for the rest of the
 permissions — the project may not open directories outside the working
 directory, its rules may only deny, and the tools it names may only remove
 from the tools of the user. The permissions are the user's to decide.</p>
+<p>The rest of the configuration of a project is bound the same way. It may not
+put variables into the environment of the agent: a <code>LD_PRELOAD</code> or a <code>PATH</code> of
+its own would run its code on your machine, in every command the agent runs.
+It may not claim a context window bigger than the one of the model. And the
+ceilings of the session — the turns, the money, the tokens, the timeout of a
+command, the size of an output — it may only lower them. A ceiling that you
+name yourself is yours: your file, a profile and the command line win over
+the project.</p>
 <p><code>plan</code> and <code>readonly</code> make the permission layer deny the writing tools, so the
 model is told about it: a <code>&lt;permission_mode mode="..."&gt;</code> block goes into the
 conversation, saying what it may do and what it should answer instead. The
@@ -5188,6 +5244,11 @@ user in <code>~/.coderagent/rules.yaml</code>. Both are read, in that order, so 
 the user beats a rule of the project with the same tool and pattern — except
 that a <code>deny</code> is never beaten by anything. The rules of the project may only
 <strong>deny</strong>: a project cannot allow itself something the user has to be asked for.</p>
+<p>The rules that live in the configuration file (<code>permissions.rules</code>) are checked
+when the configuration is read: a decision that is not <code>allow</code>, <code>ask</code> or <code>deny</code>,
+or a key that does not exist, stops the session at the start instead of turning
+into a rule that lets a call through. A rule of the project that is written
+wrong is a deny: a broken deny must never become an allow.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/rules.yaml</span>
 <span class="nt">rules</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
@@ -5195,10 +5256,12 @@ that a <code>deny</code> is never beaten by anything. The rules of the project m
 <span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
 </code></pre></div>
 <p><code>permissions.deny_paths</code> are the paths that are off limits, whatever the mode
-says. <code>permissions.include_dirs</code> are the directories outside the working
-directory that the agent may still touch. Without them the agent stays inside
-the directory of the session. The paths that the project denies are added to
-the ones of the user, not put in their place.</p>
+says. They are off limits for the shell as well: with <code>*.env</code> denied,
+<code>cat .env</code> is refused just like <code>read .env</code> is. <code>permissions.include_dirs</code> are
+the directories outside the working directory that the agent may still touch.
+Without them the agent stays inside the directory of the session. The paths
+that the project denies are added to the ones of the user, not put in their
+place.</p>
 <p>The shell has its own boundaries: the commands that only look around (<code>ls</code>,
 <code>cat</code>, <code>grep</code>, <code>git status</code>) go through without a question, the ones that
 destroy something or send it out (<code>rm</code>, <code>curl</code>, <code>git push</code>) ask, and a path
@@ -5328,6 +5391,9 @@ Seatbelt on macOS, bubblewrap on Linux:</p>
 directory, <code>read-only</code> writes nothing. The mode and the permission mode are two
 axes: the permissions ask the user, the sandbox asks nobody. See
 <a href="../coderagent_sandbox/">Sandbox</a>.</p>
+<p>A project may close the sandbox but never open it, and it may not choose where
+the commands run: the <code>type</code> of the sandbox and the options of the environment
+are the decision of the user.</p>
 <h2 id="what-the-agent-reads">What the agent reads</h2>
 <p>The agent reads the instructions of the project before it starts. The files are
 <code>AGENTS.md</code> and <code>CLAUDE.md</code>, in this order:</p>
@@ -5459,7 +5525,14 @@ the instructions — is used as it is, because it says what the agent may do, no
 what it may run. The permissions are the exception: the project may only take
 tools away, never give them. The model is the other exception: where the
 conversation goes is the decision of the user, so the whole <code>model</code> section of
-a project is dropped.</p>
+a project is dropped. So are the two other places where a model is named:
+<code>context.summarize_model</code> of a project, and the <code>model</code> of a command of the
+project. The commands of the user, in <code>~/.coderagent/commands</code>, may name one.</p>
+<p>The same holds for the programs a project would run on your machine: the
+editor of <code>ui.file_opener</code>, the notifier of <code>ui.notify_command</code> and the
+environment of <code>sandbox.type</code> are dropped from the configuration of a project.
+A project may close the sandbox, never open it, and it may never say where its
+commands run.</p>
 <h2 id="the-sessions-and-the-money">The sessions and the money</h2>
 <p>A session is an append-only log of events, and that log is the source of
 truth. The sessions live in <code>~/.coderagent/sessions</code>: one <code>.jsonl</code> file with the

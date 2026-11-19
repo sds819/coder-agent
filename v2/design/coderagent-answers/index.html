@@ -5174,12 +5174,14 @@
 <li><strong>位置</strong>：项目 <code>&lt;project&gt;/.coderagent/rules.yaml</code> 和用户 <code>&lt;config_home&gt;/rules.yaml</code>。</li>
 <li><strong>优先级</strong>：<strong>项目规则先、用户规则后</strong>。在 <code>allow</code> / <code>ask</code> 之间<strong>后写的赢</strong>，也就是说用户可以覆盖项目的同名规则；但 <strong><code>deny</code> 不会被后面的规则盖掉</strong>——项目的 <code>deny</code> 挡住的就是用户也挡不住的。</li>
 <li><strong>格式</strong>：<code>{"rules": [{tool, pattern, decision, reason}]}</code>。只认这四个键，多一个就抛 <code>RuleError</code>（带文件名和行号）。<code>decision</code> 只能是 <code>allow</code> / <code>ask</code> / <code>deny</code>。</li>
+<li><strong>配置文件里的规则</strong>（<code>permissions.rules</code>）走另一条路：读配置时就被检查（<code>config/schema.py</code> 的 <code>_known_rules</code>），决定值不对或键不对会抛 <code>ValidationError</code>，会话在开场就停下来。<strong>项目层</strong>里写坏的规则算成<strong>拒绝</strong>（<code>core/trust.py</code> 的 <code>_denies_of()</code>，并记一条警告）——写坏的拒绝不能变成放行。策略层再兜一层：匹配上的规则里决定值不是那三个之一时，一律当成 <code>ask</code>（<code>permissions._strictest()</code>）。</li>
 <li><strong>匹配语义</strong>（<code>Rule.pattern</code>）：</li>
 <li><strong>路径类工具</strong>：<code>pattern</code> 是 <strong>glob</strong>，用 <code>glob_to_regex</code> 转成正则，对<strong>相对 cwd 的路径</strong>匹配。<code>*</code> 不跨 <code>/</code>，<code>**</code> 跨。</li>
 <li><strong><code>bash</code></strong>：<code>pattern</code> 是<strong>正则</strong>，而且必须匹配<strong>整段的开头</strong>（<code>git push</code> 不会匹配 <code>echo "git push"</code>）。</li>
 <li><strong>其他工具</strong>：<code>pattern</code> 是工具名，或者 <code>*</code>。</li>
 <li><strong>求值顺序</strong>：所有工具都走<strong>「最严的匹配规则赢」</strong>（<code>permissions._strictest_rule</code>）：<strong><code>deny</code> 永远赢</strong>；在 <code>allow</code> / <code>ask</code> 之间<strong>后写的赢</strong>。bash 还要<strong>分段</strong>判，每段各取最严的匹配规则，整条命令再取<strong>最严</strong>的段。</li>
 <li><strong>deny 一定赢</strong>：<code>_strictest_rule()</code> 让 <code>deny</code> 一旦命中就不再让位，所以一条<strong>写在后面的</strong> <code>allow</code> 盖不掉前面的 <code>deny</code>——项目的 <code>deny</code> 用户也开不了。剩下的两个例外是 <code>deny_paths</code>／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 <code>bypass</code>）都拦。</li>
+<li><strong><code>deny_paths</code> 不是规则</strong>：<code>PermissionPolicy</code> 把它单独收下（<code>deny_paths=[...]</code>），不混进 <code>rules</code>。路径类工具拿自己的 <code>path</code> 去比，bash 拿命令里<strong>提到的路径</strong>去比（<code>bash_policy.named_paths()</code>），两边都按 glob 配。它排在规则之后，所以同一条路径上的 <code>allow</code> 打不过它；<code>bypass</code> 也拦得住。</li>
 </ul>
 <h3 id="b7-bash">b7 <code>bash</code> 这种命令怎么管？</h3>
 <p><strong>结论</strong>：<code>tools/bash_policy.py</code> + <code>permissions.py</code> 的 <code>_evaluate_bash()</code>。</p>
@@ -5627,7 +5629,7 @@
 </tr>
 <tr>
 <td><strong><code>deny_paths</code></strong></td>
-<td>指定路径全局拒绝，<strong>任何模式下都拒</strong>，且排在所有规则之后（能覆盖掉前面的 allow）</td>
+<td>指定路径全局拒绝，<strong>任何模式下都拒</strong>，且排在所有规则之后（能覆盖掉前面的 allow）；路径类工具和 bash 都算</td>
 <td><code>permissions.deny_paths</code></td>
 </tr>
 <tr>

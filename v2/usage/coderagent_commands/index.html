@@ -4303,7 +4303,9 @@ Everything else: $ARGUMENTS
 <li><code>$1</code>, <code>$2</code>, … become the arguments, one by one.</li>
 <li><code>allowed-tools</code> limits the tools the command may use. The tools of the
   session are back when the command is done.</li>
-<li><code>model</code> picks another model for this command.</li>
+<li><code>model</code> picks another model for this command. A command of the <strong>project</strong>
+  may not: the model is the decision of the user, and the key of the user would
+  go to a model of the project. A command in <code>~/.coderagent/commands</code> may.</li>
 </ul>
 <p>The part in parentheses is a <strong>pattern of its own</strong>: <code>bash(git diff:*)</code> lets
 the command run <code>git diff</code> and nothing else, and a tool that is not named is

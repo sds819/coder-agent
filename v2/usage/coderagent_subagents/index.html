@@ -4128,6 +4128,11 @@ You write the documentation of a module. Read the code, then write the docs.
 </table>
 <p>The tools are a white list: the sub agent cannot reach anything that is not on
 it. A file without a front matter is ignored.</p>
+<p><code>model_purpose</code> is one of the purposes of the
+<a href="../coderagent_routing/">routing</a>: <code>main</code>, <code>cheap</code>, <code>strong</code>, <code>summarize</code>,
+<code>reflect</code> or <code>review</code>. A name that is not one of them is refused: the sub agent
+is not used and the log says why. A purpose that is not routed answers with
+the model of the session.</p>
 <h2 id="the-limits">The limits</h2>
 <p>A sub agent has its own turn budget, and the session has a ceiling over all of
 them.</p>

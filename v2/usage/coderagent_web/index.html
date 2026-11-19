@@ -4335,7 +4335,10 @@ coder<span class="w"> </span>web
   buttons. The box under the conversation takes a message or a slash command
   (<code>/help</code>, <code>/clear</code>, <code>/cost</code>, … — the same commands as the terminal
   interface). The dropdown under the box lists them and says what each one
-  takes. <code>Interrupt</code> stops the turn that is running.</li>
+  takes. <code>Review the changes</code> reviews the changes of the working tree: the
+  diff goes into a turn of its own, and the browser shows the diff that is
+  being reviewed above the findings. <code>Interrupt</code> stops the turn that is
+  running.</li>
 </ul>
 <p>The page itself does not scroll: every column has its own scrollbar. The
   conversation follows the newest output, unless you scroll up to read
@@ -4374,11 +4377,11 @@ what it cost.</p>
 </tr>
 <tr>
 <td>API base</td>
-<td><code>model.model_kwargs.api_base</code> — the address of the provider</td>
+<td><code>model.api_base</code> — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it</td>
 </tr>
 <tr>
 <td>API key</td>
-<td><code>model.model_kwargs.api_key</code>, or the key of the provider in the environment. A click shows it, a second click hides it again</td>
+<td><code>model.api_key</code>, or the key of the provider in the environment. A click shows it, a second click hides it again</td>
 </tr>
 <tr>
 <td>Retries</td>
@@ -4417,7 +4420,9 @@ what it cost.</p>
 <p>The parameters of the call itself (<code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code>,
 <code>stream_options</code>) belong to the agent: the page refuses them instead of
 writing a file that the agent would not start with.</p>
-<p>Under every field is the layer it comes from: <code>defaults</code>, <code>user</code> or <code>env</code>.
+<p>Under every field is the layer it comes from: <code>defaults</code>, <code>user</code>, <code>alias</code> or
+<code>env</code>. The aliases file is a layer of its own: what it holds is used when no
+file of the user sets the setting, and the address of the user wins over it.
 The table at the bottom shows every layer, with the secrets taken out.
 The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command
 line are for the sessions, so with <code>coder web -m deepseek/deepseek-flash</code> the

@@ -4040,9 +4040,15 @@ the main loop should get stronger when the job gets big.</p>
 <td><code>strong</code></td>
 <td>A stronger model, when the job is big</td>
 </tr>
+<tr>
+<td><code>review</code></td>
+<td>The review of the changes (<code>/review</code>)</td>
+</tr>
 </tbody>
 </table>
-<p>A purpose that is not routed uses the model of the main loop.</p>
+<p>A purpose that is not routed uses the model of the main loop. A purpose that is
+not one of these is refused when the configuration is read: a name that names
+no job would answer with the model of the session, without saying so.</p>
 <p>The summary has a setting of its own, which wins over the routing:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">summarize_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -4136,8 +4142,8 @@ of the session:</p>
 </tbody>
 </table>
 <p>The rules are <strong>parsed, not evaluated</strong>. A condition that is not of that form
-never holds, and it never runs code: a configuration file cannot make the
-agent do anything.</p>
+is refused when the configuration is read, and it never runs code: a
+configuration file cannot make the agent do anything.</p>
 <p>The rules are tried before the purpose of the call, and before the policy of
 the main loop. The first rule that holds wins.</p>
 <h2 id="what-the-user-sees">What the user sees</h2>

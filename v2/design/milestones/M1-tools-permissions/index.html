@@ -4898,6 +4898,7 @@ Include more surrounding context to make it unique, or set replace_all=true.
 <li><code>mode</code> 决定默认值（见 2.4 表）</li>
 <li>遍历匹配的规则，<strong>最严的赢</strong>：<strong><code>deny</code> 永远赢</strong>，<code>allow</code> / <code>ask</code> 之间<strong>后写规则覆盖先写</strong></li>
 <li>路径类工具在规则之后还要过一次<strong>越界检查</strong>，越界一律 <code>deny</code></li>
+<li>再过一次 <strong><code>deny_paths</code> 检查</strong>：命中的路径一律 <code>deny</code>（路径类工具和 bash 都一样）</li>
 </ol>
 <blockquote>
 <p><strong>简化决策</strong>：匹配到的规则里最严的赢。这比「谁写在后面谁赢」安全——项目的 <code>deny</code>
@@ -4906,6 +4907,10 @@ Include more surrounding context to make it unique, or set replace_all=true.
 （<code>allow &lt; ask &lt; deny</code>）。所以 <code>git push</code> 被 <code>allow</code> 放行，不等于同一条命令里的 <code>rm</code> 也放行。</p>
 <p><strong>越界检查不是规则</strong>：不管哪条规则写了 <code>allow</code>，落在工作目录之外的路径一律 <code>deny</code>
 （<code>permissions.py</code> 的 <code>within_bounds</code>）。要放开某些目录，用 <code>permissions.include_dirs</code>。</p>
+<p><strong><code>deny_paths</code> 也不是规则</strong>：<code>permissions.deny_paths</code> 里的路径按 glob 匹配，
+对<strong>路径类工具</strong>和 <strong><code>bash</code></strong> 都成立——命令里提到的路径也算（<code>cat .env</code> 撞上
+<code>*.env</code>）。它在规则之后生效，所以压得住同一条路径上的 <code>allow</code>；在所有模式下都
+成立，<code>bypass</code> 也不例外。</p>
 </blockquote>
 <p><strong>默认规则表</strong></p>
 <table>
@@ -5086,9 +5091,16 @@ Include more surrounding context to make it unique, or set replace_all=true.
 </p><div class="highlight"><pre><span></span><code>配置文件里的 permissions.rules → 项目规则 → 用户规则 → permissions.deny_paths
 </code></pre></div><p></p>
 <blockquote>
+<p><code>permissions.deny_paths</code> 不在这条链上：它不是规则，是<strong>路径</strong>，在规则之后
+单独过一次检查（见 §2.4）。这样 <code>cat .env</code> 也撞得上 <code>*.env</code>。</p>
 <p><strong>没有内置的默认规则集</strong>：<code>config/defaults.yaml</code> 里的 <code>rules</code> 是空的，各模式的行为由
 <code>PermissionPolicy</code> 的默认决策表决定（见 §2.4），不是靠一组内置规则实现的。
-「总是允许」写进的是<strong>用户级</strong> <code>rules.yaml</code>，它排在项目规则之后，所以同名时<strong>用户级赢</strong>。</p>
+「总是允许」写进的是<strong>用户级</strong> <code>rules.yaml</code>，它排在项目规则之后，所以同名时<strong>用户级赢</strong>
+——但<strong>只在 <code>allow</code> 和 <code>ask</code> 之间</strong>：匹配上的规则里最严的赢，<code>deny</code> 谁也盖不掉
+（见 §2.6 的求值顺序）。
+配置文件里的 <code>permissions.rules</code> 在读配置时就检查：决定值不对或键不对，
+会话在开场就被拒（<code>config/schema.py</code> 的 <code>_known_rules</code>）。项目层里写坏的规则
+算成拒绝（<code>core/trust.py</code> 的 <code>_denies_of()</code>）：写坏的拒绝不能变成放行。</p>
 </blockquote>
 <hr>
 <h2 id="5">5. 任务分解</h2>
@@ -5314,6 +5326,12 @@ Include more surrounding context to make it unique, or set replace_all=true.
 <td>未提及</td>
 <td><code>plan</code> / <code>readonly</code> 往上下文里插一段 <code>&lt;permission_mode&gt;</code> 说明</td>
 <td>模式把工具收走了，模型得知道，否则只会反复撞墙；<code>readonly</code> 与 <code>plan</code> 权限完全相同，全靠这段提示区分</td>
+</tr>
+<tr>
+<td><code>deny_paths</code></td>
+<td>一条 <code>tool: "*"</code> 的规则</td>
+<td>权限层里单独的一项，路径类工具和 bash 都查</td>
+<td>规则是按工具名或命令正则匹配的，<code>*.env</code> 当正则对不上 <code>cat .env</code>；路径要按 glob 比，才管得住 shell</td>
 </tr>
 </tbody>
 </table>

@@ -4137,6 +4137,9 @@ tools away:</p>
 <li><code>*</code> in <code>enabled_tools</code>: every tool of the server is there.</li>
 <li><code>*</code> in <code>disabled_tools</code>: no tool of the server is there.</li>
 </ul>
+<p>A name that the server does not have hides nothing, so the log says so:</p>
+<div class="highlight"><pre><span></span><code>The MCP server 'database' has no tool 'drop_table'. The name is ignored.
+</code></pre></div>
 <h2 id="the-timeouts-of-a-server">The timeouts of a server</h2>
 <p><code>mcp.timeout</code> is the timeout of every server. A server that needs more time
 says so itself, and one server cannot hold up the others:</p>

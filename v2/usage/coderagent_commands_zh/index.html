@@ -4285,7 +4285,8 @@ Everything else: $ARGUMENTS
 <li><code>$ARGUMENTS</code> 变成用户敲在命令后面的全部内容。</li>
 <li><code>$1</code>、<code>$2</code>…… 变成参数，一个一个来。</li>
 <li><code>allowed-tools</code> 限定这个命令能用的工具。命令干完，session 的工具就回来了。</li>
-<li><code>model</code> 给这个命令换一个模型。</li>
+<li><code>model</code> 给这个命令换一个模型。<strong>项目里</strong>的命令不许这样：模型是用户的事，
+  用户的 key 会跟着跑到项目的模型上去。<code>~/.coderagent/commands</code> 里的命令可以。</li>
 </ul>
 <p>括号里那一段<strong>本身就是一道限制</strong>：<code>bash(git diff:*)</code> 是说这个命令只能跑
 <code>git diff</code>，别的都跑不了；没写出来的工具就是没有。这个限制在哪种权限模式下

@@ -4118,7 +4118,10 @@ always writable, because a build needs somewhere to put its files.</p>
 <code>deny</code>: the sandbox has no way out.</p>
 <p>A project may close the sandbox, never open it. The tightest of the two modes
 wins, so a repository that asks for <code>read-only</code> keeps the agent from writing,
-whatever the user level says.</p>
+whatever the user level says. A project may also not choose <strong>where</strong> the
+commands run: the <code>type</code> of the sandbox and the options of the environment
+(<code>image</code> and the rest) are dropped from the configuration of a project, because
+an environment of a project would take the workspace of the user with it.</p>
 <h3 id="what-the-sandbox-needs">What the sandbox needs</h3>
 <table>
 <thead>
@@ -4168,8 +4171,9 @@ is dropped without a word.</p>
 <p>The paths the agent may touch are a property of the agent, not of the container.
 They are bounded by the permission layer: <code>permissions.deny_paths</code> for the paths
 that are off limits and <code>permissions.include_dirs</code> for the ones outside the
-directory of the session that are allowed. The mode of the local sandbox tells
-the same thing to the operating system.</p>
+directory of the session that are allowed. A denied path is off limits for the
+shell as well: <code>cat .env</code> is refused when <code>*.env</code> is denied. The mode of the
+local sandbox tells the same thing to the operating system.</p>
 <p>A configuration that still has <code>sandbox.network</code> or <code>sandbox.writable_roots</code>
 keeps working: they are unknown options now, and unknown options are ignored.</p>
 <h2 id="what-is-still-local">What is still local</h2>
