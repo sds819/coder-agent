@@ -12,6 +12,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
+      - 'README_zh.md'
       - 'mkdocs.yml'
       - '.cursor/**'
       - '.github/workflows/build-docs.yaml'
@@ -24,6 +25,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
+      - 'README_zh.md'
       - 'mkdocs.yml'
       - '.cursor/**'
       - '.github/workflows/build-docs.yaml'
