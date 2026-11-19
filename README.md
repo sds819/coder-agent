@@ -4,7 +4,7 @@
 
 # The minimal AI software engineering agent
 
-> 中文版：[README_zh.md](README_zh.md)
+> 中文版：[docs/readme_zh.md](docs/readme_zh.md)
 
 📣 [mini-swe-agent now powers Ramp SWE-Bench](https://labs.ramp.com/swebench)<br/>
 📣 [mini-swe-agent beats Claude Code and Codex on DeepSWE](https://deepswe.datacurve.ai/blog#evaluation-harness)<br/>
