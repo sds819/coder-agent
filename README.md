@@ -188,9 +188,11 @@ Read more in our [documentation](https://mini-swe-agent.com/latest/):
 
 ## The coding agent (`coder`)
 
-This repository also ships `coder`: an interactive coding agent built on the same model and environment layer.
-It adds what a daily driver needs on top of mini — a tool system with permissions, sessions you can resume and
-fork, context compaction, MCP servers, hooks, subagents — and it runs in the terminal **and** in the browser.
+This repository also ships `coder`: an interactive coding agent that **reuses mini-swe-agent's
+model and environment layer** (see [where it comes from](#where-it-comes-from) below) and adds
+what a daily driver needs on top of it — a tool system with permissions, sessions you can resume
+and fork, context compaction, memory, subagents, MCP servers, hooks — and it runs in the terminal
+**and** in the browser.
 
 ```bash
 pip install -e ".[web]"      # the browser interface needs fastapi, uvicorn and jinja2
@@ -198,19 +200,81 @@ cd my-project
 
 coder                        # the terminal interface
 coder web                    # the same agent in the browser
+coder eval path/to/suite     # run a task suite against the agent
 ```
 
-- **`coder`** — the terminal interface: streaming output, approval prompts, slash commands (`/model`, `/mode`, `/cost`, …)
-- **`coder web`** — the same agent in the browser (`http://127.0.0.1:8765`): chat page, settings page, file tree, diffs
+### What it does
 
-Both share the same sessions, the same event log and the same permissions, so a session started in the browser
-can be continued in the terminal with `coder --resume <id>`, and the other way round.
+**Tools.** Fourteen built-ins: `read`, `write`, `edit`, `multi_edit` and `apply_patch` to change
+files; `glob`, `grep` and `ls` to find code; `bash`, `bash_output` and `bash_kill` to run commands
+(also in the background); `todo_write` to keep a task list; `task` to spawn a sub agent; `skill`
+to load a skill.
+
+**Permissions.** Five modes: `default` (everything that changes something asks), `acceptEdits`
+(writes pass, the rest still asks), `plan` and `readonly` (nothing is changed) and `bypass`
+(nothing asks). Rules live in `~/.coderagent/rules.yaml` (yours) and `.coderagent/rules.yaml`
+(the project's); a `deny` always wins over an `allow`.
+
+**Sessions.** Every session has an event log, so it can be resumed (`coder --resume`), forked
+(`/fork`), rewound (`/rewind`) and exported (`coder export`). A session started in the browser
+can be continued in the terminal, and the other way round.
+
+**Context.** The conversation is compacted when it reaches 80% of the budget; the summary keeps
+the goal, the findings, the decisions, the files that were touched and the open questions. Before
+a round ends, three gates are checked in order: a `Stop` hook, the `verify.commands` of the
+project, and the output schema.
+
+**Memory.** The project writes `.coderagent/memory/*.md`, your own preferences live in
+`~/.coderagent/CLAUDE.md`, and `/init` writes an `AGENTS.md` for the repository.
+
+**Subagents and routing.** `task` spawns a sub agent (`code-explorer`, `verifier`, `refactorer`
+and your own). Different jobs can use different models: `main`, `cheap`, `strong`, `summarize`,
+`reflect` and `review`.
+
+**Extensions.** Hooks on nine events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`,
+`SessionStart`, `SessionEnd`, `SubagentStop`, `PreCompact`, `PostCompact`), MCP servers, plugins,
+skills and custom slash commands.
+
+**Sandboxes.** The commands can run in `local`, `docker`, `singularity`, `bubblewrap`, `contree`
+or SWE-ReX (`swerex_docker`, `swerex_modal`).
+
+**35 slash commands** in the terminal (`/model`, `/mode`, `/plan`, `/review`, `/diff`, `/cost`,
+`/context`, `/compact`, `/resume`, `/fork`, `/agents`, `/permissions`, `/hooks`, `/sandbox`, …)
+— the same set in the browser.
+
+**The web interface.** `coder web` serves a chat page, a settings page (model and permissions as
+forms), a file tree and the diffs of the session. Every action is a plain HTTP call, so the
+browser can be driven by a script too; the API docs are at `/api/docs`.
+
+**Evaluation.** `coder eval <suite>` runs a task suite against the agent and reports what the
+agent did with every task; `coder eval-compare` diffs two reports and names the regressions.
 
 > [!WARNING]
 > The browser interface has **no authentication**: everybody who can reach the port can drive the agent and run
 > shell commands in the working directory. Keep it on `127.0.0.1`.
 
-Read more in [docs/usage](docs/usage/):
+### Where it comes from
+
+`coder` is not a separate project that happens to live next to mini-swe-agent — it is
+mini-swe-agent's model and environment layer with a different front end on top. These parts are
+mini-swe-agent's and are used as they are:
+
+| From mini-swe-agent | What `coder` uses it for |
+|---|---|
+| `minisweagent.environments` (`local`, `docker`, `singularity`, `bubblewrap`, `contree`, SWE-ReX) | the sandboxes the commands run in |
+| `minisweagent.config.get_config_from_spec` | the `key=value` config specs on the command line |
+| `minisweagent.utils.serialize.recursive_merge` | merging the config layers |
+| `minisweagent.models.utils.retry` and `...cache_control` | retrying a failing call, prompt caching |
+| `minisweagent.exceptions.FormatError` | a model answer that cannot be parsed |
+
+Everything else is new: the agent loop, the tool system and the permission layer, the sessions and
+the event log, the context engine and its compaction, the memory, the sub agents and the model
+routing, the extensions (hooks, MCP, plugins, skills), the terminal interface, the web interface
+and the evaluation harness.
+
+### Read more
+
+In [docs/usage](docs/usage/):
 
 * [Coding agent overview](docs/usage/coderagent.md) — installation, the terminal interface, configuration, tools, permissions
 * [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
@@ -222,6 +286,11 @@ And if you want to know how it was designed, [docs/design](docs/design/):
 * [The design logic](docs/design/coderagent-design-logic.md) — why it grew this way: the load-bearing decisions, the invariants, the trade-offs
 
 ## Attribution
+
+The `coder` coding agent is built on **mini-swe-agent**, the agent in this repository: it uses
+mini-swe-agent's model and environment layer, its configuration handling and its utilities
+(see [where it comes from](#where-it-comes-from)). mini-swe-agent itself is a research project of
+the SWE-agent team, and its own papers and releases are the reference for that half of the code.
 
 If you found this work helpful, please consider citing the [SWE-agent paper](https://arxiv.org/abs/2405.15793) in your work:
 
