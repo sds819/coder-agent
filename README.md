@@ -4,7 +4,7 @@
 
 # The minimal AI software engineering agent
 
-> 中文版：[docs/readme_zh.md](docs/readme_zh.md)
+> 中文版：[docs/readme_zh.md](docs/readme_zh.md)｜中文文档见[下面](#chinese)
 
 📣 [mini-swe-agent now powers Ramp SWE-Bench](https://labs.ramp.com/swebench)<br/>
 📣 [mini-swe-agent beats Claude Code and Codex on DeepSWE](https://deepswe.datacurve.ai/blog#evaluation-harness)<br/>
@@ -286,6 +286,22 @@ And if you want to know how it was designed, [docs/design](docs/design/):
 
 * [The architecture](docs/design/coding-agent-architecture.md) — the layers, the modules, the interfaces, the key decisions
 * [The design logic](docs/design/coderagent-design-logic.md) — why it grew this way: the load-bearing decisions, the invariants, the trade-offs
+
+<a id="chinese"></a>
+
+### 中文
+
+这份 README 有中文版，文档也有中文的：
+
+* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
+* [快速开始](docs/usage/coderagent_quickstart.md)——装上、配置模型、跑第一轮
+* [功能](docs/usage/coderagent_features_zh.md)——一页看完所有功能，外加你可能撞到的报错
+* [网页版](docs/usage/coderagent_web_zh.md)——聊天页、设置页、HTTP API、安全模型
+* [命令](docs/usage/coderagent_commands_zh.md)——全部 slash 命令
+* [子 agent](docs/usage/coderagent_subagents_zh.md)——子 agent 和模型路由
+* [Hooks](docs/usage/coderagent_hooks_zh.md)——九个事件上的 hook
+* [沙箱](docs/usage/coderagent_sandbox_zh.md)——命令跑在哪里
+* [评测](docs/usage/coderagent_eval_zh.md)——任务集、报告和对比
 
 ## Attribution
 
