@@ -283,6 +283,30 @@ is retried, a bad request is not. The number of attempts comes from
 browser alike. The environment variable `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
 overrides it, which is handy when a test should not wait.
 
+## The configuration
+
+The configuration is read in four layers, the later ones win: the built-in
+defaults, `.coderagent/config.yaml` of the project, `~/.coderagent/config.yaml`
+of the user, and the `-c key=value` overrides of the command line.
+
+A setting that means nothing is **refused**, not taken silently:
+
+| What you see | What it means | What to do |
+|---|---|---|
+| `unknown permission mode '{name}'` | `permissions.mode` is not one of the five modes. | Use `default`, `acceptEdits`, `plan`, `bypass` or `readonly`. |
+| `unknown network policy '{name}'` | `permissions.network` is not `allow` or `deny`. | Use one of the two. |
+| `unknown tool '{name}'` | `tools.enabled` or `tools.disabled` names a tool that does not exist. | Use the name of one of the built-in tools. |
+| `unknown hook event '{name}'` | `hooks.events` names a moment that is not one of the moments of a session. | Use one of the events of the [hooks](coderagent_hooks.md). |
+| `unknown purpose '{name}'` | `model.routing` or a routing rule names a job that does not exist. | Use one of the [purposes](coderagent_routing.md). |
+| `'{name}' is not a condition` | A routing rule is not a key, an operator and a number. | Write it as `tokens > 50000`. |
+| `Extra inputs are not permitted` | A section or a key is written wrong (`permissons`). | Fix the name of the section. |
+| `Input should be greater than or equal to 0` | A number is negative. | Use a number of zero or more. |
+
+The **project** is treated differently from the user: a repository may not break
+the session, so what it writes wrong is left out, key by key, and the rest of
+its file is kept. The projects may also lower the ceilings of a session, never
+raise them.
+
 ## The tools
 
 The fourteen built-in tools:

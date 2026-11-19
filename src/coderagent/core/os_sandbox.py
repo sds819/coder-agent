@@ -59,7 +59,8 @@ class Confinement:
             raise ValueError(f"unknown sandbox mode '{mode}'. Use one of: {', '.join(MODES)}.")
         self.mode = mode
         self.cwd = Path(cwd).resolve()
-        self.include_dirs = [Path(directory).resolve() for directory in include_dirs or []]
+        self.include_dirs = [_resolve(directory, self.cwd) for directory in include_dirs or []]
+        """The extra directories, relative to the working directory of the session."""
         self.network = network
         """Whether the commands may reach the network. `deny` closes it in the sandbox too."""
         self.scratch = Path(scratch).resolve() if scratch else scratch_dir()
@@ -120,6 +121,12 @@ class Confinement:
 def _escape(path: Path) -> str:
     """A path as the Seatbelt profile wants it."""
     return path.as_posix().replace('"', '\\"')
+
+
+def _resolve(directory: str, base: Path) -> Path:
+    """Where a directory is, relative to the working directory of the session."""
+    target = Path(directory).expanduser()
+    return (target if target.is_absolute() else base / target).resolve()
 
 
 SANDBOX_TOOLS = {"Darwin": ("sandbox-exec", "Seatbelt"), "Linux": ("bwrap", "bubblewrap")}

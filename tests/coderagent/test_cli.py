@@ -135,6 +135,15 @@ def test_a_profile_that_does_not_exist_is_reported(tmp_path, monkeypatch):
     assert "unknown profile" in str(result.exception)
 
 
+def test_a_configuration_that_is_not_understood_is_reported(tmp_path, monkeypatch):
+    """A mistake in the configuration is said in words, not in a traceback."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(app, ["--task", "hi", "-c", "permissions.mode=dffault", "--cwd", str(tmp_path)])
+    assert result.exit_code != 0
+    assert "not understood" in result.output
+    assert "unknown permission mode 'dffault'" in result.output
+
+
 def test_the_sessions_of_the_directory_are_listed(tmp_path, monkeypatch):
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     store = SessionStore(tmp_path / "home" / "sessions")

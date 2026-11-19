@@ -262,6 +262,28 @@ sandbox:
   type: local
 ```
 
+### When a setting is wrong
+
+A setting that means nothing is refused when the configuration is read, not
+taken silently: a permission mode that is not `default`, a tool that does not
+exist, a hook event that is not one of the moments of a session, a purpose that
+names no job, a section that is written wrong (`permissons` instead of
+`permissions`), a number that is negative or out of range. The command line
+says which setting is wrong and what it should be:
+
+```
+Invalid value: the configuration is not understood: permissions.mode: unknown permission mode 'dffault'. Use one of: default, acceptEdits, plan, bypass, readonly.
+```
+
+The **project** is treated differently from the user. A repository is code that
+the agent may be asked to work in, so it may not break the session: what it
+writes wrong is left out, key by key, and the rest of the file is kept. A
+project that names a tool that does not exist therefore does not empty the set
+of tools — the tool is dropped and the others stay.
+
+The layers are the same for the numbers: a project may lower the ceilings of a
+session (`agent.max_turns` and the like), never raise them.
+
 ### The model
 
 `model.model_name` is the model of the agent. `model.api_key` and `model.api_base`

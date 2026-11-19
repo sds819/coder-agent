@@ -27,8 +27,11 @@ model:
 | `summarize` | The summary of a compacted context |
 | `reflect` | What the session writes into the memory |
 | `strong` | A stronger model, when the job is big |
+| `review` | The review of the changes (`/review`) |
 
-A purpose that is not routed uses the model of the main loop.
+A purpose that is not routed uses the model of the main loop. A purpose that is
+not one of these is refused when the configuration is read: a name that names
+no job would answer with the model of the session, without saying so.
 
 The summary has a setting of its own, which wins over the routing:
 
@@ -91,8 +94,8 @@ of the session:
 | `token_budget` | The token limit of the session |
 
 The rules are **parsed, not evaluated**. A condition that is not of that form
-never holds, and it never runs code: a configuration file cannot make the
-agent do anything.
+is refused when the configuration is read, and it never runs code: a
+configuration file cannot make the agent do anything.
 
 The rules are tried before the purpose of the call, and before the policy of
 the main loop. The first rule that holds wins.

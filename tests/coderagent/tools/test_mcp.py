@@ -1,6 +1,7 @@
 """MCP: the tools of an MCP server, used like the built-in ones."""
 
 import json
+import logging
 import socket
 import subprocess
 import sys
@@ -196,6 +197,15 @@ def test_every_tool_of_the_server_can_be_hidden(tmp_path):
     tools = client.start()
     client.stop()
     assert tools == []
+
+
+def test_a_tool_that_the_server_does_not_have_is_reported(tmp_path, caplog):
+    """A name that is wrong hides nothing: the user has to hear about it."""
+    with caplog.at_level(logging.WARNING, logger="coderagent.mcp"):
+        client = MCPClient(_two_tools(tmp_path, enabled_tools=["nope"]))
+        client.start()
+        client.stop()
+    assert "has no tool 'nope'" in caplog.text
 
 
 def test_the_schema_of_the_tool_is_the_one_of_the_server(tmp_path):

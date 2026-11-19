@@ -257,6 +257,27 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 `model.max_retries`（默认 3），终端和浏览器都一样。环境变量
 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT` 能盖过它——测试不想等的时候好用。
 
+## 配置
+
+配置分四层读，后面的赢：内置默认值、项目的 `.coderagent/config.yaml`、用户的
+`~/.coderagent/config.yaml`、命令行上的 `-c key=value`。
+
+没有意义的设置会被**拒绝**，不会悄悄收下：
+
+| 你看到的 | 什么意思 | 怎么办 |
+|---|---|---|
+| `unknown permission mode '{name}'` | `permissions.mode` 不是那五个模式之一。 | 用 `default`、`acceptEdits`、`plan`、`bypass` 或 `readonly`。 |
+| `unknown network policy '{name}'` | `permissions.network` 不是 `allow` 或 `deny`。 | 用这两个之一。 |
+| `unknown tool '{name}'` | `tools.enabled` 或 `tools.disabled` 写了一个不存在的工具。 | 用内置工具的名字。 |
+| `unknown hook event '{name}'` | `hooks.events` 写了一个不是「会话时刻」的时刻。 | 用 [Hooks](coderagent_hooks_zh.md) 里的事件。 |
+| `unknown purpose '{name}'` | `model.routing` 或一条路由规则写了一个不存在的用途。 | 用[路由](coderagent_routing.md)里的用途。 |
+| `'{name}' is not a condition` | 一条路由规则不是「键 运算符 数字」。 | 写成 `tokens > 50000` 这样。 |
+| `Extra inputs are not permitted` | 段名或键名写错了（`permissons`）。 | 把名字改对。 |
+| `Input should be greater than or equal to 0` | 数字是负的。 | 用零或更大的数。 |
+
+**项目**和用户不一样：仓库不能弄坏用户的会话，所以它写错的地方被一个键一个键地
+丢掉，文件里其余的部分照旧。项目也只能把会话的天花板调低，不能调高。
+
 ## 工具
 
 十四个内置工具：

@@ -81,6 +81,25 @@ def test_the_project_sub_agent_wins_over_the_user_one(tmp_path):
     assert specs["scout"].description == "from the project"
 
 
+def test_a_sub_agent_with_an_unknown_purpose_is_not_used(tmp_path):
+    """A purpose that names no model would quietly answer with the model of the session."""
+    directory = Path(tmp_path) / ".coderagent" / "agents"
+    directory.mkdir(parents=True)
+    (directory / "scout.md").write_text(
+        "---\nname: scout\ndescription: Looks around.\nmodel_purpose: chep\n---\nLook around.", encoding="utf-8"
+    )
+    assert "scout" not in load_subagents(tmp_path, Path(tmp_path) / "home")
+
+
+def test_a_sub_agent_with_a_known_purpose_is_used(tmp_path):
+    directory = Path(tmp_path) / ".coderagent" / "agents"
+    directory.mkdir(parents=True)
+    (directory / "scout.md").write_text(
+        "---\nname: scout\ndescription: Looks around.\nmodel_purpose: cheap\n---\nLook around.", encoding="utf-8"
+    )
+    assert load_subagents(tmp_path, Path(tmp_path) / "home")["scout"].model_purpose == "cheap"
+
+
 def test_the_index_of_the_sub_agents_goes_into_the_system_prompt(tmp_path):
     loop = _loop(tmp_path)
     assert "code-explorer" in loop.context.system_prompt

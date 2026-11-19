@@ -15,6 +15,9 @@ INFO_TOOLS = {"todo_write", "bash_output", "bash_kill"}
 """Tools that only touch the agent's own bookkeeping, so they never need approval."""
 PATH_TOOLS = READ_TOOLS | WRITE_TOOLS
 
+NETWORK_POLICIES = ("allow", "deny")
+"""What the network of a session may do."""
+
 
 class PermissionMode(str, Enum):
     DEFAULT = "default"
@@ -180,11 +183,12 @@ class PermissionPolicy:
         self.mode = PermissionMode(mode)
         self.rules = list(rules or [])
         self.cwd = Path(cwd).resolve() if cwd else Path.cwd().resolve()
-        self.include_dirs = [Path(directory).resolve() for directory in include_dirs or []]
+        self.include_dirs = [_resolve(directory, self.cwd) for directory in include_dirs or []]
+        """A directory that is written down relative to the working directory."""
         self.bounded = bounded
         """Whether the commands run on this disk. A container has its own boundary."""
-        if network not in ("allow", "deny"):
-            raise ValueError(f"unknown network policy '{network}'")
+        if network not in NETWORK_POLICIES:
+            raise ValueError(f"unknown network policy '{network}'. Use one of: {', '.join(NETWORK_POLICIES)}.")
         self.network = network
         """Whether the commands may reach the network. `deny` refuses them."""
         self.sandbox_mode = sandbox_mode
@@ -341,8 +345,7 @@ class PermissionPolicy:
         return rule.pattern in ("*", tool)
 
     def _relative(self, path: str) -> str:
-        target = Path(path)
-        resolved = (target if target.is_absolute() else self.cwd / target).resolve()
+        resolved = _resolve(path, self.cwd)
         if resolved.is_relative_to(self.cwd):
             return resolved.relative_to(self.cwd).as_posix()
         return resolved.as_posix()
@@ -353,8 +356,7 @@ class PermissionPolicy:
         The rules of the user cannot widen this: an `allow` rule for a path outside
         the bounds is still a path the agent must not touch.
         """
-        target = Path(path)
-        resolved = (target if target.is_absolute() else self.cwd / target).resolve()
+        resolved = _resolve(path, self.cwd)
         if resolved.is_relative_to(self.cwd):
             return True
         return any(resolved.is_relative_to(directory) for directory in self.include_dirs)
@@ -438,6 +440,16 @@ def _matches_bash(pattern: str, segment: str) -> bool:
         return bool(re.match(pattern, segment))
     except re.error:
         return False
+
+
+def _resolve(path: str, base: Path) -> Path:
+    """Where a path is, relative to the working directory of the session.
+
+    A path that is written down relative is relative to the working directory
+    of the session, not to the directory the process happens to stand in.
+    """
+    target = Path(path).expanduser()
+    return (target if target.is_absolute() else base / target).resolve()
 
 
 def _strictest(first: str, second: str) -> str:

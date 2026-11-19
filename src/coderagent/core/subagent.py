@@ -17,6 +17,7 @@ the context of the main agent stays clean.
 """
 
 import json
+import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -24,7 +25,7 @@ from pathlib import Path
 
 import yaml
 
-from coderagent.config.schema import ContextConfig, MemoryConfig
+from coderagent.config.schema import PURPOSES, ContextConfig, MemoryConfig
 from coderagent.core.budget import context_window_for
 from coderagent.core.context import repair_tool_calls
 from coderagent.core.events import EventBus
@@ -39,6 +40,8 @@ from coderagent.tools.registry import ToolRegistry
 
 AGENTS_DIR = "agents"
 """The directory of the sub agents. In the project it is under `.coderagent`."""
+
+logger = logging.getLogger("coderagent.subagent")
 
 DEFAULT_TOOLS = ["read", "grep", "glob", "bash"]
 
@@ -86,12 +89,16 @@ def parse_subagent(path: Path) -> SubagentSpec | None:
         return None
     if not isinstance(data, dict):
         return None
+    purpose = str(data.get("model_purpose", "cheap"))
+    if purpose not in PURPOSES:
+        logger.warning("The sub agent '%s' has an unknown model_purpose '%s'. It is not used.", path.name, purpose)
+        return None
     return SubagentSpec(
         name=str(data.get("name") or path.stem),
         description=str(data.get("description", "")),
         system_prompt=body.strip(),
         tools=_tool_list(data.get("tools")),
-        model_purpose=str(data.get("model_purpose", "cheap")),
+        model_purpose=purpose,
         max_turns=int(data.get("max_turns", 20)),
         path=path,
     )

@@ -334,7 +334,7 @@ def outside_paths(command: str, cwd: Path, include_dirs: list[Path]) -> list[str
     """
     outside: list[str] = []
     cwd = Path(cwd).resolve()
-    include_dirs = [Path(directory).resolve() for directory in include_dirs]
+    include_dirs = [_resolve(directory, cwd) for directory in include_dirs]
     virtual = cwd
     variables: dict[str, str] = {}
     for segment in segments(command):
@@ -465,13 +465,14 @@ def _remember(variables: dict[str, str], token: str) -> None:
         variables[name] = value.strip("\"'")
 
 
-def _resolve(path: str, base: Path) -> Path:
+def _resolve(path: str | Path, base: Path) -> Path:
     """Where a path is, relative to the directory the command is in."""
-    if path.startswith("~"):
-        return Path(path).expanduser().resolve()
-    if path.startswith("/"):
-        return Path(path).resolve()
-    return (base / path).resolve()
+    text = str(path)
+    if text.startswith("~"):
+        return Path(text).expanduser().resolve()
+    if text.startswith("/"):
+        return Path(text).resolve()
+    return (base / text).resolve()
 
 
 def _allowed(path: Path, cwd: Path, include_dirs: list[Path], system: bool = False) -> bool:

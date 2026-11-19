@@ -1,5 +1,8 @@
 """The model router: which model answers which purpose."""
 
+import pytest
+from pydantic import ValidationError
+
 from coderagent.config.schema import ModelConfig, RoutingRuleConfig
 from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
@@ -86,14 +89,20 @@ def test_a_rule_that_does_not_hold_is_ignored():
     assert ModelRouter(config).resolve("main", {"other": 6}) == "main/model"
 
 
-def test_a_broken_rule_is_ignored():
-    config = _config(routing_rules=[RoutingRuleConfig(when="calls >", purpose="cheap")])
-    assert ModelRouter(config).resolve("main", {"calls": 6}) == "main/model"
+def test_a_broken_rule_is_refused():
+    """A condition that cannot be read is a condition that never holds: it is refused."""
+    with pytest.raises(ValidationError):
+        RoutingRuleConfig(when="calls >", purpose="cheap")
 
 
 def test_a_rule_on_a_string_value_is_ignored():
-    config = _config(routing_rules=[RoutingRuleConfig(when="state == done", purpose="cheap")])
+    config = _config(routing_rules=[RoutingRuleConfig(when="state == 1", purpose="cheap")])
     assert ModelRouter(config).resolve("main", {"state": "done"}) == "main/model"
+
+
+def test_an_unknown_purpose_is_refused():
+    with pytest.raises(ValidationError):
+        RoutingRuleConfig(when="calls > 5", purpose="chep")
 
 
 def test_the_router_says_why_the_model_changed():

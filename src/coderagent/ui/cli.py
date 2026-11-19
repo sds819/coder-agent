@@ -10,8 +10,10 @@ from pathlib import Path
 
 import litellm
 import typer
+from pydantic import ValidationError
 
-from coderagent.config.loader import load_config
+from coderagent.config.loader import load_config, problems
+from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.run import build_loop, build_store, run_turn
@@ -21,6 +23,14 @@ from coderagent.ui.render import last_message, render
 litellm.suppress_debug_info = True
 
 app = typer.Typer(rich_markup_mode="rich", invoke_without_command=True, no_args_is_help=False)
+
+
+def read_config(specs: list[str], cwd: Path) -> Config:
+    """The configuration of the session, with a readable error when it is wrong."""
+    try:
+        return load_config(specs, cwd=cwd)
+    except ValidationError as error:
+        raise typer.BadParameter(f"the configuration is not understood: {problems(error)}") from None
 
 
 def main_impl(
@@ -169,7 +179,7 @@ def main(
     # fmt: on
     if ctx.invoked_subcommand is not None:
         return
-    config = load_config(config_spec + ([f"profile={profile}"] if profile else []), cwd=cwd)
+    config = read_config(config_spec + ([f"profile={profile}"] if profile else []), cwd)
     if model_name:
         config.model.model_name = model_name
     store = build_store(config)
@@ -267,7 +277,7 @@ def eval_suite(
     from coderagent.eval.task import load_suite
 
     cwd = Path.cwd()
-    config = load_config(config_spec, cwd=cwd)
+    config = read_config(config_spec, cwd)
     """The configuration of the user is read before the isolation, it holds the model."""
     if model_name:
         config.model.model_name = model_name
@@ -405,7 +415,7 @@ def export(
         typer.echo(f"Unknown format '{output_format}'. Use json or otel.")
         return
     if push:
-        endpoint = load_config(cwd=cwd).telemetry.otel_endpoint
+        endpoint = read_config([], cwd).telemetry.otel_endpoint
         if not endpoint:
             typer.echo("No telemetry.otel_endpoint is configured, so there is nowhere to push the trace.")
             raise typer.Exit(code=1)

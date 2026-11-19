@@ -1,7 +1,5 @@
 """Configuration schema. See `docs/design/coding-agent-architecture.md` section 7."""
 
-from pathlib import Path
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from coderagent.core.os_sandbox import MODES
@@ -10,7 +8,7 @@ from coderagent.core.shell_env import INHERITS
 from coderagent.models.call import check_reserved
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
-from coderagent.tools.permissions import check_rule
+from coderagent.tools.permissions import NETWORK_POLICIES, PermissionMode, check_rule
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a coding agent working in a code repository. "
@@ -38,15 +36,102 @@ BUILTIN_TOOL_NAMES = [
     "skill",
 ]
 
+ENVIRONMENT_TYPES = (
+    "local",
+    "docker",
+    "singularity",
+    "swerex_docker",
+    "swerex_modal",
+    "bubblewrap",
+    "contree",
+)
+"""The kinds of environment the commands of the agent may run in."""
+
+HOOK_EVENTS = (
+    "PreToolUse",
+    "PostToolUse",
+    "UserPromptSubmit",
+    "Stop",
+    "SessionStart",
+    "SessionEnd",
+    "SubagentStop",
+    "PreCompact",
+    "PostCompact",
+)
+"""The moments of a session a hook may hang on."""
+
+PURPOSES = ("main", "cheap", "strong", "summarize", "reflect", "review")
+"""The jobs a model may be picked for."""
+
+COMPARISONS = {
+    ">": lambda left, right: left > right,
+    ">=": lambda left, right: left >= right,
+    "<": lambda left, right: left < right,
+    "<=": lambda left, right: left <= right,
+    "==": lambda left, right: left == right,
+    "!=": lambda left, right: left != right,
+}
+"""The operators a condition of the routing may use."""
+
+
+def parse_condition(when: str) -> tuple[str, str, float] | None:
+    """The parts of a condition: a key, an operator and a number.
+
+    Nothing when the condition is not one: a condition that cannot be read is
+    a condition that never holds, and the user should hear about it.
+    """
+    parts = when.split()
+    if len(parts) != 3:
+        return None
+    key, operator, value = parts
+    if operator not in COMPARISONS:
+        return None
+    try:
+        return key, operator, float(value)
+    except ValueError:
+        return None
+
+
+def check_routing_rule(rule: dict) -> None:
+    """Whether a routing rule is one the router can read. It raises when it is not.
+
+    The rule is checked without the model, so that the message is the one of
+    the rule and not a nest of field names.
+    """
+    when = rule.get("when")
+    if not isinstance(when, str) or parse_condition(when) is None:
+        raise ValueError(f"'{when}' is not a condition. A condition is a key, an operator and a number.")
+    purpose = rule.get("purpose")
+    if purpose not in PURPOSES:
+        raise ValueError(f"unknown purpose '{purpose}'. Use one of: {', '.join(PURPOSES)}.")
+
 
 class RoutingRuleConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     when: str
     """A condition on the state of the session, like `tokens > 50000`."""
     purpose: str
     """The purpose the model is picked for when the condition holds."""
 
+    @field_validator("when")
+    @classmethod
+    def _known_condition(cls, value: str) -> str:
+        if parse_condition(value) is None:
+            raise ValueError(f"'{value}' is not a condition. A condition is a key, an operator and a number.")
+        return value
+
+    @field_validator("purpose")
+    @classmethod
+    def _known_purpose(cls, value: str) -> str:
+        if value not in PURPOSES:
+            raise ValueError(f"unknown purpose '{value}'. Use one of: {', '.join(PURPOSES)}.")
+        return value
+
 
 class ModelConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     model_name: str = ""
     """Model name. Falls back to $MSWEA_MODEL_NAME and then to a built-in default."""
     model_kwargs: dict = Field(default_factory=dict)
@@ -54,7 +139,7 @@ class ModelConfig(BaseModel):
     """The key of the provider of the model. It belongs to the user."""
     api_base: str = ""
     """The address of the provider of the model."""
-    max_retries: int = 3
+    max_retries: int = Field(default=3, ge=0)
     litellm_config: str = ""
     """A litellm config file with the model list. Its aliases name the models."""
     routing: dict[str, str] = Field(default_factory=dict)
@@ -89,38 +174,60 @@ class ModelConfig(BaseModel):
             raise ValueError(f"unknown verbosity '{value}'. Use one of: {', '.join(VERBOSITIES)}.")
         return value
 
+    @field_validator("routing")
+    @classmethod
+    def _known_purposes(cls, value: dict) -> dict:
+        for purpose in value:
+            if purpose not in PURPOSES:
+                raise ValueError(f"unknown purpose '{purpose}'. Use one of: {', '.join(PURPOSES)}.")
+        return value
+
 
 class AgentConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
-    max_turns: int = 50
+    max_turns: int = Field(default=50, ge=0)
     """Maximum number of model calls per user turn. 0 means no limit."""
-    cost_limit: float = 0.0
+    cost_limit: float = Field(default=0.0, ge=0)
     """Stop after exceeding this cost. 0 means no limit."""
-    token_limit: int = 0
+    token_limit: int = Field(default=0, ge=0)
     """Stop after exceeding this many tokens. 0 means no limit.
 
     It is the budget of a model that has no price, where the money never moves.
     """
-    subagent_max_turns: int = 0
+    subagent_max_turns: int = Field(default=0, ge=0)
     """The ceiling of the turns of every sub agent. 0 means no ceiling.
 
     A sub agent that asks for more turns than this is held down to it.
     """
-    subagent_max_parallel: int = 2
+    subagent_max_parallel: int = Field(default=2, ge=0)
     """How many sub agents may run at the same time. 0 means no limit."""
 
 
 class ToolConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     enabled: list[str] = Field(default_factory=lambda: list(BUILTIN_TOOL_NAMES))
     """Names of the tools the model may call."""
     disabled: list[str] = Field(default_factory=list)
-    bash_timeout: int = 120
-    max_output_tokens: int = 8000
-    schema_budget_tokens: int = 0
+    bash_timeout: int = Field(default=120, ge=0)
+    max_output_tokens: int = Field(default=8000, ge=0)
+    schema_budget_tokens: int = Field(default=0, ge=0)
     """The tokens the schemas of the tools may take. 0 means a tenth of the context window."""
+
+    @field_validator("enabled", "disabled")
+    @classmethod
+    def _known_tools(cls, value: list[str]) -> list[str]:
+        for name in value:
+            if name not in BUILTIN_TOOL_NAMES:
+                raise ValueError(f"unknown tool '{name}'. Use one of: {', '.join(BUILTIN_TOOL_NAMES)}.")
+        return value
 
 
 class ShellEnvironmentConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     inherit: str = "all"
     """One of all, core, none. How much of the environment of the user the agent sees."""
     exclude: list[str] = Field(default_factory=list)
@@ -139,6 +246,8 @@ class ShellEnvironmentConfig(BaseModel):
 
 
 class PermissionConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     mode: str = "default"
     """One of default, acceptEdits, plan, bypass, readonly."""
     rules: list[dict] = Field(default_factory=list)
@@ -147,6 +256,22 @@ class PermissionConfig(BaseModel):
     """Directories outside the working directory that the agent may still touch."""
     network: str = "allow"
     """One of allow, deny. `deny` refuses the commands that reach the network."""
+
+    @field_validator("mode")
+    @classmethod
+    def _known_mode(cls, value: str) -> str:
+        if value not in {mode.value for mode in PermissionMode}:
+            raise ValueError(
+                f"unknown permission mode '{value}'. Use one of: {', '.join(m.value for m in PermissionMode)}."
+            )
+        return value
+
+    @field_validator("network")
+    @classmethod
+    def _known_network(cls, value: str) -> str:
+        if value not in NETWORK_POLICIES:
+            raise ValueError(f"unknown network policy '{value}'. Use one of: {', '.join(NETWORK_POLICIES)}.")
+        return value
 
     @field_validator("rules")
     @classmethod
@@ -162,33 +287,41 @@ class PermissionConfig(BaseModel):
 
 
 class ContextConfig(BaseModel):
-    context_window: int = 200000
-    reserved_output: int = 8000
-    compact_threshold: float = 0.8
-    keep_recent_turns: int = 20
-    keep_recent_token_ratio: float = 0.4
-    compact_every_turns: int = 40
+    model_config = ConfigDict(extra="forbid")
+
+    context_window: int = Field(default=200000, gt=0)
+    reserved_output: int = Field(default=8000, ge=0)
+    compact_threshold: float = Field(default=0.8, gt=0, le=1)
+    keep_recent_turns: int = Field(default=20, ge=0)
+    keep_recent_token_ratio: float = Field(default=0.4, ge=0, le=1)
+    compact_every_turns: int = Field(default=40, ge=0)
     auto_compact: bool = True
     summarize_model: str = ""
     """Model used for summarization. Empty means the same model as the agent."""
-    summary_chunk_tokens: int = 0
+    summary_chunk_tokens: int = Field(default=0, ge=0)
     """How many tokens one summarization prompt may take. Zero means: as much as the window allows."""
-    project_doc_max_bytes: int = 32768
+    project_doc_max_bytes: int = Field(default=32768, ge=0)
     """The bytes one instruction file may take. A longer file is cut short."""
 
 
 class MemoryConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     project_path: str = ".coderagent/memory"
     user_path: str = "~/.coderagent/CLAUDE.md"
     enabled: bool = True
 
 
 class CheckpointConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     enabled: bool = True
-    keep: int = 50
+    keep: int = Field(default=50, ge=0)
 
 
 class MCPServerConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     command: str = ""
     """Command that starts the server, for the stdio transport."""
@@ -201,39 +334,57 @@ class MCPServerConfig(BaseModel):
     """The tools of this server that the agent may call. Empty means: all of them."""
     disabled_tools: list[str] = Field(default_factory=list)
     """The tools of this server that the agent may not call."""
-    startup_timeout: int = 0
+    startup_timeout: int = Field(default=0, ge=0)
     """The seconds the server may take to start. Zero means: the timeout of the section."""
-    tool_timeout: int = 0
+    tool_timeout: int = Field(default=0, ge=0)
     """The seconds one call of this server may take. Zero means: the timeout of the section."""
     supports_parallel_tool_calls: bool = True
     """Whether two calls of this server may run at the same time."""
 
 
 class MCPConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     servers: list[MCPServerConfig] = Field(default_factory=list)
-    timeout: int = 30
+    timeout: int = Field(default=30, ge=0)
 
 
 class HookCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     type: str = "command"
     command: str
-    timeout: int = 10
+    timeout: int = Field(default=10, ge=0)
     strict: bool = False
     """When the hook fails, block the action instead of letting it through."""
 
 
 class HookMatcher(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     matcher: str = ""
     """Regular expression of the tool names this hook applies to. Empty means all."""
     hooks: list[HookCommand] = Field(default_factory=list)
 
 
 class HookConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     events: dict[str, list[HookMatcher]] = Field(default_factory=dict)
+
+    @field_validator("events")
+    @classmethod
+    def _known_events(cls, value: dict) -> dict:
+        for event in value:
+            if event not in HOOK_EVENTS:
+                raise ValueError(f"unknown hook event '{event}'. Use one of: {', '.join(HOOK_EVENTS)}.")
+        return value
 
 
 class UIConfig(BaseModel):
-    approval_timeout: int = 0
+    model_config = ConfigDict(extra="forbid")
+
+    approval_timeout: int = Field(default=0, ge=0)
     """Seconds to wait for an approval. 0 waits forever."""
     notifications: bool = True
     """Tell the terminal when a turn is over. The terminal may not show it."""
@@ -246,9 +397,11 @@ class UIConfig(BaseModel):
 
 
 class HistoryConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     persistence: str = "save-all"
     """One of save-all, save-none. Whether the history of the sessions is written to the disk."""
-    max_bytes: int = 0
+    max_bytes: int = Field(default=0, ge=0)
     """The bytes the history of all the sessions may take. 0 means no limit.
 
     The oldest sessions are deleted when the history grows over it.
@@ -283,28 +436,44 @@ class SandboxConfig(BaseModel):
             raise ValueError(f"unknown sandbox mode '{value}'. Use one of: {', '.join(MODES)}.")
         return value
 
+    @field_validator("type")
+    @classmethod
+    def _known_type(cls, value: str) -> str:
+        if value not in ENVIRONMENT_TYPES and "." not in value:
+            """A path to a class of mini-swe-agent is a kind of environment too."""
+            raise ValueError(f"unknown environment '{value}'. Use one of: {', '.join(ENVIRONMENT_TYPES)}.")
+        return value
+
 
 class VerifyConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     commands: list[str] = Field(default_factory=list)
     """The commands that check the work of the agent. Empty means: no verification."""
-    max_rounds: int = 3
+    max_rounds: int = Field(default=3, ge=0)
     """How many times the agent may try to make the commands pass."""
-    timeout: int = 300
+    timeout: int = Field(default=300, ge=0)
     """The seconds one command may take."""
 
 
 class TelemetryConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     otel_endpoint: str = ""
     """Where the trace of a session goes. Empty means: it stays in the local event log."""
     otel_headers: dict[str, str] = Field(default_factory=dict)
     """The headers that address wants, like the key it asks for."""
-    otel_timeout: float = 5.0
+    otel_timeout: float = Field(default=5.0, ge=0)
     """The seconds one push may take."""
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(hide_input_in_errors=True)
-    """The values that went wrong are not shown: a key may be among them."""
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    """The values that went wrong are not shown: a key may be among them.
+
+    A section that is not known is refused: a name that is written wrong would
+    otherwise be a setting that does nothing.
+    """
 
     model: ModelConfig = Field(default_factory=ModelConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
@@ -325,4 +494,3 @@ class Config(BaseModel):
     """Named presets of the configuration. `--profile` picks one of them."""
     profile: str = ""
     """The name of the profile that is in effect."""
-    cwd: Path = Field(default_factory=Path.cwd)

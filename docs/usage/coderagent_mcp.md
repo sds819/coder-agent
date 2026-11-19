@@ -129,6 +129,12 @@ tools away:
 - `*` in `enabled_tools`: every tool of the server is there.
 - `*` in `disabled_tools`: no tool of the server is there.
 
+A name that the server does not have hides nothing, so the log says so:
+
+```
+The MCP server 'database' has no tool 'drop_table'. The name is ignored.
+```
+
 ## The timeouts of a server
 
 `mcp.timeout` is the timeout of every server. A server that needs more time

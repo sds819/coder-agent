@@ -13,17 +13,8 @@ They are parsed, not evaluated, so a configuration file cannot run code.
 
 from dataclasses import dataclass
 
-from coderagent.config.schema import ModelConfig
+from coderagent.config.schema import COMPARISONS, ModelConfig, parse_condition
 from coderagent.models.backends import LiteLLMBackend
-
-COMPARISONS = {
-    ">": lambda left, right: left > right,
-    ">=": lambda left, right: left >= right,
-    "<": lambda left, right: left < right,
-    "<=": lambda left, right: left <= right,
-    "==": lambda left, right: left == right,
-    "!=": lambda left, right: left != right,
-}
 
 STRONG_PURPOSE = "strong"
 """The purpose of a model that is stronger than the main one."""
@@ -45,15 +36,11 @@ class RoutingRule:
 
     def matches(self, context: dict) -> bool:
         """True when the condition holds for this context. Only numbers are compared."""
-        parts = self.when.split()
-        if len(parts) != 3:
+        parts = parse_condition(self.when)
+        if parts is None:
             return False
-        key, operator, value = parts
-        if key not in context or operator not in COMPARISONS:
-            return False
-        try:
-            right = float(value)
-        except ValueError:
+        key, operator, right = parts
+        if key not in context:
             return False
         left = context[key]
         if isinstance(left, bool) or not isinstance(left, (int, float)):

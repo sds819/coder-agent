@@ -15,7 +15,7 @@ import yaml
 from litellm.utils import get_llm_provider
 
 from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
-from coderagent.config.schema import ModelConfig, PermissionConfig
+from coderagent.config.schema import PURPOSES, ModelConfig, PermissionConfig, check_routing_rule
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import locate
 from coderagent.models.litellm_config import resolve as resolve_alias
@@ -331,9 +331,15 @@ def write_user_model(payload: dict) -> Path:
         _keep(model, "review_model", review.strip(), defaults["review_model"])
     routing = payload.get("routing")
     if isinstance(routing, dict):
+        for purpose in routing:
+            if purpose not in PURPOSES:
+                raise ValueError(f"unknown purpose '{purpose}'. Use one of: {', '.join(PURPOSES)}.")
         _keep(model, "routing", {str(key): str(value) for key, value in routing.items()}, defaults["routing"])
     rules = payload.get("routing_rules")
     if isinstance(rules, list):
+        for rule in rules:
+            if isinstance(rule, dict):
+                check_routing_rule(rule)
         _keep(model, "routing_rules", [rule for rule in rules if isinstance(rule, dict)], defaults["routing_rules"])
     extra = payload.get("model_kwargs")
     if isinstance(extra, dict):

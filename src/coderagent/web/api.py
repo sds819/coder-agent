@@ -11,8 +11,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
+from coderagent.config.loader import problems
 from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.subagent import effective_turns, load_subagents
 from coderagent.core.telemetry import collect
@@ -315,13 +316,17 @@ def agents(request: Request) -> dict[str, Any]:
 def get_config(request: Request) -> dict[str, Any]:
     """The model configuration, with the layer every setting comes from."""
     cwd = request.app.state.cwd
-    return {
-        "model": config_api.model_view(cwd),
-        "permissions": config_api.permissions_view(cwd, server_mode=_server_mode(request)),
-        "sources": config_api.sources(cwd),
-        "layers": config_api.layers_preview(cwd),
-        "user_config_path": str(config_api.user_config_path()),
-    }
+    try:
+        return {
+            "model": config_api.model_view(cwd),
+            "permissions": config_api.permissions_view(cwd, server_mode=_server_mode(request)),
+            "sources": config_api.sources(cwd),
+            "layers": config_api.layers_preview(cwd),
+            "user_config_path": str(config_api.user_config_path()),
+        }
+    except ValidationError as error:
+        """A configuration that is not understood is the fault of the user, not of the server."""
+        raise HTTPException(status_code=400, detail=problems(error)) from None
 
 
 @router.put("/config/model")

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel, ValidationError
 
 from coderagent.config.schema import Config
 from coderagent.core.os_sandbox import FULL_ACCESS, MODES
@@ -50,7 +51,7 @@ def config_layers(cwd: Path | None = None) -> list[tuple[str, dict]]:
     layers = [("defaults", _read(DEFAULTS_PATH))]
     project = _project_config_path(directory)
     if project.exists():
-        layers.append(("project", tightened(without_untrusted(_read(project), directory))))
+        layers.append(("project", _sanitized(tightened(without_untrusted(_read(project), directory)))))
     user = config_home() / "config.yaml"
     if user.exists():
         layers.append(("user", _read(user)))
@@ -98,6 +99,62 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)
+
+
+def problems(error: ValidationError) -> str:
+    """What is wrong with the configuration, one thing per problem.
+
+    The error of pydantic is meant for a program: this is meant for a person.
+    """
+    return "; ".join(
+        f"{'.'.join(str(part) for part in entry['loc'])}: {entry['msg'].removeprefix('Value error, ')}"
+        for entry in error.errors()
+    )
+
+
+def _sanitized(project: dict) -> dict:
+    """The project without the values that the schema would refuse.
+
+    A project may not break the session of the user: a value that is not
+    understood is left out, and the rest of the project is kept. The mistake
+    of a project is a warning, not the end of the session.
+    """
+    result = {}
+    for key, value in project.items():
+        model = _model_of(key)
+        if model is not None and isinstance(value, dict):
+            value = _accepted(model, value)
+        result[key] = value
+    return _accepted(Config, result)
+
+
+def _model_of(key: str) -> type[BaseModel] | None:
+    """The model of a section of the configuration, when it has one."""
+    field = Config.model_fields.get(key)
+    annotation = field.annotation if field else None
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    return None
+
+
+def _accepted(model: type[BaseModel], values: dict) -> dict:
+    """The values of a mapping that the model accepts.
+
+    A value that the model would refuse is left out, one key at a time: the
+    rest of the section is still worth something.
+    """
+    kept = dict(values)
+    while kept:
+        try:
+            model(**kept)
+            return kept
+        except ValidationError as error:
+            keys = {str(entry["loc"][0]) for entry in error.errors() if entry.get("loc")}
+            if not keys:
+                return {}
+            for key in keys:
+                kept.pop(key, None)
+    return {}
 
 
 def _tighten_telemetry(merged: dict, project: dict) -> None:

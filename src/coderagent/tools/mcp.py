@@ -217,7 +217,23 @@ class MCPClient:
                     schema,
                 )
             )
+        self._warn_unknown(listed.tools)
         return tools
+
+    def _warn_unknown(self, listed) -> None:
+        """Say when the user names a tool the server does not have.
+
+        A name that is wrong hides nothing and says nothing, so the user would
+        never learn that the tool they wanted is not there.
+        """
+        names = {tool.name for tool in listed}
+        for name in (*self.config.enabled_tools, *self.config.disabled_tools):
+            if name != "*" and name not in names:
+                logger.warning(
+                    "The MCP server '%s' has no tool '%s'. The name is ignored.",
+                    self.config.name,
+                    name,
+                )
 
 
 class MCPManager:

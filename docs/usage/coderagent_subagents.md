@@ -67,6 +67,12 @@ You write the documentation of a module. Read the code, then write the docs.
 The tools are a white list: the sub agent cannot reach anything that is not on
 it. A file without a front matter is ignored.
 
+`model_purpose` is one of the purposes of the
+[routing](coderagent_routing.md): `main`, `cheap`, `strong`, `summarize`,
+`reflect` or `review`. A name that is not one of them is refused: the sub agent
+is not used and the log says why. A purpose that is not routed answers with
+the model of the session.
+
 ## The limits
 
 A sub agent has its own turn budget, and the session has a ceiling over all of

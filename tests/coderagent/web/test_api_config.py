@@ -332,6 +332,34 @@ def test_a_verbosity_that_does_not_exist_is_refused(make_client):
     assert "unknown verbosity" in response.json()["detail"]
 
 
+def test_a_purpose_that_does_not_exist_is_refused(make_client):
+    """A purpose that names no model would answer with the model of the session."""
+    response = make_client().put("/api/config/model", json={"routing": {"chep": "cheap/model"}})
+
+    assert response.status_code == 400
+    assert "unknown purpose 'chep'" in response.json()["detail"]
+
+
+def test_a_rule_that_cannot_be_read_is_refused(make_client):
+    response = make_client().put("/api/config/model", json={"routing_rules": [{"when": "calls >", "purpose": "cheap"}]})
+
+    assert response.status_code == 400
+    assert "not a condition" in response.json()["detail"]
+
+
+def test_a_configuration_that_is_not_understood_is_reported(make_client):
+    """A broken file of the user is the fault of the user, not of the server."""
+    client = make_client()
+    user_file = config_home() / "config.yaml"
+    user_file.parent.mkdir(parents=True, exist_ok=True)
+    user_file.write_text("permissions:\n  mode: dffault\n", encoding="utf-8")
+
+    response = client.get("/api/config")
+
+    assert response.status_code == 400
+    assert "unknown permission mode 'dffault'" in response.json()["detail"]
+
+
 def test_the_model_of_the_review_is_written_and_read_back(make_client):
     client = make_client()
 
