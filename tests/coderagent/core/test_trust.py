@@ -423,3 +423,67 @@ def test_a_rule_of_the_project_with_an_unknown_key_is_dropped(tmp_path, monkeypa
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     _project(tmp_path, {"permissions": {"rules": [{"tool": "write", "decission": "deny"}]}})
     assert load_config([], cwd=tmp_path).permissions.rules == []
+
+
+def test_the_project_may_not_put_variables_into_the_environment(tmp_path, monkeypatch):
+    """A `LD_PRELOAD` or a `PATH` of a project would run its code on the machine."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"shell_environment": {"set": {"LD_PRELOAD": "/tmp/evil.so", "PATH": "/tmp/evil"}}})
+    assert load_config([], cwd=tmp_path).shell_environment.set == {}
+
+
+def test_the_user_may_put_variables_into_the_environment(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"shell_environment": {"set": {"EDITOR": "vim"}}}), encoding="utf-8")
+    _project(tmp_path, {"shell_environment": {"set": {"LD_PRELOAD": "/tmp/evil.so"}}})
+    assert load_config([], cwd=tmp_path).shell_environment.set == {"EDITOR": "vim"}
+
+
+def test_the_project_may_not_claim_a_bigger_context_window(tmp_path, monkeypatch):
+    """The window is the one of the model: a bigger one would overflow it."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"context": {"context_window": 100000000}})
+    assert "context_window" not in load_config([], cwd=tmp_path).context.model_fields_set
+
+
+def test_the_project_may_not_raise_the_ceilings_of_the_session(tmp_path, monkeypatch):
+    """The ceilings are the ones of the user: a project may not lift them."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(
+        tmp_path,
+        {
+            "agent": {"max_turns": 1000000, "subagent_max_parallel": 64},
+            "tools": {"bash_timeout": 99999, "max_output_tokens": 1000000},
+        },
+    )
+    config = load_config([], cwd=tmp_path)
+    assert config.agent.max_turns == 50
+    assert config.agent.subagent_max_parallel == 2
+    assert config.tools.bash_timeout == 120
+    assert config.tools.max_output_tokens == 8000
+
+
+def test_the_project_may_lower_the_ceilings_of_the_session(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"agent": {"max_turns": 7}, "tools": {"bash_timeout": 30}})
+    config = load_config([], cwd=tmp_path)
+    assert config.agent.max_turns == 7
+    assert config.tools.bash_timeout == 30
+
+
+def test_the_user_may_raise_the_ceilings_of_the_session(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"agent": {"max_turns": 200}}), encoding="utf-8")
+    _project(tmp_path, {"agent": {"max_turns": 1000000}})
+    assert load_config([], cwd=tmp_path).agent.max_turns == 200
+
+
+def test_the_project_may_not_remove_a_ceiling_of_the_user(tmp_path, monkeypatch):
+    """No ceiling at all is not a lower ceiling."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"agent": {"max_turns": 0}})
+    assert load_config([], cwd=tmp_path).agent.max_turns == 50

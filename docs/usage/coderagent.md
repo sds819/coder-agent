@@ -518,6 +518,15 @@ permissions — the project may not open directories outside the working
 directory, its rules may only deny, and the tools it names may only remove
 from the tools of the user. The permissions are the user's to decide.
 
+The rest of the configuration of a project is bound the same way. It may not
+put variables into the environment of the agent: a `LD_PRELOAD` or a `PATH` of
+its own would run its code on your machine, in every command the agent runs.
+It may not claim a context window bigger than the one of the model. And the
+ceilings of the session — the turns, the money, the tokens, the timeout of a
+command, the size of an output — it may only lower them. A ceiling that you
+name yourself is yours: your file, a profile and the command line win over
+the project.
+
 `plan` and `readonly` make the permission layer deny the writing tools, so the
 model is told about it: a `<permission_mode mode="...">` block goes into the
 conversation, saying what it may do and what it should answer instead. The
@@ -572,10 +581,12 @@ rules:
 ```
 
 `permissions.deny_paths` are the paths that are off limits, whatever the mode
-says. `permissions.include_dirs` are the directories outside the working
-directory that the agent may still touch. Without them the agent stays inside
-the directory of the session. The paths that the project denies are added to
-the ones of the user, not put in their place.
+says. They are off limits for the shell as well: with `*.env` denied,
+`cat .env` is refused just like `read .env` is. `permissions.include_dirs` are
+the directories outside the working directory that the agent may still touch.
+Without them the agent stays inside the directory of the session. The paths
+that the project denies are added to the ones of the user, not put in their
+place.
 
 The shell has its own boundaries: the commands that only look around (`ls`,
 `cat`, `grep`, `git status`) go through without a question, the ones that

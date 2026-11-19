@@ -23,6 +23,20 @@ ADDED_LISTS = (
 )
 """The lists that every layer adds to, instead of replacing."""
 
+LIMIT_KEYS = (
+    ("agent", "max_turns"),
+    ("agent", "cost_limit"),
+    ("agent", "token_limit"),
+    ("agent", "subagent_max_turns"),
+    ("agent", "subagent_max_parallel"),
+    ("tools", "bash_timeout"),
+    ("tools", "max_output_tokens"),
+)
+"""The ceilings of a session. A project may lower them, never raise them."""
+
+UNLIMITED = {"max_turns", "cost_limit", "token_limit", "subagent_max_turns", "subagent_max_parallel"}
+"""The ceilings where zero means: no ceiling at all."""
+
 
 def config_layers(cwd: Path | None = None) -> list[tuple[str, dict]]:
     """The configuration layers, from the lowest to the highest priority.
@@ -63,6 +77,8 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
     layers = config_layers(cwd)
     spec_layers = [get_config_from_spec(spec) for spec in specs or []]
     project = next((data for name, data in layers if name == "project"), None)
+    defaults = next((data for name, data in layers if name == "defaults"), {})
+    user = next((data for name, data in layers if name == "user"), {})
     profile = _profile(recursive_merge(*[data for _, data in layers], *spec_layers))
     base = recursive_merge(*[data for name, data in layers if name != "project"], profile, *spec_layers)
     merged = recursive_merge(*[data for _, data in layers], profile, *spec_layers)
@@ -78,6 +94,7 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
             merged.setdefault("permissions", {})["network"] = "deny"
         _tighten_sandbox(merged, project)
         _tighten_telemetry(merged, project)
+        _tighten_limits(merged, defaults, user, recursive_merge(profile, *spec_layers), project)
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)
@@ -111,6 +128,42 @@ def _profile(merged: dict) -> dict:
     if not isinstance(chosen, dict):
         raise ValueError(f"unknown profile '{name}'. Use one of: {', '.join(sorted(tables)) or 'none'}.")
     return chosen
+
+
+def _tighten_limits(merged: dict, defaults: dict, user: dict, explicit: dict, project: dict) -> None:
+    """The ceilings of a session belong to the user: a project may lower them.
+
+    A ceiling that the user names — in the file of the user, in a profile or on
+    the command line — is the last word. A project that asks for a higher one
+    than the default is given the default instead.
+    """
+    for section, key in LIMIT_KEYS:
+        value = _number(project, section, key)
+        if value is None:
+            continue
+        if _number(user, section, key) is not None or _number(explicit, section, key) is not None:
+            continue
+        reference = _number(defaults, section, key)
+        if reference is None:
+            continue
+        merged.setdefault(section, {})[key] = value if _lower(value, reference, key) else reference
+
+
+def _number(layer: dict, section: str, key: str) -> float | None:
+    """The number at a path of a layer, when there is one there."""
+    value = (layer.get(section) or {}).get(key)
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def _lower(value: float, reference: float, key: str) -> bool:
+    """Whether the ceiling of the project is the lower one."""
+    if key in UNLIMITED:
+        if value == 0:
+            """No ceiling at all is not a lower ceiling."""
+            return False
+        if reference == 0:
+            return True
+    return value < reference
 
 
 def _tighten_sandbox(merged: dict, project: dict) -> None:

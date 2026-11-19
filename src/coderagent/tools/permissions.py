@@ -175,6 +175,7 @@ class PermissionPolicy:
         bounded: bool = True,
         network: str = "allow",
         sandbox_mode: str = FULL_ACCESS,
+        deny_paths: list[str] | None = None,
     ) -> None:
         self.mode = PermissionMode(mode)
         self.rules = list(rules or [])
@@ -188,6 +189,8 @@ class PermissionPolicy:
         """Whether the commands may reach the network. `deny` refuses them."""
         self.sandbox_mode = sandbox_mode
         """The mode of the operating system sandbox. `read-only` takes the write tools away."""
+        self.deny_paths = list(deny_paths or [])
+        """The paths that are off limits, whatever the mode says."""
         self.restriction: dict[str, str] = {}
         """The tools a command may use, and the pattern each one is limited to.
 
@@ -220,6 +223,10 @@ class PermissionPolicy:
             if self.sandbox_mode == READ_ONLY and tool in WRITE_TOOLS:
                 """The sandbox is read only: a rule cannot open it either."""
                 return Decision("deny", matched, "the sandbox is read only")
+            denied = self.denied_path(path)
+            if denied:
+                """The denied paths come after the rules: they win over an allow."""
+                return Decision("deny", matched, self._denied_reason(path, denied))
         reason = matched.reason if matched else ""
         if decision == "deny" and not reason:
             """A refusal without a reason leaves the model guessing."""
@@ -237,6 +244,11 @@ class PermissionPolicy:
         if outside:
             """The bounds of the disk hold in every mode, like they do for the file tools."""
             return Decision("deny", None, self._outside_reason(outside[0]))
+        for named in bash_policy.named_paths(command, self.cwd):
+            denied = self.denied_path(named)
+            if denied:
+                """A denied path is off limits for the command too, not only for the file tools."""
+                return Decision("deny", None, self._denied_reason(named, denied))
         if self.network == "deny":
             """The network is closed: the commands that reach it are refused."""
             for segment in bash_policy.segments(command):
@@ -354,6 +366,32 @@ class PermissionPolicy:
             directories = ", ".join(str(directory) for directory in self.include_dirs)
             return f"{reason}. The directories that are open: {directories}"
         return reason
+
+    def denied_path(self, path: str) -> str:
+        """The pattern of a denied path that this path matches, empty when none does.
+
+        A path matches when the pattern matches it relative to the working
+        directory, when it matches the whole of it, or when it matches the name
+        of the file: `*.env` is the file of the working directory as well as
+        the one of any directory below it. A pattern that ends in `/**` denies
+        the directory as well, so that a search below it is refused too.
+        """
+        if not path or not self.deny_paths:
+            return ""
+        relative = self._relative(path)
+        name = Path(path).name
+        for pattern in self.deny_paths:
+            regex = glob_to_regex(pattern)
+            if regex.match(relative) or regex.match(name):
+                return pattern
+            directory = pattern[:-3] if pattern.endswith("/**") and "*" not in pattern[:-3] else ""
+            if directory and (relative == directory or relative.startswith(f"{directory}/")):
+                return pattern
+        return ""
+
+    def _denied_reason(self, path: str, pattern: str) -> str:
+        """Why the path is off limits."""
+        return f"'{path}' is denied by the configuration ('{pattern}')"
 
 
 def pattern_for(tool: str, params: dict[str, Any]) -> str:

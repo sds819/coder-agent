@@ -416,7 +416,8 @@ token、密码、私钥——在写和发之前都会换成 `[redacted]`。日�
   算成拒绝——写坏的拒绝不能变成放行。
 - **`Always allow`**——审批卡片上的这个按钮会写一条规则，以后**同一个调用**
   （同一个文件、同一条命令）直接放行。
-- **禁止的路径**——`permissions.deny_paths`，agent 不许碰的路径。
+- **禁止的路径**——`permissions.deny_paths`，agent 不许碰的路径。命令行里
+  提到它的命令也一样被拒。
 - **额外的目录**——`permissions.include_dirs`，工作目录以外、agent 仍然
   可以碰的目录。
 - **网络开关**——`permissions.network` 默认是 `allow`（出网的命令先问一次），
@@ -511,8 +512,9 @@ rules:
 只能拒绝，那个拒绝也挡得住用户级的规则；`allow` 和 `ask` 之间是最后一条
 匹配的赢。
 
-`permissions.deny_paths` 加的是一条「全部拒绝」的规则，它在规则文件之后
-生效，所以同样路径上的 `allow` 打不过它。
+`permissions.deny_paths` 拒绝所有匹配上的路径，它在规则文件之后生效，
+所以同样路径上的 `allow` 打不过它。被禁止的路径对命令行也一样：禁掉
+`*.env` 之后，`cat .env` 和 `read .env` 一样被拒。
 
 ### 命令行 {#cli}
 
@@ -779,7 +781,7 @@ memory:
 - **项目只能拿走工具，不能给**——项目的模式只能是 `plan` 或 `readonly`，它的
   规则只能拒绝，它禁掉的路径是加在用户那些之上的，它列的工具只能从用户的工具
   里拿掉。它也不能挑那些要跑在用户机器上的程序：编辑器、通知程序、沙箱的环境
-  都归用户决定。
+  都归用户决定。它也不能往 agent 的环境里塞变量，也不能抬高会话的上限。
 
 ### 用法例子
 
@@ -1204,6 +1206,15 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 连同用户的 key，一起送到别处去。
 另外两处写了模型名字的地方也一样：项目的 `context.summarize_model` 被丢掉，
 项目里的命令不许写 `model`。
+
+**项目不能往 agent 的环境里塞变量**：项目的 `shell_environment.set` 被丢掉——
+项目自己的 `LD_PRELOAD` 或 `PATH` 会把仓库里的代码带进用户机器上 agent 跑的
+每一条命令里。项目也不能声称比模型更大的上下文窗口。**会话的上限**——
+`agent.max_turns`、`agent.cost_limit`、`agent.token_limit`、
+`agent.subagent_max_turns`、`agent.subagent_max_parallel`、
+`tools.bash_timeout` 和 `tools.max_output_tokens`——项目只能**往下压**：
+更大的那个换回默认值。你自己写下的上限是你自己的，用户文件、profile 和
+命令行都压过项目。
 
 ### profile（命名配置）
 

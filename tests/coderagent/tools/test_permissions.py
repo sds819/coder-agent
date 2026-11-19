@@ -326,3 +326,54 @@ def test_an_unknown_network_policy_is_refused():
 def test_the_model_is_told_when_the_network_is_closed():
     assert network_block("deny").startswith('<permission_network policy="deny">')
     assert network_block("allow") == ""
+
+
+def test_a_denied_path_is_denied_for_the_file_tools(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, deny_paths=["*.env", "secrets/**"])
+    assert policy.check("read", {"path": ".env"}) == "deny"
+    assert policy.check("read", {"path": "secrets/key"}) == "deny"
+    assert policy.check("read", {"path": "main.py"}) == "allow"
+
+
+def test_a_denied_path_is_denied_for_a_command_that_names_it(tmp_path):
+    """The path is off limits for the shell too, not only for the file tools."""
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, deny_paths=["*.env", "secrets/**"])
+    assert policy.check("bash", {"command": "cat .env"}) == "deny"
+    assert policy.check("bash", {"command": "cat secrets/key"}) == "deny"
+    assert policy.check("bash", {"command": "cat sub/.env"}) == "deny"
+    assert policy.check("bash", {"command": "echo hi > .env"}) == "deny"
+    assert policy.check("bash", {"command": "cat main.py"}) == "allow"
+
+
+def test_a_denied_path_holds_in_bypass(tmp_path):
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=tmp_path, deny_paths=["*.env"])
+    assert policy.check("read", {"path": ".env"}) == "deny"
+    assert policy.check("bash", {"command": "cat .env"}) == "deny"
+
+
+def test_an_allow_rule_cannot_open_a_denied_path(tmp_path):
+    """The denied paths come after the rules: they win over an allow."""
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT,
+        [Rule(tool="*", pattern="*", decision="allow")],
+        cwd=tmp_path,
+        deny_paths=["*.env"],
+    )
+    assert policy.check("read", {"path": ".env"}) == "deny"
+    assert policy.check("read", {"path": "main.py"}) == "allow"
+
+
+def test_the_reason_of_a_denied_path_says_why(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, deny_paths=["*.env"])
+    decision = policy.evaluate("read", {"path": ".env"})
+    assert ".env" in decision.reason
+    assert "*.env" in decision.reason
+
+
+def test_a_denied_directory_is_denied_with_the_files_below_it(tmp_path):
+    """A search below a denied directory is refused as well."""
+    (tmp_path / "secrets").mkdir()
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, deny_paths=["secrets/**"])
+    assert policy.check("read", {"path": "secrets"}) == "deny"
+    assert policy.check("grep", {"path": "secrets", "pattern": "x"}) == "deny"
+    assert policy.check("bash", {"command": "grep -r x secrets"}) == "deny"

@@ -506,7 +506,7 @@ Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 
 
 | 能力 | Codex | coderagent |
 |---|---|---|
-| **信任边界** | 项目配置可以带 MCP server、hook | **项目只能拿走能力，不能给能力**（`src/coderagent/core/trust.py`）：模式只留 plan/readonly、规则只留 deny（写坏的规则也算 deny）、路径取并集、工具取交集、**`model` 整段丢掉**（项目的端点会把对话和用户的 key 一起带走）、**`context.summarize_model` 丢掉**、**项目命令里的 `model` 清掉**、**`ui.file_opener` / `ui.notify_command` / `sandbox.type` 丢掉**（跑在用户机器上的程序归用户挑） |
+| **信任边界** | 项目配置可以带 MCP server、hook | **项目只能拿走能力，不能给能力**（`src/coderagent/core/trust.py`）：模式只留 plan/readonly、规则只留 deny（写坏的规则也算 deny）、路径取并集、工具取交集、**`model` 整段丢掉**（项目的端点会把对话和用户的 key 一起带走）、**`context.summarize_model` 丢掉**、**项目命令里的 `model` 清掉**、**`ui.file_opener` / `ui.notify_command` / `sandbox.type` 丢掉**（跑在用户机器上的程序归用户挑）、**`shell_environment.set` 丢掉**（项目自己的 `LD_PRELOAD` 会跑在用户机器上）、**`context.context_window` 丢掉**（窗口是模型的）、**会话的上限只能往下压**（`config/loader.py` 的 `_tighten_limits`） |
 | **路径边界** | 由沙箱决定 | `within_bounds()` 在**所有**模式下都生效，**用户的 `allow` 规则也放宽不了** |
 | **事实来源** | 会话状态 | **事件日志是唯一事实来源**，压缩只把原文移出窗口，不删事实 |
 | **离线评测** | 有 `codex exec`，但没有可对比的指纹 | `coder eval` + `coder eval-compare` + 指纹，**能测出「harness 坏了」**（模型会绕开坏掉的 `edit`，只数工具调用是测不出来的） |

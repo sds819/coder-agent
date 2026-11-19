@@ -126,7 +126,8 @@ sandbox:
 
 agent 能碰哪些路径是 agent 的属性，不是容器的。它们由权限那一层圈住：
 `permissions.deny_paths` 是不能碰的路径，`permissions.include_dirs` 是会话目录
-之外、但允许碰的那些。本地沙箱的那一档，是把同样的事告诉操作系统。
+之外、但允许碰的那些。被禁的路径对命令行也一样：禁掉 `*.env` 之后，
+`cat .env` 也被拒。本地沙箱的那一档，是把同样的事告诉操作系统。
 
 配置里还留着 `sandbox.network` 或 `sandbox.writable_roots` 也能跑：它们现在是
 不认识的选项，而不认识的选项会被忽略。

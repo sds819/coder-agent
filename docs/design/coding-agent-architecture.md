@@ -302,6 +302,8 @@ class PermissionPolicy:
 `配置文件里的 permissions.rules` → `项目级 .coderagent/rules.yaml` → `用户级 ~/.coderagent/rules.yaml`；
 覆盖只在 `allow` / `ask` 之间生效，**`deny` 谁也盖不掉**。
 最后 `permissions.deny_paths` 里的路径一律 deny（越界路径在任何模式下都挡）。
+它不是规则，是**路径**：路径类工具拿自己的 `path` 去比，bash 拿命令里提到的
+路径去比，两边都按 glob 配，所以 `cat .env` 也撞得上 `*.env`。
 **没有内置默认规则集**（`defaults.yaml` 里 `rules: []`）。
 
 「总是允许」需要持久化到**用户级**规则文件——这是 Claude Code 体验的关键。
@@ -906,6 +908,16 @@ sandbox:
 > 同一条道理还管着**跑在用户机器上的程序**：`ui.file_opener`、`ui.notify_command`
 > 和 `sandbox` 的 `type`（连同环境的那些选项）都从项目层丢掉。项目可以关沙箱，
 > 不能开，也不能决定命令在哪里跑。
+>
+> 也管着**环境变量**：`shell_environment.set` 从项目层丢掉——项目自己的
+> `LD_PRELOAD` 或 `PATH` 会把仓库里的代码带进用户机器上 agent 跑的每一条命令里。
+> `context.context_window` 同样丢掉：窗口是模型的，项目说个大窗口只会撑爆它。
+>
+> **会话的上限**归用户：`agent.max_turns`、`agent.cost_limit`、`agent.token_limit`、
+> `agent.subagent_max_turns`、`agent.subagent_max_parallel`、`tools.bash_timeout`、
+> `tools.max_output_tokens`——项目只能往下压，更大的那个换回默认值
+> （`config/loader.py` 的 `_tighten_limits`）。用户文件、profile 和命令行里
+> 写下的上限是用户自己的，压过项目。
 >
 > 项目层里**写坏的规则算成 deny**：`permissions.rules` 里不是 `allow`/`ask`/`deny`
 > 的决定值，在 `core/trust.py` 的 `_denies_of()` 里被当成拒绝并记一条警告——

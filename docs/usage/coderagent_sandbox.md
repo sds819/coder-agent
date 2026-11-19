@@ -141,8 +141,9 @@ is dropped without a word.
 The paths the agent may touch are a property of the agent, not of the container.
 They are bounded by the permission layer: `permissions.deny_paths` for the paths
 that are off limits and `permissions.include_dirs` for the ones outside the
-directory of the session that are allowed. The mode of the local sandbox tells
-the same thing to the operating system.
+directory of the session that are allowed. A denied path is off limits for the
+shell as well: `cat .env` is refused when `*.env` is denied. The mode of the
+local sandbox tells the same thing to the operating system.
 
 A configuration that still has `sandbox.network` or `sandbox.writable_roots`
 keeps working: they are unknown options now, and unknown options are ignored.

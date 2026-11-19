@@ -563,9 +563,10 @@ undone by a later `allow` — the rules of the project may only deny, and that
 deny holds against the rules of the user. Between `allow` and `ask` the last
 matching rule wins.
 
-`permissions.deny_paths` adds a rule that denies everything that matches, and
-it is applied after the rule files, so it wins over an `allow` of the same
-path.
+`permissions.deny_paths` denies everything that matches, and it is applied
+after the rule files, so it wins over an `allow` of the same path. A denied
+path is off limits for the shell as well: with `*.env` denied, `cat .env` is
+refused just like `read .env` is.
 
 ### The shell
 
@@ -1329,6 +1330,18 @@ would take the conversation — and the key of the user with it — somewhere el
 The same holds for the two other places where a model is named:
 `context.summarize_model` of a project is dropped, and a command of the project
 may not name a model.
+
+A **project may not put variables into the environment of the agent**: the
+`shell_environment.set` of a project is dropped, because a `LD_PRELOAD` or a
+`PATH` of its own would run the code of the repository on the machine of the
+user, in every command the agent runs. A project may not claim a context
+window bigger than the one of the model either. The **ceilings of the
+session** — `agent.max_turns`, `agent.cost_limit`, `agent.token_limit`,
+`agent.subagent_max_turns`, `agent.subagent_max_parallel`,
+`tools.bash_timeout` and `tools.max_output_tokens` — a project may only
+**lower**: a higher one is given the default instead. A ceiling that you name
+yourself is yours, so your file, a profile and the command line win over the
+project.
 
 ### The profiles
 

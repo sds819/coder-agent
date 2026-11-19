@@ -71,14 +71,10 @@ def build_model(config: Config, model_name: str = "") -> ModelBackend:
 
 
 def build_policy(config: Config, cwd: Path, permission_mode: str | None = None) -> PermissionPolicy:
-    """Built-in rules, then the project and user rule files, then explicit denies."""
+    """Built-in rules, then the project and user rule files."""
     fields = ("tool", "pattern", "decision", "reason")
     rules = [Rule(**{k: v for k, v in rule.items() if k in fields}) for rule in config.permissions.rules]
     rules += load_rules(cwd)
-    rules += [
-        Rule(tool="*", pattern=pattern, decision="deny", reason="denied by configuration")
-        for pattern in config.permissions.deny_paths
-    ]
     return PermissionPolicy(
         permission_mode or config.permissions.mode,
         rules,
@@ -87,6 +83,7 @@ def build_policy(config: Config, cwd: Path, permission_mode: str | None = None) 
         bounded=config.sandbox.type == "local",
         network=config.permissions.network,
         sandbox_mode=config.sandbox.mode,
+        deny_paths=config.permissions.deny_paths,
     )
 
 

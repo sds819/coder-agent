@@ -190,6 +190,9 @@ def tightened(project: dict) -> dict:
     if isinstance(context, dict):
         """The summary of the context goes to a model: the project may not choose it."""
         context.pop("summarize_model", None)
+        """The window is the one of the model: a project that claims a bigger one
+        would overflow it."""
+        context.pop("context_window", None)
     sandbox = result.get("sandbox")
     if isinstance(sandbox, dict):
         """A project may close the sandbox, never open it, and never choose
@@ -218,6 +221,10 @@ def tightened(project: dict) -> dict:
     if isinstance(shell, dict):
         """A project may hide more of the environment, never show what the user hid."""
         shell.pop("include", None)
+        shell.pop("set", None)
+        """A project may not put variables into the environment of the agent: a
+        `LD_PRELOAD` or a `PATH` of its own would run its code on the machine of
+        the user, in every command the agent runs."""
     if not isinstance(permissions, dict):
         return result
     if str(permissions.get("mode") or "") not in TIGHT_MODES:

@@ -190,6 +190,7 @@
   - **其他工具**：`pattern` 是工具名，或者 `*`。
 - **求值顺序**：所有工具都走**「最严的匹配规则赢」**（`permissions._strictest_rule`）：**`deny` 永远赢**；在 `allow` / `ask` 之间**后写的赢**。bash 还要**分段**判，每段各取最严的匹配规则，整条命令再取**最严**的段。
 - **deny 一定赢**：`_strictest_rule()` 让 `deny` 一旦命中就不再让位，所以一条**写在后面的** `allow` 盖不掉前面的 `deny`——项目的 `deny` 用户也开不了。剩下的两个例外是 `deny_paths`／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 `bypass`）都拦。
+- **`deny_paths` 不是规则**：`PermissionPolicy` 把它单独收下（`deny_paths=[...]`），不混进 `rules`。路径类工具拿自己的 `path` 去比，bash 拿命令里**提到的路径**去比（`bash_policy.named_paths()`），两边都按 glob 配。它排在规则之后，所以同一条路径上的 `allow` 打不过它；`bypass` 也拦得住。
 
 ### b7 `bash` 这种命令怎么管？
 
@@ -579,7 +580,7 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 |---|---|---|
 | **权限模式** | 一刀切：这次会话允许做什么 | `permissions.mode` |
 | **规则** | 按工具 + 路径 / 命令模式细粒度 allow/ask/deny | `rules.yaml`、`permissions.rules` |
-| **`deny_paths`** | 指定路径全局拒绝，**任何模式下都拒**，且排在所有规则之后（能覆盖掉前面的 allow） | `permissions.deny_paths` |
+| **`deny_paths`** | 指定路径全局拒绝，**任何模式下都拒**，且排在所有规则之后（能覆盖掉前面的 allow）；路径类工具和 bash 都算 | `permissions.deny_paths` |
 | **`include_dirs`** | 显式打开工作目录之外的目录 | `permissions.include_dirs` |
 | **hook** | 六个时点上的自定义检查与改写 | `hooks.events` |
 | **沙箱** | 命令实际跑在哪 | `sandbox.type` |

@@ -361,6 +361,56 @@ def outside_paths(command: str, cwd: Path, include_dirs: list[Path]) -> list[str
     return outside
 
 
+def named_paths(command: str, cwd: Path) -> list[str]:
+    """The paths a command names, relative to the working directory.
+
+    A word is taken for a path when it looks like one — it has a separator or
+    a dot in it — or when there is something of that name on the disk. The
+    variables are expanded first, and a command that changes the directory
+    moves the ground the paths after it are relative to.
+    """
+    cwd = Path(cwd).resolve()
+    virtual = cwd
+    variables: dict[str, str] = {}
+    found: list[str] = []
+    for segment in segments(command):
+        parts = tokens(segment)
+        for token in parts:
+            value = token.strip("\"'")
+            _remember(variables, value)
+            for candidate in _path_words(_assigned(value), variables):
+                resolved = _resolve(candidate, virtual)
+                if not ("/" in candidate or "." in candidate or resolved.exists()):
+                    continue
+                found.append(
+                    resolved.relative_to(cwd).as_posix() if resolved.is_relative_to(cwd) else resolved.as_posix()
+                )
+        if parts and Path(parts[0].strip("\"'")).name == "cd" and len(parts) > 1:
+            virtual = _resolve(parts[1].strip("\"'"), virtual)
+    return found
+
+
+def _assigned(value: str) -> str:
+    """The path of an assignment: what follows the equal sign."""
+    name, separator, assignment = value.partition("=")
+    if separator and (name.isidentifier() or name.startswith("-")):
+        return assignment.strip("\"'")
+    return value
+
+
+def _path_words(value: str, variables: dict[str, str]) -> list[str]:
+    """The words of a value that may name a path."""
+    value = _expand(value, variables)
+    if not value or value.startswith("-"):
+        return []
+    words = []
+    for part in [value, *EMBEDDED_PATH.findall(value)]:
+        part = part.strip("\"'")
+        if part and not part.startswith("-"):
+            words.append(part)
+    return words
+
+
 def _subcommand(arguments: list[str]) -> str:
     """The first argument that is not a flag."""
     for argument in arguments:

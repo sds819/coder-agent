@@ -55,3 +55,11 @@ def test_the_diff_of_the_working_tree_is_answered(project):
     assert response.status_code == 200
     assert "diff" in response.json()
     """Outside of a repository the answer is the error of git, not a crash."""
+
+
+def test_a_denied_path_is_refused(make_client, tmp_path):
+    """The paths the configuration denies are off limits for the browser too."""
+    (tmp_path / "secret.env").write_text("token\n", encoding="utf-8")
+    project = make_client(project_config="permissions:\n  deny_paths: ['*.env']\n")
+
+    assert project.get("/api/file", params={"path": "secret.env"}).status_code == 403

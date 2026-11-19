@@ -111,3 +111,23 @@ def test_a_subcommand_of_git_that_reaches_the_network_is_named():
 
 def test_a_flag_between_git_and_its_subcommand_does_not_hide_it():
     assert "push" in bash_policy.needs_network("git -C /tmp push")
+
+
+def test_the_paths_a_command_names_are_found():
+    assert bash_policy.named_paths("cat .env", Path("/repo")) == [".env"]
+    assert bash_policy.named_paths("cat sub/dir/file.txt", Path("/repo")) == ["sub/dir/file.txt"]
+    assert bash_policy.named_paths("echo hi > out.log", Path("/repo")) == ["out.log"]
+
+
+def test_a_word_that_is_not_a_path_is_not_one():
+    assert bash_policy.named_paths("pytest -q tests", Path("/repo")) == []
+
+
+def test_the_path_a_command_names_is_relative_to_the_working_directory():
+    assert bash_policy.named_paths("cat /opt/secret", Path("/repo")) == ["/opt/secret"]
+
+
+def test_a_word_that_names_something_on_the_disk_is_a_path(tmp_path):
+    """A directory of the project is a path, even without a separator in its name."""
+    (tmp_path / "secrets").mkdir()
+    assert bash_policy.named_paths("grep -r x secrets", tmp_path) == ["secrets"]

@@ -178,6 +178,7 @@ class PermissionPolicy:
 1. `mode` 决定默认值（见 2.4 表）
 2. 遍历匹配的规则，**最严的赢**：**`deny` 永远赢**，`allow` / `ask` 之间**后写规则覆盖先写**
 3. 路径类工具在规则之后还要过一次**越界检查**，越界一律 `deny`
+4. 再过一次 **`deny_paths` 检查**：命中的路径一律 `deny`（路径类工具和 bash 都一样）
 
 > **简化决策**：匹配到的规则里最严的赢。这比「谁写在后面谁赢」安全——项目的 `deny`
 > 是用户的安全边界，不该被仓库里的一份配置打开。代价是 `deny` 没有解禁口，只能去改那份规则文件。
@@ -187,6 +188,11 @@ class PermissionPolicy:
 >
 > **越界检查不是规则**：不管哪条规则写了 `allow`，落在工作目录之外的路径一律 `deny`
 > （`permissions.py` 的 `within_bounds`）。要放开某些目录，用 `permissions.include_dirs`。
+>
+> **`deny_paths` 也不是规则**：`permissions.deny_paths` 里的路径按 glob 匹配，
+> 对**路径类工具**和 **`bash`** 都成立——命令里提到的路径也算（`cat .env` 撞上
+> `*.env`）。它在规则之后生效，所以压得住同一条路径上的 `allow`；在所有模式下都
+> 成立，`bypass` 也不例外。
 
 **默认规则表**
 
@@ -352,6 +358,9 @@ rules:
 配置文件里的 permissions.rules → 项目规则 → 用户规则 → permissions.deny_paths
 ```
 
+> `permissions.deny_paths` 不在这条链上：它不是规则，是**路径**，在规则之后
+> 单独过一次检查（见 §2.4）。这样 `cat .env` 也撞得上 `*.env`。
+
 > **没有内置的默认规则集**：`config/defaults.yaml` 里的 `rules` 是空的，各模式的行为由
 > `PermissionPolicy` 的默认决策表决定（见 §2.4），不是靠一组内置规则实现的。
 > 「总是允许」写进的是**用户级** `rules.yaml`，它排在项目规则之后，所以同名时**用户级赢**
@@ -495,6 +504,7 @@ rules:
 | `update_plan` | 与 `todo_write` 二选一 | 只做 `todo_write` | 两者语义重合，M2 再决定是否需要单独的 plan 视图 |
 | 审批 | M3 才有 TUI | M1 就是 `HeadlessApprover`（ask → DENY） | headless 不能阻塞；交互式审批留给 M3 |
 | 模式提示 | 未提及 | `plan` / `readonly` 往上下文里插一段 `<permission_mode>` 说明 | 模式把工具收走了，模型得知道，否则只会反复撞墙；`readonly` 与 `plan` 权限完全相同，全靠这段提示区分 |
+| `deny_paths` | 一条 `tool: "*"` 的规则 | 权限层里单独的一项，路径类工具和 bash 都查 | 规则是按工具名或命令正则匹配的，`*.env` 当正则对不上 `cat .env`；路径要按 glob 比，才管得住 shell |
 
 **实测**（DeepSeek，`coder --print --permission-mode acceptEdits`）：
 模型连续调用 `read` → `edit` → `grep`，文件真实被改写；默认权限模式下 `edit` 被拒并把原因回传给模型，模型据此改口而不是硬改。

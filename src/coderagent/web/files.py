@@ -30,6 +30,7 @@ def policy_for(config: Config, cwd: Path) -> PermissionPolicy:
         [],
         cwd=cwd,
         include_dirs=config.permissions.include_dirs,
+        deny_paths=config.permissions.deny_paths,
     )
 
 
@@ -39,6 +40,9 @@ def resolve(cwd: Path, path: str, policy: PermissionPolicy) -> Path:
     resolved = (target if target.is_absolute() else cwd / target).resolve()
     if not policy.within_bounds(str(resolved)):
         raise OutsideBounds(f"'{path}' is outside the working directory {policy.cwd}")
+    denied = policy.denied_path(str(resolved))
+    if denied:
+        raise OutsideBounds(f"'{path}' is denied by the configuration ('{denied}')")
     return resolved
 
 
