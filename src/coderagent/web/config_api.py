@@ -115,16 +115,20 @@ def sources(cwd: Path) -> dict[str, str]:
     """Which layer every model setting comes from.
 
     The files win over the environment, the same way the loader merges them.
+    The aliases file is a layer of its own: what it holds is used when no
+    file of the user sets the setting.
     """
     layers = config_layers(cwd)
     merged = load_config([], cwd=cwd)
-    name, _ = resolve_alias(merged.model.litellm_config, merged.model.model_name)
+    name, params = resolve_alias(merged.model.litellm_config, merged.model.model_name)
     result = {}
     for field in (*MODEL_FIELDS, *merged.model.model_kwargs):
         source = "defaults"
         for name_of_layer, layer in layers:
             if _defines(layer, field):
                 source = name_of_layer
+        if source == "defaults" and field in params:
+            source = "alias"
         if source == "defaults" and field == "model_name" and os.getenv("MSWEA_MODEL_NAME"):
             source = "env"
         if source == "defaults" and field == "api_key" and env_api_key(name):
@@ -139,10 +143,13 @@ def model_view(cwd: Path) -> dict[str, Any]:
     model = config.model
     kwargs = dict(model.model_kwargs)
     api_key = effective_api_key(cwd)
+    _, alias = resolve_alias(model.litellm_config, model.model_name)
     return {
         "model_name": model.model_name,
         "litellm_config": model.litellm_config,
         "api_base": str(model.api_base or kwargs.get("api_base") or ""),
+        "alias_api_base": str(alias.get("api_base") or ""),
+        # The field of the user stays empty: the aliases file holds the address.
         "api_key_set": bool(api_key),
         "api_key_hint": hint(api_key),
         "max_retries": model.max_retries,

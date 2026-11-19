@@ -78,7 +78,7 @@ The model configuration, in a form:
 |---|---|
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider in front of the name says who is called: `openai/MiniMax-M2.7` for a third party endpoint, `deepseek/deepseek-flash` for DeepSeek |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
-| API base | `model.api_base` — the address of the provider |
+| API base | `model.api_base` — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it |
 | API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
@@ -93,7 +93,9 @@ The parameters of the call itself (`model`, `messages`, `tools`, `stream`,
 `stream_options`) belong to the agent: the page refuses them instead of
 writing a file that the agent would not start with.
 
-Under every field is the layer it comes from: `defaults`, `user` or `env`.
+Under every field is the layer it comes from: `defaults`, `user`, `alias` or
+`env`. The aliases file is a layer of its own: what it holds is used when no
+file of the user sets the setting, and the address of the user wins over it.
 The table at the bottom shows every layer, with the secrets taken out.
 The page reads the **configuration files**; the `-m` and `-c` of the command
 line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the

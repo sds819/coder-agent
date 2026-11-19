@@ -742,6 +742,10 @@ async function startSettings() {
   document.getElementById("model-name").value = model.model_name || "";
   document.getElementById("litellm-config").value = model.litellm_config || "";
   document.getElementById("api-base").value = model.api_base || "";
+  const aliasBase = document.getElementById("alias-api_base");
+  if (aliasBase) {
+    aliasBase.textContent = model.alias_api_base ? t("alias_base", { base: model.alias_api_base }) : "";
+  }
   document.getElementById("max-retries").value = model.max_retries;
   document.getElementById("set-cache-control").value = model.set_cache_control || "";
   document.getElementById("reasoning-effort").value = model.reasoning_effort || "";

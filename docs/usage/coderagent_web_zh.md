@@ -82,7 +82,7 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 |---|---|
 | Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。名字前面那个厂商决定调谁：第三方端点写 `openai/MiniMax-M2.7`，DeepSeek 写 `deepseek/deepseek-flash` |
 | Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
-| API base | `model.api_base`——第三方模型的地址 |
+| API base | `model.api_base`——第三方模型的地址。地址写在别名文件里时，这一栏是空的，页面把它显示在下面 |
 | API key | `model.api_key`。点一下显示，再点一下收起 |
 | Max retries | `model.max_retries` |
 | Cache control | `model.set_cache_control`（`default_end` 或空） |
@@ -96,7 +96,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 这次调用自己的参数（`model`、`messages`、`tools`、`stream`、`stream_options`）是 agent 设的：
 页面直接拒绝，不写进一个 agent 起不来的文件。
 
-每个字段下面写着它来自哪一层：`defaults`、`user` 或 `env`（项目定不了模型）。
+每个字段下面写着它来自哪一层：`defaults`、`user`、`alias` 或 `env`（项目定不了模型）。
+别名文件自己算一层：用户没写的设置用它填，用户写了地址就听用户的。
 页面底部的表格列出所有层，含密钥的项都被抹成 `***`。页面读的是**配置文件**；命令行上的
 `-m` 和 `-c` 是给会话用的，所以 `coder web -m deepseek/deepseek-flash` 时页面显示的还是
 文件里的那个模型。

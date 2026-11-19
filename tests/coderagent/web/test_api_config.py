@@ -198,6 +198,32 @@ def test_the_key_needs_the_header_of_the_client(make_client):
     assert response.status_code == 403
 
 
+def test_the_aliases_file_is_the_source_of_the_address(make_client, tmp_path):
+    client = make_client()
+    path = _aliases_file(tmp_path)
+
+    client.put("/api/config/model", json={"model_name": "my-alias", "litellm_config": path})
+
+    view = client.get("/api/config").json()
+    assert view["sources"]["api_base"] == "alias"
+    assert view["model"]["alias_api_base"] == "https://x/v1"
+    assert view["model"]["api_base"] == ""
+    """The field stays empty: the aliases file holds the address, not the settings."""
+
+
+def test_the_address_of_the_user_wins_over_the_alias(make_client, tmp_path):
+    client = make_client()
+    path = _aliases_file(tmp_path)
+
+    client.put(
+        "/api/config/model", json={"model_name": "my-alias", "litellm_config": path, "api_base": "https://mine/v1"}
+    )
+
+    view = client.get("/api/config").json()
+    assert view["sources"]["api_base"] == "user"
+    assert view["model"]["api_base"] == "https://mine/v1"
+
+
 def test_the_key_of_the_alias_file_is_the_key_of_the_agent(make_client, tmp_path):
     path = tmp_path / "litellm_config.yaml"
     path.write_text(
