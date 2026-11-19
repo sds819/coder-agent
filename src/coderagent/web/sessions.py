@@ -9,6 +9,7 @@ import asyncio
 import queue
 import threading
 from collections import deque
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +64,7 @@ class SessionRuntime:
         self._lock = threading.Lock()
         self._seq = 0
         self._subscribers: list[tuple[asyncio.AbstractEventLoop, asyncio.Queue]] = []
-        self._queue: queue.Queue[str] = queue.Queue()
+        self._queue: queue.Queue[Callable[[], None]] = queue.Queue()
         self._worker = threading.Thread(target=self._work, daemon=True, name=f"session-{self.session.id}")
         self._worker.start()
         self._subscribe()
@@ -125,30 +126,55 @@ class SessionRuntime:
 
     # -- the work ---------------------------------------------------------
 
-    def submit(self, text: str) -> None:
+    def submit(self, text: str, purpose: str = "") -> None:
         """Queue a message for the worker. Raises `SessionBusy` when it is running."""
+        self._enqueue(lambda: self._execute(text, purpose))
+
+    def _enqueue(self, job: Callable[[], None]) -> None:
+        """Put a job on the worker thread. Only one job runs at a time."""
         with self._lock:
             if self.busy.is_set():
                 raise SessionBusy(f"the session {self.session.id} is running")
             self.busy.set()
-        self._queue.put(text)
+        self._queue.put(job)
+
+    def review(self) -> dict[str, Any]:
+        """Review the changes of the project: the diff goes into the prompt of a turn.
+
+        The turn runs on the worker thread, like every other turn. The diff goes
+        to the browser first, so the user sees what is being reviewed.
+        """
+        from coderagent.ui.commands.review import changes, prompt
+
+        diff, untracked, error = changes(self.cwd)
+        if error:
+            return {"error": error}
+        if not diff and not untracked:
+            return {"error": "No changes to review."}
+        self._enqueue(lambda: self._review_turn(prompt(diff, untracked), diff, untracked))
+        return {"diff": diff, "untracked": untracked}
+
+    def _review_turn(self, text: str, diff: str, untracked: list[str]) -> None:
+        """The card with the diff, then the turn that reviews it."""
+        self.emit({"kind": "review", "diff": diff, "untracked": untracked})
+        self._run_turn(text, "review")
 
     def _work(self) -> None:
         while True:
-            text = self._queue.get()
+            job = self._queue.get()
             try:
-                self._execute(text)
+                job()
             except Exception as error:
                 self.emit({"kind": "error", "error": f"{type(error).__name__}: {error}"})
             finally:
                 self.busy.clear()
                 self._queue.task_done()
 
-    def _execute(self, text: str) -> None:
+    def _execute(self, text: str, purpose: str = "") -> None:
         if text.startswith("/"):
             self._run_command(text)
             return
-        self._run_turn(text)
+        self._run_turn(text, purpose)
 
     def _run_turn(self, text: str, purpose: str = "") -> None:
         loop = self.loop()

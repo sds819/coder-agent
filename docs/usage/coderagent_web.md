@@ -44,7 +44,10 @@ Three columns:
   buttons. The box under the conversation takes a message or a slash command
   (`/help`, `/clear`, `/cost`, … — the same commands as the terminal
   interface). The dropdown under the box lists them and says what each one
-  takes. `Interrupt` stops the turn that is running.
+  takes. `Review the changes` reviews the changes of the working tree: the
+  diff goes into a turn of its own, and the browser shows the diff that is
+  being reviewed above the findings. `Interrupt` stops the turn that is
+  running.
 
   The page itself does not scroll: every column has its own scrollbar. The
   conversation follows the newest output, unless you scroll up to read

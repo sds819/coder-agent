@@ -44,8 +44,17 @@ async function api(path, options = {}) {
   }
   const response = await fetch(path, opts);
   const text = await response.text();
-  if (!response.ok) throw new Error(`${response.status} ${text}`);
+  if (!response.ok) throw new Error(detailOf(text) || `${response.status}`);
   return text ? JSON.parse(text) : null;
+}
+
+/* The reason of a failure: the server says it in `detail`. */
+function detailOf(text) {
+  try {
+    return JSON.parse(text).detail || "";
+  } catch (error) {
+    return "";
+  }
 }
 
 // -- the conversation ------------------------------------------------------
@@ -234,6 +243,21 @@ function render(item) {
     case "command_output":
       bubble("command", item.text);
       break;
+    case "review": {
+      const card = el("div", "tool review");
+      const header = el("header");
+      header.appendChild(el("strong", "", t("review")));
+      card.appendChild(header);
+      const body = el("div", "body");
+      body.appendChild(diffView(item.diff || ""));
+      if ((item.untracked || []).length) {
+        body.appendChild(el("div", "note", t("untracked", { files: item.untracked.join(", ") })));
+      }
+      card.appendChild(body);
+      target().appendChild(card);
+      scrollToBottom();
+      break;
+    }
     case "error":
       bubble("error", item.error);
       break;
@@ -554,6 +578,18 @@ function wire() {
       const select = document.getElementById("command-list");
       input.value = select.value;
       document.getElementById("composer").requestSubmit();
+    };
+  }
+
+  const review = document.getElementById("review");
+  if (review) {
+    review.onclick = async () => {
+      if (!state.sessionId) return;
+      try {
+        await api(`/api/sessions/${state.sessionId}/review`, { method: "POST" });
+      } catch (error) {
+        bubble("error", error.message);
+      }
     };
   }
 

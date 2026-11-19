@@ -1273,6 +1273,7 @@ The endpoints of the API:
 | `POST /api/sessions/{id}/resume` | Continue the session |
 | `POST /api/sessions/{id}/fork` | A copy of the session |
 | `POST /api/sessions/{id}/messages` | Send a message |
+| `POST /api/sessions/{id}/review` | Review the changes of the project |
 | `POST /api/sessions/{id}/interrupt` | Interrupt the turn |
 | `POST /api/sessions/{id}/mode` | Change the permission mode of the session |
 | `POST /api/approvals/{id}` | Answer an approval |

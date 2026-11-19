@@ -1152,6 +1152,7 @@ curl -N http://127.0.0.1:8765/api/sessions/20261109-3f0a91/stream
 | `POST /api/sessions/{id}/resume` | 续接会话 |
 | `POST /api/sessions/{id}/fork` | 复制会话 |
 | `POST /api/sessions/{id}/messages` | 发消息 |
+| `POST /api/sessions/{id}/review` | 评审这个项目的改动 |
 | `POST /api/sessions/{id}/interrupt` | 打断这一轮 |
 | `POST /api/sessions/{id}/mode` | 改这个会话的权限模式 |
 | `POST /api/approvals/{id}` | 回答审批 |

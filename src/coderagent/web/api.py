@@ -224,6 +224,23 @@ def send_message(session_id: str, body: MessageBody, request: Request, _: None =
     return {"accepted": True, "session_id": runtime.session.id}
 
 
+@router.post("/sessions/{session_id}/review", status_code=202)
+def review(session_id: str, request: Request, _: None = Depends(require_client)) -> dict:
+    """Review the changes of the project.
+
+    The diff goes into the prompt of a turn of its own, and the answer comes
+    back in the stream of the session.
+    """
+    runtime = _runtime(request, session_id)
+    try:
+        result = runtime.review()
+    except SessionBusy as error:
+        raise HTTPException(status_code=409, detail=str(error))
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return {"accepted": True, **result}
+
+
 @router.post("/sessions/{session_id}/interrupt")
 def interrupt(session_id: str, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Stop the turn that is running."""

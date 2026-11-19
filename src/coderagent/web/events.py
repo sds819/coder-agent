@@ -6,6 +6,7 @@ call is one item per action, and a tool result is one item per observation.
 
 from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventType
+from coderagent.core.loop import REVIEW_NOTE
 from coderagent.ui.widgets.tool_card import summarize
 
 TRANSIENT_KINDS = frozenset({"text_delta", "reasoning_delta"})
@@ -21,10 +22,14 @@ def normalize(event: Event) -> list[dict]:
     """The items of one event. An event that says nothing renders nothing."""
     payload = event.payload
     if event.type == EventType.USER_MESSAGE:
+        content = payload.get("content", "")
+        if content == REVIEW_NOTE:
+            """The diff of a review has its own card. The note that replaces it says nothing to the user."""
+            return []
         return [
             {
                 "kind": "user_message",
-                "content": describe_message(payload.get("content", "")),
+                "content": describe_message(content),
                 "original": payload.get("original", ""),
             }
         ]
