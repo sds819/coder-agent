@@ -9,9 +9,7 @@ from typing import Any
 import yaml
 
 from coderagent.paths import config_home
-from coderagent.tools.permissions import Rule
-
-DECISIONS = ("allow", "ask", "deny")
+from coderagent.tools.permissions import DECISIONS, Rule
 
 
 class RuleError(ValueError):

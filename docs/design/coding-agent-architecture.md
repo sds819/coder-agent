@@ -902,6 +902,15 @@ sandbox:
 > 另外两处也一样：`context.summarize_model` 被丢掉，
 > `ui/custom_commands.py` 加载**项目**命令时把 `model` 字段清掉
 > （用户命令 `~/.coderagent/commands` 里的可以写）。
+>
+> 同一条道理还管着**跑在用户机器上的程序**：`ui.file_opener`、`ui.notify_command`
+> 和 `sandbox` 的 `type`（连同环境的那些选项）都从项目层丢掉。项目可以关沙箱，
+> 不能开，也不能决定命令在哪里跑。
+>
+> 项目层里**写坏的规则算成 deny**：`permissions.rules` 里不是 `allow`/`ask`/`deny`
+> 的决定值，在 `core/trust.py` 的 `_denies_of()` 里被当成拒绝并记一条警告——
+> 写坏的拒绝不能变成放行。用户层（`~/.coderagent/config.yaml`）里写坏的规则
+> 在读配置时就被拒（`config/schema.py` 的 `_known_rules`），会话开场就停下来。
 
 ### 7.1 谁可以写配置
 

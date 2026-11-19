@@ -13,9 +13,13 @@ command is a thing that has to be trusted again.
 import copy
 import hashlib
 import json
+import logging
 from pathlib import Path
 
 from coderagent.paths import config_home
+from coderagent.tools.permissions import RULE_KEYS
+
+logger = logging.getLogger("coderagent.trust")
 
 TRUST_FILE = "trusted.json"
 TRUSTED = "trusted"
@@ -187,9 +191,14 @@ def tightened(project: dict) -> dict:
         """The summary of the context goes to a model: the project may not choose it."""
         context.pop("summarize_model", None)
     sandbox = result.get("sandbox")
-    if isinstance(sandbox, dict) and str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
-        """A project may close the sandbox, never open it."""
-        sandbox.pop("mode", None)
+    if isinstance(sandbox, dict):
+        """A project may close the sandbox, never open it, and never choose
+        where the commands of the agent run: an image of the project would
+        take the workspace of the user with it."""
+        if str(sandbox.get("mode") or "") not in TIGHT_SANDBOX_MODES:
+            sandbox.pop("mode", None)
+        for key in [key for key in sandbox if key != "mode"]:
+            sandbox.pop(key)
     telemetry = result.get("telemetry")
     if isinstance(telemetry, dict):
         if str(telemetry.get("otel_endpoint") or ""):
@@ -202,6 +211,8 @@ def tightened(project: dict) -> dict:
     if isinstance(ui, dict):
         """A project may not choose the program that runs on the machine of the user."""
         ui.pop("file_opener", None)
+        ui.pop("notify_command", None)
+        """The notifier runs a program of the project and hands it the answer of the agent."""
     result.pop("history", None)
     """The history belongs to the user: a project may neither hide it nor delete it."""
     if isinstance(shell, dict):
@@ -216,12 +227,29 @@ def tightened(project: dict) -> dict:
         """A project may close the network, never open it."""
         permissions.pop("network", None)
     rules = permissions.get("rules")
-    permissions["rules"] = (
-        [rule for rule in rules if isinstance(rule, dict) and str(rule.get("decision")) == "deny"]
-        if isinstance(rules, list)
-        else []
-    )
+    permissions["rules"] = _denies_of(rules) if isinstance(rules, list) else []
     return result
+
+
+def _denies_of(rules: list) -> list[dict]:
+    """The rules of a project: they may only deny.
+
+    A rule that says something else is a deny as well: a broken deny must not
+    turn into an allow, and a project may not break the session of the user
+    with a rule it wrote wrong.
+    """
+    denies = []
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+        decision = str(rule.get("decision") or "")
+        if not decision or decision in ("allow", "ask"):
+            """A project may not allow itself what the user has to be asked for."""
+            continue
+        if decision != "deny":
+            logger.warning("The rule of the project has the unknown decision '%s': it is treated as a deny.", decision)
+        denies.append({**{key: value for key, value in rule.items() if key in RULE_KEYS}, "decision": "deny"})
+    return denies
 
 
 def _entries(project: dict, section: str, key: str) -> list:

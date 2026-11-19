@@ -12,6 +12,19 @@ from coderagent.tools.permissions import (
 )
 
 
+def test_a_rule_with_an_unknown_decision_asks(tmp_path):
+    """A decision the policy does not know is not an allow: the user is asked."""
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT, [Rule(tool="write", pattern="*.py", decision="Deny")], cwd=tmp_path
+    )
+    assert policy.check("write", {"path": "a.py"}) == "ask"
+
+
+def test_a_rule_with_an_unknown_decision_asks_for_bash(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [Rule(tool="bash", pattern=".*", decision="Deny")], cwd=tmp_path)
+    assert policy.check("bash", {"command": "pytest -q"}) == "ask"
+
+
 def test_the_default_mode_allows_reads_and_asks_for_everything_else(tmp_path):
     policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
     assert policy.check("read", {"path": "a.py"}) == "allow"

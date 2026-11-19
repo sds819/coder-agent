@@ -455,7 +455,10 @@ it was.
   working directory is refused.
 - **Rules** — `~/.coderagent/rules.yaml` and `.coderagent/rules.yaml` decide
   per tool and per pattern. The user level file wins, except that a `deny` is
-  never beaten. The rules of the project may only deny.
+  never beaten. The rules of the project may only deny. The rules of the
+  configuration file are checked when the configuration is read: a wrong
+  decision or a wrong key stops the session at the start, and a rule of the
+  project that was written wrong is a deny.
 - **`Always allow`** — the button of an approval writes a rule, so the same
   call — the same file, or the same command — goes through from then on.
 - **Denied paths** — `permissions.deny_paths`, paths the agent may not touch.
@@ -858,7 +861,9 @@ memory:
 - **The project may only take tools away** — the mode of a project may only be
   `plan` or `readonly`, its rules may only deny, its denied paths are added to
   the ones of the user, and the tools it names may only remove from the tools
-  of the user.
+  of the user. It may also not choose the programs that would run on the
+  machine of the user: the editor, the notifier and the environment of the
+  sandbox are the decision of the user.
 
 ### Example
 
@@ -1130,7 +1135,8 @@ $ python -m pytest -q
   of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
 - **A program of your own may say it** — `ui.notify_command` names a program that
   is called with the title and the body of the notification, e.g. `notify-send`.
-  A program that fails is a warning, not a broken session.
+  A program that fails is a warning, not a broken session. A project may not
+  choose the notifier: that program runs on the machine of the user.
 - **The answer is Markdown** — the code blocks, the tables and the lists look the
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; `ui.markdown: false` keeps it plain.
@@ -1361,7 +1367,9 @@ repository. Choosing a set of permissions is the decision of the user.
 
 The tightening of the project still wins: a project that closes the sandbox
 (`sandbox.mode: read-only`) keeps it closed, even when the profile says
-`full-access`.
+`full-access`. A project may not say *where* the commands run: the `type` of
+the sandbox and the options of the environment are dropped from the
+configuration of a project.
 
 The sections and what they hold:
 

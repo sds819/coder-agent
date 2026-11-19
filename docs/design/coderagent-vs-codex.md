@@ -134,6 +134,9 @@ sandbox:
 - **信任边界照旧**：项目里的配置**只能关沙箱，不能开沙箱**（`core/trust.py` 的
   `tightened()` 只留下更紧的那两档；`config/loader.py` 里两档里更紧的算数，
   用户层不能把项目关掉的沙箱重新打开）；
+- **项目不能决定命令在哪里跑**：沙箱的 `type` 和环境的那些选项（`image` 等等）
+  都从项目层丢掉——`tightened()` 只留下 `mode`（`core/trust.py`）。项目的环境会
+  把用户的工作目录一起带走，那个选择归用户；
 - **模型会被告知**：一段 `<sandbox mode="…">` 进上下文，每轮重算，不烤进 system prompt；
 - **机器上缺那个程序，会话就起不来**（`UnsupportedSandbox`）：承诺兑现不了，就不要许。
 
@@ -503,7 +506,7 @@ Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 
 
 | 能力 | Codex | coderagent |
 |---|---|---|
-| **信任边界** | 项目配置可以带 MCP server、hook | **项目只能拿走能力，不能给能力**（`src/coderagent/core/trust.py`）：模式只留 plan/readonly、规则只留 deny、路径取并集、工具取交集、**`model` 整段丢掉**（项目的端点会把对话和用户的 key 一起带走）、**`context.summarize_model` 丢掉**、**项目命令里的 `model` 清掉** |
+| **信任边界** | 项目配置可以带 MCP server、hook | **项目只能拿走能力，不能给能力**（`src/coderagent/core/trust.py`）：模式只留 plan/readonly、规则只留 deny（写坏的规则也算 deny）、路径取并集、工具取交集、**`model` 整段丢掉**（项目的端点会把对话和用户的 key 一起带走）、**`context.summarize_model` 丢掉**、**项目命令里的 `model` 清掉**、**`ui.file_opener` / `ui.notify_command` / `sandbox.type` 丢掉**（跑在用户机器上的程序归用户挑） |
 | **路径边界** | 由沙箱决定 | `within_bounds()` 在**所有**模式下都生效，**用户的 `allow` 规则也放宽不了** |
 | **事实来源** | 会话状态 | **事件日志是唯一事实来源**，压缩只把原文移出窗口，不删事实 |
 | **离线评测** | 有 `codex exec`，但没有可对比的指纹 | `coder eval` + `coder eval-compare` + 指纹，**能测出「harness 坏了」**（模型会绕开坏掉的 `edit`，只数工具调用是测不出来的） |
@@ -684,6 +687,8 @@ CLI 选项、周边产品），再逐条对 coderagent 的源码。这一轮**�
 - **`--output-last-message`**：最后一条回答写进文件，就那一段文字。
 - **`ui.notify_command`**：一个外部程序，拿到通知的**标题和正文**两个参数。
   跑不起来只是记一条警告。终端通知（OSC 777）还在，两者是补充关系。
+  **项目不能挑通知程序**（`core/trust.py` 丢掉项目层的 `ui.notify_command`）——
+  那个程序跑在用户的机器上，还拿着 agent 的回答。
 - **MCP 每服务器超时**：`startup_timeout` 和 `tool_timeout`，不写就用全局的。
   一个慢的服务器拖不住别的了。
 - **`shell_environment`**（**安全向**）：命令的环境里**像秘密的名字一定被去掉**

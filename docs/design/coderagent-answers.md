@@ -183,6 +183,7 @@
 - **位置**：项目 `<project>/.coderagent/rules.yaml` 和用户 `<config_home>/rules.yaml`。
 - **优先级**：**项目规则先、用户规则后**。在 `allow` / `ask` 之间**后写的赢**，也就是说用户可以覆盖项目的同名规则；但 **`deny` 不会被后面的规则盖掉**——项目的 `deny` 挡住的就是用户也挡不住的。
 - **格式**：`{"rules": [{tool, pattern, decision, reason}]}`。只认这四个键，多一个就抛 `RuleError`（带文件名和行号）。`decision` 只能是 `allow` / `ask` / `deny`。
+- **配置文件里的规则**（`permissions.rules`）走另一条路：读配置时就被检查（`config/schema.py` 的 `_known_rules`），决定值不对或键不对会抛 `ValidationError`，会话在开场就停下来。**项目层**里写坏的规则算成**拒绝**（`core/trust.py` 的 `_denies_of()`，并记一条警告）——写坏的拒绝不能变成放行。策略层再兜一层：匹配上的规则里决定值不是那三个之一时，一律当成 `ask`（`permissions._strictest()`）。
 - **匹配语义**（`Rule.pattern`）：
   - **路径类工具**：`pattern` 是 **glob**，用 `glob_to_regex` 转成正则，对**相对 cwd 的路径**匹配。`*` 不跨 `/`，`**` 跨。
   - **`bash`**：`pattern` 是**正则**，而且必须匹配**整段的开头**（`git push` 不会匹配 `echo "git push"`）。

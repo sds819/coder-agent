@@ -10,6 +10,7 @@ from coderagent.core.shell_env import INHERITS
 from coderagent.models.call import check_reserved
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
+from coderagent.tools.permissions import check_rule
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a coding agent working in a code repository. "
@@ -146,6 +147,18 @@ class PermissionConfig(BaseModel):
     """Directories outside the working directory that the agent may still touch."""
     network: str = "allow"
     """One of allow, deny. `deny` refuses the commands that reach the network."""
+
+    @field_validator("rules")
+    @classmethod
+    def _known_rules(cls, value: list[dict]) -> list[dict]:
+        for number, rule in enumerate(value, start=1):
+            try:
+                check_rule(rule)
+            except ValueError as error:
+                raise ValueError(f"rule {number}: {error}") from None
+            """A rule that says something the policy does not know is a rule
+            that may not deny: it is refused at the start instead."""
+        return value
 
 
 class ContextConfig(BaseModel):

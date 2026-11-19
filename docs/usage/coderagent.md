@@ -157,7 +157,9 @@ ui:
 
 The program is called with the title and the body of the notification:
 `notify-send coder "the work is done"`. A program that fails is a warning, not
-a broken session. `ui.notifications: false` turns the notifications off.
+a broken session. `ui.notifications: false` turns the notifications off. A
+project may not choose the notifier either: that program runs on your machine,
+with the answer of the agent in its hands.
 
 A picture goes to the model with `/image`:
 
@@ -555,6 +557,12 @@ the user beats a rule of the project with the same tool and pattern — except
 that a `deny` is never beaten by anything. The rules of the project may only
 **deny**: a project cannot allow itself something the user has to be asked for.
 
+The rules that live in the configuration file (`permissions.rules`) are checked
+when the configuration is read: a decision that is not `allow`, `ask` or `deny`,
+or a key that does not exist, stops the session at the start instead of turning
+into a rule that lets a call through. A rule of the project that is written
+wrong is a deny: a broken deny must never become an allow.
+
 ```yaml
 # .coderagent/rules.yaml
 rules:
@@ -703,6 +711,10 @@ sandbox:
 directory, `read-only` writes nothing. The mode and the permission mode are two
 axes: the permissions ask the user, the sandbox asks nobody. See
 [Sandbox](coderagent_sandbox.md).
+
+A project may close the sandbox but never open it, and it may not choose where
+the commands run: the `type` of the sandbox and the options of the environment
+are the decision of the user.
 
 ## What the agent reads
 
@@ -864,6 +876,12 @@ conversation goes is the decision of the user, so the whole `model` section of
 a project is dropped. So are the two other places where a model is named:
 `context.summarize_model` of a project, and the `model` of a command of the
 project. The commands of the user, in `~/.coderagent/commands`, may name one.
+
+The same holds for the programs a project would run on your machine: the
+editor of `ui.file_opener`, the notifier of `ui.notify_command` and the
+environment of `sandbox.type` are dropped from the configuration of a project.
+A project may close the sandbox, never open it, and it may never say where its
+commands run.
 
 ## The sessions and the money
 

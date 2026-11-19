@@ -87,7 +87,10 @@ The network is closed at the operating system too when `permissions.network` is
 
 A project may close the sandbox, never open it. The tightest of the two modes
 wins, so a repository that asks for `read-only` keeps the agent from writing,
-whatever the user level says.
+whatever the user level says. A project may also not choose **where** the
+commands run: the `type` of the sandbox and the options of the environment
+(`image` and the rest) are dropped from the configuration of a project, because
+an environment of a project would take the workspace of the user with it.
 
 ### What the sandbox needs
 

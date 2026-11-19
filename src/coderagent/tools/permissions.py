@@ -33,6 +33,31 @@ class Rule:
     reason: str = ""
 
 
+DECISIONS = ("allow", "ask", "deny")
+"""What a rule may say."""
+
+RULE_KEYS = ("tool", "pattern", "decision", "reason")
+"""The keys a rule has."""
+
+
+def check_rule(rule: dict) -> None:
+    """Refuse a rule that says something the policy does not know.
+
+    A decision that is not one of the three is not a decision: the policy would
+    take it for an allow, and a rule that may not deny is worse than no rule.
+    """
+    if not isinstance(rule, dict):
+        raise ValueError(f"a rule must be a mapping, not {type(rule).__name__}.")
+    unknown = set(rule) - set(RULE_KEYS)
+    if unknown:
+        raise ValueError(
+            f"a rule has the unknown keys {', '.join(sorted(unknown))}. A rule has {', '.join(RULE_KEYS)}."
+        )
+    decision = str(rule.get("decision") or "ask")
+    if decision not in DECISIONS:
+        raise ValueError(f"a rule has the unknown decision '{decision}'. Use one of: {', '.join(DECISIONS)}.")
+
+
 @dataclass
 class Decision:
     decision: str
@@ -184,6 +209,9 @@ class PermissionPolicy:
             return self._evaluate_bash(str(params.get("command", "")))
         matched = _strictest_rule([rule for rule in self.rules if self._matches(rule, tool, params)])
         decision = matched.decision if matched else self._default_decision(tool)
+        if decision not in DECISIONS:
+            """A decision that is not one of the three is not a decision: ask."""
+            decision = "ask"
         if tool in PATH_TOOLS:
             path = str(params.get("path", ""))
             if path and not self.within_bounds(path):
@@ -345,13 +373,19 @@ def _strictest_rule(rules: list[Rule]) -> Rule | None:
     A deny is not undone by a later rule: it holds in every mode, so a rule of
     the project cannot be opened by a rule of the user. Among the other
     decisions the last rule wins, so a rule of the user overrides a rule of the
-    project.
+    project. A decision that is not one of the three holds as well: a rule that
+    was written wrong is not undone by a later rule.
     """
     matched: Rule | None = None
     for rule in rules:
-        if rule.decision == "deny" or matched is None or matched.decision != "deny":
+        if _holds(rule) or matched is None or not _holds(matched):
             matched = rule
     return matched
+
+
+def _holds(rule: Rule) -> bool:
+    """Whether the rule may not be undone by a later one."""
+    return rule.decision == "deny" or rule.decision not in DECISIONS
 
 
 def _matches_bash(pattern: str, segment: str) -> bool:
@@ -369,6 +403,12 @@ def _matches_bash(pattern: str, segment: str) -> bool:
 
 
 def _strictest(first: str, second: str) -> str:
-    """The stricter of two decisions."""
+    """The stricter of two decisions.
+
+    A decision that is not one of the three is not a decision: it is an ask,
+    so that a rule which was written wrong never lets a call through.
+    """
     order = {"allow": 0, "ask": 1, "deny": 2}
-    return first if order.get(first, 1) >= order.get(second, 1) else second
+    if order.get(first, 1) >= order.get(second, 1):
+        return first if first in order else "ask"
+    return second if second in order else "ask"
