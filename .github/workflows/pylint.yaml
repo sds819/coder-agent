@@ -9,6 +9,7 @@ on:
       - main
     paths-ignore:
       - 'docs/**'
+      - 'docs/readme_zh.md'
       - 'README.md'
       - 'mkdocs.yml'
       - '.cursor/**'
@@ -20,6 +21,7 @@ on:
       - main
     paths-ignore:
       - 'docs/**'
+      - 'docs/readme_zh.md'
       - 'README.md'
       - 'mkdocs.yml'
       - '.cursor/**'

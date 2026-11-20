@@ -11,6 +11,7 @@ on:
       - v2.0
     paths-ignore:
       - 'docs/**'
+      - 'docs/readme_zh.md'
       - 'README.md'
       - 'mkdocs.yml'
       - '.cursor/**'
@@ -23,6 +24,7 @@ on:
       - v2.0
     paths-ignore:
       - 'docs/**'
+      - 'docs/readme_zh.md'
       - 'README.md'
       - 'mkdocs.yml'
       - '.cursor/**'
