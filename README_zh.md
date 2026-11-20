@@ -219,7 +219,7 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 
 **权限。** 五种模式：`default`（凡是会改东西的都问）、`acceptEdits`（写操作直接放行，其余的还是要问）、
 `plan` 和 `readonly`（什么都不改）以及 `bypass`（什么都不问）。规则写在 `~/.coderagent/rules.yaml`（你的）
-和 `.coderagent/rules.yaml`（项目的）里；**deny 永远压过 allow**。
+和 `.coderagent/rules.yaml`（项目的）里；`deny` 永远压过 `allow`。
 
 **会话。** 每个会话都有一份事件日志，所以它能被续接（`coder --resume`）、分叉（`/fork`）、
 回退（`/rewind`）和导出（`coder export`）；会话的轨迹还能发给 OpenTelemetry 采集器。
