@@ -45,6 +45,7 @@ dependencies = [
     "prompt_toolkit",
     "datasets",
     "openai != 1.100.0,!=1.100.1",  # https://github.com/SWE-agent/mini-swe-agent/issues/446
+    "fastapi>=0.115",  # the web interface of the coding agent
 ]
 
 [project.optional-dependencies]
@@ -75,7 +76,6 @@ dev = [
     "mkdocs-redirects",
     "portkey-ai",
     "swe-rex",
-    "fastapi>=0.115",
     "uvicorn>=0.30",
     "jinja2>=3.1.5",
     "httpx>=0.27",
@@ -86,7 +86,6 @@ contree = [
 ]
 
 web = [
-    "fastapi>=0.115",
     "uvicorn>=0.30",
     "jinja2>=3.1.5",
 ]
