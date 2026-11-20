@@ -151,6 +151,13 @@ agent.run("Write a sudoku game")
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+<a href="docs/readme_zh.md"><strong>中文版 README</strong></a>
+</td>
+<td>
+</td>
+</tr>
 </table>
 
 ## Let's get started!
