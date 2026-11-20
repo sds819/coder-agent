@@ -965,6 +965,8 @@
       
         
       
+        
+      
     
     
     
@@ -1160,6 +1162,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        技能页
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1398,6 +1411,34 @@
     
   
     子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_skills_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    技能
   
 
     
@@ -3643,6 +3684,8 @@
       
         
       
+        
+      
     
     
     
@@ -3850,6 +3893,34 @@
     
   
     Topic — Compared with Codex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-skill-hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Skill hub &amp; the skills page
   
 
     
@@ -4208,6 +4279,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        技能页
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4399,6 +4481,7 @@
 <li><a href="#cli">命令行选项</a></li>
 <li><a href="#chat">聊天页</a></li>
 <li><a href="#settings">设置页</a></li>
+<li><a href="#skills">技能页</a></li>
 <li><a href="#permissions">权限</a></li>
 <li><a href="#approvals">审批</a></li>
 <li><a href="#api">当 API 用</a></li>
@@ -4615,6 +4698,17 @@ coder<span class="w"> </span>web
   但<strong>走 API 的话规则不同</strong>：<code>api_key: ""</code> 是<strong>删掉</strong>存着的 key，不写这个字段（或写 <code>null</code>）
   才是保留。</li>
 </ul>
+<h2 id="skills">技能页</h2>
+<p>装好的技能，以及从网络装新技能的办法。</p>
+<ul>
+<li><strong>已安装</strong>：<code>~/.coderagent/skills/</code> 里的每个技能，带描述、来源和内容摘要。没有来源的是
+  你自己的。<code>详情</code> 打开整个 <code>SKILL.md</code>；从网络装来的技能还多两个按钮：<code>检查更新</code> 重新抓一次
+  来源比摘要，<code>卸载</code> 把它删掉。</li>
+<li><strong>从网络安装</strong>：一个填来源的输入框和一个按钮。下载的东西先在暂存区里等着，弹窗先摊开
+  给你看——来源、文件清单、摘要，还有 <strong><code>SKILL.md</code> 的全文</strong>——你点了<code>安装</code>才写进磁盘，
+  落在 <code>~/.coderagent/skills/&lt;名字&gt;/</code>。</li>
+</ul>
+<p>来源、限制和锁文件见<a href="../coderagent_skills_zh/">技能</a>。</p>
 <h2 id="permissions">权限</h2>
 <p>权限有两个地方管，管的不是同一件事：</p>
 <table>
@@ -4698,7 +4792,7 @@ coder<span class="w"> </span>web
 <h2 id="api">当 API 用</h2>
 <p>页面做的每个动作都是普通 HTTP 调用，可以拿脚本驱动。交互式文档在 <code>/api/docs</code>。</p>
 <p>驱动 agent 或者把 key 交出来的接口要带一个头 <code>X-Coder-Client: 1</code>：发消息、中断、改模式、
-回审批、写配置、读 api key。浏览器从别的网站发这个头要先过预检，而服务端不给预检许可，
+回审批、写配置、读 api key，还有动技能的写操作。浏览器从别的网站发这个头要先过预检，而服务端不给预检许可，
 所以别的网站没法驱动你的 agent。<code>curl</code> 不受影响。建会话、续接会话、fork 会话<strong>不要</strong>这个头
 ——它们只是开会话，不动手。</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># 建一个会话</span>
@@ -4857,6 +4951,41 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <td><code>/api/diff?path=</code></td>
 <td>工作区里这个文件的改动</td>
 </tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills</code></td>
+<td>装好的技能</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/{name}</code></td>
+<td>一个技能，带它的 <code>SKILL.md</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/preview</code></td>
+<td>下载一个来源并摊开给你看</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/install</code></td>
+<td>装上看过的技能</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/update</code></td>
+<td>重新抓一次来源，看它变没变</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/registry</code></td>
+<td>一个注册表里列的技能</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/skills/{name}</code></td>
+<td>卸载一个技能</td>
+</tr>
 </tbody>
 </table>
 <p>状态码：正忙着在跑一轮时再发消息 → <code>409</code>；审批 id 不认识 → <code>404</code>；会话 id 不认识 → <code>404</code>；
@@ -4925,6 +5054,7 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
   都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
   别的站点的页面问不到它。</li>
 <li><strong>API key 只写用户级文件</strong>，绝不写进会进 git 的项目级文件。</li>
+<li><strong>下载探不进内网</strong>。技能页的下载只走 <code>https://</code>，指向内网的主机被拒绝。</li>
 </ul>
 <h2 id="differences">和终端的差别</h2>
 <table>

@@ -963,6 +963,8 @@
       
         
       
+        
+      
     
     
     
@@ -1133,6 +1135,34 @@
     
   
     子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_skills_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    技能
   
 
     
@@ -1427,6 +1457,17 @@
     <span class="md-ellipsis">
       
         The settings page (/settings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-skills-page-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The skills page (/skills)
       
     </span>
   </a>
@@ -3630,6 +3671,8 @@
       
         
       
+        
+      
     
     
     
@@ -3837,6 +3880,34 @@
     
   
     Topic — Compared with Codex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-skill-hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Skill hub &amp; the skills page
   
 
     
@@ -4172,6 +4243,17 @@
     <span class="md-ellipsis">
       
         The settings page (/settings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-skills-page-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The skills page (/skills)
       
     </span>
   </a>
@@ -4607,6 +4689,22 @@ the stored key, and a missing <code>api_key</code> (or <code>null</code>) keeps 
 A <strong>new</strong> session reads the files again, so the new settings apply from the
 next session on. The session you are in keeps the model it has; use <code>/model
 &lt;name&gt;</code> to switch it right away.</p>
+<h3 id="the-skills-page-skills">The skills page (<code>/skills</code>)</h3>
+<p>The skills that are installed, and the way to install new ones from the network.</p>
+<ul>
+<li><strong>Installed</strong>: every skill in <code>~/.coderagent/skills/</code>, with its description,
+  its source and the digest of its content. A skill with no source is yours.
+  <code>Details</code> opens the whole <code>SKILL.md</code>; a skill that came from the network
+  also gets <code>Check for an update</code>, which fetches the source again and compares
+  the digest, and <code>Uninstall</code>.</li>
+<li><strong>Install from the network</strong>: a field for a source and a button that
+  downloads it. The download waits in the cache, and a dialog shows what it is
+  — the source, the files, the digest and the <strong>whole <code>SKILL.md</code></strong> — before
+  anything is written to the disk. <code>Install</code> writes it to
+  <code>~/.coderagent/skills/&lt;name&gt;/</code>.</li>
+</ul>
+<p>See <a href="../coderagent_skills/">Skills</a> for the sources, the limits and the lock
+file.</p>
 <h2 id="permissions">Permissions</h2>
 <p>The permissions are in two places, and they do different things.</p>
 <table>
@@ -4755,7 +4853,8 @@ themselves is in the templates.</p>
 a script. The interactive documentation is at <code>/api/docs</code>.</p>
 <p>The endpoints that drive the agent or hand out the key ask for the header
 <code>X-Coder-Client: 1</code>: sending a message, interrupting, changing the mode,
-answering an approval, writing the configuration, and reading the api key. A
+answering an approval, writing the configuration, reading the api key, and
+writing to the skills. A
 browser on another site cannot send that header without asking the server
 first, and the server does not grant it, so a page somewhere else cannot drive
 your agent. <code>curl</code> is not affected. Creating, resuming and forking a session
@@ -4904,6 +5003,41 @@ do not ask for the header — they start nothing.</p>
 <td><code>/api/diff?path=</code></td>
 <td>The changes of the working tree</td>
 </tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills</code></td>
+<td>The skills that are installed</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/{name}</code></td>
+<td>One skill, with its <code>SKILL.md</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/preview</code></td>
+<td>Download a source and show what it is</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/install</code></td>
+<td>Install a previewed skill</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/update</code></td>
+<td>Fetch the source of a skill again, and say whether it changed</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/skills/registry</code></td>
+<td>The skills a registry lists</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/skills/{name}</code></td>
+<td>Uninstall a skill</td>
+</tr>
 </tbody>
 </table>
 <p>A turn that is already running makes the next message fail with <code>409</code>. An
@@ -4947,6 +5081,9 @@ minutes by default). A tool that is denied never runs.</p>
   somewhere else cannot ask for it.</li>
 <li><strong>The api key is written to the user file only</strong>, never to the project file
   that goes into the repository.</li>
+<li><strong>A download cannot reach into the network.</strong> The downloads of the skills
+  page only go to <code>https://</code>, and a host that points inside the network is
+  refused.</li>
 </ul>
 <h2 id="the-differences-from-the-terminal-interface">The differences from the terminal interface</h2>
 <table>

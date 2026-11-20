@@ -963,6 +963,8 @@
       
         
       
+        
+      
     
     
     
@@ -1133,6 +1135,34 @@
     
   
     子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_skills_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    技能
   
 
     
@@ -3779,6 +3809,8 @@
       
         
       
+        
+      
     
     
     
@@ -3986,6 +4018,34 @@
     
   
     Topic — Compared with Codex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-skill-hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Skill hub &amp; the skills page
   
 
     
@@ -5564,6 +5624,9 @@ Run <span class="sb">`scripts/make_report.py`</span> to build the report...
 <p>The model sees the name and the description of every skill, and loads the
 whole one when the description fits the task. The files of the user are in
 <code>~/.coderagent/skills</code>. See <a href="../coderagent_skills/">Skills</a>.</p>
+<p>The page <code>/skills</code> of the web interface installs them from the network: a
+GitHub repository, a registry or one <code>SKILL.md</code>, looked at before it is
+written to the disk. See <a href="../coderagent_web/">The web interface</a>.</p>
 <h3 id="the-plugins">The plugins</h3>
 <p>A plugin adds tools, commands or hooks to the agent. It is a directory
 with a <code>plugin.py</code> in it, and it runs in the process of the agent, without a
@@ -5763,6 +5826,10 @@ the <code>session_cost</code> of the command line.</p>
 <tr>
 <td><code>~/.coderagent/commands/</code></td>
 <td>The commands of the user</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/skills.lock.json</code></td>
+<td>What was installed from the network, and where it came from</td>
 </tr>
 <tr>
 <td><code>~/.coderagent/trusted-plugins.json</code></td>
