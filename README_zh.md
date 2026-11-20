@@ -193,6 +193,7 @@ mini  # 跑命令行
 * [用 cookbook 增强它](https://mini-swe-agent.com/latest/advanced/cookbook/)
 * [常见问题](https://mini-swe-agent.com/latest/faq/)
 * [来贡献！](https://mini-swe-agent.com/latest/contributing/)
+* [English README](docs/readme.md)——英文版的那份介绍
 
 ## Coding agent（`coder`）
 
