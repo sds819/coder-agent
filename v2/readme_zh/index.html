@@ -4422,7 +4422,7 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
 <code>todo_write</code> 用来记任务清单；<code>task</code> 用来开子 agent；<code>skill</code> 用来加载技能。</p>
 <p><strong>权限。</strong> 五种模式：<code>default</code>（凡是会改东西的都问）、<code>acceptEdits</code>（写操作直接放行，其余的还是要问）、
 <code>plan</code> 和 <code>readonly</code>（什么都不改）以及 <code>bypass</code>（什么都不问）。规则写在 <code>~/.coderagent/rules.yaml</code>（你的）
-和 <code>.coderagent/rules.yaml</code>（项目的）里；<strong>deny 永远压过 allow</strong>。</p>
+和 <code>.coderagent/rules.yaml</code>（项目的）里；<code>deny</code> 永远压过 <code>allow</code>。</p>
 <p><strong>会话。</strong> 每个会话都有一份事件日志，所以它能被续接（<code>coder --resume</code>）、分叉（<code>/fork</code>）、
 回退（<code>/rewind</code>）和导出（<code>coder export</code>）；会话的轨迹还能发给 OpenTelemetry 采集器。
 浏览器里开的会话能在终端里接着聊，反过来也一样。</p>
