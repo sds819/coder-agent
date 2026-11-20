@@ -4,7 +4,7 @@
 
 # 极简的 AI 软件工程 agent
 
-> 英文版：[README.md](https://github.com/sds819/mini-swe-agent/blob/main/README.md)
+> 英文版：[README.md](docs/readme.md)
 
 📣 [mini-swe-agent 现在支撑着 Ramp SWE-Bench](https://labs.ramp.com/swebench)<br/>
 📣 [mini-swe-agent 在 DeepSWE 上胜过 Claude Code 和 Codex](https://deepswe.datacurve.ai/blog#evaluation-harness)<br/>
@@ -284,7 +284,7 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 * [Hooks](docs/usage/coderagent_hooks_zh.md)——九个事件上的 hook
 * [沙箱](docs/usage/coderagent_sandbox_zh.md)——命令跑在哪里
 * [评测](docs/usage/coderagent_eval_zh.md)——任务集、报告和对比
-* [English README](https://github.com/sds819/mini-swe-agent/blob/main/README.md)——英文版的那份介绍
+* [English README](docs/readme.md)——英文版的那份介绍
 
 英文的概览在 [The coding agent](docs/usage/coderagent.md)。
 
