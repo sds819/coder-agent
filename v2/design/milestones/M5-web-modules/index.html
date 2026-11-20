@@ -4822,7 +4822,9 @@
 <blockquote>
 <p>目标：把 <a href="../M5-web-interface/">M5-web-interface.md</a> 里的<strong>总体设计</strong>落到<strong>模块与函数</strong>一级：
 每个模块负责什么、对外暴露哪些函数与签名、每个接口出入参长什么样、失败时怎么办。
-状态：已完成（M5 的代码已落地，本文按现有实现逐模块描述，未决问题见 §16）。</p>
+状态：已完成（M5 的代码已落地，本文按现有实现逐模块描述，未决问题见 §16）。
+后来的改动（2026-11-20）：fastapi 进了<strong>核心依赖</strong>，本文里「fastapi 只在 <code>web</code> extra 里」那几条
+已经过时；<code>web/__init__.py</code> 不在模块层 import fastapi / uvicorn 这条仍然成立。</p>
 </blockquote>
 <p>M5 那篇讲的是「为什么这么做」。本文讲的是「具体是哪个函数、参数是什么、返回什么」。
 两者配合看：<strong>先读 M5 的 §2–§11 建立认知，再查本文的表格定位到具体函数。</strong></p>
