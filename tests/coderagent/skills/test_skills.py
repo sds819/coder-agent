@@ -5,8 +5,8 @@ from pathlib import Path
 from coderagent.config.schema import Config
 from coderagent.core.events import EventBus
 from coderagent.core.session import SessionStore
-from coderagent.extensions.skills import load_skills, parse_skill, skill_index
 from coderagent.run import build_loop
+from coderagent.skills import load_skills, parse_skill, skill_index
 from coderagent.testing.factory import build_context
 from coderagent.testing.scripted_model import ScriptedModel
 

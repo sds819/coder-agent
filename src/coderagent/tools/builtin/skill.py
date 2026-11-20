@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from coderagent.extensions.skills import Skill
+from coderagent.skills import Skill
 from coderagent.tools.base import ToolContext, ToolResult
 
 

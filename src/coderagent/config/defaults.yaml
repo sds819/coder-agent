@@ -88,3 +88,15 @@ telemetry:
   otel_endpoint: ""
   otel_headers: {}
   otel_timeout: 5.0
+
+skills:
+  enabled: true
+  max_bytes: 8388608
+  max_file_bytes: 1048576
+  max_files: 2000
+  max_depth: 16
+  timeout: 30
+  registries: []
+  github_token: ""
+  allow_insecure: false
+  allowed_hosts: []

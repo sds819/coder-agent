@@ -19,6 +19,9 @@ The front matter of `SKILL.md` says what the skill is for:
 
 The index of the skills goes into the system prompt. The model decides to load one
 when the description fits the task, and gets the whole instruction then.
+
+This module only reads the skills that are on the disk. Downloading them is in
+`coderagent.skills.source` and putting them there is in `coderagent.skills.install`.
 """
 
 from dataclasses import dataclass

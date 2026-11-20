@@ -36,12 +36,12 @@ from coderagent.extensions.reflect import (
     reflect_prompt,
     user_memory_path,
 )
-from coderagent.extensions.skills import load_skills, skill_index
 from coderagent.models import verbosity
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
 from coderagent.paths import config_home
+from coderagent.skills import load_skills, skill_index
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
 from coderagent.tools.builtin.skill import SkillTool

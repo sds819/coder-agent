@@ -441,7 +441,7 @@ def _agents(context: CommandContext, argument: str) -> None:
 
 
 def _skills(context: CommandContext, argument: str) -> None:
-    from coderagent.extensions.skills import load_skills
+    from coderagent.skills import load_skills
 
     skills = load_skills(context.cwd, context.loop.context.user_home)
     if not skills:

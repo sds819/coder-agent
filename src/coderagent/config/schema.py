@@ -467,6 +467,31 @@ class TelemetryConfig(BaseModel):
     """The seconds one push may take."""
 
 
+class SkillsConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    """Whether skills may be downloaded and installed."""
+    max_bytes: int = Field(default=8 * 1024 * 1024, ge=0)
+    """How many bytes a download may take."""
+    max_file_bytes: int = Field(default=1024 * 1024, ge=0)
+    """How many bytes one file of a skill may have."""
+    max_files: int = Field(default=2000, ge=0)
+    """How many files a skill may have."""
+    max_depth: int = Field(default=16, ge=0)
+    """How deep the directories of a skill may go."""
+    timeout: int = Field(default=30, ge=0)
+    """The seconds a download may take."""
+    registries: list[str] = Field(default_factory=list)
+    """The registries that are offered in the page of the skills."""
+    github_token: str = ""
+    """The token of GitHub. It only goes into the headers of a request."""
+    allow_insecure: bool = False
+    """Whether `http://` may be fetched. `https://` is the rule."""
+    allowed_hosts: list[str] = Field(default_factory=list)
+    """The hosts that may point inside the network. The others may not."""
+
+
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
     """The values that went wrong are not shown: a key may be among them.
@@ -490,6 +515,7 @@ class Config(BaseModel):
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     verify: VerifyConfig = Field(default_factory=VerifyConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
+    skills: SkillsConfig = Field(default_factory=SkillsConfig)
     profiles: dict[str, dict] = Field(default_factory=dict)
     """Named presets of the configuration. `--profile` picks one of them."""
     profile: str = ""
