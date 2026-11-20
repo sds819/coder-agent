@@ -587,7 +587,8 @@ FastAPI 的事件循环里**绝不**跑 agent 代码——碰文件系统/模型
 模板目录、`i18n.py` 的 `LANGUAGES`/`STRINGS`、以及 `REGION_LANGUAGES`。
 
 **依赖边界**：`web/__init__.py` 只有 docstring——`import coderagent` **不会**拉起
-fastapi / uvicorn / jinja2；`ui/cli.py` 的 `web` 子命令在函数体里惰性导入。
+uvicorn（fastapi 已进核心依赖，uvicorn 还在 `web` extra 里）；`ui/cli.py` 的 `web`
+子命令在函数体里惰性导入。
 
 #### Web 版的功能清单
 
@@ -806,7 +807,7 @@ src/coderagent/
 │   ├── report.py            # 报告与 fingerprint
 │   └── compare.py           # 两次运行的对比
 ├── web/
-│   ├── __init__.py          # 只有 docstring：不 import fastapi（web extra 才是硬依赖）
+│   ├── __init__.py          # 只有 docstring：不 import fastapi / uvicorn
 │   ├── app.py               # create_app：装配 app、静态资源、模板
 │   ├── api.py               # 全部 REST + SSE 端点（/api 前缀）
 │   ├── sessions.py          # SessionRuntime / SessionRegistry：线程、环形缓冲、turn
@@ -1102,8 +1103,8 @@ model.api_key  >  model.model_kwargs.api_key  >  别名文件 litellm_params.api
 | 端到端 | 假 model（脚本化响应序列）+ 真实 env | 多轮收敛、工具并行顺序正确 |
 | Web 层 | `TestClient` + `ScriptedModel` + 真实 tmp 文件系统 | 写接口缺客户端头 403、会话忙 409、路径越界 403、密钥不明文、项目级配置永不被写、审批超时自动 DENY |
 
-Web 层的测试在 `tests/coderagent/web/`：`fastapi` 是**可选依赖**，测试文件首行
-`pytest.importorskip("fastapi")`；`MSWEA_CODER_HOME` 被全局 fixture 指向 tmp → 隔离。
+Web 层的测试在 `tests/coderagent/web/`：测试文件首行有 `pytest.importorskip("fastapi")`
+（环境里没装 fastapi 就跳过这一层）；`MSWEA_CODER_HOME` 被全局 fixture 指向 tmp → 隔离。
 **所有 web 代码必须在调用时读 `config_home()`，不能 import 时缓存**。
 
 关键：**造一个 `ScriptedModel`**，按序返回预置响应，用于不依赖真实 API 的全链路测试（这是让 CI 可跑的前提）。
@@ -1154,11 +1155,12 @@ include = ["minisweagent*", "coderagent*"]
 coder = "coderagent.ui.cli:app"
 ```
 
-Web 版是**可选依赖**（`import coderagent` 不该拉起 fastapi）：
+Web 版的**服务进程**还是可选依赖（`import coderagent` 不该拉起 uvicorn）：
+fastapi 已进核心依赖，uvicorn 和 jinja2 留在 `web` extra 里。
 
 ```toml
 [project.optional-dependencies]
-web = ["fastapi", "uvicorn", "jinja2"]
+web = ["uvicorn", "jinja2"]
 ```
 
 ### 12.1 M5 对既有文件的改动（全部是加法）

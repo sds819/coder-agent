@@ -205,7 +205,7 @@ and fork, context compaction, memory, subagents, MCP servers, hooks — and it r
 **and** in the browser.
 
 ```bash
-pip install -e ".[web]"      # the browser interface needs fastapi, uvicorn and jinja2
+pip install -e ".[web]"      # the browser interface needs uvicorn and jinja2
 cd my-project
 
 coder                        # the terminal interface

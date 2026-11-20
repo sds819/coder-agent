@@ -22,7 +22,7 @@
 ## 安装与启动 {#install}
 
 ```bash
-pip install -e ".[web]"      # fastapi、uvicorn、jinja2
+pip install -e ".[web]"      # uvicorn 和 jinja2（fastapi 在核心依赖里）
 cd my-project
 coder web
 ```

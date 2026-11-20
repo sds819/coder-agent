@@ -203,7 +203,7 @@ mini  # 跑命令行
 而且它既能在**终端**里跑，也能在**浏览器**里跑。
 
 ```bash
-pip install -e ".[web]"      # 网页版需要 fastapi、uvicorn 和 jinja2
+pip install -e ".[web]"      # 网页版需要 uvicorn 和 jinja2
 cd my-project
 
 coder                        # 终端界面
