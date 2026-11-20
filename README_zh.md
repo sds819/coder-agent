@@ -222,7 +222,8 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 和 `.coderagent/rules.yaml`（项目的）里；**deny 永远压过 allow**。
 
 **会话。** 每个会话都有一份事件日志，所以它能被续接（`coder --resume`）、分叉（`/fork`）、
-回退（`/rewind`）和导出（`coder export`）。浏览器里开的会话能在终端里接着聊，反过来也一样。
+回退（`/rewind`）和导出（`coder export`）；会话的轨迹还能发给 OpenTelemetry 采集器。
+浏览器里开的会话能在终端里接着聊，反过来也一样。
 
 **上下文。** 对话占满预算的 80% 时会被压缩；摘要里留着目标、发现、决定、动过的文件和还没解决的问题。
 一轮结束前三道闸门按这个顺序过：`Stop` hook、项目的 `verify.commands`、输出格式。
@@ -286,6 +287,15 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 * [沙箱](docs/usage/coderagent_sandbox_zh.md)——命令跑在哪里
 * [评测](docs/usage/coderagent_eval_zh.md)——任务集、报告和对比
 * [English README](docs/readme.md)——英文版的那份介绍
+
+下面这几页只有英文版：
+
+* [模型路由](docs/usage/coderagent_routing.md)——哪个模型干哪活
+* [记忆](docs/usage/coderagent_memory.md)——项目记忆和你的偏好
+* [技能](docs/usage/coderagent_skills.md)——agent 能加载的技能
+* [插件](docs/usage/coderagent_plugins.md)——扩展它的插件
+* [MCP server](docs/usage/coderagent_mcp.md)——别的 server 带来的工具
+* [会话的轨迹](docs/usage/coderagent_export.md)——导出轨迹，发给采集器
 
 英文的概览在 [The coding agent](docs/usage/coderagent.md)。
 

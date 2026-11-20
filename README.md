@@ -226,8 +226,9 @@ to load a skill.
 (the project's); a `deny` always wins over an `allow`.
 
 **Sessions.** Every session has an event log, so it can be resumed (`coder --resume`), forked
-(`/fork`), rewound (`/rewind`) and exported (`coder export`). A session started in the browser
-can be continued in the terminal, and the other way round.
+(`/fork`), rewound (`/rewind`) and exported (`coder export`). The trace of a session can be sent to
+an OpenTelemetry collector. A session started in the browser can be continued in the terminal, and
+the other way round.
 
 **Context.** The conversation is compacted when it reaches 80% of the budget; the summary keeps
 the goal, the findings, the decisions, the files that were touched and the open questions. Before
@@ -286,9 +287,20 @@ and the evaluation harness.
 
 In `docs/usage`:
 
-* [Coding agent overview](docs/usage/coderagent.md) — installation, the terminal interface, configuration, tools, permissions
-* [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
+* [Quick start](docs/usage/coderagent_quickstart.md) — install it, set the model, run the first round
 * [Everything `coder` can do](docs/usage/coderagent_features.md) — one page, every feature, with the errors you may hit
+* [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
+* [The commands](docs/usage/coderagent_commands.md) — every slash command
+* [Sub agents](docs/usage/coderagent_subagents.md) — sub agents and their own models
+* [Hooks](docs/usage/coderagent_hooks.md) — hooks on nine events
+* [The sandbox](docs/usage/coderagent_sandbox.md) — where the commands run
+* [The eval harness](docs/usage/coderagent_eval.md) — task suites, reports, comparisons
+* [Model routing](docs/usage/coderagent_routing.md) — which model does which job
+* [Memory](docs/usage/coderagent_memory.md) — project memory and your preferences
+* [Skills](docs/usage/coderagent_skills.md) — the skills the agent may load
+* [Plugins](docs/usage/coderagent_plugins.md) — the plugins that extend it
+* [MCP servers](docs/usage/coderagent_mcp.md) — the tools other servers bring
+* [The trace of a session](docs/usage/coderagent_export.md) — export the trace, send it to a collector
 
 And if you want to know how it was designed, see `docs/design`:
 
