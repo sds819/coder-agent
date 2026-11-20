@@ -162,6 +162,24 @@ A **new** session reads the files again, so the new settings apply from the
 next session on. The session you are in keeps the model it has; use `/model
 <name>` to switch it right away.
 
+### The skills page (`/skills`)
+
+The skills that are installed, and the way to install new ones from the network.
+
+- **Installed**: every skill in `~/.coderagent/skills/`, with its description,
+  its source and the digest of its content. A skill with no source is yours.
+  `Details` opens the whole `SKILL.md`; a skill that came from the network
+  also gets `Check for an update`, which fetches the source again and compares
+  the digest, and `Uninstall`.
+- **Install from the network**: a field for a source and a button that
+  downloads it. The download waits in the cache, and a dialog shows what it is
+  — the source, the files, the digest and the **whole `SKILL.md`** — before
+  anything is written to the disk. `Install` writes it to
+  `~/.coderagent/skills/<name>/`.
+
+See [Skills](coderagent_skills.md) for the sources, the limits and the lock
+file.
+
 ## Permissions
 
 The permissions are in two places, and they do different things.
@@ -277,7 +295,8 @@ a script. The interactive documentation is at `/api/docs`.
 
 The endpoints that drive the agent or hand out the key ask for the header
 `X-Coder-Client: 1`: sending a message, interrupting, changing the mode,
-answering an approval, writing the configuration, and reading the api key. A
+answering an approval, writing the configuration, reading the api key, and
+writing to the skills. A
 browser on another site cannot send that header without asking the server
 first, and the server does not grant it, so a page somewhere else cannot drive
 your agent. `curl` is not affected. Creating, resuming and forking a session
@@ -312,6 +331,13 @@ do not ask for the header — they start nothing.
 | GET | `/api/files?path=&depth=` | The entries of a directory |
 | GET | `/api/file?path=` | The content of a file |
 | GET | `/api/diff?path=` | The changes of the working tree |
+| GET | `/api/skills` | The skills that are installed |
+| GET | `/api/skills/{name}` | One skill, with its `SKILL.md` |
+| POST | `/api/skills/preview` | Download a source and show what it is |
+| POST | `/api/skills/install` | Install a previewed skill |
+| POST | `/api/skills/update` | Fetch the source of a skill again, and say whether it changed |
+| POST | `/api/skills/registry` | The skills a registry lists |
+| DELETE | `/api/skills/{name}` | Uninstall a skill |
 
 A turn that is already running makes the next message fail with `409`. An
 approval that nobody is waiting for is a `404`, and so is a session that does
@@ -358,6 +384,9 @@ Read this before you put it on a network.
   somewhere else cannot ask for it.
 - **The api key is written to the user file only**, never to the project file
   that goes into the repository.
+- **A download cannot reach into the network.** The downloads of the skills
+  page only go to `https://`, and a host that points inside the network is
+  refused.
 
 ## The differences from the terminal interface
 

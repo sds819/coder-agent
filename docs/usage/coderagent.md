@@ -832,6 +832,10 @@ The model sees the name and the description of every skill, and loads the
 whole one when the description fits the task. The files of the user are in
 `~/.coderagent/skills`. See [Skills](coderagent_skills.md).
 
+The page `/skills` of the web interface installs them from the network: a
+GitHub repository, a registry or one `SKILL.md`, looked at before it is
+written to the disk. See [The web interface](coderagent_web.md).
+
 ### The plugins
 
 A plugin adds tools, commands or hooks to the agent. It is a directory
@@ -1007,6 +1011,7 @@ the `session_cost` of the command line.
 | `~/.coderagent/CLAUDE.md` | The instructions and the preferences of the user |
 | `~/.coderagent/agents/`, `~/.coderagent/skills/`, `~/.coderagent/plugins/` | The extensions of the user |
 | `~/.coderagent/commands/` | The commands of the user |
+| `~/.coderagent/skills.lock.json` | What was installed from the network, and where it came from |
 | `~/.coderagent/trusted-plugins.json` | The plugins the user trusts |
 | `~/.coderagent/sessions/` | The event log of the sessions |
 | `~/.coderagent/checkpoints/` | The checkpoints of the sessions |

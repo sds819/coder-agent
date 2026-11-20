@@ -9,6 +9,7 @@
 - [命令行选项](#cli)
 - [聊天页](#chat)
 - [设置页](#settings)
+- [技能页](#skills)
 - [权限](#permissions)
 - [审批](#approvals)
 - [当 API 用](#api)
@@ -142,6 +143,19 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
   但**走 API 的话规则不同**：`api_key: ""` 是**删掉**存着的 key，不写这个字段（或写 `null`）
   才是保留。
 
+## 技能页 {#skills}
+
+装好的技能，以及从网络装新技能的办法。
+
+- **已安装**：`~/.coderagent/skills/` 里的每个技能，带描述、来源和内容摘要。没有来源的是
+  你自己的。`详情` 打开整个 `SKILL.md`；从网络装来的技能还多两个按钮：`检查更新` 重新抓一次
+  来源比摘要，`卸载` 把它删掉。
+- **从网络安装**：一个填来源的输入框和一个按钮。下载的东西先在暂存区里等着，弹窗先摊开
+  给你看——来源、文件清单、摘要，还有 **`SKILL.md` 的全文**——你点了`安装`才写进磁盘，
+  落在 `~/.coderagent/skills/<名字>/`。
+
+来源、限制和锁文件见[技能](coderagent_skills_zh.md)。
+
 ## 权限 {#permissions}
 
 权限有两个地方管，管的不是同一件事：
@@ -203,7 +217,7 @@ agent 要跑命令、写文件时会问。卡片上有三个按钮：
 页面做的每个动作都是普通 HTTP 调用，可以拿脚本驱动。交互式文档在 `/api/docs`。
 
 驱动 agent 或者把 key 交出来的接口要带一个头 `X-Coder-Client: 1`：发消息、中断、改模式、
-回审批、写配置、读 api key。浏览器从别的网站发这个头要先过预检，而服务端不给预检许可，
+回审批、写配置、读 api key，还有动技能的写操作。浏览器从别的网站发这个头要先过预检，而服务端不给预检许可，
 所以别的网站没法驱动你的 agent。`curl` 不受影响。建会话、续接会话、fork 会话**不要**这个头
 ——它们只是开会话，不动手。
 
@@ -250,6 +264,13 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/files?path=&depth=` | 一个目录里的条目 |
 | GET | `/api/file?path=` | 一个文件的内容 |
 | GET | `/api/diff?path=` | 工作区里这个文件的改动 |
+| GET | `/api/skills` | 装好的技能 |
+| GET | `/api/skills/{name}` | 一个技能，带它的 `SKILL.md` |
+| POST | `/api/skills/preview` | 下载一个来源并摊开给你看 |
+| POST | `/api/skills/install` | 装上看过的技能 |
+| POST | `/api/skills/update` | 重新抓一次来源，看它变没变 |
+| POST | `/api/skills/registry` | 一个注册表里列的技能 |
+| DELETE | `/api/skills/{name}` | 卸载一个技能 |
 
 状态码：正忙着在跑一轮时再发消息 → `409`；审批 id 不认识 → `404`；会话 id 不认识 → `404`；
 路径越界 → `403`；空消息 → `400`；权限模式不认识 → `400`；审批的回答不是
@@ -310,6 +331,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
   都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
   别的站点的页面问不到它。
 - **API key 只写用户级文件**，绝不写进会进 git 的项目级文件。
+- **下载探不进内网**。技能页的下载只走 `https://`，指向内网的主机被拒绝。
 
 ## 和终端的差别 {#differences}
 

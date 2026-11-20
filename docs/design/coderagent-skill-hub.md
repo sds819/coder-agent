@@ -1,7 +1,7 @@
 # 技能市场与网页技能页（设计文档）
 
 > 目标：让技能（skill）不再只能从磁盘手写，而是能从网络下载、在网页上浏览和安装。
-> 状态：**阶段 A（领域层）和阶段 B（网页层）已实现**，阶段 C（收尾）还没做。§1.1 写的是动手之前的样子。
+> 状态：**三个阶段都已实现**（领域层、网页层、收尾）。§1.1 写的是动手之前的样子。
 > 相关：[M4-advanced.md](milestones/M4-advanced.md)（技能机制的来源）、
 > [M5-web-interface.md](milestones/M5-web-interface.md)（网页版的地基）、
 > [coderagent_skills.md](../usage/coderagent_skills.md)（技能的用户文档）。
@@ -465,13 +465,15 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 
 ### 8.4 页面之外
 
-终端里的 `/skills` 保持原样，但它现在可以多显示一行来源：
+终端里的 `/skills` 保持原样，但它现在可以多显示一行来源（终端的输出是英文的）：
 
 ```
 pdf-report       Make a PDF report out of a folder of notes.
                  ~/.coderagent/skills/pdf-report
-                 来源 github:owner/repo@v1.2.0（sha256 9f2c…）
+                 from owner/repo/skills/pdf-report@v1.2.0 (sha256 9f2cabc123)
 ```
+
+这一行只在锁文件里有这个技能时才有——自己放进去的技能没有来源。
 
 ---
 
@@ -577,13 +579,13 @@ skills:
 - [x] `web/i18n.py`：中英文案
 - [x] 测试：`tests/coderagent/web/test_api_skills.py`（21 个）
 
-### 阶段 C：收尾
+### 阶段 C：收尾 —— 已完成
 
-- [ ] usage 文档：`docs/usage/coderagent_skills.md` 加「从网络安装」一节（英文）
-- [ ] 中文 usage 文档同步（本仓库中文 usage 目前只覆盖部分页面，按现有做法补）
-- [ ] `docs/design/README.md` 索引加这一篇
-- [ ] 终端 `/skills` 显示来源
-- [ ] `pytest tests/coderagent` 全绿
+- [x] usage 文档：`docs/usage/coderagent_skills.md` 加「从网络安装」一节（英文）
+- [x] 中文 usage 文档：`docs/usage/coderagent_skills_zh.md`（新建，两版对齐）
+- [x] `docs/design/README.md` 索引加这一篇
+- [x] 终端 `/skills` 显示来源
+- [x] `pytest tests/coderagent` 全绿
 
 ---
 
