@@ -13,6 +13,8 @@ from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubagentSpec, load_subagents
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
+from coderagent.skills.install import Installed, write_lock
+from coderagent.skills.source import Source
 from coderagent.testing.factory import build_executor
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import PermissionMode, PermissionPolicy
@@ -389,6 +391,44 @@ def test_the_skills_are_shown(tmp_path):
     answer = _run(context, output, "/skills")
     assert "pdf-report" in answer
     assert "Make a PDF report." in answer
+
+
+def test_the_skills_say_where_they_came_from(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    context, output = _context(tmp_path)
+    directory = home / "skills" / "pdf-report"
+    directory.mkdir(parents=True)
+    (directory / "SKILL.md").write_text(
+        "---\nname: pdf-report\ndescription: Make a PDF report.\n---\nMake it.", encoding="utf-8"
+    )
+    write_lock(
+        {
+            "pdf-report": Installed(
+                name="pdf-report",
+                source=Source(kind="github", repo="owner/repo", ref="v1"),
+                sha256="9f2c" + "0" * 60,
+                installed_at="2026-11-20T10:00:00Z",
+            )
+        },
+        home,
+    )
+    answer = _run(context, output, "/skills")
+    assert "owner/repo@v1" in answer
+    assert "9f2c" in answer
+
+
+def test_a_skill_of_the_user_says_nothing_about_a_source(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "skills" / "pdf-report"
+    directory.mkdir(parents=True)
+    (directory / "SKILL.md").write_text(
+        "---\nname: pdf-report\ndescription: Make a PDF report.\n---\nMake it.", encoding="utf-8"
+    )
+    answer = _run(context, output, "/skills")
+    assert "pdf-report" in answer
+    assert "sha256" not in answer
 
 
 def test_the_plugins_are_shown(tmp_path, monkeypatch):

@@ -442,14 +442,25 @@ def _agents(context: CommandContext, argument: str) -> None:
 
 def _skills(context: CommandContext, argument: str) -> None:
     from coderagent.skills import load_skills
+    from coderagent.skills.errors import SkillError
+    from coderagent.skills.install import read_lock
 
     skills = load_skills(context.cwd, context.loop.context.user_home)
     if not skills:
         context.say("No skills.")
         return
-    context.say(
-        "\n".join(f"{skill.name:<16} {skill.description}\n{'':<16} {skill.directory}" for skill in skills.values())
-    )
+    try:
+        lock = read_lock(context.loop.context.user_home)
+    except SkillError:
+        lock = {}
+    lines = []
+    for skill in skills.values():
+        line = f"{skill.name:<16} {skill.description}\n{'':<16} {skill.directory}"
+        installed = lock.get(skill.name)
+        if installed is not None:
+            line += f"\n{'':<16} from {installed.source.describe()} (sha256 {installed.sha256[:12]})"
+        lines.append(line)
+    context.say("\n".join(lines))
 
 
 def _plugins(context: CommandContext, argument: str) -> None:
