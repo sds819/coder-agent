@@ -4,7 +4,7 @@
 
 # The minimal AI software engineering agent
 
-> 中文版：[docs/readme_zh.md](docs/readme_zh.md)｜中文文档见[下面](#chinese)
+> 中文版：[README_zh.md](https://github.com/sds819/mini-swe-agent/blob/main/README_zh.md)｜中文文档见[下面](#chinese)
 
 📣 [mini-swe-agent now powers Ramp SWE-Bench](https://labs.ramp.com/swebench)<br/>
 📣 [mini-swe-agent beats Claude Code and Codex on DeepSWE](https://deepswe.datacurve.ai/blog#evaluation-harness)<br/>
@@ -153,7 +153,7 @@ agent.run("Write a sudoku game")
 </tr>
 <tr>
 <td width="50%">
-<a href="https://github.com/sds819/mini-swe-agent/blob/main/docs/readme_zh.md"><strong>中文版 README</strong></a>
+<a href="https://github.com/sds819/mini-swe-agent/blob/main/README_zh.md"><strong>中文版 README</strong></a>
 </td>
 <td>
 </td>
@@ -194,7 +194,7 @@ Read more in our [documentation](https://mini-swe-agent.com/latest/):
 * [Power up with the cookbook](https://mini-swe-agent.com/latest/advanced/cookbook/)
 * [FAQ](https://mini-swe-agent.com/latest/faq/)
 * [Contribute!](https://mini-swe-agent.com/latest/contributing/)
-* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
+* [中文版 README](https://github.com/sds819/mini-swe-agent/blob/main/README_zh.md)——整篇中文的这份介绍
 
 ## The coding agent (`coder`)
 
@@ -301,7 +301,7 @@ And if you want to know how it was designed, see `docs/design`:
 
 这份 README 有中文版，文档也有中文的：
 
-* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
+* [中文版 README](https://github.com/sds819/mini-swe-agent/blob/main/README_zh.md)——整篇中文的这份介绍
 * [快速开始](docs/usage/coderagent_quickstart.md)——装上、配置模型、跑第一轮
 * [功能](docs/usage/coderagent_features_zh.md)——一页看完所有功能，外加你可能撞到的报错
 * [网页版](docs/usage/coderagent_web_zh.md)——聊天页、设置页、HTTP API、安全模型
