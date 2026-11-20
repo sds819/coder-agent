@@ -153,7 +153,7 @@ agent.run("Write a sudoku game")
 </tr>
 <tr>
 <td width="50%">
-<a href="https://github.com/sds819/mini-swe-agent/blob/main/README_zh.md"><strong>中文版 README</strong></a>
+<a href="https://github.com/sds819/mini-swe-agent/blob/main/docs/readme_zh.md"><strong>中文版 README</strong></a>
 </td>
 <td>
 </td>
