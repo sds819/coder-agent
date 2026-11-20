@@ -19,6 +19,8 @@
 
 </div>
 
+> 中文版：[Overview（中文）](readme_zh.md)
+
 !!! warning "This is mini-swe-agent v2"
 
     Read the [migration guide](https://mini-swe-agent.com/latest/advanced/v2_migration/). For the previous version, check out the [v1 documentation](https://mini-swe-agent.com/v1/) or the [v1 branch](https://github.com/SWE-agent/mini-swe-agent/tree/v1).
