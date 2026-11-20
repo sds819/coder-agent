@@ -153,7 +153,7 @@ agent.run("Write a sudoku game")
 </tr>
 <tr>
 <td width="50%">
-<a href="docs/readme_zh.md"><strong>中文版 README</strong></a>
+<a href="https://github.com/sds819/mini-swe-agent/blob/main/docs/readme_zh.md"><strong>中文版 README</strong></a>
 </td>
 <td>
 </td>
@@ -284,13 +284,13 @@ and the evaluation harness.
 
 ### Read more
 
-In [docs/usage](docs/usage/):
+In `docs/usage`:
 
 * [Coding agent overview](docs/usage/coderagent.md) — installation, the terminal interface, configuration, tools, permissions
 * [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
 * [Everything `coder` can do](docs/usage/coderagent_features.md) — one page, every feature, with the errors you may hit
 
-And if you want to know how it was designed, [docs/design](docs/design/):
+And if you want to know how it was designed, see `docs/design`:
 
 * [The architecture](docs/design/coding-agent-architecture.md) — the layers, the modules, the interfaces, the key decisions
 * [The design logic](docs/design/coderagent-design-logic.md) — why it grew this way: the load-bearing decisions, the invariants, the trade-offs

@@ -82,6 +82,7 @@ nav:
         - "沙箱": usage/coderagent_sandbox_zh.md
         - "评测": usage/coderagent_eval_zh.md
       - "Overview": usage/coderagent.md
+      - "English README": readme.md
       - "Features": usage/coderagent_features.md
       - "Web interface": usage/coderagent_web.md
       - "Commands": usage/coderagent_commands.md
