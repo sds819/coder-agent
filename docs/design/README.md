@@ -24,6 +24,7 @@
 | [coderagent-answers.md](coderagent-answers.md) | **答问录**：逐题作答，每条答案指向具体文件与函数，并说明取舍与已知瑕疵 |
 | [coderagent-context.md](coderagent-context.md) | **专题：上下文管理与压缩**——怎么组上下文、怎么切、摘要怎么保证不丢东西、工具调用怎么进上下文 |
 | [coderagent-vs-codex.md](coderagent-vs-codex.md) | **对照 Codex**：还差什么——P0/P1/P2 差距清单、两个真 bug、别照抄的地方、推进顺序 |
+| [coderagent-skill-hub.md](coderagent-skill-hub.md) | **技能市场与网页技能页**：从网络下载技能——三种来源、预览后安装、三层沙箱、锁文件、`/skills` 页面 |
 | [milestones/M0-skeleton.md](milestones/M0-skeleton.md) | M0 骨架与配置：Session / EventBus / Loop / Config 的逐条任务分解 |
 | [milestones/M1-tools-permissions.md](milestones/M1-tools-permissions.md) | M1 工具系统与权限：ToolRegistry / PermissionPolicy / 内置工具规范 |
 | [milestones/M2-context-session.md](milestones/M2-context-session.md) | M2 上下文治理与会话管理：结构化压缩 / 恢复 / 检查点 |

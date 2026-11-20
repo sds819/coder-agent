@@ -15,6 +15,7 @@ from coderagent.core.session import SessionStore
 from coderagent.web.api import router
 from coderagent.web.i18n import COOKIE, DEFAULT_LANGUAGE, LANGUAGES, STRINGS, Language, locale_of
 from coderagent.web.sessions import SessionRegistry
+from coderagent.web.skills_api import router as skills_router
 
 TEMPLATES = Path(__file__).parent / "templates"
 
@@ -51,6 +52,7 @@ def create_app(
     app.state.config_spec = spec
     app.state.config_of = lambda: load_config(app.state.config_spec, cwd=cwd)
     app.include_router(router)
+    app.include_router(skills_router)
 
     languages = available_languages()
     codes = [language.code for language in languages]
@@ -80,6 +82,11 @@ def create_app(
     def settings(request: Request):
         """The page where the model is configured."""
         return page(request, "settings.html")
+
+    @app.get("/skills")
+    def skills(request: Request):
+        """The page where the skills are looked at and installed."""
+        return page(request, "skills.html")
 
     @app.get("/api/i18n/{language}")
     def strings_of(language: str):

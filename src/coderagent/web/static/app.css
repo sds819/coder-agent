@@ -182,6 +182,18 @@ dd { margin: 0; font-family: ui-monospace, Menlo, monospace; word-break: break-a
 .agent-tools { color: var(--muted); font-family: ui-monospace, Menlo, monospace; word-break: break-all; }
 .agent-description { margin-top: 2px; }
 
+.skill { border-bottom: 1px solid var(--border); padding: 8px 0; }
+.skill:last-child { border-bottom: none; }
+.skill-head { display: flex; gap: 8px; align-items: baseline; }
+.skill-head span { color: var(--muted); }
+.skill-meta { color: var(--muted); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin: 2px 0 6px; word-break: break-all; }
+
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; width: 90%; max-width: 720px; padding: 16px; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.warning { color: var(--warn); margin: 4px 0; }
+button.close { background: none; border: none; font-size: 18px; line-height: 1; padding: 0 4px; }
+
 pre { background: #151821; border: 1px solid var(--border); border-radius: 6px; padding: 8px; overflow: auto; max-height: 320px; }
 .diff .add { color: var(--ok); }
 .diff .del { color: var(--err); }

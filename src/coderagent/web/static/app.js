@@ -521,7 +521,13 @@ async function relocalize(values = {}) {
     if (state.sessionId) await openSession(state.sessionId);
     return;
   }
-  if (!document.getElementById("model-form")) return;
+  if (!document.getElementById("model-form")) {
+    if (document.getElementById("skills-page")) {
+      await startSkills();
+      restoreForm(values);
+    }
+    return;
+  }
   await startSettings();
   restoreForm(values);
 }
@@ -534,6 +540,182 @@ async function chooseLanguage(code) {
   } catch (error) {
     /* the page stays in the language it has */
   }
+}
+
+// -- the skills -------------------------------------------------------------
+
+const skillState = { staged: null, force: false };
+
+function skillButton(label, action) {
+  const button = el("button", "", label);
+  button.onclick = action;
+  return button;
+}
+
+async function loadSkills() {
+  const box = document.getElementById("skills-installed");
+  if (!box) return;
+  const data = await api("/api/skills");
+  box.innerHTML = "";
+  if (!data.skills.length) box.appendChild(el("div", "note", t("skills_none")));
+  for (const skill of data.skills) {
+    const row = el("div", "skill");
+    const head = el("div", "skill-head");
+    head.appendChild(el("strong", "", skill.name));
+    head.appendChild(el("span", "", skill.description));
+    row.appendChild(head);
+    const meta = el("div", "skill-meta");
+    if (skill.source_text) meta.appendChild(el("div", "", t("skills_from", { source: skill.source_text })));
+    meta.appendChild(el("div", "", t("skills_files", { count: skill.files })));
+    if (skill.sha256) meta.appendChild(el("div", "", `${t("skills_sha256")} ${skill.sha256}`));
+    if (!skill.managed) meta.appendChild(el("div", "", t("skills_yours")));
+    row.appendChild(meta);
+    const buttons = el("div", "row");
+    buttons.appendChild(skillButton(t("skills_details"), () => showSkill(skill.name)));
+    if (skill.managed) {
+      buttons.appendChild(skillButton(t("skills_update"), () => updateSkill(skill.name)));
+      buttons.appendChild(skillButton(t("skills_uninstall"), () => removeSkill(skill.name)));
+    }
+    row.appendChild(buttons);
+    box.appendChild(row);
+  }
+  showRegistries(data.registries || []);
+}
+
+function showRegistries(urls) {
+  const box = document.getElementById("skills-registries");
+  box.innerHTML = "";
+  if (!urls.length) return;
+  box.appendChild(el("h2", "", t("skills_registries")));
+  const row = el("div", "row");
+  for (const url of urls) row.appendChild(skillButton(url, () => browseRegistry(url)));
+  box.appendChild(row);
+}
+
+async function browseRegistry(url) {
+  const box = document.getElementById("skills-registries");
+  const message = document.getElementById("skills-message");
+  try {
+    const data = await api("/api/skills/registry", { method: "POST", body: { url } });
+    const old = box.querySelector(".registry-entries");
+    if (old) old.remove();
+    const entries = el("div", "registry-entries");
+    if (!data.skills.length) entries.appendChild(el("div", "note", t("skills_none")));
+    for (const skill of data.skills) {
+      const row = el("div", "skill");
+      const head = el("div", "skill-head");
+      head.appendChild(el("strong", "", skill.name));
+      head.appendChild(el("span", "", skill.description));
+      row.appendChild(head);
+      row.appendChild(skillButton(t("skills_use"), () => {
+        document.getElementById("skill-source").value = skill.source_text;
+      }));
+      entries.appendChild(row);
+    }
+    box.appendChild(entries);
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
+}
+
+/* What the user is shown before the skill is installed: the whole of the
+   SKILL.md, the files that come with it and the warnings about them. */
+function openPreview(preview, force) {
+  skillState.staged = preview;
+  skillState.force = !!force;
+  document.getElementById("preview-name").textContent = preview.name;
+  document.getElementById("preview-meta").textContent =
+    `${preview.source_text} · ${t("skills_files", { count: (preview.files || []).length })} · ${t("skills_sha256")} ${preview.sha256}`;
+  const warnings = document.getElementById("preview-warnings");
+  warnings.innerHTML = "";
+  for (const warning of preview.warnings || []) warnings.appendChild(el("div", "warning", `⚠ ${warning}`));
+  document.getElementById("preview-body").textContent = preview.body;
+  const files = document.getElementById("preview-files");
+  files.innerHTML = "";
+  for (const file of preview.files || []) files.appendChild(el("div", "", `${file.path} (${file.size} B)`));
+  const install = document.getElementById("preview-install");
+  install.style.display = preview.stage_id ? "inline-block" : "none";
+  const dialog = document.getElementById("skills-preview");
+  if (!dialog.open) dialog.showModal();
+}
+
+async function showSkill(name) {
+  const message = document.getElementById("skills-message");
+  try {
+    openPreview(await api(`/api/skills/${encodeURIComponent(name)}`), false);
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
+}
+
+async function updateSkill(name) {
+  const message = document.getElementById("skills-message");
+  message.textContent = t("skills_downloading");
+  try {
+    const data = await api("/api/skills/update", { method: "POST", body: { name } });
+    if (data.up_to_date) {
+      message.textContent = t("skills_up_to_date", { name });
+      return;
+    }
+    message.textContent = "";
+    openPreview(data.preview, true);
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
+}
+
+async function removeSkill(name) {
+  if (!window.confirm(t("skills_uninstall_confirm", { name }))) return;
+  const message = document.getElementById("skills-message");
+  try {
+    await api(`/api/skills/${encodeURIComponent(name)}`, { method: "DELETE" });
+    message.textContent = t("skills_removed", { name });
+    await loadSkills();
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
+}
+
+async function installStaged() {
+  const message = document.getElementById("skills-message");
+  if (!skillState.staged || !skillState.staged.stage_id) return;
+  message.textContent = t("skills_downloading");
+  try {
+    await api("/api/skills/install", {
+      method: "POST",
+      body: { stage_id: skillState.staged.stage_id, force: skillState.force },
+    });
+    document.getElementById("skills-preview").close();
+    message.textContent = t("skills_installed_ok", { name: skillState.staged.name });
+    await loadSkills();
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
+}
+
+async function startSkills() {
+  const message = document.getElementById("skills-message");
+  const download = document.getElementById("skills-download");
+  document.getElementById("skills-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const source = document.getElementById("skill-source").value.trim();
+    if (!source) return;
+    message.textContent = t("skills_downloading");
+    download.disabled = true;
+    try {
+      const preview = await api("/api/skills/preview", { method: "POST", body: { source } });
+      message.textContent = "";
+      openPreview(preview, false);
+    } catch (error) {
+      message.textContent = t("error", { message: error.message });
+    } finally {
+      download.disabled = false;
+    }
+  };
+  document.getElementById("preview-install").onclick = installStaged;
+  document.getElementById("preview-cancel").onclick = () => document.getElementById("skills-preview").close();
+  document.getElementById("preview-close").onclick = () => document.getElementById("skills-preview").close();
+  await loadSkills();
 }
 
 // -- the wiring ------------------------------------------------------------
@@ -921,4 +1103,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (document.getElementById("messages")) start();
   if (document.getElementById("model-form")) startSettings();
+  if (document.getElementById("skills-page")) startSkills();
 });
