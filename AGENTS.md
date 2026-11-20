@@ -16,6 +16,14 @@ minisweagent/run  # Run scripts that serve as an entry point
 - The project embraces polymorphism: Every individual class should be simple, but we offer alternatives
 - Every use case should start with a run script, that picks one agent, environment, and model class to run
 
+# Environment
+
+- The versions of the dependencies are pinned in `uv.lock`. Install them with `uv sync --locked --extra full`
+  and run everything in that environment: `uv run --locked --extra full pytest ...`, the same for `ruff`, `mkdocs`
+  and `coder`.
+- A change of `pyproject.toml` needs a new lock file: run `uv lock` and commit it. `--locked` fails when the two
+  disagree, so a stale lock is a broken build, not a surprise.
+
 # Style guide
 
 1. Target python 3.10 or higher
