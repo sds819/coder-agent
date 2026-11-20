@@ -194,6 +194,7 @@ Read more in our [documentation](https://mini-swe-agent.com/latest/):
 * [Power up with the cookbook](https://mini-swe-agent.com/latest/advanced/cookbook/)
 * [FAQ](https://mini-swe-agent.com/latest/faq/)
 * [Contribute!](https://mini-swe-agent.com/latest/contributing/)
+* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
 
 ## The coding agent (`coder`)
 

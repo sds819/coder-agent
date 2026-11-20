@@ -284,6 +284,7 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 * [Hooks](usage/coderagent_hooks_zh.md)——九个事件上的 hook
 * [沙箱](usage/coderagent_sandbox_zh.md)——命令跑在哪里
 * [评测](usage/coderagent_eval_zh.md)——任务集、报告和对比
+* [English README](https://github.com/sds819/mini-swe-agent/blob/main/README.md)——英文版的那份介绍
 
 英文的概览在 [The coding agent](usage/coderagent.md)。
 
