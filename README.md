@@ -4,7 +4,7 @@
 
 # The minimal AI software engineering agent
 
-> 中文版：[README_zh.md](README_zh.md)｜中文文档见[下面](#chinese)
+> 中文版：[docs/readme_zh.md](docs/readme_zh.md)｜中文文档见[下面](#chinese)
 
 📣 [mini-swe-agent now powers Ramp SWE-Bench](https://labs.ramp.com/swebench)<br/>
 📣 [mini-swe-agent beats Claude Code and Codex on DeepSWE](https://deepswe.datacurve.ai/blog#evaluation-harness)<br/>
@@ -293,7 +293,7 @@ And if you want to know how it was designed, [docs/design](docs/design/):
 
 这份 README 有中文版，文档也有中文的：
 
-* [中文版 README](README_zh.md)——整篇中文的这份介绍
+* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
 * [快速开始](docs/usage/coderagent_quickstart.md)——装上、配置模型、跑第一轮
 * [功能](docs/usage/coderagent_features_zh.md)——一页看完所有功能，外加你可能撞到的报错
 * [网页版](docs/usage/coderagent_web_zh.md)——聊天页、设置页、HTTP API、安全模型
