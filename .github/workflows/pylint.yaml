@@ -46,10 +46,10 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install dependencies
         run: |
-            uv pip install --python ${Python_ROOT_DIR} -e '.[full]'
-            uv pip install --python ${Python_ROOT_DIR} pylint
+            uv sync --locked --extra full --python ${Python_ROOT_DIR}
+            uv pip install --python .venv/bin/python pylint
       - name: Run pylint (fail only on errors)
         run: |
           # Run pylint with errors-only flag to only fail on real errors (E and F level)
           # This will show all messages but only exit with error code for errors, not warnings/advice
-          pylint minisweagent/ --errors-only
+          .venv/bin/pylint minisweagent/ --errors-only

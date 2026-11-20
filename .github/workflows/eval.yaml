@@ -45,7 +45,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install dependencies
-        run: uv pip install --python ${Python_ROOT_DIR} -e '.[full]'
+        run: uv sync --locked --extra full --python ${Python_ROOT_DIR}
       - name: The commit of the base
         id: base
         run: |
@@ -56,16 +56,16 @@ jobs:
           fi
       - name: The suite of the pull request
         run: |
-          coder eval evals/offline --label head --format json --out head.json
-          coder eval-compare head.json | tee -a $GITHUB_STEP_SUMMARY
+          uv run --locked --extra full coder eval evals/offline --label head --format json --out head.json
+          uv run --locked --extra full coder eval-compare head.json | tee -a $GITHUB_STEP_SUMMARY
       - name: The suite of the base
         if: steps.base.outputs.sha != ''
         run: |
           git worktree add /tmp/base "${{ steps.base.outputs.sha }}"
           mkdir -p /tmp/base/evals
           cp -r evals/offline /tmp/base/evals/
-          if PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" eval --help > /dev/null 2>&1; then
-            PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+          if PYTHONPATH=/tmp/base/src uv run --locked --extra full python -c "from coderagent.ui.cli import app; app()" eval --help > /dev/null 2>&1; then
+            PYTHONPATH=/tmp/base/src uv run --locked --extra full python -c "from coderagent.ui.cli import app; app()" \
               eval /tmp/base/evals/offline --label base --format json --out base.json
           else
             echo "the base has no eval harness, there is nothing to compare with"
@@ -74,7 +74,7 @@ jobs:
         if: steps.base.outputs.sha != ''
         run: |
           if [ -f base.json ]; then
-            coder eval-compare head.json --against base.json | tee -a $GITHUB_STEP_SUMMARY
+            uv run --locked --extra full coder eval-compare head.json --against base.json | tee -a $GITHUB_STEP_SUMMARY
           fi
 
   live:
@@ -95,7 +95,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install dependencies
-        run: uv pip install --python ${Python_ROOT_DIR} -e '.[full]'
+        run: uv sync --locked --extra full --python ${Python_ROOT_DIR}
       - name: The configuration of the model
         run: |
           mkdir -p ~/.coderagent
@@ -107,15 +107,15 @@ jobs:
               api_base: ${{ inputs.api_base }}
           EOF
       - name: The suite of the pull request
-        run: coder eval evals/basic --label head --format json --out head.json
+        run: uv run --locked --extra full coder eval evals/basic --label head --format json --out head.json
       - name: The suite of the base
         run: |
           git worktree add /tmp/base "${{ github.event.before }}"
           mkdir -p /tmp/base/evals
           cp -r evals/basic /tmp/base/evals/
-          PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+          PYTHONPATH=/tmp/base/src uv run --locked --extra full python -c "from coderagent.ui.cli import app; app()" \
             eval /tmp/base/evals/basic --label base --format json --out base.json
       - name: Compare the two runs
         run: |
-          coder eval-compare head.json --against base.json --same-config --max-regressions 0 --max-drop 0 \
+          uv run --locked --extra full coder eval-compare head.json --against base.json --same-config --max-regressions 0 --max-drop 0 \
             | tee -a $GITHUB_STEP_SUMMARY
