@@ -4330,8 +4330,9 @@ to load a skill.</p>
 (nothing asks). Rules live in <code>~/.coderagent/rules.yaml</code> (yours) and <code>.coderagent/rules.yaml</code>
 (the project's); a <code>deny</code> always wins over an <code>allow</code>.</p>
 <p><strong>Sessions.</strong> Every session has an event log, so it can be resumed (<code>coder --resume</code>), forked
-(<code>/fork</code>), rewound (<code>/rewind</code>) and exported (<code>coder export</code>). A session started in the browser
-can be continued in the terminal, and the other way round.</p>
+(<code>/fork</code>), rewound (<code>/rewind</code>) and exported (<code>coder export</code>). The trace of a session can be sent to
+an OpenTelemetry collector. A session started in the browser can be continued in the terminal, and
+the other way round.</p>
 <p><strong>Context.</strong> The conversation is compacted when it reaches 80% of the budget; the summary keeps
 the goal, the findings, the decisions, the files that were touched and the open questions. Before
 a round ends, three gates are checked in order: a <code>Stop</code> hook, the <code>verify.commands</code> of the
@@ -4400,9 +4401,20 @@ and the evaluation harness.</p>
 <h3 id="read-more">Read more</h3>
 <p>In <code>docs/usage</code>:</p>
 <ul>
-<li><a href="../usage/coderagent/">Coding agent overview</a> — installation, the terminal interface, configuration, tools, permissions</li>
-<li><a href="../usage/coderagent_web/">The web interface</a> — the chat page, the settings page, the HTTP API, the security model</li>
+<li><a href="../usage/coderagent_quickstart/">Quick start</a> — install it, set the model, run the first round</li>
 <li><a href="../usage/coderagent_features/">Everything <code>coder</code> can do</a> — one page, every feature, with the errors you may hit</li>
+<li><a href="../usage/coderagent_web/">The web interface</a> — the chat page, the settings page, the HTTP API, the security model</li>
+<li><a href="../usage/coderagent_commands/">The commands</a> — every slash command</li>
+<li><a href="../usage/coderagent_subagents/">Sub agents</a> — sub agents and their own models</li>
+<li><a href="../usage/coderagent_hooks/">Hooks</a> — hooks on nine events</li>
+<li><a href="../usage/coderagent_sandbox/">The sandbox</a> — where the commands run</li>
+<li><a href="../usage/coderagent_eval/">The eval harness</a> — task suites, reports, comparisons</li>
+<li><a href="../usage/coderagent_routing/">Model routing</a> — which model does which job</li>
+<li><a href="../usage/coderagent_memory/">Memory</a> — project memory and your preferences</li>
+<li><a href="../usage/coderagent_skills/">Skills</a> — the skills the agent may load</li>
+<li><a href="../usage/coderagent_plugins/">Plugins</a> — the plugins that extend it</li>
+<li><a href="../usage/coderagent_mcp/">MCP servers</a> — the tools other servers bring</li>
+<li><a href="../usage/coderagent_export/">The trace of a session</a> — export the trace, send it to a collector</li>
 </ul>
 <p>And if you want to know how it was designed, see <code>docs/design</code>:</p>
 <ul>
