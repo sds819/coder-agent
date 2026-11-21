@@ -286,3 +286,34 @@ def test_the_skills_can_be_turned_off(make_client, home, served):
 
     assert answer.status_code == 403
     assert "turned off" in answer.json()["detail"]
+
+
+def test_the_sites_of_gitee_are_listed(make_client, home):
+    """There is a tab for each site."""
+    client = make_client()
+
+    answer = client.get("/api/skills/sites")
+
+    sites = answer.json()["sites"]
+    assert answer.status_code == 200
+    assert len(sites) == 3
+    assert [site["id"] for site in sites] == ["official", "personal", "tools"]
+    assert all(site["repo"].count("/") == 1 for site in sites)
+    assert all(site["url"].startswith("https://gitee.com/") for site in sites)
+
+
+def test_a_site_that_is_not_there_is_refused(make_client, home):
+    """The address of a site may name one that does not exist."""
+    client = make_client()
+
+    answer = client.get("/api/skills/sites/nothing")
+
+    assert answer.status_code == 400
+    assert "no site with the name" in answer.json()["detail"]
+
+
+def test_the_sites_are_refused_when_the_skills_are_off(make_client, home):
+    client = make_client(project_config="skills:\n  enabled: false\n")
+
+    assert client.get("/api/skills/sites").status_code == 403
+    assert client.get("/api/skills/sites/official").status_code == 403

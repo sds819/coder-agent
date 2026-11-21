@@ -81,6 +81,31 @@ def test_the_prefix_wins_over_the_shape():
     assert parse_source("registry:owner/repo").kind == "registry"
 
 
+def test_a_repository_of_gitee_is_a_gitee_source():
+    assert parse_source("gitee:owner/repo") == source.Source(kind="gitee", repo="owner/repo")
+    assert parse_source("gitee:owner/repo/skills/pdf") == source.Source(
+        kind="gitee", repo="owner/repo", path="skills/pdf"
+    )
+
+
+def test_an_address_of_gitee_is_a_gitee_source():
+    parsed = parse_source("https://gitee.com/owner/repo/tree/main/skills/pdf")
+    assert parsed.kind == "gitee"
+    assert parsed.repo == "owner/repo"
+    assert parsed.path == "skills/pdf"
+
+
+def test_a_gitee_source_survives_the_lock_file():
+    """The lock file holds the source as it was written down."""
+    source_ = parse_source("gitee:owner/repo/skills/pdf")
+
+    assert source.source_of(source_.as_dict()) == source_
+
+
+def test_a_gitee_source_says_where_it_is_from():
+    assert parse_source("gitee:owner/repo/skills/pdf").describe() == "owner/repo/skills/pdf"
+
+
 def test_an_address_of_a_registry_is_a_registry():
     assert parse_source("https://example.com/index.json").kind == "registry"
     assert parse_source("registry:https://example.com/index.json").url == "https://example.com/index.json"

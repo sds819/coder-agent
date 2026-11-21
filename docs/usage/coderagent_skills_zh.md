@@ -78,9 +78,26 @@ These skills are available. Load one with the `skill` tool when its description 
 coder web
 ```
 
-页面分两块：**已安装**——`~/.coderagent/skills/` 里的每个技能，带来源和内容摘要；
-**从网络安装**——一个填来源的输入框和一个按钮，点了就把技能下载下来给你看。
+页面分三块：**已安装**——`~/.coderagent/skills/` 里的每个技能，带来源和内容摘要；
+**从网络安装**——一个填来源的输入框和一个按钮，点了就把技能下载下来给你看；
+还有 Gitee 上那几个站点的标签页。
 磁盘上先不写任何东西：下载的东西先在暂存区里等着，页面先摊开给你看。
+
+### Gitee 上的站点
+
+输入框下面的标签页是 Gitee 上真正有技能的三个站点：
+
+| 标签 | 是什么 |
+|---|---|
+| `oschina/gitee-agent-skills` | Gitee 官方仓库：十四个驱动 Gitee MCP 服务器的技能 |
+| `yang_huai_qiang1/agent-skills` | 个人收藏：十二个日常开发用得上的技能 |
+| `jianchaoteng/agent-skills` | 三个技能：两个用来读代码库，一个用来部署 |
+
+每个标签页列出该站点的前六个技能。点一个技能就把它下载下来，
+弹出的还是那个预览框——看过之前，照样不装。
+
+站点的清单是从它仓库的克隆里读出来的，克隆放在 `~/.coderagent/cache/skills/sites/`
+里放着半天：Gitee 的 API 对匿名请求放行一阵子就拒绝，但克隆一直管用。
 
 ### 来源
 
@@ -89,11 +106,12 @@ coder web
 | `owner/repo` | 一个 GitHub 仓库，默认分支 |
 | `owner/repo@v1.2.0` | GitHub 仓库的某个 tag、分支或提交 |
 | `owner/repo/skills/pdf-report@v1` | GitHub 仓库里的一个技能 |
+| `gitee:owner/repo/skills/pdf-report` | Gitee 仓库里的一个技能 |
 | `https://host/org/repo.git`、`git@host:org/repo.git` | 一个 git 仓库 |
 | `https://example.com/skills/pdf-report/SKILL.md` | 一个文件 |
 | `https://example.com/index.json` | 一个注册表：一份技能清单 |
 
-地址有两种讲法时，用前缀说清你要哪个：`github:`、`git:`、`registry:`、`direct:`。
+地址有两种讲法时，用前缀说清你要哪个：`github:`、`gitee:`、`git:`、`registry:`、`direct:`。
 
 直链只有一个文件，所以这样的技能没有脚本也没有资源——这是它的代价。
 

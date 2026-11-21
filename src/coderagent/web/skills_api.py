@@ -15,6 +15,8 @@ from pydantic import BaseModel
 from coderagent.paths import config_home
 from coderagent.skills import SKILL_FILE, SKILLS_DIR, parse_skill
 from coderagent.skills.errors import SkillError
+from coderagent.skills.gitee import ROWS, SITES, Site, SiteSkill, site_of
+from coderagent.skills.gitee import list_skills as site_skills
 from coderagent.skills.install import (
     Staged,
     check_update,
@@ -33,6 +35,7 @@ router = APIRouter(prefix="/api/skills")
 
 REASONS = {
     "there is no source": "没有填来源",
+    "there is no site with the name": "没有这个站点：{detail}",
     "is not a source of a skill": "这不是一个技能的来源：{text}",
     "does not point at a skill": "这不是一个技能的来源：{text}",
     "is not a repository": "这不是一个仓库：{text}",
@@ -170,6 +173,29 @@ def list_skills(request: Request) -> dict[str, Any]:
     return {"skills": skills, "registries": _settings(request).registries}
 
 
+@router.get("/sites")
+def list_sites(request: Request) -> dict[str, Any]:
+    """The sites of skills that Gitee holds: one tab for each of them."""
+    _guard(request)
+    return {"sites": [_site_view(site) for site in SITES]}
+
+
+@router.get("/sites/{site_id}")
+def list_site_skills(site_id: str, request: Request) -> dict[str, Any]:
+    """The skills of one site. The first ones are the ones the page shows."""
+    _guard(request)
+    try:
+        site = site_of(site_id)
+        skills = site_skills(site, _policy(request))
+    except SkillError as error:
+        raise _bad_request(request, error, site_id) from None
+    return {
+        "site": _site_view(site),
+        "total": len(skills),
+        "skills": [_skill_view(site, skill) for skill in skills[:ROWS]],
+    }
+
+
 @router.get("/{name}")
 def get_skill(name: str, request: Request) -> dict[str, Any]:
     """One skill, with the text the model would read."""
@@ -281,6 +307,21 @@ def registry(body: RegistryBody, request: Request, _: None = Depends(require_cli
             }
             for entry in entries
         ]
+    }
+
+
+def _site_view(site: Site) -> dict[str, Any]:
+    """What the tab of a site says."""
+    return {"id": site.id, "repo": site.repo, "url": site.url, "path": site.path}
+
+
+def _skill_view(site: Site, skill: SiteSkill) -> dict[str, Any]:
+    """One skill of a site, with the source that downloads it."""
+    return {
+        "name": skill.name,
+        "description": skill.description,
+        "path": skill.path,
+        "source_text": f"gitee:{site.repo}/{skill.path}",
     }
 
 

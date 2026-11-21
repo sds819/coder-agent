@@ -1,11 +1,12 @@
 """Where a skill comes from: a GitHub repository, a git URL, a registry or one file.
 
 The user writes a source and the agent gets a directory with a `SKILL.md` in
-it. Four kinds of source do that:
+it. Five kinds of source do that:
 
 | Kind | What the user writes |
 |---|---|
 | `github` | `owner/repo`, `owner/repo@ref`, `owner/repo/skills/pdf-report@v1` |
+| `gitee` | `gitee:owner/repo`, `gitee:owner/repo/skills/pdf-report` |
 | `git` | `https://host/org/repo.git`, `git@host:org/repo.git` |
 | `registry` | the address of a `index.json` that lists skills |
 | `direct` | the address of one `SKILL.md` |
@@ -34,6 +35,12 @@ REDIRECTS = (301, 302, 303, 307, 308)
 HOPS = 3
 """How many times a download may be sent to another address."""
 
+CLONE_TIMEOUT = 120
+"""The seconds a clone may take. A repository is bigger than a file."""
+
+GITEE = "https://gitee.com"
+"""Where the repositories of Gitee are fetched from."""
+
 GITHUB_API = "https://api.github.com"
 """Where the repositories of GitHub are fetched from."""
 
@@ -55,11 +62,11 @@ class Source:
     """Where a skill comes from."""
 
     kind: str
-    """One of `github`, `git`, `registry` or `direct`."""
+    """One of `github`, `gitee`, `git`, `registry` or `direct`."""
     url: str = ""
     """The address to fetch. Empty for a GitHub repository, which is built from `repo`."""
     repo: str = ""
-    """The repository of GitHub: `owner/name`."""
+    """The repository of GitHub or of Gitee: `owner/name`."""
     ref: str = ""
     """The tag, the branch or the commit of the repository."""
     path: str = ""
@@ -73,7 +80,7 @@ class Source:
 
     def describe(self) -> str:
         """The source as the user would write it."""
-        if self.kind == "github":
+        if self.kind in ("github", "gitee"):
             text = "/".join(part for part in (self.repo, self.path) if part)
             return f"{text}@{self.ref}" if self.ref else text
         return self.url
@@ -95,7 +102,13 @@ def parse_source(text: str) -> Source:
     text = text.strip()
     if not text:
         raise SkillError("there is no source")
-    for prefix, kind in (("github:", "github"), ("git:", "git"), ("registry:", "registry"), ("direct:", "direct")):
+    for prefix, kind in (
+        ("github:", "github"),
+        ("gitee:", "gitee"),
+        ("git:", "git"),
+        ("registry:", "registry"),
+        ("direct:", "direct"),
+    ):
         if text.lower().startswith(prefix):
             return _parse(kind, text[len(prefix) :].strip())
     if text.startswith("git@"):
@@ -119,6 +132,11 @@ def source_of(data: object) -> Source:
         if "/" not in repo:
             raise SkillError("a github source needs a repository")
         return Source(kind="github", repo=repo, ref=str(data.get("ref") or ""), path=str(data.get("path") or ""))
+    if kind == "gitee":
+        repo = str(data.get("repo") or "")
+        if "/" not in repo:
+            raise SkillError("a gitee source needs a repository")
+        return Source(kind="gitee", repo=repo, ref=str(data.get("ref") or ""), path=str(data.get("path") or ""))
     if kind in ("git", "registry", "direct"):
         url = str(data.get("url") or "")
         if not url:
@@ -136,6 +154,8 @@ def fetch(source: Source, workdir: Path, policy: Policy, token: str = "") -> Pat
     workdir.mkdir(parents=True, exist_ok=True)
     if source.kind == "github":
         return _fetch_github(source, workdir, policy, token)
+    if source.kind == "gitee":
+        return _fetch_gitee(source, workdir, policy)
     if source.kind == "git":
         return _fetch_git(source, workdir, policy)
     if source.kind == "direct":
@@ -182,6 +202,29 @@ def download(url: str, policy: Policy, headers: dict[str, str] | None = None) ->
     raise SkillError("the download went through too many redirects")
 
 
+def clone_repository(url: str, target: Path, policy: Policy) -> Path:
+    """A clone of a repository, without its history.
+
+    A skill is a directory of files: the commits that led to it are of no use
+    to anybody, and the history of a big repository is a lot of download.
+    """
+    check_git_url(url, policy)
+    if shutil.which("git") is None:
+        raise SkillError("git is not installed, so a git URL cannot be used")
+    try:
+        result = subprocess.run(
+            ["git", "clone", "--depth", "1", "--quiet", url, str(target)],
+            capture_output=True,
+            text=True,
+            timeout=CLONE_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise SkillError("the clone took too long") from None
+    if result.returncode != 0:
+        raise SkillError(f"the clone failed: {result.stderr.strip() or 'git said nothing'}")
+    return target
+
+
 def check_url(url: str, policy: Policy) -> None:
     """Whether an address may be fetched: the scheme, and where it points."""
     parsed = urlparse(url)
@@ -224,6 +267,8 @@ def check_host(host: str, allowed_hosts: tuple[str, ...]) -> None:
 def _parse(kind: str, text: str) -> Source:
     if kind == "github":
         return _parse_github(text)
+    if kind == "gitee":
+        return _parse_gitee(text)
     if not text:
         raise SkillError("there is no source")
     return Source(kind=kind, url=text)
@@ -235,6 +280,14 @@ def _parse_github(text: str) -> Source:
     if len(parts) < 2:
         raise SkillError(f"'{text}' is not a repository: it needs an owner and a name")
     return Source(kind="github", repo="/".join(parts[:2]), path="/".join(parts[2:]), ref=ref)
+
+
+def _parse_gitee(text: str) -> Source:
+    """A repository of Gitee. The clone takes the branch the repository has."""
+    parts = [part for part in text.split("/") if part]
+    if len(parts) < 2:
+        raise SkillError(f"'{text}' is not a repository: it needs an owner and a name")
+    return Source(kind="gitee", repo="/".join(parts[:2]), path="/".join(parts[2:]))
 
 
 def _parse_url(text: str) -> Source:
@@ -253,6 +306,12 @@ def _parse_url(text: str) -> Source:
             if len(parts) > 3 and parts[2] == "tree":
                 ref, parts = parts[3], parts[:2] + parts[4:]
             return Source(kind="github", repo=f"{parts[0]}/{parts[1]}", path="/".join(parts[2:]), ref=ref)
+    if parsed.hostname in ("gitee.com", "www.gitee.com"):
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) >= 2:
+            if len(parts) > 3 and parts[2] == "tree":
+                parts = parts[:2] + parts[4:]
+            return Source(kind="gitee", repo=f"{parts[0]}/{parts[1]}", path="/".join(parts[2:]))
     raise SkillError(f"'{text}' does not point at a skill: it is not a registry, a SKILL.md or a repository")
 
 
@@ -290,23 +349,19 @@ def _fetch_github(source: Source, workdir: Path, policy: Policy, token: str) -> 
     return target
 
 
-def _fetch_git(source: Source, workdir: Path, policy: Policy) -> Path:
-    check_git_url(source.url, policy)
-    if shutil.which("git") is None:
-        raise SkillError("git is not installed, so a git URL cannot be used")
-    target = workdir / "repo"
-    try:
-        result = subprocess.run(
-            ["git", "clone", "--depth", "1", "--quiet", source.url, str(target)],
-            capture_output=True,
-            text=True,
-            timeout=policy.timeout,
-        )
-    except subprocess.TimeoutExpired:
-        raise SkillError("the clone took too long") from None
-    if result.returncode != 0:
-        raise SkillError(f"the clone failed: {result.stderr.strip() or 'git said nothing'}")
+def _fetch_gitee(source: Source, workdir: Path, policy: Policy) -> Path:
+    owner, _, name = source.repo.partition("/")
+    if not owner or not name:
+        raise SkillError(f"'{source.repo}' is not a repository: it needs an owner and a name")
+    root = clone_repository(f"{GITEE}/{owner}/{name}.git", workdir / "repo", policy)
+    target = check_path(root, source.path) if source.path else root
+    if not target.is_dir():
+        raise SkillError(f"there is no '{source.path}' in {source.repo}")
     return target
+
+
+def _fetch_git(source: Source, workdir: Path, policy: Policy) -> Path:
+    return clone_repository(source.url, workdir / "repo", policy)
 
 
 def _fetch_direct(source: Source, workdir: Path, policy: Policy) -> Path:
@@ -330,6 +385,7 @@ def _read(response: requests.Response, policy: Policy) -> bytes:
 
 __all__ = [
     "Entry",
+    "GITEE",
     "HOPS",
     "PRIVATE",
     "REDIRECTS",
@@ -337,6 +393,7 @@ __all__ = [
     "check_git_url",
     "check_host",
     "check_url",
+    "clone_repository",
     "download",
     "fetch",
     "fetch_registry",

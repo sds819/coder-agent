@@ -141,6 +141,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "skills_installed_ok": "{name} is installed. It takes effect in a new session.",
         "skills_uninstall_confirm": "Remove {name}?",
         "skills_downloading": "downloading…",
+        "skills_site_official": "The repository of Gitee itself: the skills that drive the Gitee MCP server.",
+        "skills_site_personal": "A personal collection: twelve skills for everyday work.",
+        "skills_site_tools": "Three skills: two for reading a codebase, one for deployment.",
+        "skills_site_download": "Download",
+        "skills_site_loading": "loading the site…",
+        "skills_site_more": "{count} more",
     },
     "zh": {
         "history": "之前的几轮",
@@ -218,6 +224,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "skills_installed_ok": "{name} 装好了，新会话里生效。",
         "skills_uninstall_confirm": "要删掉 {name} 吗？",
         "skills_downloading": "下载中…",
+        "skills_site_official": "Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能。",
+        "skills_site_personal": "个人收藏：十二个日常开发用得上的技能。",
+        "skills_site_tools": "三个技能：两个用来读代码库，一个用来部署。",
+        "skills_site_download": "下载",
+        "skills_site_loading": "正在取这个站点…",
+        "skills_site_more": "还有 {count} 个",
     },
 }
 """The strings the browser shows. The templates have their own text."""

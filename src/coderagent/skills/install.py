@@ -290,7 +290,7 @@ def _name(skill, source: Source, files: list[FileEntry]) -> tuple[str, list[str]
 
 def _fallback_name(source: Source) -> str:
     """The name of a skill that does not have a usable one of its own."""
-    if source.kind in ("github", "git"):
+    if source.kind in ("github", "gitee", "git"):
         if source.path:
             return source.path.rstrip("/").split("/")[-1]
         if source.repo:

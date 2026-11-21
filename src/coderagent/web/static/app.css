@@ -188,6 +188,10 @@ dd { margin: 0; font-family: ui-monospace, Menlo, monospace; word-break: break-a
 .skill-head span { color: var(--muted); }
 .skill-meta { color: var(--muted); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin: 2px 0 6px; word-break: break-all; }
 
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.tabs .tab { font-size: 12px; padding: 4px 8px; }
+.tabs .tab.active { background: #24406e; border-color: var(--accent); color: #fff; }
+
 dialog { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; width: 90%; max-width: 720px; padding: 16px; }
 dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
 .preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }

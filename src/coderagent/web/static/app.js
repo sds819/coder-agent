@@ -716,6 +716,69 @@ async function startSkills() {
   document.getElementById("preview-cancel").onclick = () => document.getElementById("skills-preview").close();
   document.getElementById("preview-close").onclick = () => document.getElementById("skills-preview").close();
   await loadSkills();
+  await loadSites();
+}
+
+// -- the sites of Gitee ----------------------------------------------------
+
+/* The sites are the tabs of the page: one tab for each repository, and the
+   skills of the repository under it. */
+async function loadSites() {
+  const box = document.getElementById("skills-sites");
+  if (!box) return;
+  try {
+    const data = await api("/api/skills/sites");
+    box.innerHTML = "";
+    for (const site of data.sites || []) {
+      const tab = el("button", "tab", site.repo);
+      tab.dataset.site = site.id;
+      tab.onclick = () => showSite(site);
+      box.appendChild(tab);
+    }
+    if ((data.sites || []).length) await showSite(data.sites[0]);
+  } catch (error) {
+    box.appendChild(el("div", "note", t("error", { message: error.message })));
+  }
+}
+
+async function showSite(site) {
+  const box = document.getElementById("skills-site-skills");
+  for (const tab of document.querySelectorAll("#skills-sites .tab")) {
+    tab.classList.toggle("active", tab.dataset.site === site.id);
+  }
+  document.getElementById("skills-site-note").textContent = t(`skills_site_${site.id}`);
+  box.innerHTML = "";
+  box.appendChild(el("div", "note", t("skills_site_loading")));
+  try {
+    const data = await api(`/api/skills/sites/${encodeURIComponent(site.id)}`);
+    box.innerHTML = "";
+    for (const skill of data.skills || []) {
+      const row = el("div", "skill");
+      const head = el("div", "skill-head");
+      head.appendChild(el("strong", "", skill.name));
+      head.appendChild(el("span", "", skill.description));
+      row.appendChild(head);
+      row.appendChild(skillButton(t("skills_site_download"), () => downloadSkill(skill)));
+      box.appendChild(row);
+    }
+    const shown = (data.skills || []).length;
+    if (data.total > shown) box.appendChild(el("div", "note", t("skills_site_more", { count: data.total - shown })));
+  } catch (error) {
+    box.innerHTML = "";
+    box.appendChild(el("div", "note", t("error", { message: error.message })));
+  }
+}
+
+async function downloadSkill(skill) {
+  const message = document.getElementById("skills-message");
+  message.textContent = t("skills_downloading");
+  try {
+    const preview = await api("/api/skills/preview", { method: "POST", body: { source: skill.source_text } });
+    message.textContent = "";
+    openPreview(preview, false);
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
+  }
 }
 
 // -- the wiring ------------------------------------------------------------

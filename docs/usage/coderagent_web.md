@@ -176,6 +176,9 @@ The skills that are installed, and the way to install new ones from the network.
   — the source, the files, the digest and the **whole `SKILL.md`** — before
   anything is written to the disk. `Install` writes it to
   `~/.coderagent/skills/<name>/`.
+- **Gitee**: the tabs of the three sites on Gitee that hold real skills. A tab
+  shows six skills of its site, and a click on a skill downloads it and opens
+  the same dialog.
 
 See [Skills](coderagent_skills.md) for the sources, the limits and the lock
 file.
@@ -332,6 +335,8 @@ do not ask for the header — they start nothing.
 | GET | `/api/file?path=` | The content of a file |
 | GET | `/api/diff?path=` | The changes of the working tree |
 | GET | `/api/skills` | The skills that are installed |
+| GET | `/api/skills/sites` | The sites of Gitee: one tab for each of them |
+| GET | `/api/skills/sites/{site}` | The skills of one site |
 | GET | `/api/skills/{name}` | One skill, with its `SKILL.md` |
 | POST | `/api/skills/preview` | Download a source and show what it is |
 | POST | `/api/skills/install` | Install a previewed skill |

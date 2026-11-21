@@ -90,13 +90,33 @@ installs new ones from the network.
 coder web
 ```
 
-The page has two parts: **Installed** — every skill in `~/.coderagent/skills/`
-with its source and its digest — and **Install from the network**, a field for
-a source and a button that downloads it and shows what it is. A skill you put
-there yourself has no source, and the page says so.
+The page has three parts: **Installed** — every skill in `~/.coderagent/skills/`
+with its source and its digest — **Install from the network**, a field for
+a source and a button that downloads it and shows what it is, and the tabs of
+the sites of Gitee. A skill you put there yourself has no source, and the page
+says so.
 
 Nothing is written to the disk before you have read it: the download waits in
 the cache and the page shows it first.
+
+### The sites of Gitee
+
+The tabs under the field are the three sites on Gitee that hold real skills:
+
+| Tab | What it is |
+|---|---|
+| `oschina/gitee-agent-skills` | the repository of Gitee itself: fourteen skills that drive the Gitee MCP server |
+| `yang_huai_qiang1/agent-skills` | a personal collection: twelve skills for everyday work |
+| `jianchaoteng/agent-skills` | three skills: two for reading a codebase, one for deployment |
+
+A tab shows the first six skills of its site. A click on a skill downloads it
+and opens the same dialog as any other download, so you still read it before it
+is installed.
+
+The list of a site is read from a clone of its repository, and the clone is
+kept in `~/.coderagent/cache/skills/sites/` for half a day: the API of Gitee
+lets anonymous callers in for a while and then refuses them, but a clone
+always works.
 
 ### The sources
 
@@ -105,12 +125,13 @@ the cache and the page shows it first.
 | `owner/repo` | a GitHub repository, the default branch |
 | `owner/repo@v1.2.0` | a GitHub repository at a tag, a branch or a commit |
 | `owner/repo/skills/pdf-report@v1` | one skill of a GitHub repository |
+| `gitee:owner/repo/skills/pdf-report` | one skill of a repository of Gitee |
 | `https://host/org/repo.git`, `git@host:org/repo.git` | a git repository |
 | `https://example.com/skills/pdf-report/SKILL.md` | one file |
 | `https://example.com/index.json` | a registry: a list of skills |
 
 A prefix says what you mean when an address could be read in two ways:
-`github:`, `git:`, `registry:`, `direct:`.
+`github:`, `gitee:`, `git:`, `registry:`, `direct:`.
 
 A direct link brings one file, so such a skill has no scripts and no resources.
 That is the price of it.

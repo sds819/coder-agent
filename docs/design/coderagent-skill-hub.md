@@ -71,9 +71,9 @@
 @dataclass(frozen=True)
 class Source:
     """Where a skill comes from. One of the three kinds below."""
-    kind: str            # "github" | "git" | "registry" | "direct"
+    kind: str            # "github" | "gitee" | "git" | "registry" | "direct"
     url: str = ""        # the URL to fetch (registry/direct/github tarball)
-    repo: str = ""       # "owner/repo" for github
+    repo: str = ""       # "owner/repo" for github and for gitee
     ref: str = ""        # a tag, a branch or a commit
     path: str = ""       # the directory of the skill inside the repository
     name: str = ""       # the name of the skill, when the source names it
@@ -82,6 +82,7 @@ class Source:
 | 来源 | 用户填的东西 | 内部怎么取 |
 |---|---|---|
 | `github` | `owner/repo`、`owner/repo@ref`、`owner/repo/skills/pdf-report@v1` | GitHub API 的 tarball：`https://api.github.com/repos/{owner}/{repo}/tarball/{ref}` |
+| `gitee` | `gitee:owner/repo`、`gitee:owner/repo/skills/pdf-report` | `git clone --depth 1 https://gitee.com/{owner}/{repo}.git`，再取其中的子目录 |
 | `git` | `https://host/org/repo.git`、`git@host:org/repo.git` | `git clone --depth 1` 到临时目录 |
 | `registry` | 一个 `index.json` 的地址 | 读 JSON 清单，每条再指向上面三种之一 |
 | `direct` | 一个 `SKILL.md` 的地址 | 单文件下载 |
@@ -164,7 +165,8 @@ class Installed:
 src/coderagent/skills/
 ├── __init__.py    # 现有的 Skill / load_skills / skill_index / parse_skill（搬过来，公共 API 不变）
 ├── errors.py      # SkillError：给用户看的理由
-├── source.py      # Source 的解析（用户填的字符串 → Source）与四种来源的抓取
+├── source.py      # Source 的解析（用户填的字符串 → Source）与来源的抓取
+├── gitee.py       # Gitee 上的三个站点：清单与它们的 clone 缓存
 ├── sandbox.py     # 解包的边界：路径、体积、文件数、符号链接
 └── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
 ```
@@ -186,6 +188,7 @@ src/coderagent/skills/
 | `src/coderagent/skills/source.py` | `parse_source(text) -> Source`；`fetch(source, workdir, policy) -> Path`（把来源变成一个目录树）；`fetch_registry(url, policy) -> list[Entry]` |
 | `src/coderagent/skills/sandbox.py` | `Policy`（能下多少、能有多大）；`unpack_tar(archive, dest, policy)`；`copy_tree(src, dest, policy)`；`digest(files) -> str`；`check_path` / `check_name` / `sanitize` |
 | `src/coderagent/skills/install.py` | `stage(source, policy) -> Staged`；`read_stage(stage_id)`；`install(staged, force=)`；`check_update(installed)`；`uninstall(name)`；`read_lock` / `write_lock` |
+| `src/coderagent/skills/gitee.py` | Gitee 上的站点（`SITES`）；`list_skills(site, policy)` 从 clone 里读出清单；clone 的缓存 |
 | `src/coderagent/web/skills_api.py` | 网页端点的实现（校验、入参组装、错误翻译）；自带一个 `APIRouter(prefix="/api/skills")` |
 | `src/coderagent/web/templates/{en,zh}/skills.html` | 技能页 |
 | `tests/coderagent/skills/test_*.py` | 领域层测试 |
@@ -239,13 +242,34 @@ clone 出来的是整个仓库，技能是其中的一个子目录，路径由�
 一次普通下载，得到一个文件。技能名取 front matter 的 `name`，没有就用 URL 的文件名。
 直链**不带目录**，所以技能没有脚本和资源——这是它的固有代价，页面上要说清楚。
 
-### 5.5 引用的写法
+### 5.5 Gitee 仓库与站点
+
+Gitee 是国内开发者放技能的地方，所以它有自己的来源种类和一组内置站点。
+
+**来源**：`gitee:owner/repo/skills/pdf-report` → `git clone --depth 1 https://gitee.com/{owner}/{repo}.git`，
+再取其中的子目录。走 clone 而不是 API，是因为 **Gitee 的 API 对匿名请求放行一阵子就拒绝**
+（`403 Forbidden (Rate Limit Exceeded)`），clone 则一直管用。
+
+**站点**：网页上的三个标签页，各对应一个仓库：
+
+| 站点 | 仓库 | 技能 |
+|---|---|---|
+| `official` | `oschina/gitee-agent-skills` | `mcp-gitee-skills/skills/` 下的 14 个（Gitee 官方，给 Gitee MCP 服务器用） |
+| `personal` | `yang_huai_qiang1/agent-skills` | 12 个日常开发用得上的技能 |
+| `tools` | `jianchaoteng/agent-skills` | 3 个：两个读代码库，一个管部署 |
+
+站点的清单也从 clone 里读（`src/coderagent/skills/gitee.py`），clone 缓存在
+`~/.coderagent/cache/skills/sites/` 里半天。Gitee 上的技能仓库 star 几乎都是 0，
+排名靠的是「谁维护 + 有多少技能 + 什么时候更新」，不是 star。
+
+### 5.6 引用的写法
 
 `parse_source(text)` 按前缀分派：
 
 | 输入 | 判定 |
 |---|---|
 | `github:owner/repo/path@ref` | github |
+| `gitee:owner/repo/path` | gitee |
 | 长得像 `owner/repo`（含一个 `/`，不是 URL） | github |
 | `https://` / `http://` 开头且以 `.json` 结尾 | registry |
 | `https://` / `http://` 开头且以 `SKILL.md` 结尾 | direct |
@@ -253,7 +277,7 @@ clone 出来的是整个仓库，技能是其中的一个子目录，路径由�
 | `git@host:...` | git |
 | 其它 | 报错，`"this is not a source of a skill: <text>"` |
 
-显式前缀（`github:` / `git:` / `registry:` / `direct:`）永远优先，用来消歧。
+显式前缀（`github:` / `gitee:` / `git:` / `registry:` / `direct:`）永远优先，用来消歧。
 
 ---
 
@@ -420,6 +444,13 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 │ [来源__________________________] [下载预览] │
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
+┌─ Gitee ──────────────────────────────────┐
+│ [oschina/gitee-agent-skills][个人][工具]           │
+│ Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能        │
+│ create-issue   Use this skill when…        [下载] │
+│ create-pr      Use this skill when…        [下载] │
+│ …（每个站点六行）                                │
+└───────────────────────────────────────────┘
 ```
 
 预览弹窗：
@@ -450,6 +481,8 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 | 方法 | 路径 | 干什么 |
 |---|---|---|
 | `GET` | `/api/skills` | 已装的技能（名字、描述、目录、来源、sha256、文件数） |
+| `GET` | `/api/skills/sites` | Gitee 上的站点（标签页） |
+| `GET` | `/api/skills/sites/{site}` | 某个站点的技能（页面只显示前六个） |
 | `GET` | `/api/skills/{name}` | 详情，含 `SKILL.md` 全文与文件清单 |
 | `POST` | `/api/skills/preview` | `{source: "owner/repo@v1"}` → 暂存 + 预览 |
 | `POST` | `/api/skills/install` | `{stage_id: "…"}` → 装上 |
@@ -586,6 +619,15 @@ skills:
 - [x] `docs/design/README.md` 索引加这一篇
 - [x] 终端 `/skills` 显示来源
 - [x] `pytest tests/coderagent` 全绿
+
+### 阶段 D：Gitee 站点 —— 已完成
+
+- [x] `source.py` 加 `gitee` 这一种来源：`gitee:owner/repo/path`，靠 clone 取
+- [x] `skills/gitee.py`：三个站点、清单、clone 的缓存
+- [x] `web/skills_api.py`：`GET /api/skills/sites`、`GET /api/skills/sites/{site}`
+- [x] 技能页加标签页，每个站点显示六行，点一个就下载
+- [x] 中英文案、usage 文档、设计文档
+- [x] 测试：`tests/coderagent/skills/test_gitee.py`、`web/test_api_skills.py` 加 3 个
 
 ---
 
