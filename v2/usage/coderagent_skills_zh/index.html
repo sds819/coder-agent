@@ -1251,6 +1251,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#gitee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gitee 上的站点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4163,6 +4174,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#gitee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gitee 上的站点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4378,9 +4400,38 @@ These skills are available. Load one with the `skill` tool when its description 
 <p>网页版的 <code>/skills</code> 页（见<a href="../coderagent_web_zh/">网页版</a>）列出装好的技能，也能从网络装新的。</p>
 <div class="highlight"><pre><span></span><code>coder web
 </code></pre></div>
-<p>页面分两块：<strong>已安装</strong>——<code>~/.coderagent/skills/</code> 里的每个技能，带来源和内容摘要；
-<strong>从网络安装</strong>——一个填来源的输入框和一个按钮，点了就把技能下载下来给你看。
+<p>页面分三块：<strong>已安装</strong>——<code>~/.coderagent/skills/</code> 里的每个技能，带来源和内容摘要；
+<strong>从网络安装</strong>——一个填来源的输入框和一个按钮，点了就把技能下载下来给你看；
+还有 Gitee 上那几个站点的标签页。
 磁盘上先不写任何东西：下载的东西先在暂存区里等着，页面先摊开给你看。</p>
+<h3 id="gitee">Gitee 上的站点</h3>
+<p>输入框下面的标签页是 Gitee 上真正有技能的三个站点：</p>
+<table>
+<thead>
+<tr>
+<th>标签</th>
+<th>是什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>oschina/gitee-agent-skills</code></td>
+<td>Gitee 官方仓库：十四个驱动 Gitee MCP 服务器的技能</td>
+</tr>
+<tr>
+<td><code>yang_huai_qiang1/agent-skills</code></td>
+<td>个人收藏：十二个日常开发用得上的技能</td>
+</tr>
+<tr>
+<td><code>jianchaoteng/agent-skills</code></td>
+<td>三个技能：两个用来读代码库，一个用来部署</td>
+</tr>
+</tbody>
+</table>
+<p>每个标签页列出该站点的前六个技能。点一个技能就把它下载下来，
+弹出的还是那个预览框——看过之前，照样不装。</p>
+<p>站点的清单是从它仓库的克隆里读出来的，克隆放在 <code>~/.coderagent/cache/skills/sites/</code>
+里放着半天：Gitee 的 API 对匿名请求放行一阵子就拒绝，但克隆一直管用。</p>
 <h3 id="_5">来源</h3>
 <table>
 <thead>
@@ -4403,6 +4454,10 @@ These skills are available. Load one with the `skill` tool when its description 
 <td>GitHub 仓库里的一个技能</td>
 </tr>
 <tr>
+<td><code>gitee:owner/repo/skills/pdf-report</code></td>
+<td>Gitee 仓库里的一个技能</td>
+</tr>
+<tr>
 <td><code>https://host/org/repo.git</code>、<code>git@host:org/repo.git</code></td>
 <td>一个 git 仓库</td>
 </tr>
@@ -4416,7 +4471,7 @@ These skills are available. Load one with the `skill` tool when its description 
 </tr>
 </tbody>
 </table>
-<p>地址有两种讲法时，用前缀说清你要哪个：<code>github:</code>、<code>git:</code>、<code>registry:</code>、<code>direct:</code>。</p>
+<p>地址有两种讲法时，用前缀说清你要哪个：<code>github:</code>、<code>gitee:</code>、<code>git:</code>、<code>registry:</code>、<code>direct:</code>。</p>
 <p>直链只有一个文件，所以这样的技能没有脚本也没有资源——这是它的代价。</p>
 <p>注册表就是一个 JSON 文件：</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>

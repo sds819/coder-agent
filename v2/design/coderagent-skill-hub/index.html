@@ -3862,10 +3862,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#55" class="md-nav__link">
+  <a href="#55-gitee" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 引用的写法
+        5.5 Gitee 仓库与站点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 引用的写法
       
     </span>
   </a>
@@ -4187,6 +4198,17 @@
     <span class="md-ellipsis">
       
         阶段 C：收尾 —— 已完成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dgitee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 D：Gitee 站点 —— 已完成
       
     </span>
   </a>
@@ -4669,10 +4691,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#55" class="md-nav__link">
+  <a href="#55-gitee" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 引用的写法
+        5.5 Gitee 仓库与站点
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 引用的写法
       
     </span>
   </a>
@@ -5000,6 +5033,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#dgitee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 D：Gitee 站点 —— 已完成
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5200,9 +5244,9 @@
 <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Source</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Where a skill comes from. One of the three kinds below."""</span>
-    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>            <span class="c1"># "github" | "git" | "registry" | "direct"</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>            <span class="c1"># "github" | "gitee" | "git" | "registry" | "direct"</span>
     <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>        <span class="c1"># the URL to fetch (registry/direct/github tarball)</span>
-    <span class="n">repo</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>       <span class="c1"># "owner/repo" for github</span>
+    <span class="n">repo</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>       <span class="c1"># "owner/repo" for github and for gitee</span>
     <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>        <span class="c1"># a tag, a branch or a commit</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>       <span class="c1"># the directory of the skill inside the repository</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>       <span class="c1"># the name of the skill, when the source names it</span>
@@ -5220,6 +5264,11 @@
 <td><code>github</code></td>
 <td><code>owner/repo</code>、<code>owner/repo@ref</code>、<code>owner/repo/skills/pdf-report@v1</code></td>
 <td>GitHub API 的 tarball：<code>https://api.github.com/repos/{owner}/{repo}/tarball/{ref}</code></td>
+</tr>
+<tr>
+<td><code>gitee</code></td>
+<td><code>gitee:owner/repo</code>、<code>gitee:owner/repo/skills/pdf-report</code></td>
+<td><code>git clone --depth 1 https://gitee.com/{owner}/{repo}.git</code>，再取其中的子目录</td>
 </tr>
 <tr>
 <td><code>git</code></td>
@@ -5299,7 +5348,8 @@
 <div class="highlight"><pre><span></span><code>src/coderagent/skills/
 ├── __init__.py    # 现有的 Skill / load_skills / skill_index / parse_skill（搬过来，公共 API 不变）
 ├── errors.py      # SkillError：给用户看的理由
-├── source.py      # Source 的解析（用户填的字符串 → Source）与四种来源的抓取
+├── source.py      # Source 的解析（用户填的字符串 → Source）与来源的抓取
+├── gitee.py       # Gitee 上的三个站点：清单与它们的 clone 缓存
 ├── sandbox.py     # 解包的边界：路径、体积、文件数、符号链接
 └── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
 </code></pre></div>
@@ -5354,6 +5404,10 @@
 <tr>
 <td><code>src/coderagent/skills/install.py</code></td>
 <td><code>stage(source, policy) -&gt; Staged</code>；<code>read_stage(stage_id)</code>；<code>install(staged, force=)</code>；<code>check_update(installed)</code>；<code>uninstall(name)</code>；<code>read_lock</code> / <code>write_lock</code></td>
+</tr>
+<tr>
+<td><code>src/coderagent/skills/gitee.py</code></td>
+<td>Gitee 上的站点（<code>SITES</code>）；<code>list_skills(site, policy)</code> 从 clone 里读出清单；clone 的缓存</td>
 </tr>
 <tr>
 <td><code>src/coderagent/web/skills_api.py</code></td>
@@ -5425,7 +5479,42 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 <h3 id="54-skillmd">5.4 单个 SKILL.md 直链</h3>
 <p>一次普通下载，得到一个文件。技能名取 front matter 的 <code>name</code>，没有就用 URL 的文件名。
 直链<strong>不带目录</strong>，所以技能没有脚本和资源——这是它的固有代价，页面上要说清楚。</p>
-<h3 id="55">5.5 引用的写法</h3>
+<h3 id="55-gitee">5.5 Gitee 仓库与站点</h3>
+<p>Gitee 是国内开发者放技能的地方，所以它有自己的来源种类和一组内置站点。</p>
+<p><strong>来源</strong>：<code>gitee:owner/repo/skills/pdf-report</code> → <code>git clone --depth 1 https://gitee.com/{owner}/{repo}.git</code>，
+再取其中的子目录。走 clone 而不是 API，是因为 <strong>Gitee 的 API 对匿名请求放行一阵子就拒绝</strong>
+（<code>403 Forbidden (Rate Limit Exceeded)</code>），clone 则一直管用。</p>
+<p><strong>站点</strong>：网页上的三个标签页，各对应一个仓库：</p>
+<table>
+<thead>
+<tr>
+<th>站点</th>
+<th>仓库</th>
+<th>技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>official</code></td>
+<td><code>oschina/gitee-agent-skills</code></td>
+<td><code>mcp-gitee-skills/skills/</code> 下的 14 个（Gitee 官方，给 Gitee MCP 服务器用）</td>
+</tr>
+<tr>
+<td><code>personal</code></td>
+<td><code>yang_huai_qiang1/agent-skills</code></td>
+<td>12 个日常开发用得上的技能</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td><code>jianchaoteng/agent-skills</code></td>
+<td>3 个：两个读代码库，一个管部署</td>
+</tr>
+</tbody>
+</table>
+<p>站点的清单也从 clone 里读（<code>src/coderagent/skills/gitee.py</code>），clone 缓存在
+<code>~/.coderagent/cache/skills/sites/</code> 里半天。Gitee 上的技能仓库 star 几乎都是 0，
+排名靠的是「谁维护 + 有多少技能 + 什么时候更新」，不是 star。</p>
+<h3 id="56">5.6 引用的写法</h3>
 <p><code>parse_source(text)</code> 按前缀分派：</p>
 <table>
 <thead>
@@ -5438,6 +5527,10 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 <tr>
 <td><code>github:owner/repo/path@ref</code></td>
 <td>github</td>
+</tr>
+<tr>
+<td><code>gitee:owner/repo/path</code></td>
+<td>gitee</td>
 </tr>
 <tr>
 <td>长得像 <code>owner/repo</code>（含一个 <code>/</code>，不是 URL）</td>
@@ -5465,7 +5558,7 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 </tr>
 </tbody>
 </table>
-<p>显式前缀（<code>github:</code> / <code>git:</code> / <code>registry:</code> / <code>direct:</code>）永远优先，用来消歧。</p>
+<p>显式前缀（<code>github:</code> / <code>gitee:</code> / <code>git:</code> / <code>registry:</code> / <code>direct:</code>）永远优先，用来消歧。</p>
 <hr>
 <h2 id="6">6. 安装流程</h2>
 <div class="highlight"><pre><span></span><code>用户填来源
@@ -5648,6 +5741,13 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 │ [来源__________________________] [下载预览] │
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
+┌─ Gitee ──────────────────────────────────┐
+│ [oschina/gitee-agent-skills][个人][工具]           │
+│ Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能        │
+│ create-issue   Use this skill when…        [下载] │
+│ create-pr      Use this skill when…        [下载] │
+│ …（每个站点六行）                                │
+└───────────────────────────────────────────┘
 </code></pre></div>
 <p>预览弹窗：</p>
 <div class="highlight"><pre><span></span><code>┌─ 预览：pdf-report ───────────────────────┐
@@ -5683,6 +5783,16 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <td><code>GET</code></td>
 <td><code>/api/skills</code></td>
 <td>已装的技能（名字、描述、目录、来源、sha256、文件数）</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/skills/sites</code></td>
+<td>Gitee 上的站点（标签页）</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/skills/sites/{site}</code></td>
+<td>某个站点的技能（页面只显示前六个）</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -5905,6 +6015,15 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <li>[x] <code>docs/design/README.md</code> 索引加这一篇</li>
 <li>[x] 终端 <code>/skills</code> 显示来源</li>
 <li>[x] <code>pytest tests/coderagent</code> 全绿</li>
+</ul>
+<h3 id="dgitee">阶段 D：Gitee 站点 —— 已完成</h3>
+<ul>
+<li>[x] <code>source.py</code> 加 <code>gitee</code> 这一种来源：<code>gitee:owner/repo/path</code>，靠 clone 取</li>
+<li>[x] <code>skills/gitee.py</code>：三个站点、清单、clone 的缓存</li>
+<li>[x] <code>web/skills_api.py</code>：<code>GET /api/skills/sites</code>、<code>GET /api/skills/sites/{site}</code></li>
+<li>[x] 技能页加标签页，每个站点显示六行，点一个就下载</li>
+<li>[x] 中英文案、usage 文档、设计文档</li>
+<li>[x] 测试：<code>tests/coderagent/skills/test_gitee.py</code>、<code>web/test_api_skills.py</code> 加 3 个</li>
 </ul>
 <hr>
 <h2 id="14">14. 风险与取舍</h2>

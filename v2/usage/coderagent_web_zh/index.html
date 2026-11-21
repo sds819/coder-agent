@@ -4707,6 +4707,8 @@ coder<span class="w"> </span>web
 <li><strong>从网络安装</strong>：一个填来源的输入框和一个按钮。下载的东西先在暂存区里等着，弹窗先摊开
   给你看——来源、文件清单、摘要，还有 <strong><code>SKILL.md</code> 的全文</strong>——你点了<code>安装</code>才写进磁盘，
   落在 <code>~/.coderagent/skills/&lt;名字&gt;/</code>。</li>
+<li><strong>Gitee</strong>：Gitee 上三个真正有技能的站点的标签页。每个标签页列六个技能，点一个技能就把它
+  下载下来，弹的还是那个预览框。</li>
 </ul>
 <p>来源、限制和锁文件见<a href="../coderagent_skills_zh/">技能</a>。</p>
 <h2 id="permissions">权限</h2>
@@ -4955,6 +4957,16 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <td>GET</td>
 <td><code>/api/skills</code></td>
 <td>装好的技能</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/sites</code></td>
+<td>Gitee 上的站点，一个标签页一个</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/sites/{site}</code></td>
+<td>某个站点的技能</td>
 </tr>
 <tr>
 <td>GET</td>

@@ -4702,6 +4702,9 @@ next session on. The session you are in keeps the model it has; use <code>/model
   — the source, the files, the digest and the <strong>whole <code>SKILL.md</code></strong> — before
   anything is written to the disk. <code>Install</code> writes it to
   <code>~/.coderagent/skills/&lt;name&gt;/</code>.</li>
+<li><strong>Gitee</strong>: the tabs of the three sites on Gitee that hold real skills. A tab
+  shows six skills of its site, and a click on a skill downloads it and opens
+  the same dialog.</li>
 </ul>
 <p>See <a href="../coderagent_skills/">Skills</a> for the sources, the limits and the lock
 file.</p>
@@ -5007,6 +5010,16 @@ do not ask for the header — they start nothing.</p>
 <td>GET</td>
 <td><code>/api/skills</code></td>
 <td>The skills that are installed</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/sites</code></td>
+<td>The sites of Gitee: one tab for each of them</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skills/sites/{site}</code></td>
+<td>The skills of one site</td>
 </tr>
 <tr>
 <td>GET</td>
