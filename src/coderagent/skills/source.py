@@ -342,11 +342,10 @@ def _fetch_github(source: Source, workdir: Path, policy: Policy, token: str) -> 
     archive = workdir / "repo.tar.gz"
     archive.write_bytes(download(url, policy, headers))
     root = workdir / "repo"
-    unpack_tar(archive, root, policy)
-    target = check_path(root, source.path) if source.path else root
-    if not target.is_dir():
+    entries = unpack_tar(archive, root, policy, prefix=source.path)
+    if source.path and not entries:
         raise SkillError(f"there is no '{source.path}' in {source.repo}")
-    return target
+    return root
 
 
 def _fetch_gitee(source: Source, workdir: Path, policy: Policy) -> Path:

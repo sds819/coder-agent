@@ -213,3 +213,17 @@ def test_a_directory_that_is_not_in_the_repository_is_refused(tmp_path, monkeypa
             fetch(
                 source.Source(kind="github", repo="owner/repo", path="skills/pdf", ref="v1"), tmp_path / "work", POLICY
             )
+
+
+def test_only_the_directory_of_the_skill_is_taken(tmp_path, monkeypatch):
+    """A repository is big, a skill is small: the rest of it is left alone."""
+    served = _github(
+        tmp_path,
+        {"owner-repo-abc/skills/pdf/SKILL.md": b"x", "owner-repo-abc/README.md": b"y", "owner-repo-abc/logo.png": b"z"},
+    )
+    with serve(served) as base:
+        monkeypatch.setattr(source, "GITHUB_API", base)
+        fetched = fetch(
+            source.Source(kind="github", repo="owner/repo", path="skills/pdf", ref="v1"), tmp_path / "work", POLICY
+        )
+    assert [path.name for path in fetched.iterdir()] == ["SKILL.md"]

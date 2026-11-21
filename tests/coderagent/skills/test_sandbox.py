@@ -48,6 +48,43 @@ def test_the_directory_of_the_archive_is_dropped(tmp_path):
     assert not (tmp_path / "out" / "owner-repo-abc").exists()
 
 
+def test_an_archive_that_holds_its_own_root_is_unpacked(tmp_path):
+    """The tarball of GitHub holds the directory of the repository as a member."""
+    archive = tmp_path / "a.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        info = tarfile.TarInfo("owner-repo-abc")
+        info.type = tarfile.DIRTYPE
+        tar.addfile(info)
+        for name, content in {"owner-repo-abc/SKILL.md": b"hi", "owner-repo-abc/scripts/run.py": b"print(1)"}.items():
+            member = tarfile.TarInfo(name)
+            member.size = len(content)
+            tar.addfile(member, io.BytesIO(content))
+
+    entries = unpack_tar(archive, tmp_path / "out", POLICY)
+
+    assert [entry.path for entry in entries] == ["SKILL.md", "scripts/run.py"]
+    assert (tmp_path / "out" / "SKILL.md").read_bytes() == b"hi"
+    assert not (tmp_path / "out" / "owner-repo-abc").exists()
+
+
+def test_a_plain_file_at_the_top_is_not_a_root(tmp_path):
+    """An archive without a directory of its own keeps its paths."""
+    archive = _tarball(tmp_path / "a.tar.gz", {"SKILL.md": b"hi"})
+    entries = unpack_tar(archive, tmp_path / "out", POLICY)
+    assert [entry.path for entry in entries] == ["SKILL.md"]
+
+
+def test_only_the_directory_that_is_wanted_is_unpacked(tmp_path):
+    """A repository is big, a skill is small: the rest of it is left alone."""
+    archive = _tarball(
+        tmp_path / "a.tar.gz",
+        {"owner-repo-abc/skills/pdf/SKILL.md": b"hi", "owner-repo-abc/README.md": b"no"},
+    )
+    entries = unpack_tar(archive, tmp_path / "out", POLICY, prefix="skills/pdf")
+    assert [entry.path for entry in entries] == ["SKILL.md"]
+    assert not (tmp_path / "out" / "README.md").exists()
+
+
 def test_a_path_that_leaves_the_directory_is_refused(tmp_path):
     archive = _tarball(tmp_path / "a.tar.gz", {"repo/../../evil": b"x"})
     with pytest.raises(SkillError, match="not a path inside"):

@@ -121,29 +121,39 @@ def check_path(root: Path, relative: str) -> Path:
     return target
 
 
-def unpack_tar(archive: Path, dest: Path, policy: Policy) -> list[FileEntry]:
+def unpack_tar(archive: Path, dest: Path, policy: Policy, prefix: str = "") -> list[FileEntry]:
     """Unpack a tarball into a directory, refusing what does not belong there.
 
     The members are checked one by one: only plain files and directories are
     taken, the paths may not leave the directory, and the sizes may not pass
     the policy. The first directory of the archive is dropped: it is the name
     GitHub gives it, not a part of the skill.
+
+    With `prefix` only the part of the archive under that directory is taken:
+    a repository may be big, but a skill is small.
     """
     entries: list[FileEntry] = []
     total = 0
     dest.mkdir(parents=True, exist_ok=True)
+    prefix = prefix.strip("/")
     try:
         with tarfile.open(archive, "r:*") as tar:
             members = tar.getmembers()
             root = _root_of(members)
             for member in members:
-                if not (member.isfile() or member.isdir()):
-                    raise SkillError(f"'{member.name}' is not a plain file")
                 if member.name.startswith("/"):
                     raise SkillError(f"'{member.name}' is not a path inside the skill")
                 relative = _relative(member.name, root)
+                if prefix:
+                    if relative == prefix:
+                        continue
+                    if not relative.startswith(f"{prefix}/"):
+                        continue
+                    relative = relative[len(prefix) + 1 :]
                 if not relative:
                     continue
+                if not (member.isfile() or member.isdir()):
+                    raise SkillError(f"'{member.name}' is not a plain file")
                 if len(PurePosixPath(relative).parts) > policy.max_depth:
                     raise SkillError(f"'{relative}' is deeper than {policy.max_depth} levels")
                 target = check_path(dest, relative)
@@ -217,11 +227,20 @@ def entries_of(directory: Path) -> list[FileEntry]:
 
 
 def _root_of(members: list[tarfile.TarInfo]) -> str:
-    """The directory every member of the archive is under, when there is one."""
-    parts = [PurePosixPath(member.name).parts for member in members]
-    if not parts or not all(len(part) > 1 for part in parts):
-        return ""
-    roots = {part[0] for part in parts}
+    """The directory every member of the archive is under, when there is one.
+
+    The archive of GitHub holds the directory of the repository as a member of
+    its own: that member names the root, but it is not a part of the skill.
+    A plain file at the top says there is no root at all.
+    """
+    roots = set()
+    for member in members:
+        parts = PurePosixPath(member.name).parts
+        if not parts:
+            return ""
+        if len(parts) == 1 and not member.isdir():
+            return ""
+        roots.add(parts[0])
     return roots.pop() if len(roots) == 1 else ""
 
 
