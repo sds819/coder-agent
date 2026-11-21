@@ -5,10 +5,9 @@ import socket
 import sys
 from pathlib import Path
 
-import litellm
-
 from coderagent.config.loader import load_config
 from coderagent.core.protocols import ModelBackend
+from coderagent.models import litellm_module
 
 logger = logging.getLogger("coderagent.web")
 
@@ -49,7 +48,7 @@ def serve(
 
     from coderagent.web.app import create_app
 
-    litellm.suppress_debug_info = True
+    litellm_module()
     """litellm prints banners to stdout, which would break the event stream."""
     config = load_config(config_spec or [], cwd=cwd)
     app = create_app(

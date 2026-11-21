@@ -12,10 +12,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from litellm.utils import get_llm_provider
 
 from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
 from coderagent.config.schema import PURPOSES, ModelConfig, PermissionConfig, check_routing_rule
+from coderagent.models import litellm_module
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import locate
 from coderagent.models.litellm_config import resolve as resolve_alias
@@ -429,7 +429,7 @@ def provider_of(model_name: str) -> str:
         return model_name.split("/", 1)[0].lower()
     try:
         with contextlib.redirect_stdout(io.StringIO()):
-            _, provider, _, _ = get_llm_provider(model=model_name)
+            _, provider, _, _ = litellm_module().utils.get_llm_provider(model=model_name)
     except Exception:
         return ""
     return provider

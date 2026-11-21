@@ -2,11 +2,10 @@
 
 import logging
 from collections.abc import Iterator
-from functools import cache
+from functools import cache, cached_property
 from typing import Any
 
-import litellm
-
+from coderagent.models import litellm_module
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import translate
@@ -43,15 +42,19 @@ def _warn_about_the_price(model: str, message: str) -> None:
 class LiteLLMBackend:
     """Calls `litellm.completion` and normalizes the response."""
 
-    abort_exceptions: list[type[Exception]] = [
-        litellm.exceptions.UnsupportedParamsError,
-        litellm.exceptions.NotFoundError,
-        litellm.exceptions.PermissionDeniedError,
-        litellm.exceptions.ContextWindowExceededError,
-        litellm.exceptions.AuthenticationError,
-        litellm.exceptions.BadRequestError,
-        KeyboardInterrupt,
-    ]
+    @cached_property
+    def abort_exceptions(self) -> list[type[Exception]]:
+        """The errors that no retry can fix."""
+        exceptions = litellm_module().exceptions
+        return [
+            exceptions.UnsupportedParamsError,
+            exceptions.NotFoundError,
+            exceptions.PermissionDeniedError,
+            exceptions.ContextWindowExceededError,
+            exceptions.AuthenticationError,
+            exceptions.BadRequestError,
+            KeyboardInterrupt,
+        ]
 
     def __init__(
         self,
@@ -107,6 +110,7 @@ class LiteLLMBackend:
         return {"model_name": self.model_name, **self.model_kwargs}
 
     def _open_stream(self, messages: list[dict], call_kwargs: dict):
+        litellm = litellm_module()
         for attempt in retry(logger=logger, abort_exceptions=self.abort_exceptions, attempts=self.max_retries):
             with attempt:
                 try:
@@ -178,7 +182,7 @@ class LiteLLMBackend:
         prompt = int(self._field(usage, "prompt_tokens") or 0)
         completion = int(self._field(usage, "completion_tokens") or 0)
         try:
-            prompt_cost, completion_cost = litellm.cost_calculator.cost_per_token(
+            prompt_cost, completion_cost = litellm_module().cost_calculator.cost_per_token(
                 model=self.model_name, prompt_tokens=prompt, completion_tokens=completion
             )
             return float(prompt_cost) + float(completion_cost)

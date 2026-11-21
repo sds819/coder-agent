@@ -10,6 +10,10 @@ __version__ = "0.1.0"
 # mini-swe-agent greets the user on import; the coder CLI has its own output.
 os.environ.setdefault("MSWEA_SILENT_STARTUP", "1")
 
+# litellm fetches the price table from GitHub while it is imported: seconds of waiting,
+# and a failure behind a firewall. The copy it ships with is good enough.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "true")
+
 from coderagent.core.protocols import ModelBackend, ToolExecutor  # noqa: E402
 
 __all__ = ["ModelBackend", "ToolExecutor", "__version__"]

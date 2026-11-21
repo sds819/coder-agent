@@ -8,7 +8,6 @@ import tempfile
 import time
 from pathlib import Path
 
-import litellm
 import typer
 from pydantic import ValidationError
 
@@ -18,9 +17,6 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.run import build_loop, build_store, run_turn
 from coderagent.ui.render import last_message, render
-
-# litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
-litellm.suppress_debug_info = True
 
 app = typer.Typer(rich_markup_mode="rich", invoke_without_command=True, no_args_is_help=False)
 

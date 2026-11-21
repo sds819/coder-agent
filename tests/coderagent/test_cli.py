@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -323,3 +324,18 @@ def test_without_a_notifier_nothing_is_run(tmp_path, monkeypatch):
         [{"role": "assistant", "content": "the work is done", "tool_calls": [], "extra": {"cost": 0.0}}]
     )
     assert main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path))
+
+
+def test_the_start_does_not_wait_for_litellm():
+    """litellm takes two seconds to import and fetches a price table from the network.
+
+    Neither may happen before the agent calls a model.
+    """
+    code = (
+        "import os, sys\n"
+        "import coderagent.ui.cli\n"
+        "print('litellm' in sys.modules, os.environ.get('LITELLM_LOCAL_MODEL_COST_MAP'))\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip().splitlines()[-1] == "False true"

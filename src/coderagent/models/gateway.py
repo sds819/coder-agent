@@ -3,15 +3,14 @@
 from collections.abc import Iterator
 from typing import Any
 
-import litellm
-
 from coderagent.core.protocols import ModelBackend
+from coderagent.models import litellm_module
 from coderagent.models.streaming import ModelEvent, message_from_events, usage_tokens
 
 
 def is_context_overflow(error: Exception) -> bool:
     """True when the provider refused the request because the context was too long."""
-    if isinstance(error, litellm.exceptions.ContextWindowExceededError):
+    if isinstance(error, litellm_module().exceptions.ContextWindowExceededError):
         return True
     text = str(error).lower()
     return any(marker in text for marker in ("context window", "context_length_exceeded", "maximum context length"))
