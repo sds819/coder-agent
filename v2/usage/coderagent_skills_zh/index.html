@@ -4428,10 +4428,12 @@ These skills are available. Load one with the `skill` tool when its description 
 </tr>
 </tbody>
 </table>
-<p>每个标签页列出该站点的前六个技能。点一个技能就把它下载下来，
+<p>每个标签页一次显示六个技能，但站点的技能是全都取回来的，卡片下面的翻页
+按钮把它们一页一页摊开。点一个技能就把它下载下来，
 弹出的还是那个预览框——看过之前，照样不装。</p>
 <p>站点的清单是从它仓库的克隆里读出来的，克隆放在 <code>~/.coderagent/cache/skills/sites/</code>
-里放着半天：Gitee 的 API 对匿名请求放行一阵子就拒绝，但克隆一直管用。</p>
+里放着半天：Gitee 的 API 对匿名请求放行一阵子就拒绝，但克隆一直管用。
+标签页顶上的<strong>同步更新</strong>按钮会把克隆扔掉重新取一遍，于是你看到的是站点现在的样子。</p>
 <h3 id="_5">来源</h3>
 <table>
 <thead>

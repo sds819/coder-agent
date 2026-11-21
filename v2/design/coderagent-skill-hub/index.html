@@ -4215,6 +4215,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 E：站点页做得好看点 —— 已完成
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5044,6 +5055,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 E：站点页做得好看点 —— 已完成
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5514,6 +5536,8 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 <p>站点的清单也从 clone 里读（<code>src/coderagent/skills/gitee.py</code>），clone 缓存在
 <code>~/.coderagent/cache/skills/sites/</code> 里半天。Gitee 上的技能仓库 star 几乎都是 0，
 排名靠的是「谁维护 + 有多少技能 + 什么时候更新」，不是 star。</p>
+<p>网页把<strong>站点的全部技能</strong>都取回来，一页显示六个（<code>ROWS = 6</code>），剩下的由前端的翻页按钮摊开；
+标签页上的「同步更新」按钮带 <code>refresh=true</code>，把缓存的 clone 扔掉重新取一次。</p>
 <h3 id="56">5.6 引用的写法</h3>
 <p><code>parse_source(text)</code> 按前缀分派：</p>
 <table>
@@ -5742,11 +5766,14 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
 ┌─ Gitee ──────────────────────────────────┐
-│ [oschina/gitee-agent-skills][个人][工具]           │
+│ [●oschina/gitee-agent-skills][●个人][●工具]        │
+│ ● oschina/gitee-agent-skills  (14 个技能) [同步更新] │
 │ Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能        │
-│ create-issue   Use this skill when…        [下载] │
-│ create-pr      Use this skill when…        [下载] │
-│ …（每个站点六行）                                │
+│ ┌ (C) create-issue  [已安装]              [下载] │ │
+│ │     Use this skill when…                      │ │
+│ └     mcp-gitee-skills/skills/create-issue       │ │
+│ …（一页六个）                                     │
+│ [‹][1][2][3][›]  第 1 页，共 3 页                   │
 └───────────────────────────────────────────┘
 </code></pre></div>
 <p>预览弹窗：</p>
@@ -5791,8 +5818,8 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 </tr>
 <tr>
 <td><code>GET</code></td>
-<td><code>/api/skills/sites/{site}</code></td>
-<td>某个站点的技能（页面只显示前六个）</td>
+<td><code>/api/skills/sites/{site}?refresh=</code></td>
+<td>某个站点的全部技能；<code>refresh=true</code> 把缓存的 clone 扔掉重取</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -6021,9 +6048,16 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <li>[x] <code>source.py</code> 加 <code>gitee</code> 这一种来源：<code>gitee:owner/repo/path</code>，靠 clone 取</li>
 <li>[x] <code>skills/gitee.py</code>：三个站点、清单、clone 的缓存</li>
 <li>[x] <code>web/skills_api.py</code>：<code>GET /api/skills/sites</code>、<code>GET /api/skills/sites/{site}</code></li>
-<li>[x] 技能页加标签页，每个站点显示六行，点一个就下载</li>
+<li>[x] 技能页加标签页，点一个就下载</li>
 <li>[x] 中英文案、usage 文档、设计文档</li>
 <li>[x] 测试：<code>tests/coderagent/skills/test_gitee.py</code>、<code>web/test_api_skills.py</code> 加 3 个</li>
+</ul>
+<h3 id="e">阶段 E：站点页做得好看点 —— 已完成</h3>
+<ul>
+<li>[x] 站点全部技能一次取回，一页六个，前端翻页</li>
+<li>[x] <code>?refresh=true</code>：扔掉缓存的 clone 重取，页面上是「同步更新」按钮</li>
+<li>[x] 每个站点一个颜色，卡片、头像、徽章、翻页按钮</li>
+<li>[x] 测试：本地 git daemon 起着，测 clone、缓存和刷新</li>
 </ul>
 <hr>
 <h2 id="14">14. 风险与取舍</h2>

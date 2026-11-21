@@ -4441,13 +4441,15 @@ the cache and the page shows it first.</p>
 </tr>
 </tbody>
 </table>
-<p>A tab shows the first six skills of its site. A click on a skill downloads it
+<p>A tab shows six skills at a time. Every skill of the site is fetched, and the
+pager under the cards walks through them. A click on a skill downloads it
 and opens the same dialog as any other download, so you still read it before it
 is installed.</p>
 <p>The list of a site is read from a clone of its repository, and the clone is
 kept in <code>~/.coderagent/cache/skills/sites/</code> for half a day: the API of Gitee
 lets anonymous callers in for a while and then refuses them, but a clone
-always works.</p>
+always works. The <strong>Sync</strong> button at the top of the tab throws the clone away
+and fetches the site again, so you see what the site holds now.</p>
 <h3 id="the-sources">The sources</h3>
 <table>
 <thead>
