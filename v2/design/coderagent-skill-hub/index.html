@@ -3865,7 +3865,7 @@
   <a href="#55-gitee" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 Gitee 仓库与站点
+        5.5 Gitee 仓库与技能站点
       
     </span>
   </a>
@@ -4205,10 +4205,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#dgitee" class="md-nav__link">
+  <a href="#d" class="md-nav__link">
     <span class="md-ellipsis">
       
-        阶段 D：Gitee 站点 —— 已完成
+        阶段 D：技能站点 —— 已完成
       
     </span>
   </a>
@@ -4705,7 +4705,7 @@
   <a href="#55-gitee" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5.5 Gitee 仓库与站点
+        5.5 Gitee 仓库与技能站点
       
     </span>
   </a>
@@ -5045,10 +5045,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#dgitee" class="md-nav__link">
+  <a href="#d" class="md-nav__link">
     <span class="md-ellipsis">
       
-        阶段 D：Gitee 站点 —— 已完成
+        阶段 D：技能站点 —— 已完成
       
     </span>
   </a>
@@ -5371,7 +5371,7 @@
 ├── __init__.py    # 现有的 Skill / load_skills / skill_index / parse_skill（搬过来，公共 API 不变）
 ├── errors.py      # SkillError：给用户看的理由
 ├── source.py      # Source 的解析（用户填的字符串 → Source）与来源的抓取
-├── gitee.py       # Gitee 上的三个站点：清单与它们的 clone 缓存
+├── sites.py       # 三个技能站点：清单与它们的 clone 缓存
 ├── sandbox.py     # 解包的边界：路径、体积、文件数、符号链接
 └── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
 </code></pre></div>
@@ -5428,8 +5428,8 @@
 <td><code>stage(source, policy) -&gt; Staged</code>；<code>read_stage(stage_id)</code>；<code>install(staged, force=)</code>；<code>check_update(installed)</code>；<code>uninstall(name)</code>；<code>read_lock</code> / <code>write_lock</code></td>
 </tr>
 <tr>
-<td><code>src/coderagent/skills/gitee.py</code></td>
-<td>Gitee 上的站点（<code>SITES</code>）；<code>list_skills(site, policy)</code> 从 clone 里读出清单；clone 的缓存</td>
+<td><code>src/coderagent/skills/sites.py</code></td>
+<td>技能站点（<code>SITES</code>）；<code>list_skills(site, policy)</code> 从 clone 里读出清单；clone 的缓存</td>
 </tr>
 <tr>
 <td><code>src/coderagent/web/skills_api.py</code></td>
@@ -5486,7 +5486,9 @@ owner/repo@main                  → ref = main
 owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 </code></pre></div>
 <p>取法：<code>GET https://api.github.com/repos/{owner}/{repo}/tarball/{ref}</code>（<code>Accept: application/vnd.github+json</code>），
-解 tar.gz。整仓当 skill 的情况只在<strong>根目录就有 <code>SKILL.md</code></strong> 时成立；否则要指 <code>path</code>。</p>
+解 tar.gz。tarball 的第一个成员是仓库自己的根目录，解包时要去掉；
+指了 <code>path</code> 时<strong>只解那一个子目录</strong>——仓库可能很大，技能却很小，
+所以体积上限算的是技能，不是整个仓库。整仓当 skill 的情况只在<strong>根目录就有 <code>SKILL.md</code></strong> 时成立；否则要指 <code>path</code>。</p>
 <p>API 有速率限制（匿名 60 次/小时）。可配 <code>skills.github_token</code> 提高配额；
 令牌只用于请求头，<strong>不写进锁文件</strong>。</p>
 <h3 id="52-git">5.2 任意 git 地址</h3>
@@ -5501,9 +5503,10 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 <h3 id="54-skillmd">5.4 单个 SKILL.md 直链</h3>
 <p>一次普通下载，得到一个文件。技能名取 front matter 的 <code>name</code>，没有就用 URL 的文件名。
 直链<strong>不带目录</strong>，所以技能没有脚本和资源——这是它的固有代价，页面上要说清楚。</p>
-<h3 id="55-gitee">5.5 Gitee 仓库与站点</h3>
-<p>Gitee 是国内开发者放技能的地方，所以它有自己的来源种类和一组内置站点。</p>
-<p><strong>来源</strong>：<code>gitee:owner/repo/skills/pdf-report</code> → <code>git clone --depth 1 https://gitee.com/{owner}/{repo}.git</code>，
+<h3 id="55-gitee">5.5 Gitee 仓库与技能站点</h3>
+<p>Gitee 是国内开发者放技能的地方，所以它有自己的来源种类；网页上另外有一组
+「技能站点」的标签页，指向当下最热门、真的装着技能的 GitHub 仓库。</p>
+<p><strong>Gitee 来源</strong>：<code>gitee:owner/repo/skills/pdf-report</code> → <code>git clone --depth 1 https://gitee.com/{owner}/{repo}.git</code>，
 再取其中的子目录。走 clone 而不是 API，是因为 <strong>Gitee 的 API 对匿名请求放行一阵子就拒绝</strong>
 （<code>403 Forbidden (Rate Limit Exceeded)</code>），clone 则一直管用。</p>
 <p><strong>站点</strong>：网页上的三个标签页，各对应一个仓库：</p>
@@ -5517,27 +5520,29 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 </thead>
 <tbody>
 <tr>
-<td><code>official</code></td>
-<td><code>oschina/gitee-agent-skills</code></td>
-<td><code>mcp-gitee-skills/skills/</code> 下的 14 个（Gitee 官方，给 Gitee MCP 服务器用）</td>
+<td><code>superpowers</code></td>
+<td><code>obra/superpowers</code></td>
+<td><code>skills/</code> 下的 15 个：规划、调试、写测试</td>
 </tr>
 <tr>
-<td><code>personal</code></td>
-<td><code>yang_huai_qiang1/agent-skills</code></td>
-<td>12 个日常开发用得上的技能</td>
+<td><code>anthropic</code></td>
+<td><code>anthropics/skills</code></td>
+<td><code>skills/</code> 下的 19 个：文档、幻灯片、表格等等</td>
 </tr>
 <tr>
-<td><code>tools</code></td>
-<td><code>jianchaoteng/agent-skills</code></td>
-<td>3 个：两个读代码库，一个管部署</td>
+<td><code>composio</code></td>
+<td><code>ComposioHQ/awesome-claude-skills</code></td>
+<td>仓库根下的 864 个：写作、表格、很多服务的自动化</td>
 </tr>
 </tbody>
 </table>
-<p>站点的清单也从 clone 里读（<code>src/coderagent/skills/gitee.py</code>），clone 缓存在
-<code>~/.coderagent/cache/skills/sites/</code> 里半天。Gitee 上的技能仓库 star 几乎都是 0，
-排名靠的是「谁维护 + 有多少技能 + 什么时候更新」，不是 star。</p>
+<p>站点的清单从 clone 里读（<code>src/coderagent/skills/sites.py</code>），clone 缓存在
+<code>~/.coderagent/cache/skills/sites/</code> 里半天。排名靠的是 star 加上「真的有多少 <code>SKILL.md</code>」：
+只放链接的合集不算站点。</p>
 <p>网页把<strong>站点的全部技能</strong>都取回来，一页显示六个（<code>ROWS = 6</code>），剩下的由前端的翻页按钮摊开；
 标签页上的「同步更新」按钮带 <code>refresh=true</code>，把缓存的 clone 扔掉重新取一次。</p>
+<p>下载技能时只取仓库里的那一个目录（<code>unpack_tar(..., prefix=...)</code>）：仓库可能很大，
+技能却很小，所以体积上限算的是技能，不是整个仓库。</p>
 <h3 id="56">5.6 引用的写法</h3>
 <p><code>parse_source(text)</code> 按前缀分派：</p>
 <table>
@@ -5765,13 +5770,13 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 │ [来源__________________________] [下载预览] │
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
-┌─ Gitee ──────────────────────────────────┐
-│ [●oschina/gitee-agent-skills][●个人][●工具]        │
-│ ● oschina/gitee-agent-skills  (14 个技能) [同步更新] │
-│ Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能        │
-│ ┌ (C) create-issue  [已安装]              [下载] │ │
+┌─ 技能站点 ────────────────────────────────┐
+│ [●obra/superpowers][●anthropics/skills][●ComposioHQ…] │
+│ ● obra/superpowers  (15 个技能) [同步更新]          │
+│ 一套讲 agent 怎么干活的技能：规划、调试、写测试        │
+│ ┌ (B) brainstorming  [已安装]             [下载] │ │
 │ │     Use this skill when…                      │ │
-│ └     mcp-gitee-skills/skills/create-issue       │ │
+│ └     skills/brainstorming                       │ │
 │ …（一页六个）                                     │
 │ [‹][1][2][3][›]  第 1 页，共 3 页                   │
 └───────────────────────────────────────────┘
@@ -5814,7 +5819,7 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <tr>
 <td><code>GET</code></td>
 <td><code>/api/skills/sites</code></td>
-<td>Gitee 上的站点（标签页）</td>
+<td>技能站点（标签页）</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -6043,14 +6048,16 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <li>[x] 终端 <code>/skills</code> 显示来源</li>
 <li>[x] <code>pytest tests/coderagent</code> 全绿</li>
 </ul>
-<h3 id="dgitee">阶段 D：Gitee 站点 —— 已完成</h3>
+<h3 id="d">阶段 D：技能站点 —— 已完成</h3>
 <ul>
 <li>[x] <code>source.py</code> 加 <code>gitee</code> 这一种来源：<code>gitee:owner/repo/path</code>，靠 clone 取</li>
-<li>[x] <code>skills/gitee.py</code>：三个站点、清单、clone 的缓存</li>
+<li>[x] <code>skills/sites.py</code>：三个站点、清单、clone 的缓存</li>
 <li>[x] <code>web/skills_api.py</code>：<code>GET /api/skills/sites</code>、<code>GET /api/skills/sites/{site}</code></li>
 <li>[x] 技能页加标签页，点一个就下载</li>
 <li>[x] 中英文案、usage 文档、设计文档</li>
-<li>[x] 测试：<code>tests/coderagent/skills/test_gitee.py</code>、<code>web/test_api_skills.py</code> 加 3 个</li>
+<li>[x] 测试：<code>tests/coderagent/skills/test_sites.py</code>、<code>web/test_api_skills.py</code> 加 3 个</li>
+<li>[x] 站点换成当下最热门的三个 GitHub 仓库（<code>obra/superpowers</code>、<code>anthropics/skills</code>、
+      <code>ComposioHQ/awesome-claude-skills</code>），Gitee 的三个标签页不再出现</li>
 </ul>
 <h3 id="e">阶段 E：站点页做得好看点 —— 已完成</h3>
 <ul>

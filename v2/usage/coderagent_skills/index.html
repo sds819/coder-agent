@@ -1537,10 +1537,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-sites-of-gitee" class="md-nav__link">
+  <a href="#the-sites-of-skills" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The sites of Gitee
+        The sites of skills
       
     </span>
   </a>
@@ -4172,10 +4172,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-sites-of-gitee" class="md-nav__link">
+  <a href="#the-sites-of-skills" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The sites of Gitee
+        The sites of skills
       
     </span>
   </a>
@@ -4413,12 +4413,13 @@ installs new ones from the network.</p>
 <p>The page has three parts: <strong>Installed</strong> — every skill in <code>~/.coderagent/skills/</code>
 with its source and its digest — <strong>Install from the network</strong>, a field for
 a source and a button that downloads it and shows what it is, and the tabs of
-the sites of Gitee. A skill you put there yourself has no source, and the page
+the sites of skills. A skill you put there yourself has no source, and the page
 says so.</p>
 <p>Nothing is written to the disk before you have read it: the download waits in
 the cache and the page shows it first.</p>
-<h3 id="the-sites-of-gitee">The sites of Gitee</h3>
-<p>The tabs under the field are the three sites on Gitee that hold real skills:</p>
+<h3 id="the-sites-of-skills">The sites of skills</h3>
+<p>The tabs under the field are the three repositories that hold the most skills
+and have the most stars:</p>
 <table>
 <thead>
 <tr>
@@ -4428,16 +4429,16 @@ the cache and the page shows it first.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>oschina/gitee-agent-skills</code></td>
-<td>the repository of Gitee itself: fourteen skills that drive the Gitee MCP server</td>
+<td><code>obra/superpowers</code></td>
+<td>fifteen skills that tell an agent how to work: planning, debugging, writing tests</td>
 </tr>
 <tr>
-<td><code>yang_huai_qiang1/agent-skills</code></td>
-<td>a personal collection: twelve skills for everyday work</td>
+<td><code>anthropics/skills</code></td>
+<td>the skills of Anthropic itself: documents, slides, spreadsheets and more</td>
 </tr>
 <tr>
-<td><code>jianchaoteng/agent-skills</code></td>
-<td>three skills: two for reading a codebase, one for deployment</td>
+<td><code>ComposioHQ/awesome-claude-skills</code></td>
+<td>a big collection: writing, spreadsheets, and the automation of many services</td>
 </tr>
 </tbody>
 </table>
@@ -4446,10 +4447,11 @@ pager under the cards walks through them. A click on a skill downloads it
 and opens the same dialog as any other download, so you still read it before it
 is installed.</p>
 <p>The list of a site is read from a clone of its repository, and the clone is
-kept in <code>~/.coderagent/cache/skills/sites/</code> for half a day: the API of Gitee
-lets anonymous callers in for a while and then refuses them, but a clone
-always works. The <strong>Sync</strong> button at the top of the tab throws the clone away
-and fetches the site again, so you see what the site holds now.</p>
+kept in <code>~/.coderagent/cache/skills/sites/</code> for half a day, so the second tab
+is not a second wait. The <strong>Sync</strong> button at the top of the tab throws the
+clone away and fetches the site again, so you see what the site holds now.</p>
+<p>Only the skill you click on is downloaded: the repository itself may be big,
+but a skill is small.</p>
 <h3 id="the-sources">The sources</h3>
 <table>
 <thead>
