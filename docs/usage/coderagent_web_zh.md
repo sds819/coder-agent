@@ -153,8 +153,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 - **从网络安装**：一个填来源的输入框和一个按钮。下载的东西先在暂存区里等着，弹窗先摊开
   给你看——来源、文件清单、摘要，还有 **`SKILL.md` 的全文**——你点了`安装`才写进磁盘，
   落在 `~/.coderagent/skills/<名字>/`。
-- **Gitee**：Gitee 上三个真正有技能的站点的标签页。每个标签页列六个技能，点一个技能就把它
-  下载下来，弹的还是那个预览框。
+- **Gitee**：Gitee 上三个真正有技能的站点的标签页。每个标签页一次列六个技能，
+  剩下的翻页看，标签页顶上还有一个**同步更新**按钮重新取一遍站点。
+  点一个技能就把它下载下来，弹的还是那个预览框。
 
 来源、限制和锁文件见[技能](coderagent_skills_zh.md)。
 
@@ -268,7 +269,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/diff?path=` | 工作区里这个文件的改动 |
 | GET | `/api/skills` | 装好的技能 |
 | GET | `/api/skills/sites` | Gitee 上的站点，一个标签页一个 |
-| GET | `/api/skills/sites/{site}` | 某个站点的技能 |
+| GET | `/api/skills/sites/{site}?refresh=` | 某个站点的全部技能；`refresh=true` 重新取一次站点 |
 | GET | `/api/skills/{name}` | 一个技能，带它的 `SKILL.md` |
 | POST | `/api/skills/preview` | 下载一个来源并摊开给你看 |
 | POST | `/api/skills/install` | 装上看过的技能 |

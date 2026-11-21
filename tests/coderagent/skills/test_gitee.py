@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from coderagent.skills import gitee
 from coderagent.skills.errors import SkillError
 from coderagent.skills.gitee import ROWS, SITES, Site, site_of, skills_of
+from coderagent.skills.sandbox import Policy
 
 SKILL = """---
 name: {name}
@@ -91,3 +93,32 @@ def test_a_site_that_is_not_there_is_an_error(tmp_path):
 def test_a_site_shows_a_handful_of_skills():
     """The page shows a few rows for each site, not all of them."""
     assert ROWS == 6
+
+
+def test_the_skills_of_a_site_come_from_a_clone(daemon, monkeypatch):
+    """A site is read from a clone of its repository, not from an API."""
+    daemon.push({"pdf-report": "Make a PDF report."})
+    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
+
+    skills = gitee.list_skills(Site(id="test", repo="remote", path="skills"), _policy())
+
+    assert [skill.name for skill in skills] == ["pdf-report"]
+    assert skills[0].path == "skills/pdf-report"
+
+
+def test_a_site_is_fetched_again_when_it_is_refreshed(daemon, monkeypatch):
+    """The clone is kept for a while, but a refresh throws it away."""
+    daemon.push({"pdf-report": "Make a PDF report."})
+    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
+    site = Site(id="test", repo="remote", path="skills")
+
+    gitee.list_skills(site, _policy())
+    daemon.push({"pdf-report": "Make a PDF report.", "slides": "Make the slides."})
+
+    assert [skill.name for skill in gitee.list_skills(site, _policy())] == ["pdf-report"]
+    assert [skill.name for skill in gitee.list_skills(site, _policy(), refresh=True)] == ["pdf-report", "slides"]
+
+
+def _policy() -> Policy:
+    """The policy that lets the clone reach the server of the test."""
+    return Policy(allowed_hosts=("127.0.0.1",))

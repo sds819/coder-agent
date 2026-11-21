@@ -262,6 +262,9 @@ Gitee 是国内开发者放技能的地方，所以它有自己的来源种类�
 `~/.coderagent/cache/skills/sites/` 里半天。Gitee 上的技能仓库 star 几乎都是 0，
 排名靠的是「谁维护 + 有多少技能 + 什么时候更新」，不是 star。
 
+网页把**站点的全部技能**都取回来，一页显示六个（`ROWS = 6`），剩下的由前端的翻页按钮摊开；
+标签页上的「同步更新」按钮带 `refresh=true`，把缓存的 clone 扔掉重新取一次。
+
 ### 5.6 引用的写法
 
 `parse_source(text)` 按前缀分派：
@@ -445,11 +448,14 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
 ┌─ Gitee ──────────────────────────────────┐
-│ [oschina/gitee-agent-skills][个人][工具]           │
+│ [●oschina/gitee-agent-skills][●个人][●工具]        │
+│ ● oschina/gitee-agent-skills  (14 个技能) [同步更新] │
 │ Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能        │
-│ create-issue   Use this skill when…        [下载] │
-│ create-pr      Use this skill when…        [下载] │
-│ …（每个站点六行）                                │
+│ ┌ (C) create-issue  [已安装]              [下载] │ │
+│ │     Use this skill when…                      │ │
+│ └     mcp-gitee-skills/skills/create-issue       │ │
+│ …（一页六个）                                     │
+│ [‹][1][2][3][›]  第 1 页，共 3 页                   │
 └───────────────────────────────────────────┘
 ```
 
@@ -482,7 +488,7 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 |---|---|---|
 | `GET` | `/api/skills` | 已装的技能（名字、描述、目录、来源、sha256、文件数） |
 | `GET` | `/api/skills/sites` | Gitee 上的站点（标签页） |
-| `GET` | `/api/skills/sites/{site}` | 某个站点的技能（页面只显示前六个） |
+| `GET` | `/api/skills/sites/{site}?refresh=` | 某个站点的全部技能；`refresh=true` 把缓存的 clone 扔掉重取 |
 | `GET` | `/api/skills/{name}` | 详情，含 `SKILL.md` 全文与文件清单 |
 | `POST` | `/api/skills/preview` | `{source: "owner/repo@v1"}` → 暂存 + 预览 |
 | `POST` | `/api/skills/install` | `{stage_id: "…"}` → 装上 |
@@ -625,9 +631,16 @@ skills:
 - [x] `source.py` 加 `gitee` 这一种来源：`gitee:owner/repo/path`，靠 clone 取
 - [x] `skills/gitee.py`：三个站点、清单、clone 的缓存
 - [x] `web/skills_api.py`：`GET /api/skills/sites`、`GET /api/skills/sites/{site}`
-- [x] 技能页加标签页，每个站点显示六行，点一个就下载
+- [x] 技能页加标签页，点一个就下载
 - [x] 中英文案、usage 文档、设计文档
 - [x] 测试：`tests/coderagent/skills/test_gitee.py`、`web/test_api_skills.py` 加 3 个
+
+### 阶段 E：站点页做得好看点 —— 已完成
+
+- [x] 站点全部技能一次取回，一页六个，前端翻页
+- [x] `?refresh=true`：扔掉缓存的 clone 重取，页面上是「同步更新」按钮
+- [x] 每个站点一个颜色，卡片、头像、徽章、翻页按钮
+- [x] 测试：本地 git daemon 起着，测 clone、缓存和刷新
 
 ---
 

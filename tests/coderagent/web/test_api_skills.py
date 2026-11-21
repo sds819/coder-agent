@@ -10,6 +10,10 @@ import pytest
 
 pytest.importorskip("fastapi")
 
+from coderagent.skills import gitee
+from coderagent.skills.gitee import Site
+from coderagent.web import skills_api
+
 SKILL = """---
 name: pdf-report
 description: Make a PDF report out of a folder of notes.
@@ -317,3 +321,38 @@ def test_the_sites_are_refused_when_the_skills_are_off(make_client, home):
 
     assert client.get("/api/skills/sites").status_code == 403
     assert client.get("/api/skills/sites/official").status_code == 403
+
+
+def test_the_page_gets_all_the_skills_of_a_site(make_client, home, daemon, monkeypatch):
+    """The page asks for all of them and makes the pages itself."""
+    daemon.push({"pdf-report": "Make a PDF report."})
+    site = Site(id="test", repo="remote", path="skills")
+    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
+    monkeypatch.setattr(gitee, "SITES", (site,))
+    monkeypatch.setattr(skills_api, "SITES", (site,))
+    client = make_client(project_config=NETWORK)
+
+    answer = client.get("/api/skills/sites/test")
+
+    body = answer.json()
+    assert answer.status_code == 200
+    assert body["total"] == 1
+    assert body["page_size"] == 6
+    assert [skill["name"] for skill in body["skills"]] == ["pdf-report"]
+    assert body["skills"][0]["source_text"] == "gitee:remote/skills/pdf-report"
+
+
+def test_a_site_is_fetched_again_when_the_page_asks_for_it(make_client, home, daemon, monkeypatch):
+    """The sync button of the page throws the clone away."""
+    daemon.push({"pdf-report": "Make a PDF report."})
+    site = Site(id="test", repo="remote", path="skills")
+    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
+    monkeypatch.setattr(gitee, "SITES", (site,))
+    monkeypatch.setattr(skills_api, "SITES", (site,))
+    client = make_client(project_config=NETWORK)
+    client.get("/api/skills/sites/test")
+    daemon.push({"pdf-report": "Make a PDF report.", "slides": "Make the slides."})
+
+    answer = client.get("/api/skills/sites/test?refresh=true")
+
+    assert [skill["name"] for skill in answer.json()["skills"]] == ["pdf-report", "slides"]

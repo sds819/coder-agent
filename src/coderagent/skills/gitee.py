@@ -42,6 +42,9 @@ class Site:
     path: str = ""
     """The directory of the skills inside the repository."""
 
+    accent: str = "#6aa9ff"
+    """The colour of the site in the page, so that the tabs differ."""
+
     @property
     def url(self) -> str:
         """The address of the site."""
@@ -59,9 +62,9 @@ class SiteSkill:
 
 
 SITES = (
-    Site(id="official", repo="oschina/gitee-agent-skills", path="mcp-gitee-skills/skills"),
-    Site(id="personal", repo="yang_huai_qiang1/agent-skills"),
-    Site(id="tools", repo="jianchaoteng/agent-skills"),
+    Site(id="official", repo="oschina/gitee-agent-skills", path="mcp-gitee-skills/skills", accent="#ef7059"),
+    Site(id="personal", repo="yang_huai_qiang1/agent-skills", accent="#4fb0f5"),
+    Site(id="tools", repo="jianchaoteng/agent-skills", accent="#a98bff"),
 )
 """The sites of the tabs, in the order they are shown.
 
@@ -81,9 +84,13 @@ def site_of(id: str) -> Site:
     raise SkillError(f"there is no site with the name {id}")
 
 
-def list_skills(site: Site, policy: Policy) -> list[SiteSkill]:
-    """Every skill of a site."""
-    return skills_of(_checkout(site, policy), site)
+def list_skills(site: Site, policy: Policy, refresh: bool = False) -> list[SiteSkill]:
+    """Every skill of a site.
+
+    With `refresh` the clone is thrown away and fetched again: the page asks
+    for that when the user wants to see what the site looks like now.
+    """
+    return skills_of(_checkout(site, policy, refresh), site)
 
 
 def skills_of(root: Path, site: Site) -> list[SiteSkill]:
@@ -107,10 +114,10 @@ def skills_of(root: Path, site: Site) -> list[SiteSkill]:
     return skills
 
 
-def _checkout(site: Site, policy: Policy) -> Path:
+def _checkout(site: Site, policy: Policy, refresh: bool = False) -> Path:
     """The clone of a site, fresh enough to be used."""
     directory = config_home() / CACHE / site.id
-    if _is_fresh(directory):
+    if not refresh and _is_fresh(directory):
         return directory
     shutil.rmtree(directory, ignore_errors=True)
     directory.parent.mkdir(parents=True, exist_ok=True)

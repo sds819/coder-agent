@@ -109,14 +109,16 @@ The tabs under the field are the three sites on Gitee that hold real skills:
 | `yang_huai_qiang1/agent-skills` | a personal collection: twelve skills for everyday work |
 | `jianchaoteng/agent-skills` | three skills: two for reading a codebase, one for deployment |
 
-A tab shows the first six skills of its site. A click on a skill downloads it
+A tab shows six skills at a time. Every skill of the site is fetched, and the
+pager under the cards walks through them. A click on a skill downloads it
 and opens the same dialog as any other download, so you still read it before it
 is installed.
 
 The list of a site is read from a clone of its repository, and the clone is
 kept in `~/.coderagent/cache/skills/sites/` for half a day: the API of Gitee
 lets anonymous callers in for a while and then refuses them, but a clone
-always works.
+always works. The **Sync** button at the top of the tab throws the clone away
+and fetches the site again, so you see what the site holds now.
 
 ### The sources
 

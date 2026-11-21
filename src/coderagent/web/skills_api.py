@@ -181,18 +181,23 @@ def list_sites(request: Request) -> dict[str, Any]:
 
 
 @router.get("/sites/{site_id}")
-def list_site_skills(site_id: str, request: Request) -> dict[str, Any]:
-    """The skills of one site. The first ones are the ones the page shows."""
+def list_site_skills(site_id: str, request: Request, refresh: bool = False) -> dict[str, Any]:
+    """Every skill of one site, with the size of a page.
+
+    With `refresh` the clone of the site is thrown away and fetched again: the
+    page asks for that when the user wants to see what the site looks like now.
+    """
     _guard(request)
     try:
         site = site_of(site_id)
-        skills = site_skills(site, _policy(request))
+        skills = site_skills(site, _policy(request), refresh)
     except SkillError as error:
         raise _bad_request(request, error, site_id) from None
     return {
         "site": _site_view(site),
         "total": len(skills),
-        "skills": [_skill_view(site, skill) for skill in skills[:ROWS]],
+        "page_size": ROWS,
+        "skills": [_skill_view(site, skill) for skill in skills],
     }
 
 
@@ -312,7 +317,14 @@ def registry(body: RegistryBody, request: Request, _: None = Depends(require_cli
 
 def _site_view(site: Site) -> dict[str, Any]:
     """What the tab of a site says."""
-    return {"id": site.id, "repo": site.repo, "url": site.url, "path": site.path}
+    return {
+        "id": site.id,
+        "repo": site.repo,
+        "url": site.url,
+        "path": site.path,
+        "accent": site.accent,
+        "page_size": ROWS,
+    }
 
 
 def _skill_view(site: Site, skill: SiteSkill) -> dict[str, Any]:

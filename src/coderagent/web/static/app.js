@@ -557,6 +557,7 @@ async function loadSkills() {
   if (!box) return;
   const data = await api("/api/skills");
   box.innerHTML = "";
+  siteState.installed = new Set(data.skills.map((skill) => skill.name));
   if (!data.skills.length) box.appendChild(el("div", "note", t("skills_none")));
   for (const skill of data.skills) {
     const row = el("div", "skill");
@@ -580,6 +581,7 @@ async function loadSkills() {
     box.appendChild(row);
   }
   showRegistries(data.registries || []);
+  if (siteState.site) renderSite();
 }
 
 function showRegistries(urls) {
@@ -721,6 +723,8 @@ async function startSkills() {
 
 // -- the sites of Gitee ----------------------------------------------------
 
+const siteState = { site: null, skills: [], page: 0, size: 6, installed: new Set() };
+
 /* The sites are the tabs of the page: one tab for each repository, and the
    skills of the repository under it. */
 async function loadSites() {
@@ -732,6 +736,7 @@ async function loadSites() {
     for (const site of data.sites || []) {
       const tab = el("button", "tab", site.repo);
       tab.dataset.site = site.id;
+      tab.style.setProperty("--site-accent", site.accent || "#6aa9ff");
       tab.onclick = () => showSite(site);
       box.appendChild(tab);
     }
@@ -741,31 +746,118 @@ async function loadSites() {
   }
 }
 
-async function showSite(site) {
-  const box = document.getElementById("skills-site-skills");
+async function showSite(site, refresh = false) {
+  const panel = document.getElementById("skills-site-panel");
+  siteState.site = site;
+  siteState.page = 0;
   for (const tab of document.querySelectorAll("#skills-sites .tab")) {
     tab.classList.toggle("active", tab.dataset.site === site.id);
   }
-  document.getElementById("skills-site-note").textContent = t(`skills_site_${site.id}`);
-  box.innerHTML = "";
-  box.appendChild(el("div", "note", t("skills_site_loading")));
+  panel.innerHTML = "";
+  panel.style.setProperty("--site-accent", site.accent || "#6aa9ff");
+  panel.appendChild(el("div", "note", t("skills_site_loading")));
   try {
-    const data = await api(`/api/skills/sites/${encodeURIComponent(site.id)}`);
-    box.innerHTML = "";
-    for (const skill of data.skills || []) {
-      const row = el("div", "skill");
-      const head = el("div", "skill-head");
-      head.appendChild(el("strong", "", skill.name));
-      head.appendChild(el("span", "", skill.description));
-      row.appendChild(head);
-      row.appendChild(skillButton(t("skills_site_download"), () => downloadSkill(skill)));
-      box.appendChild(row);
-    }
-    const shown = (data.skills || []).length;
-    if (data.total > shown) box.appendChild(el("div", "note", t("skills_site_more", { count: data.total - shown })));
+    const data = await api(`/api/skills/sites/${encodeURIComponent(site.id)}${refresh ? "?refresh=true" : ""}`);
+    siteState.skills = data.skills || [];
+    siteState.size = data.page_size || 6;
+    renderSite();
   } catch (error) {
-    box.innerHTML = "";
-    box.appendChild(el("div", "note", t("error", { message: error.message })));
+    panel.innerHTML = "";
+    panel.appendChild(el("div", "note", t("error", { message: error.message })));
+  }
+}
+
+function renderSite() {
+  const panel = document.getElementById("skills-site-panel");
+  const site = siteState.site;
+  panel.innerHTML = "";
+
+  const head = el("div", "site-head");
+  const title = el("div", "site-title");
+  title.appendChild(el("span", "site-dot"));
+  const link = el("a", "site-repo", site.repo);
+  link.href = site.url;
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  title.appendChild(link);
+  head.appendChild(title);
+  head.appendChild(el("span", "badge", t("skills_site_count", { count: siteState.skills.length })));
+  const sync = skillButton(t("skills_site_sync"), syncSite);
+  sync.classList.add("ghost");
+  head.appendChild(sync);
+  panel.appendChild(head);
+
+  panel.appendChild(el("div", "note", t(`skills_site_${site.id}`)));
+
+  const grid = el("div", "site-cards");
+  const items = siteState.skills.slice(siteState.page * siteState.size, (siteState.page + 1) * siteState.size);
+  if (!items.length) grid.appendChild(el("div", "note", t("skills_site_empty")));
+  for (const skill of items) grid.appendChild(siteCard(skill));
+  panel.appendChild(grid);
+
+  const pages = Math.max(1, Math.ceil(siteState.skills.length / siteState.size));
+  if (pages > 1) panel.appendChild(sitePager(pages));
+}
+
+function siteCard(skill) {
+  const card = el("div", "site-card");
+  card.appendChild(el("div", "site-avatar", (skill.name || "?").slice(0, 1).toUpperCase()));
+  const body = el("div", "site-card-body");
+  const title = el("div", "site-card-title");
+  title.appendChild(el("strong", "", skill.name));
+  if (siteState.installed.has(skill.name)) title.appendChild(el("span", "badge ok", t("skills_site_installed")));
+  body.appendChild(title);
+  body.appendChild(el("div", "site-card-desc", skill.description || ""));
+  body.appendChild(el("code", "site-card-path", skill.path));
+  card.appendChild(body);
+  const actions = el("div", "site-card-actions");
+  actions.appendChild(skillButton(t("skills_site_download"), () => downloadSkill(skill)));
+  card.appendChild(actions);
+  return card;
+}
+
+function sitePager(pages) {
+  const box = el("div", "pager");
+  const prev = skillButton(t("skills_site_prev"), () => turnPage(-1));
+  prev.disabled = siteState.page <= 0;
+  box.appendChild(prev);
+  for (let index = 0; index < pages; index++) {
+    const button = skillButton(String(index + 1), () => {
+      siteState.page = index;
+      renderSite();
+    });
+    if (index === siteState.page) button.classList.add("active");
+    box.appendChild(button);
+  }
+  const next = skillButton(t("skills_site_next"), () => turnPage(1));
+  next.disabled = siteState.page >= pages - 1;
+  box.appendChild(next);
+  box.appendChild(el("span", "note", t("skills_site_page", { page: siteState.page + 1, count: pages })));
+  return box;
+}
+
+function turnPage(step) {
+  const pages = Math.max(1, Math.ceil(siteState.skills.length / siteState.size));
+  siteState.page = Math.min(pages - 1, Math.max(0, siteState.page + step));
+  renderSite();
+}
+
+async function syncSite() {
+  const message = document.getElementById("skills-message");
+  message.textContent = t("skills_site_syncing");
+  await showSite(siteState.site, true);
+  message.textContent = "";
+}
+
+async function downloadSkill(skill) {
+  const message = document.getElementById("skills-message");
+  message.textContent = t("skills_downloading");
+  try {
+    const preview = await api("/api/skills/preview", { method: "POST", body: { source: skill.source_text } });
+    message.textContent = "";
+    openPreview(preview, false);
+  } catch (error) {
+    message.textContent = t("error", { message: error.message });
   }
 }
 
