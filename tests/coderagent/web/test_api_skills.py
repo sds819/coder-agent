@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from coderagent.skills import gitee
-from coderagent.skills.gitee import Site
+from coderagent.skills import sites
+from coderagent.skills.sites import Site
 from coderagent.web import skills_api
 
 SKILL = """---
@@ -292,18 +292,18 @@ def test_the_skills_can_be_turned_off(make_client, home, served):
     assert "turned off" in answer.json()["detail"]
 
 
-def test_the_sites_of_gitee_are_listed(make_client, home):
+def test_the_sites_are_listed(make_client, home):
     """There is a tab for each site."""
     client = make_client()
 
     answer = client.get("/api/skills/sites")
 
-    sites = answer.json()["sites"]
+    listed = answer.json()["sites"]
     assert answer.status_code == 200
-    assert len(sites) == 3
-    assert [site["id"] for site in sites] == ["official", "personal", "tools"]
-    assert all(site["repo"].count("/") == 1 for site in sites)
-    assert all(site["url"].startswith("https://gitee.com/") for site in sites)
+    assert len(listed) == 3
+    assert [site["id"] for site in listed] == ["superpowers", "anthropic", "composio"]
+    assert all(site["repo"].count("/") == 1 for site in listed)
+    assert all(site["url"].startswith("https://github.com/") for site in listed)
 
 
 def test_a_site_that_is_not_there_is_refused(make_client, home):
@@ -320,15 +320,15 @@ def test_the_sites_are_refused_when_the_skills_are_off(make_client, home):
     client = make_client(project_config="skills:\n  enabled: false\n")
 
     assert client.get("/api/skills/sites").status_code == 403
-    assert client.get("/api/skills/sites/official").status_code == 403
+    assert client.get("/api/skills/sites/superpowers").status_code == 403
 
 
 def test_the_page_gets_all_the_skills_of_a_site(make_client, home, daemon, monkeypatch):
     """The page asks for all of them and makes the pages itself."""
     daemon.push({"pdf-report": "Make a PDF report."})
     site = Site(id="test", repo="remote", path="skills")
-    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
-    monkeypatch.setattr(gitee, "SITES", (site,))
+    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
+    monkeypatch.setattr(sites, "SITES", (site,))
     monkeypatch.setattr(skills_api, "SITES", (site,))
     client = make_client(project_config=NETWORK)
 
@@ -339,15 +339,15 @@ def test_the_page_gets_all_the_skills_of_a_site(make_client, home, daemon, monke
     assert body["total"] == 1
     assert body["page_size"] == 6
     assert [skill["name"] for skill in body["skills"]] == ["pdf-report"]
-    assert body["skills"][0]["source_text"] == "gitee:remote/skills/pdf-report"
+    assert body["skills"][0]["source_text"] == "github:remote/skills/pdf-report"
 
 
 def test_a_site_is_fetched_again_when_the_page_asks_for_it(make_client, home, daemon, monkeypatch):
     """The sync button of the page throws the clone away."""
     daemon.push({"pdf-report": "Make a PDF report."})
     site = Site(id="test", repo="remote", path="skills")
-    monkeypatch.setattr(gitee, "GITEE", f"git://127.0.0.1:{daemon.port}")
-    monkeypatch.setattr(gitee, "SITES", (site,))
+    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
+    monkeypatch.setattr(sites, "SITES", (site,))
     monkeypatch.setattr(skills_api, "SITES", (site,))
     client = make_client(project_config=NETWORK)
     client.get("/api/skills/sites/test")

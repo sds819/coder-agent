@@ -93,21 +93,22 @@ coder web
 The page has three parts: **Installed** — every skill in `~/.coderagent/skills/`
 with its source and its digest — **Install from the network**, a field for
 a source and a button that downloads it and shows what it is, and the tabs of
-the sites of Gitee. A skill you put there yourself has no source, and the page
+the sites of skills. A skill you put there yourself has no source, and the page
 says so.
 
 Nothing is written to the disk before you have read it: the download waits in
 the cache and the page shows it first.
 
-### The sites of Gitee
+### The sites of skills
 
-The tabs under the field are the three sites on Gitee that hold real skills:
+The tabs under the field are the three repositories that hold the most skills
+and have the most stars:
 
 | Tab | What it is |
 |---|---|
-| `oschina/gitee-agent-skills` | the repository of Gitee itself: fourteen skills that drive the Gitee MCP server |
-| `yang_huai_qiang1/agent-skills` | a personal collection: twelve skills for everyday work |
-| `jianchaoteng/agent-skills` | three skills: two for reading a codebase, one for deployment |
+| `obra/superpowers` | fifteen skills that tell an agent how to work: planning, debugging, writing tests |
+| `anthropics/skills` | the skills of Anthropic itself: documents, slides, spreadsheets and more |
+| `ComposioHQ/awesome-claude-skills` | a big collection: writing, spreadsheets, and the automation of many services |
 
 A tab shows six skills at a time. Every skill of the site is fetched, and the
 pager under the cards walks through them. A click on a skill downloads it
@@ -115,10 +116,12 @@ and opens the same dialog as any other download, so you still read it before it
 is installed.
 
 The list of a site is read from a clone of its repository, and the clone is
-kept in `~/.coderagent/cache/skills/sites/` for half a day: the API of Gitee
-lets anonymous callers in for a while and then refuses them, but a clone
-always works. The **Sync** button at the top of the tab throws the clone away
-and fetches the site again, so you see what the site holds now.
+kept in `~/.coderagent/cache/skills/sites/` for half a day, so the second tab
+is not a second wait. The **Sync** button at the top of the tab throws the
+clone away and fetches the site again, so you see what the site holds now.
+
+Only the skill you click on is downloaded: the repository itself may be big,
+but a skill is small.
 
 ### The sources
 

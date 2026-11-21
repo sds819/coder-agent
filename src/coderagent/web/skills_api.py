@@ -15,8 +15,6 @@ from pydantic import BaseModel
 from coderagent.paths import config_home
 from coderagent.skills import SKILL_FILE, SKILLS_DIR, parse_skill
 from coderagent.skills.errors import SkillError
-from coderagent.skills.gitee import ROWS, SITES, Site, SiteSkill, site_of
-from coderagent.skills.gitee import list_skills as site_skills
 from coderagent.skills.install import (
     Staged,
     check_update,
@@ -27,6 +25,8 @@ from coderagent.skills.install import (
     uninstall,
 )
 from coderagent.skills.sandbox import Policy, check_name, entries_of
+from coderagent.skills.sites import ROWS, SITES, Site, SiteSkill, site_of
+from coderagent.skills.sites import list_skills as site_skills
 from coderagent.skills.source import fetch_registry, parse_source
 from coderagent.web.api import require_client
 from coderagent.web.i18n import STRINGS, locale_of
@@ -175,7 +175,7 @@ def list_skills(request: Request) -> dict[str, Any]:
 
 @router.get("/sites")
 def list_sites(request: Request) -> dict[str, Any]:
-    """The sites of skills that Gitee holds: one tab for each of them."""
+    """The sites of skills: one tab for each of them."""
     _guard(request)
     return {"sites": [_site_view(site) for site in SITES]}
 
@@ -333,7 +333,7 @@ def _skill_view(site: Site, skill: SiteSkill) -> dict[str, Any]:
         "name": skill.name,
         "description": skill.description,
         "path": skill.path,
-        "source_text": f"gitee:{site.repo}/{skill.path}",
+        "source_text": f"{site.kind}:{site.repo}/{skill.path}",
     }
 
 

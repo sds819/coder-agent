@@ -721,7 +721,7 @@ async function startSkills() {
   await loadSites();
 }
 
-// -- the sites of Gitee ----------------------------------------------------
+// -- the sites of skills ----------------------------------------------------
 
 const siteState = { site: null, skills: [], page: 0, size: 6, installed: new Set() };
 
@@ -821,19 +821,33 @@ function sitePager(pages) {
   const prev = skillButton(t("skills_site_prev"), () => turnPage(-1));
   prev.disabled = siteState.page <= 0;
   box.appendChild(prev);
-  for (let index = 0; index < pages; index++) {
+  let last = -1;
+  for (const index of pageWindow(pages)) {
+    if (last >= 0 && index > last + 1) box.appendChild(el("span", "note", "…"));
     const button = skillButton(String(index + 1), () => {
       siteState.page = index;
       renderSite();
     });
     if (index === siteState.page) button.classList.add("active");
     box.appendChild(button);
+    last = index;
   }
   const next = skillButton(t("skills_site_next"), () => turnPage(1));
   next.disabled = siteState.page >= pages - 1;
   box.appendChild(next);
   box.appendChild(el("span", "note", t("skills_site_page", { page: siteState.page + 1, count: pages })));
   return box;
+}
+
+/* The pages around the one on the screen, with the first and the last. A
+   collection may hold hundreds of skills: a button for every page would be
+   a wall of numbers. */
+function pageWindow(pages) {
+  const shown = new Set([0, pages - 1]);
+  for (let index = siteState.page - 2; index <= siteState.page + 2; index++) {
+    if (index >= 0 && index < pages) shown.add(index);
+  }
+  return [...shown].sort((a, b) => a - b);
 }
 
 function turnPage(step) {

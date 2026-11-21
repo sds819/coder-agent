@@ -41,6 +41,9 @@ CLONE_TIMEOUT = 120
 GITEE = "https://gitee.com"
 """Where the repositories of Gitee are fetched from."""
 
+GITHUB = "https://github.com"
+"""Where the repositories of GitHub are cloned from."""
+
 GITHUB_API = "https://api.github.com"
 """Where the repositories of GitHub are fetched from."""
 
