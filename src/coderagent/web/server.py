@@ -7,7 +7,7 @@ from pathlib import Path
 
 from coderagent.config.loader import load_config
 from coderagent.core.protocols import ModelBackend
-from coderagent.models import litellm_module
+from coderagent.models import warm_up_litellm
 
 logger = logging.getLogger("coderagent.web")
 
@@ -48,8 +48,8 @@ def serve(
 
     from coderagent.web.app import create_app
 
-    litellm_module()
-    """litellm prints banners to stdout, which would break the event stream."""
+    warm_up_litellm()
+    """litellm loads in the background, and its banners must not reach the event stream."""
     config = load_config(config_spec or [], cwd=cwd)
     app = create_app(
         config,

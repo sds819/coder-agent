@@ -19,6 +19,7 @@ from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
+from coderagent.models import warm_up_litellm
 from coderagent.run import build_loop, build_store
 from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.commands import CommandContext
@@ -159,6 +160,8 @@ class CoderApp(App):
         self._update_status()
         self._say_pending()
         self.query_one("#input", Input).focus()
+        self.call_after_refresh(warm_up_litellm)
+        """The screen is up: litellm loads while the user reads it and writes."""
 
     def _say_pending(self) -> None:
         """Say that the project has code that is not used, so that it is no surprise."""

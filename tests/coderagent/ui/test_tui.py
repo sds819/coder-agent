@@ -168,6 +168,20 @@ def test_the_status_bar_shows_the_session(tmp_path):
     assert bar[0].mode == "default"
 
 
+def test_the_app_loads_litellm_while_it_waits_for_the_user(tmp_path):
+    """The screen is up and litellm loads behind it: the first prompt does not wait."""
+    from coderagent.models import litellm_module
+
+    litellm_module.cache_clear()
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test():
+            assert await _wait_for(lambda: litellm_module.cache_info().currsize == 1, timeout=30)
+
+    asyncio.run(go())
+
+
 def test_the_status_bar_shows_the_sandbox_when_it_is_not_local():
     from coderagent.ui.widgets import StatusBar
 
