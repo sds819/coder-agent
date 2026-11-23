@@ -168,7 +168,8 @@ src/coderagent/skills/
 ├── source.py      # Source 的解析（用户填的字符串 → Source）与来源的抓取
 ├── sites.py       # 三个技能站点：清单与它们的 clone 缓存
 ├── sandbox.py     # 解包的边界：路径、体积、文件数、符号链接
-└── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
+├── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
+└── presets/       # 自带的十个技能（随包发布，用户和项目可以盖掉）
 ```
 
 **改动清单**
@@ -189,6 +190,7 @@ src/coderagent/skills/
 | `src/coderagent/skills/sandbox.py` | `Policy`（能下多少、能有多大）；`unpack_tar(archive, dest, policy)`；`copy_tree(src, dest, policy)`；`digest(files) -> str`；`check_path` / `check_name` / `sanitize` |
 | `src/coderagent/skills/install.py` | `stage(source, policy) -> Staged`；`read_stage(stage_id)`；`install(staged, force=)`；`check_update(installed)`；`uninstall(name)`；`read_lock` / `write_lock` |
 | `src/coderagent/skills/sites.py` | 技能站点（`SITES`）；`list_skills(site, policy)` 从 clone 里读出清单；clone 的缓存 |
+| `src/coderagent/skills/presets/*/SKILL.md` | 自带的技能：调研、长文档、Word、PPT、Excel、数据、写作、前端、摸代码库、评审 |
 | `src/coderagent/web/skills_api.py` | 网页端点的实现（校验、入参组装、错误翻译）；自带一个 `APIRouter(prefix="/api/skills")` |
 | `src/coderagent/web/templates/{en,zh}/skills.html` | 技能页 |
 | `tests/coderagent/skills/test_*.py` | 领域层测试 |

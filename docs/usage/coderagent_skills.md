@@ -44,9 +44,36 @@ file without a front matter is ignored.
 |---|---|
 | `.coderagent/skills/*/SKILL.md` | The skills of the project |
 | `~/.coderagent/skills/*/SKILL.md` | The skills of the user |
+| `src/coderagent/skills/presets/*/SKILL.md` | The skills that come with the agent |
 
 The project comes last, so a project may replace a skill of the user with the
-same name. `MSWEA_CODER_HOME` moves the directory of the user.
+same name. `MSWEA_CODER_HOME` moves the directory of the user. The skills of
+the agent come first: anything replaces them.
+
+## The skills that come with the agent
+
+Ten skills are in the box. They cover the work that comes back every day.
+
+| Skill | What it is for |
+|---|---|
+| `deep-research` | Look a question up and write a report that carries its sources |
+| `long-document` | Read a PDF or a Word file and answer with quotes and page numbers |
+| `office-docx` | Write a Word file with headings, tables and a table of contents |
+| `office-pptx` | Build a slide deck: one message per slide, speaker notes under each |
+| `office-xlsx` | Read and write Excel workbooks, with the formulas in the cells |
+| `data-analysis` | Clean the data, compute the figures, draw the charts |
+| `writing` | Write or rewrite prose in the voice and the length that is asked for |
+| `frontend-dev` | Build a web page that works on a phone and on a desktop |
+| `codebase-onboarding` | Get to know an unfamiliar codebase and write the map down |
+| `code-review` | Review a change before it is committed |
+
+Three of them come with a script: `pdf_text.py` reads a PDF, `docx_text.py`
+reads a Word file and `xlsx_text.py` reads an Excel workbook. They use the
+standard library only, so they work without a library installed.
+
+A skill of the user or of the project with the same name replaces one of
+them: put a `SKILL.md` of your own in `~/.coderagent/skills/<name>/` and the
+agent uses yours instead.
 
 `/skills` lists them:
 

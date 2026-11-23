@@ -35,6 +35,9 @@ SKILLS_DIR = "skills"
 """The directory of the skills. In the project it is under `.coderagent`."""
 SKILL_FILE = "SKILL.md"
 
+PRESETS = Path(__file__).parent / "presets"
+"""The skills that come with the agent. The user and the project may shadow them."""
+
 
 @dataclass
 class Skill:
@@ -79,7 +82,12 @@ def parse_skill(path: Path) -> Skill | None:
 
 
 def load_skills(cwd: Path, user_home: Path | None = None) -> dict[str, Skill]:
-    """The skills of the project and of the user. The project wins on a name clash."""
+    """The skills of the presets, of the user and of the project.
+
+    The later ones win on a name clash: a skill of the project beats a skill
+    of the user, and a skill of the user beats a skill that comes with the
+    agent.
+    """
     skills: dict[str, Skill] = {}
     for directory in _directories(cwd, user_home):
         for path in sorted(directory.glob(f"*/{SKILL_FILE}")):
@@ -91,7 +99,7 @@ def load_skills(cwd: Path, user_home: Path | None = None) -> dict[str, Skill]:
 
 def _directories(cwd: Path, user_home: Path | None) -> list[Path]:
     home = Path(user_home) if user_home else config_home()
-    directories = [home / SKILLS_DIR, Path(cwd) / ".coderagent" / SKILLS_DIR]
+    directories = [PRESETS, home / SKILLS_DIR, Path(cwd) / ".coderagent" / SKILLS_DIR]
     return [directory for directory in directories if directory.is_dir()]
 
 
@@ -108,4 +116,4 @@ def skill_index(skills: dict[str, Skill]) -> str:
     return "\n".join(lines)
 
 
-__all__ = ["SKILL_FILE", "SKILLS_DIR", "Skill", "load_skills", "parse_skill", "skill_index"]
+__all__ = ["PRESETS", "SKILL_FILE", "SKILLS_DIR", "Skill", "load_skills", "parse_skill", "skill_index"]

@@ -41,8 +41,33 @@ description: Make a PDF report out of a folder of notes.
 |---|---|
 | `.coderagent/skills/*/SKILL.md` | 项目的技能 |
 | `~/.coderagent/skills/*/SKILL.md` | 用户的技能 |
+| `src/coderagent/skills/presets/*/SKILL.md` | 自带的技能 |
 
 项目排在后面，所以项目可以用同名技能盖掉用户的。`MSWEA_CODER_HOME` 换用户目录的位置。
+自带的技能排在最前面，所以谁都能盖掉它们。
+
+## 自带的技能
+
+盒子里有十个技能，都是天天要干的活。
+
+| 技能 | 管什么 |
+|---|---|
+| `deep-research` | 查资料，写一份带出处的报告 |
+| `long-document` | 读 PDF 或 Word 文件，回答时给出原文和页码 |
+| `office-docx` | 写 Word 文件：标题、表格、目录 |
+| `office-pptx` | 做幻灯片：一页一个意思，每页配讲稿 |
+| `office-xlsx` | 读写 Excel，公式留在单元格里 |
+| `data-analysis` | 清洗数据、算指标、出图 |
+| `writing` | 写或改写文字，按要求的语气和篇幅 |
+| `frontend-dev` | 做网页，手机和桌面都要能用 |
+| `codebase-onboarding` | 摸清一个陌生代码库，并把地图写下来 |
+| `code-review` | 提交前评审一遍改动 |
+
+其中三个带脚本：`pdf_text.py` 读 PDF，`docx_text.py` 读 Word，`xlsx_text.py` 读 Excel。
+它们只用标准库，不装任何第三方库也能跑。
+
+用户或项目里同名的技能会盖掉自带的：在 `~/.coderagent/skills/<名字>/` 放一份自己的
+`SKILL.md`，agent 就用你的。
 
 `/skills` 把它们列出来：
 

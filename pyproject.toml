@@ -118,7 +118,14 @@ include = ["minisweagent*", "coderagent*"]
 
 [tool.setuptools.package-data]
 minisweagent = ["config/**/*"]
-coderagent = ["config/*.yaml", "web/templates/*/*.html", "web/static/*.css", "web/static/*.js"]
+coderagent = [
+    "config/*.yaml",
+    "web/templates/*/*.html",
+    "web/static/*.css",
+    "web/static/*.js",
+    "skills/presets/*/SKILL.md",
+    "skills/presets/*/scripts/*.py",
+]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
