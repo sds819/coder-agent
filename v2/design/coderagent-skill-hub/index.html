@@ -5395,7 +5395,8 @@
 ├── source.py      # Source 的解析（用户填的字符串 → Source）与来源的抓取
 ├── sites.py       # 三个技能站点：清单与它们的 clone 缓存
 ├── sandbox.py     # 解包的边界：路径、体积、文件数、符号链接
-└── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
+├── install.py     # 暂存、预览、安装、卸载、更新检查、锁文件的读写
+└── presets/       # 自带的十个技能（随包发布，用户和项目可以盖掉）
 </code></pre></div>
 <p><strong>改动清单</strong></p>
 <table>
@@ -5452,6 +5453,10 @@
 <tr>
 <td><code>src/coderagent/skills/sites.py</code></td>
 <td>技能站点（<code>SITES</code>）；<code>list_skills(site, policy)</code> 从 clone 里读出清单；clone 的缓存</td>
+</tr>
+<tr>
+<td><code>src/coderagent/skills/presets/*/SKILL.md</code></td>
+<td>自带的技能：调研、长文档、Word、PPT、Excel、数据、写作、前端、摸代码库、评审</td>
 </tr>
 <tr>
 <td><code>src/coderagent/web/skills_api.py</code></td>

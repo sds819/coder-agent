@@ -1514,6 +1514,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-skills-that-come-with-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The skills that come with the agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-the-model-uses-a-skill" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4149,6 +4160,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-skills-that-come-with-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The skills that come with the agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-the-model-uses-a-skill" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4378,10 +4400,73 @@ file without a front matter is ignored.</p>
 <td><code>~/.coderagent/skills/*/SKILL.md</code></td>
 <td>The skills of the user</td>
 </tr>
+<tr>
+<td><code>src/coderagent/skills/presets/*/SKILL.md</code></td>
+<td>The skills that come with the agent</td>
+</tr>
 </tbody>
 </table>
 <p>The project comes last, so a project may replace a skill of the user with the
-same name. <code>MSWEA_CODER_HOME</code> moves the directory of the user.</p>
+same name. <code>MSWEA_CODER_HOME</code> moves the directory of the user. The skills of
+the agent come first: anything replaces them.</p>
+<h2 id="the-skills-that-come-with-the-agent">The skills that come with the agent</h2>
+<p>Ten skills are in the box. They cover the work that comes back every day.</p>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>What it is for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deep-research</code></td>
+<td>Look a question up and write a report that carries its sources</td>
+</tr>
+<tr>
+<td><code>long-document</code></td>
+<td>Read a PDF or a Word file and answer with quotes and page numbers</td>
+</tr>
+<tr>
+<td><code>office-docx</code></td>
+<td>Write a Word file with headings, tables and a table of contents</td>
+</tr>
+<tr>
+<td><code>office-pptx</code></td>
+<td>Build a slide deck: one message per slide, speaker notes under each</td>
+</tr>
+<tr>
+<td><code>office-xlsx</code></td>
+<td>Read and write Excel workbooks, with the formulas in the cells</td>
+</tr>
+<tr>
+<td><code>data-analysis</code></td>
+<td>Clean the data, compute the figures, draw the charts</td>
+</tr>
+<tr>
+<td><code>writing</code></td>
+<td>Write or rewrite prose in the voice and the length that is asked for</td>
+</tr>
+<tr>
+<td><code>frontend-dev</code></td>
+<td>Build a web page that works on a phone and on a desktop</td>
+</tr>
+<tr>
+<td><code>codebase-onboarding</code></td>
+<td>Get to know an unfamiliar codebase and write the map down</td>
+</tr>
+<tr>
+<td><code>code-review</code></td>
+<td>Review a change before it is committed</td>
+</tr>
+</tbody>
+</table>
+<p>Three of them come with a script: <code>pdf_text.py</code> reads a PDF, <code>docx_text.py</code>
+reads a Word file and <code>xlsx_text.py</code> reads an Excel workbook. They use the
+standard library only, so they work without a library installed.</p>
+<p>A skill of the user or of the project with the same name replaces one of
+them: put a <code>SKILL.md</code> of your own in <code>~/.coderagent/skills/&lt;name&gt;/</code> and the
+agent uses yours instead.</p>
 <p><code>/skills</code> lists them:</p>
 <div class="highlight"><pre><span></span><code>pdf-report       Make a PDF report out of a folder of notes.
                  /path/to/project/.coderagent/skills/pdf-report
