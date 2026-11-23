@@ -4405,36 +4405,40 @@ These skills are available. Load one with the `skill` tool when its description 
 还有那几个技能站点的标签页。
 磁盘上先不写任何东西：下载的东西先在暂存区里等着，页面先摊开给你看。</p>
 <h3 id="_5">技能站点</h3>
-<p>输入框下面的标签页是当下最热门、也真的装着技能的三个仓库：</p>
+<p>输入框下面的标签页是国内社区里最有人知的三个技能仓库：</p>
 <table>
 <thead>
 <tr>
 <th>标签</th>
+<th>仓库</th>
 <th>是什么</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>obra/superpowers</code></td>
-<td>十五个讲 agent 怎么干活的技能：规划、调试、写测试</td>
+<td>Gitee 官方</td>
+<td><code>oschina/gitee-agent-skills</code></td>
+<td>Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能</td>
 </tr>
 <tr>
-<td><code>anthropics/skills</code></td>
-<td>Anthropic 官方的技能：文档、幻灯片、表格等等</td>
+<td>个人收藏</td>
+<td><code>yang_huai_qiang1/agent-skills</code></td>
+<td>日常用得上的技能：记忆同步、测试生成、开发流程</td>
 </tr>
 <tr>
-<td><code>ComposioHQ/awesome-claude-skills</code></td>
-<td>一大包技能：写作、表格，还有很多服务的自动化</td>
+<td>日常工具</td>
+<td><code>jianchaoteng/agent-skills</code></td>
+<td>几个小而全的：读代码库、部署、查模型信息</td>
 </tr>
 </tbody>
 </table>
 <p>每个标签页一次显示六个技能，但站点的技能是全都取回来的，卡片下面的翻页
 按钮把它们一页一页摊开。点一个技能就把它下载下来，
 弹出的还是那个预览框——看过之前，照样不装。</p>
+<p>卡片上的描述最多显示五十个字。鼠标移上去，整段就在浏览器的提示里。</p>
 <p>站点的清单是从它仓库的克隆里读出来的，克隆放在 <code>~/.coderagent/cache/skills/sites/</code>
 里放着半天，所以第二次开标签页不用再等一遍。
 标签页顶上的<strong>同步更新</strong>按钮会把克隆扔掉重新取一遍，于是你看到的是站点现在的样子。</p>
-<p>下载的只有你点的那个技能：仓库可能很大，技能却很小。</p>
 <h3 id="_6">来源</h3>
 <table>
 <thead>

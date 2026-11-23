@@ -4216,6 +4216,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#g2026-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 G：站点换回国内社区的三个（已做，2026-11-23）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#e" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5056,6 +5067,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#g2026-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 G：站点换回国内社区的三个（已做，2026-11-23）
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#e" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5516,29 +5538,34 @@ owner/repo/skills/pdf-report@v1  → path = skills/pdf-report, ref = v1
 <th>站点</th>
 <th>仓库</th>
 <th>技能</th>
+<th>中文名</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>superpowers</code></td>
-<td><code>obra/superpowers</code></td>
-<td><code>skills/</code> 下的 15 个：规划、调试、写测试</td>
+<td><code>official</code></td>
+<td><code>oschina/gitee-agent-skills</code></td>
+<td>25 个：Gitee MCP 服务器的那些技能</td>
+<td>Gitee 官方</td>
 </tr>
 <tr>
-<td><code>anthropic</code></td>
-<td><code>anthropics/skills</code></td>
-<td><code>skills/</code> 下的 19 个：文档、幻灯片、表格等等</td>
+<td><code>personal</code></td>
+<td><code>yang_huai_qiang1/agent-skills</code></td>
+<td>12 个：记忆、测试、开发流程</td>
+<td>个人收藏</td>
 </tr>
 <tr>
-<td><code>composio</code></td>
-<td><code>ComposioHQ/awesome-claude-skills</code></td>
-<td>仓库根下的 864 个：写作、表格、很多服务的自动化</td>
+<td><code>tools</code></td>
+<td><code>jianchaoteng/agent-skills</code></td>
+<td>3 个：读代码库、部署、查模型信息</td>
+<td>日常工具</td>
 </tr>
 </tbody>
 </table>
 <p>站点的清单从 clone 里读（<code>src/coderagent/skills/sites.py</code>），clone 缓存在
-<code>~/.coderagent/cache/skills/sites/</code> 里半天。排名靠的是 star 加上「真的有多少 <code>SKILL.md</code>」：
-只放链接的合集不算站点。</p>
+<code>~/.coderagent/cache/skills/sites/</code> 里半天。<strong>码云上的 star 说明不了什么</strong>（技能仓库几乎都是 0），
+所以排名靠的是社区的认得度：谁维护、有多少技能、多久动一次。
+每个站点有一个中文名和一句介绍（中英文各一套，在 <code>web/i18n.py</code> 的 <code>STRINGS</code> 里）。</p>
 <p>网页把<strong>站点的全部技能</strong>都取回来，一页显示六个（<code>ROWS = 6</code>），剩下的由前端的翻页按钮摊开；
 标签页上的「同步更新」按钮带 <code>refresh=true</code>，把缓存的 clone 扔掉重新取一次。</p>
 <p>下载技能时只取仓库里的那一个目录（<code>unpack_tar(..., prefix=...)</code>）：仓库可能很大，
@@ -5771,12 +5798,14 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
 ┌─ 技能站点 ────────────────────────────────┐
-│ [●obra/superpowers][●anthropics/skills][●ComposioHQ…] │
-│ ● obra/superpowers  (15 个技能) [同步更新]          │
-│ 一套讲 agent 怎么干活的技能：规划、调试、写测试        │
-│ ┌ (B) brainstorming  [已安装]             [下载] │ │
-│ │     Use this skill when…                      │ │
-│ └     skills/brainstorming                       │ │
+│ [●Gitee 官方][●个人收藏][●日常工具]                │
+│ ● Gitee 官方  oschina/gitee-agent-skills          │
+│   Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能      │
+│   25 个技能 [同步更新]                              │
+│ ┌ (C) create-issue  [已安装]             [下载] │ │
+│ │     Use this skill when the user asks to…   │ │
+│ │     （描述最多 50 字，鼠标移上去看全文）        │ │
+│ └     mcp-gitee-skills/skills/create-issue      │ │
 │ …（一页六个）                                     │
 │ [‹][1][2][3][›]  第 1 页，共 3 页                   │
 └───────────────────────────────────────────┘
@@ -6058,6 +6087,13 @@ front matter 里的 <code>name</code> 不合法时，<strong>先把它收拾干�
 <li>[x] 测试：<code>tests/coderagent/skills/test_sites.py</code>、<code>web/test_api_skills.py</code> 加 3 个</li>
 <li>[x] 站点换成当下最热门的三个 GitHub 仓库（<code>obra/superpowers</code>、<code>anthropics/skills</code>、
       <code>ComposioHQ/awesome-claude-skills</code>），Gitee 的三个标签页不再出现</li>
+</ul>
+<h3 id="g2026-11-23">阶段 G：站点换回国内社区的三个（已做，2026-11-23）</h3>
+<ul>
+<li>[x] 三个标签页换回码云上的三个仓库（<code>oschina/gitee-agent-skills</code>、<code>yang_huai_qiang1/agent-skills</code>、
+      <code>jianchaoteng/agent-skills</code>），<code>Site.kind</code> 决定从哪个 host 克隆</li>
+<li>[x] 每个站点一个中文名和一句介绍（中英文各一套），标签页和站点头都用中文名</li>
+<li>[x] 卡片的描述最多显示 50 个字，整段放在卡片的 <code>title</code> 里，鼠标移上去就是全文</li>
 </ul>
 <h3 id="e">阶段 E：站点页做得好看点 —— 已完成</h3>
 <ul>

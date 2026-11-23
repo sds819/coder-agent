@@ -4418,27 +4418,31 @@ says so.</p>
 <p>Nothing is written to the disk before you have read it: the download waits in
 the cache and the page shows it first.</p>
 <h3 id="the-sites-of-skills">The sites of skills</h3>
-<p>The tabs under the field are the three repositories that hold the most skills
-and have the most stars:</p>
+<p>The tabs under the field are the three skill repositories the Chinese community
+knows best:</p>
 <table>
 <thead>
 <tr>
 <th>Tab</th>
+<th>Repository</th>
 <th>What it is</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>obra/superpowers</code></td>
-<td>fifteen skills that tell an agent how to work: planning, debugging, writing tests</td>
+<td>Gitee official</td>
+<td><code>oschina/gitee-agent-skills</code></td>
+<td>the repository of Gitee itself: the skills that drive the Gitee MCP server</td>
 </tr>
 <tr>
-<td><code>anthropics/skills</code></td>
-<td>the skills of Anthropic itself: documents, slides, spreadsheets and more</td>
+<td>Personal collection</td>
+<td><code>yang_huai_qiang1/agent-skills</code></td>
+<td>everyday skills: memory, tests, the work of a developer</td>
 </tr>
 <tr>
-<td><code>ComposioHQ/awesome-claude-skills</code></td>
-<td>a big collection: writing, spreadsheets, and the automation of many services</td>
+<td>Everyday tools</td>
+<td><code>jianchaoteng/agent-skills</code></td>
+<td>a few small ones: reading a codebase, deploying, asking a model about itself</td>
 </tr>
 </tbody>
 </table>
@@ -4446,12 +4450,12 @@ and have the most stars:</p>
 pager under the cards walks through them. A click on a skill downloads it
 and opens the same dialog as any other download, so you still read it before it
 is installed.</p>
+<p>The description of a card is cut at fifty characters. Move the mouse over it
+and the whole of it is there, in the tooltip of the browser.</p>
 <p>The list of a site is read from a clone of its repository, and the clone is
 kept in <code>~/.coderagent/cache/skills/sites/</code> for half a day, so the second tab
 is not a second wait. The <strong>Sync</strong> button at the top of the tab throws the
 clone away and fetches the site again, so you see what the site holds now.</p>
-<p>Only the skill you click on is downloaded: the repository itself may be big,
-but a skill is small.</p>
 <h3 id="the-sources">The sources</h3>
 <table>
 <thead>
