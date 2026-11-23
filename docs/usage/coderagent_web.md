@@ -170,10 +170,12 @@ The skills that are installed, and the way to install new ones from the network.
   its source and the digest of its content. A skill with no source is yours.
   `Details` opens the whole `SKILL.md`; a skill that came from the network
   also gets `Check for an update`, which fetches the source again and compares
-  the digest, and `Uninstall`.
+  the digest, and `Uninstall`. The list shows ten skills at a time, with a
+  pager for the rest.
 - **Built in**: the skills that come with the agent. They are ready to use
   and nothing has to be installed. A skill of yours with the same name
-  replaces one of them, and then it is no longer one of them.
+  replaces one of them, and then it is no longer one of them. Ten at a
+  time, with a pager for the rest, like the list above.
 - **Install from the network**: a field for a source and a button that
   downloads it. The download waits in the cache, and a dialog shows what it is
   — the source, the files, the digest and the **whole `SKILL.md`** — before

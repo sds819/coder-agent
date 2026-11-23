@@ -545,6 +545,9 @@ async function chooseLanguage(code) {
 // -- the skills -------------------------------------------------------------
 
 const skillState = { staged: null, force: false };
+const listState = { installed: { page: 0 }, builtin: { page: 0 } };
+const PAGE = 10;
+/* How many skills a list shows at a time. */
 
 function skillButton(label, action) {
   const button = el("button", "", label);
@@ -553,13 +556,27 @@ function skillButton(label, action) {
 }
 
 async function loadSkills() {
-  const box = document.getElementById("skills-installed");
-  if (!box) return;
+  if (!document.getElementById("skills-installed")) return;
   const data = await api("/api/skills");
-  box.innerHTML = "";
   siteState.installed = new Set(data.skills.map((skill) => skill.name));
-  if (!data.skills.length) box.appendChild(el("div", "note", t("skills_none")));
-  for (const skill of data.skills) {
+  showInstalled(data.skills || []);
+  showBuiltin(data.builtin || []);
+  showRegistries(data.registries || []);
+  if (siteState.site) renderSite();
+}
+
+/* The installed skills, ten at a time. */
+function showInstalled(skills) {
+  const box = document.getElementById("skills-installed");
+  box.innerHTML = "";
+  if (!skills.length) {
+    box.appendChild(el("div", "note", t("skills_none")));
+    return;
+  }
+  const state = listState.installed;
+  const pages = Math.max(1, Math.ceil(skills.length / PAGE));
+  state.page = Math.min(state.page, pages - 1);
+  for (const skill of skills.slice(state.page * PAGE, (state.page + 1) * PAGE)) {
     const row = el("div", "skill");
     const head = el("div", "skill-head");
     head.appendChild(el("strong", "", skill.name));
@@ -580,9 +597,7 @@ async function loadSkills() {
     row.appendChild(buttons);
     box.appendChild(row);
   }
-  showRegistries(data.registries || []);
-  showBuiltin(data.builtin || []);
-  if (siteState.site) renderSite();
+  box.appendChild(makePager(state, pages, () => showInstalled(skills), "skills"));
 }
 
 /* The skills that come with the agent. They are not installed, so there is
@@ -591,7 +606,10 @@ function showBuiltin(skills) {
   const box = document.getElementById("skills-builtin");
   if (!box) return;
   box.innerHTML = "";
-  for (const skill of skills) {
+  const state = listState.builtin;
+  const pages = Math.max(1, Math.ceil(skills.length / PAGE));
+  state.page = Math.min(state.page, pages - 1);
+  for (const skill of skills.slice(state.page * PAGE, (state.page + 1) * PAGE)) {
     const row = el("div", "skill");
     const head = el("div", "skill-head");
     head.appendChild(el("strong", "", skill.name));
@@ -605,6 +623,7 @@ function showBuiltin(skills) {
     row.appendChild(buttons);
     box.appendChild(row);
   }
+  box.appendChild(makePager(state, pages, () => showBuiltin(skills), "skills"));
 }
 
 function showRegistries(urls) {
@@ -859,43 +878,47 @@ function shorten(text) {
 }
 
 function sitePager(pages) {
+  return makePager(siteState, pages, renderSite, "skills_site");
+}
+
+/* The pages of a list of skills: the one on the screen, the ones around it
+   and the first and the last. A list may hold hundreds of skills: a button
+   for every page would be a wall of numbers. */
+function makePager(state, pages, redraw, keys) {
   const box = el("div", "pager");
-  const prev = skillButton(t("skills_site_prev"), () => turnPage(-1));
-  prev.disabled = siteState.page <= 0;
+  const prev = skillButton(t(`${keys}_prev`), () => {
+    state.page = Math.max(0, state.page - 1);
+    redraw();
+  });
+  prev.disabled = state.page <= 0;
   box.appendChild(prev);
   let last = -1;
-  for (const index of pageWindow(pages)) {
+  for (const index of pageWindow(pages, state.page)) {
     if (last >= 0 && index > last + 1) box.appendChild(el("span", "note", "…"));
     const button = skillButton(String(index + 1), () => {
-      siteState.page = index;
-      renderSite();
+      state.page = index;
+      redraw();
     });
-    if (index === siteState.page) button.classList.add("active");
+    if (index === state.page) button.classList.add("active");
     box.appendChild(button);
     last = index;
   }
-  const next = skillButton(t("skills_site_next"), () => turnPage(1));
-  next.disabled = siteState.page >= pages - 1;
+  const next = skillButton(t(`${keys}_next`), () => {
+    state.page = Math.min(pages - 1, state.page + 1);
+    redraw();
+  });
+  next.disabled = state.page >= pages - 1;
   box.appendChild(next);
-  box.appendChild(el("span", "note", t("skills_site_page", { page: siteState.page + 1, count: pages })));
+  box.appendChild(el("span", "note", t(`${keys}_page`, { page: state.page + 1, count: pages })));
   return box;
 }
 
-/* The pages around the one on the screen, with the first and the last. A
-   collection may hold hundreds of skills: a button for every page would be
-   a wall of numbers. */
-function pageWindow(pages) {
+function pageWindow(pages, page) {
   const shown = new Set([0, pages - 1]);
-  for (let index = siteState.page - 2; index <= siteState.page + 2; index++) {
+  for (let index = page - 2; index <= page + 2; index++) {
     if (index >= 0 && index < pages) shown.add(index);
   }
   return [...shown].sort((a, b) => a - b);
-}
-
-function turnPage(step) {
-  const pages = Math.max(1, Math.ceil(siteState.skills.length / siteState.size));
-  siteState.page = Math.min(pages - 1, Math.max(0, siteState.page + step));
-  renderSite();
 }
 
 async function syncSite() {
