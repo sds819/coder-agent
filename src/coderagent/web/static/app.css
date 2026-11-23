@@ -188,12 +188,19 @@ dd { margin: 0; font-family: ui-monospace, Menlo, monospace; word-break: break-a
 .skill-head span { color: var(--muted); }
 .skill-meta { color: var(--muted); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin: 2px 0 6px; word-break: break-all; }
 
+/* The skills of a list stand in five columns: ten of them on a page. */
+.skill-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.skill-grid .skill { border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: #171a22; }
+.skill-grid .skill-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+.skill-grid .skill-head span { word-break: break-word; }
+.skill-grid .row { flex-wrap: wrap; }
+
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .tabs .tab { font-size: 12px; padding: 4px 8px; }
 .tabs .tab.active { background: #1d2432; border-color: var(--site-accent, var(--accent)); color: #fff; }
 .tabs .tab::before { content: "●"; color: var(--site-accent, var(--accent)); margin-right: 5px; font-size: 9px; vertical-align: middle; }
 
-#skills-page { max-width: 960px; }
+#skills-page { max-width: 1280px; }
 
 .site-panel { --site-accent: var(--accent); margin-top: 4px; }
 .site-head { display: flex; align-items: center; gap: 10px; margin: 14px 0 2px; }

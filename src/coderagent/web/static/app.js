@@ -576,6 +576,7 @@ function showInstalled(skills) {
   const state = listState.installed;
   const pages = Math.max(1, Math.ceil(skills.length / PAGE));
   state.page = Math.min(state.page, pages - 1);
+  const grid = el("div", "skill-grid");
   for (const skill of skills.slice(state.page * PAGE, (state.page + 1) * PAGE)) {
     const row = el("div", "skill");
     const head = el("div", "skill-head");
@@ -595,8 +596,9 @@ function showInstalled(skills) {
       buttons.appendChild(skillButton(t("skills_uninstall"), () => removeSkill(skill.name)));
     }
     row.appendChild(buttons);
-    box.appendChild(row);
+    grid.appendChild(row);
   }
+  box.appendChild(grid);
   box.appendChild(makePager(state, pages, () => showInstalled(skills), "skills"));
 }
 
@@ -609,6 +611,7 @@ function showBuiltin(skills) {
   const state = listState.builtin;
   const pages = Math.max(1, Math.ceil(skills.length / PAGE));
   state.page = Math.min(state.page, pages - 1);
+  const grid = el("div", "skill-grid");
   for (const skill of skills.slice(state.page * PAGE, (state.page + 1) * PAGE)) {
     const row = el("div", "skill");
     const head = el("div", "skill-head");
@@ -621,8 +624,9 @@ function showBuiltin(skills) {
     const buttons = el("div", "row");
     buttons.appendChild(skillButton(t("skills_details"), () => showSkill(skill.name)));
     row.appendChild(buttons);
-    box.appendChild(row);
+    grid.appendChild(row);
   }
+  box.appendChild(grid);
   box.appendChild(makePager(state, pages, () => showBuiltin(skills), "skills"));
 }
 
