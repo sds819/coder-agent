@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from coderagent.paths import config_home
-from coderagent.skills import SKILL_FILE, SKILLS_DIR, parse_skill
+from coderagent.skills import PRESETS, SKILL_FILE, SKILLS_DIR, load_skills, parse_skill
 from coderagent.skills.errors import SkillError
 from coderagent.skills.install import (
     Staged,
@@ -148,7 +148,7 @@ def _preview_view(staged: Staged) -> dict[str, Any]:
 
 @router.get("")
 def list_skills(request: Request) -> dict[str, Any]:
-    """The skills of the user, and where they came from."""
+    """The skills of the user, the ones that come with the agent, and where they came from."""
     lock = read_lock()
     directory = config_home() / SKILLS_DIR
     skills = []
@@ -170,7 +170,26 @@ def list_skills(request: Request) -> dict[str, Any]:
                 "files": len(installed.files) if installed else _count_files(path.parent),
             }
         )
-    return {"skills": skills, "registries": _settings(request).registries}
+    return {"skills": skills, "builtin": _builtin_skills(request), "registries": _settings(request).registries}
+
+
+def _builtin_skills(request: Request) -> list[dict[str, Any]]:
+    """The skills that come with the agent.
+
+    A skill of the user or of the project with the same name replaces one of
+    them, and then it is not one of them any more.
+    """
+    cwd = Path(request.app.state.cwd)
+    return [
+        {
+            "name": skill.name,
+            "description": skill.description,
+            "directory": str(skill.directory),
+            "files": _count_files(skill.directory),
+        }
+        for skill in load_skills(cwd, config_home()).values()
+        if skill.directory is not None and skill.directory.is_relative_to(PRESETS)
+    ]
 
 
 @router.get("/sites")
@@ -210,6 +229,10 @@ def get_skill(name: str, request: Request) -> dict[str, Any]:
         raise _bad_request(request, error) from None
     directory = config_home() / SKILLS_DIR / name
     path = directory / SKILL_FILE
+    if not path.exists():
+        """A skill that comes with the agent is in the package, not in the home."""
+        directory = PRESETS / name
+        path = directory / SKILL_FILE
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"there is no skill with the name {name}")
     skill = _parse(path)

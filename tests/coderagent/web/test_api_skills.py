@@ -89,7 +89,40 @@ def test_no_skills_are_installed(make_client, home):
     answer = client.get("/api/skills")
 
     assert answer.status_code == 200
-    assert answer.json() == {"skills": [], "registries": []}
+    assert answer.json()["skills"] == []
+
+
+def test_the_skills_that_come_with_the_agent_are_listed(make_client, home):
+    """The page shows the skills of the agent next to the installed ones."""
+    client = make_client()
+
+    skills = client.get("/api/skills").json()["builtin"]
+
+    assert [skill["name"] for skill in skills][:2] == ["code-review", "codebase-onboarding"]
+    assert all(skill["description"] for skill in skills)
+    assert all(skill["files"] >= 1 for skill in skills)
+
+
+def test_a_skill_of_the_user_replaces_the_one_of_the_agent(make_client, home):
+    """A skill of the user with the same name is no longer one of the agent."""
+    (home / "skills" / "writing").mkdir(parents=True)
+    (home / "skills" / "writing" / "SKILL.md").write_text(SKILL.replace("pdf-report", "writing"))
+    client = make_client()
+
+    builtin = client.get("/api/skills").json()["builtin"]
+
+    assert "writing" not in [skill["name"] for skill in builtin]
+
+
+def test_the_text_of_a_skill_of_the_agent_is_there(make_client, home):
+    """The details of a skill of the agent can be read."""
+    client = make_client()
+
+    answer = client.get("/api/skills/deep-research")
+
+    assert answer.status_code == 200
+    assert answer.json()["name"] == "deep-research"
+    assert "research/report.md" in answer.json()["body"]
 
 
 def test_a_skill_of_the_user_is_listed(make_client, home):

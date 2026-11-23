@@ -171,6 +171,9 @@ The skills that are installed, and the way to install new ones from the network.
   `Details` opens the whole `SKILL.md`; a skill that came from the network
   also gets `Check for an update`, which fetches the source again and compares
   the digest, and `Uninstall`.
+- **Built in**: the skills that come with the agent. They are ready to use
+  and nothing has to be installed. A skill of yours with the same name
+  replaces one of them, and then it is no longer one of them.
 - **Install from the network**: a field for a source and a button that
   downloads it. The download waits in the cache, and a dialog shows what it is
   — the source, the files, the digest and the **whole `SKILL.md`** — before
@@ -337,7 +340,7 @@ do not ask for the header — they start nothing.
 | GET | `/api/files?path=&depth=` | The entries of a directory |
 | GET | `/api/file?path=` | The content of a file |
 | GET | `/api/diff?path=` | The changes of the working tree |
-| GET | `/api/skills` | The skills that are installed |
+| GET | `/api/skills` | The skills that are installed, and the ones that come with the agent |
 | GET | `/api/skills/sites` | The sites of skills: one tab for each of them |
 | GET | `/api/skills/sites/{site}?refresh=` | Every skill of one site; `refresh=true` fetches the site again |
 | GET | `/api/skills/{name}` | One skill, with its `SKILL.md` |

@@ -581,7 +581,30 @@ async function loadSkills() {
     box.appendChild(row);
   }
   showRegistries(data.registries || []);
+  showBuiltin(data.builtin || []);
   if (siteState.site) renderSite();
+}
+
+/* The skills that come with the agent. They are not installed, so there is
+   nothing to update and nothing to remove. */
+function showBuiltin(skills) {
+  const box = document.getElementById("skills-builtin");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const skill of skills) {
+    const row = el("div", "skill");
+    const head = el("div", "skill-head");
+    head.appendChild(el("strong", "", skill.name));
+    head.appendChild(el("span", "", skill.description));
+    row.appendChild(head);
+    const meta = el("div", "skill-meta");
+    meta.appendChild(el("div", "", t("skills_files", { count: skill.files })));
+    row.appendChild(meta);
+    const buttons = el("div", "row");
+    buttons.appendChild(skillButton(t("skills_details"), () => showSkill(skill.name)));
+    row.appendChild(buttons);
+    box.appendChild(row);
+  }
 }
 
 function showRegistries(urls) {
@@ -626,8 +649,9 @@ function openPreview(preview, force) {
   skillState.staged = preview;
   skillState.force = !!force;
   document.getElementById("preview-name").textContent = preview.name;
-  document.getElementById("preview-meta").textContent =
-    `${preview.source_text} · ${t("skills_files", { count: (preview.files || []).length })} · ${t("skills_sha256")} ${preview.sha256}`;
+  const parts = [preview.source_text, t("skills_files", { count: (preview.files || []).length })];
+  if (preview.sha256) parts.push(`${t("skills_sha256")} ${preview.sha256}`);
+  document.getElementById("preview-meta").textContent = parts.filter(Boolean).join(" · ");
   const warnings = document.getElementById("preview-warnings");
   warnings.innerHTML = "";
   for (const warning of preview.warnings || []) warnings.appendChild(el("div", "warning", `⚠ ${warning}`));

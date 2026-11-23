@@ -150,6 +150,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 - **已安装**：`~/.coderagent/skills/` 里的每个技能，带描述、来源和内容摘要。没有来源的是
   你自己的。`详情` 打开整个 `SKILL.md`；从网络装来的技能还多两个按钮：`检查更新` 重新抓一次
   来源比摘要，`卸载` 把它删掉。
+- **自带**：随 agent 发布的那些技能，现在就能用，不用装什么。你自己同名的技能会盖掉它，
+  盖掉之后它就不在这一栏里了。
 - **从网络安装**：一个填来源的输入框和一个按钮。下载的东西先在暂存区里等着，弹窗先摊开
   给你看——来源、文件清单、摘要，还有 **`SKILL.md` 的全文**——你点了`安装`才写进磁盘，
   落在 `~/.coderagent/skills/<名字>/`。
@@ -268,7 +270,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/files?path=&depth=` | 一个目录里的条目 |
 | GET | `/api/file?path=` | 一个文件的内容 |
 | GET | `/api/diff?path=` | 工作区里这个文件的改动 |
-| GET | `/api/skills` | 装好的技能 |
+| GET | `/api/skills` | 装好的技能，和自带的那些 |
 | GET | `/api/skills/sites` | 技能站点，一个标签页一个 |
 | GET | `/api/skills/sites/{site}?refresh=` | 某个站点的全部技能；`refresh=true` 重新取一次站点 |
 | GET | `/api/skills/{name}` | 一个技能，带它的 `SKILL.md` |
