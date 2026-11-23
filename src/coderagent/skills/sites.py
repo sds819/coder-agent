@@ -1,11 +1,11 @@
 """The sites of skills: the repositories that hold them.
 
-The three sites below are the ones with the most stars among the repositories
-that really hold skills. Their skills are read from a clone of the repository
-and not from an API: the API of GitHub is quick with its quota and the API of
-Gitee lets anonymous callers in for a while and then refuses them, but a clone
-always works. The clone is kept in the cache for a while, so the second tab is
-not a second wait.
+The three sites below are the ones the Chinese community knows best among the
+repositories that really hold skills. Their skills are read from a clone of the
+repository and not from an API: the API of GitHub is quick with its quota and
+the API of Gitee lets anonymous callers in for a while and then refuses them,
+but a clone always works. The clone is kept in the cache for a while, so the
+second tab is not a second wait.
 """
 
 import shutil
@@ -68,15 +68,17 @@ class SiteSkill:
 
 
 SITES = (
-    Site(id="superpowers", repo="obra/superpowers", path="skills", accent="#ef7059"),
-    Site(id="anthropic", repo="anthropics/skills", path="skills", accent="#4fb0f5"),
-    Site(id="composio", repo="ComposioHQ/awesome-claude-skills", accent="#a98bff"),
+    Site(id="official", repo="oschina/gitee-agent-skills", accent="#ef7059", kind="gitee"),
+    Site(id="personal", repo="yang_huai_qiang1/agent-skills", accent="#4fb0f5", kind="gitee"),
+    Site(id="tools", repo="jianchaoteng/agent-skills", accent="#a98bff", kind="gitee"),
 )
 """The sites of the tabs, in the order they are shown.
 
-The star counts tell the order here: the sites of the tabs are the
-repositories with the most stars that really hold skills. A repository of a
-collection of links is no site: a site holds `SKILL.md` files.
+The three are the ones the Chinese community knows best: the repository of
+Gitee itself, a collection of everyday skills and a small one of tools. The
+stars of Gitee tell little about them, so the ranking is the one of the
+community: who keeps them, how many skills they hold and how often they are
+touched.
 """
 
 

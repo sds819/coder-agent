@@ -101,27 +101,27 @@ the cache and the page shows it first.
 
 ### The sites of skills
 
-The tabs under the field are the three repositories that hold the most skills
-and have the most stars:
+The tabs under the field are the three skill repositories the Chinese community
+knows best:
 
-| Tab | What it is |
-|---|---|
-| `obra/superpowers` | fifteen skills that tell an agent how to work: planning, debugging, writing tests |
-| `anthropics/skills` | the skills of Anthropic itself: documents, slides, spreadsheets and more |
-| `ComposioHQ/awesome-claude-skills` | a big collection: writing, spreadsheets, and the automation of many services |
+| Tab | Repository | What it is |
+|---|---|---|
+| Gitee official | `oschina/gitee-agent-skills` | the repository of Gitee itself: the skills that drive the Gitee MCP server |
+| Personal collection | `yang_huai_qiang1/agent-skills` | everyday skills: memory, tests, the work of a developer |
+| Everyday tools | `jianchaoteng/agent-skills` | a few small ones: reading a codebase, deploying, asking a model about itself |
 
 A tab shows six skills at a time. Every skill of the site is fetched, and the
 pager under the cards walks through them. A click on a skill downloads it
 and opens the same dialog as any other download, so you still read it before it
 is installed.
 
+The description of a card is cut at fifty characters. Move the mouse over it
+and the whole of it is there, in the tooltip of the browser.
+
 The list of a site is read from a clone of its repository, and the clone is
 kept in `~/.coderagent/cache/skills/sites/` for half a day, so the second tab
 is not a second wait. The **Sync** button at the top of the tab throws the
 clone away and fetches the site again, so you see what the site holds now.
-
-Only the skill you click on is downloaded: the repository itself may be big,
-but a skill is small.
 
 ### The sources
 

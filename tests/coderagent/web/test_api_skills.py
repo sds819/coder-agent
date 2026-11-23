@@ -301,9 +301,9 @@ def test_the_sites_are_listed(make_client, home):
     listed = answer.json()["sites"]
     assert answer.status_code == 200
     assert len(listed) == 3
-    assert [site["id"] for site in listed] == ["superpowers", "anthropic", "composio"]
+    assert [site["id"] for site in listed] == ["official", "personal", "tools"]
     assert all(site["repo"].count("/") == 1 for site in listed)
-    assert all(site["url"].startswith("https://github.com/") for site in listed)
+    assert all(site["url"].startswith("https://gitee.com/") for site in listed)
 
 
 def test_a_site_that_is_not_there_is_refused(make_client, home):
@@ -326,8 +326,8 @@ def test_the_sites_are_refused_when_the_skills_are_off(make_client, home):
 def test_the_page_gets_all_the_skills_of_a_site(make_client, home, daemon, monkeypatch):
     """The page asks for all of them and makes the pages itself."""
     daemon.push({"pdf-report": "Make a PDF report."})
-    site = Site(id="test", repo="remote", path="skills")
-    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
+    site = Site(id="test", repo="remote", path="skills", kind="gitee")
+    monkeypatch.setattr(sites, "HOSTS", {"gitee": f"git://127.0.0.1:{daemon.port}"})
     monkeypatch.setattr(sites, "SITES", (site,))
     monkeypatch.setattr(skills_api, "SITES", (site,))
     client = make_client(project_config=NETWORK)
@@ -339,14 +339,14 @@ def test_the_page_gets_all_the_skills_of_a_site(make_client, home, daemon, monke
     assert body["total"] == 1
     assert body["page_size"] == 6
     assert [skill["name"] for skill in body["skills"]] == ["pdf-report"]
-    assert body["skills"][0]["source_text"] == "github:remote/skills/pdf-report"
+    assert body["skills"][0]["source_text"] == "gitee:remote/skills/pdf-report"
 
 
 def test_a_site_is_fetched_again_when_the_page_asks_for_it(make_client, home, daemon, monkeypatch):
     """The sync button of the page throws the clone away."""
     daemon.push({"pdf-report": "Make a PDF report."})
-    site = Site(id="test", repo="remote", path="skills")
-    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
+    site = Site(id="test", repo="remote", path="skills", kind="gitee")
+    monkeypatch.setattr(sites, "HOSTS", {"gitee": f"git://127.0.0.1:{daemon.port}"})
     monkeypatch.setattr(sites, "SITES", (site,))
     monkeypatch.setattr(skills_api, "SITES", (site,))
     client = make_client(project_config=NETWORK)

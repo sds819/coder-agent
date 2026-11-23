@@ -198,6 +198,7 @@ dd { margin: 0; font-family: ui-monospace, Menlo, monospace; word-break: break-a
 .site-panel { --site-accent: var(--accent); margin-top: 4px; }
 .site-head { display: flex; align-items: center; gap: 10px; margin: 14px 0 2px; }
 .site-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.site-name { color: var(--text); }
 .site-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--site-accent); box-shadow: 0 0 10px var(--site-accent); }
 .site-repo { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
 .site-repo:hover { color: var(--site-accent); }
@@ -213,7 +214,7 @@ button.ghost { background: transparent; }
 .site-avatar { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; color: #10131a; background: var(--site-accent); }
 .site-card-body { flex: 1; min-width: 0; }
 .site-card-title { display: flex; align-items: center; gap: 6px; }
-.site-card-desc { color: var(--muted); font-size: 12px; margin: 2px 0 4px; }
+.site-card-desc { color: var(--muted); font-size: 12px; margin: 2px 0 4px; cursor: help; }
 .site-card-path { font-size: 11px; color: var(--muted); word-break: break-all; }
 .site-card-actions { flex: none; }
 .site-card-actions button { font-size: 12px; padding: 4px 8px; }

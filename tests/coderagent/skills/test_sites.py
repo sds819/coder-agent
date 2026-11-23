@@ -28,14 +28,14 @@ def _site(tmp_path: Path, name: str, description: str = "Do the thing.") -> Site
 
 def test_there_are_three_sites():
     """The page has a tab for each of them."""
-    assert [site.id for site in SITES] == ["superpowers", "anthropic", "composio"]
+    assert [site.id for site in SITES] == ["official", "personal", "tools"]
     assert all(site.repo.count("/") == 1 for site in SITES)
     assert all(site.path or site.repo for site in SITES)
 
 
-def test_the_sites_are_of_github():
-    """A site is a repository of GitHub."""
-    assert all(site.url.startswith("https://github.com/") for site in SITES)
+def test_the_sites_are_of_gitee():
+    """A site is a repository of Gitee."""
+    assert all(site.url.startswith("https://gitee.com/") for site in SITES)
 
 
 def test_a_site_that_is_not_there_is_refused():
@@ -122,9 +122,9 @@ def test_a_site_shows_a_handful_of_skills():
 def test_the_skills_of_a_site_come_from_a_clone(daemon, monkeypatch):
     """A site is read from a clone of its repository, not from an API."""
     daemon.push({"pdf-report": "Make a PDF report."})
-    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
+    monkeypatch.setattr(sites, "HOSTS", {"gitee": f"git://127.0.0.1:{daemon.port}"})
 
-    skills = sites.list_skills(Site(id="test", repo="remote", path="skills"), _policy())
+    skills = sites.list_skills(Site(id="test", repo="remote", path="skills", kind="gitee"), _policy())
 
     assert [skill.name for skill in skills] == ["pdf-report"]
     assert skills[0].path == "skills/pdf-report"
@@ -133,8 +133,8 @@ def test_the_skills_of_a_site_come_from_a_clone(daemon, monkeypatch):
 def test_a_site_is_fetched_again_when_it_is_refreshed(daemon, monkeypatch):
     """The clone is kept for a while, but a refresh throws it away."""
     daemon.push({"pdf-report": "Make a PDF report."})
-    monkeypatch.setattr(sites, "HOSTS", {"github": f"git://127.0.0.1:{daemon.port}"})
-    site = Site(id="test", repo="remote", path="skills")
+    monkeypatch.setattr(sites, "HOSTS", {"gitee": f"git://127.0.0.1:{daemon.port}"})
+    site = Site(id="test", repo="remote", path="skills", kind="gitee")
 
     sites.list_skills(site, _policy())
     daemon.push({"pdf-report": "Make a PDF report.", "slides": "Make the slides."})

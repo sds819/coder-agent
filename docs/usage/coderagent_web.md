@@ -176,10 +176,12 @@ The skills that are installed, and the way to install new ones from the network.
   — the source, the files, the digest and the **whole `SKILL.md`** — before
   anything is written to the disk. `Install` writes it to
   `~/.coderagent/skills/<name>/`.
-- **Sites**: the tabs of the three repositories that hold the most popular
-  skills. A tab shows six skills of its site at a time, with a pager for the
-  rest, and a **Sync** button that fetches the site again. A click on a skill
-  downloads it and opens the same dialog.
+- **Sites**: the tabs of the three skill repositories the Chinese community
+  knows best, each with a Chinese name and a description. A tab shows six
+  skills of its site at a time, with a pager for the rest, and a **Sync**
+  button that fetches the site again. A click on a skill downloads it and
+  opens the same dialog. The description of a card is cut at fifty
+  characters; the mouse over it shows the whole of it.
 
 See [Skills](coderagent_skills.md) for the sources, the limits and the lock
 file.

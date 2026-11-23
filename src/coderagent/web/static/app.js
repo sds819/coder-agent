@@ -725,6 +725,9 @@ async function startSkills() {
 
 const siteState = { site: null, skills: [], page: 0, size: 6, installed: new Set() };
 
+const DESCRIPTION = 50;
+/* How much of a description a card shows. The rest waits for the mouse. */
+
 /* The sites are the tabs of the page: one tab for each repository, and the
    skills of the repository under it. */
 async function loadSites() {
@@ -734,7 +737,7 @@ async function loadSites() {
     const data = await api("/api/skills/sites");
     box.innerHTML = "";
     for (const site of data.sites || []) {
-      const tab = el("button", "tab", site.repo);
+      const tab = el("button", "tab", siteName(site));
       tab.dataset.site = site.id;
       tab.style.setProperty("--site-accent", site.accent || "#6aa9ff");
       tab.onclick = () => showSite(site);
@@ -744,6 +747,12 @@ async function loadSites() {
   } catch (error) {
     box.appendChild(el("div", "note", t("error", { message: error.message })));
   }
+}
+
+/* The name of a site in the language of the visitor. */
+function siteName(site) {
+  const name = t(`skills_site_${site.id}_name`);
+  return name === `skills_site_${site.id}_name` ? site.repo : name;
 }
 
 async function showSite(site, refresh = false) {
@@ -775,6 +784,7 @@ function renderSite() {
   const head = el("div", "site-head");
   const title = el("div", "site-title");
   title.appendChild(el("span", "site-dot"));
+  title.appendChild(el("span", "site-name", siteName(site)));
   const link = el("a", "site-repo", site.repo);
   link.href = site.url;
   link.target = "_blank";
@@ -807,13 +817,21 @@ function siteCard(skill) {
   title.appendChild(el("strong", "", skill.name));
   if (siteState.installed.has(skill.name)) title.appendChild(el("span", "badge ok", t("skills_site_installed")));
   body.appendChild(title);
-  body.appendChild(el("div", "site-card-desc", skill.description || ""));
+  const description = el("div", "site-card-desc", shorten(skill.description || ""));
+  description.title = skill.description || "";
+  body.appendChild(description);
   body.appendChild(el("code", "site-card-path", skill.path));
   card.appendChild(body);
   const actions = el("div", "site-card-actions");
   actions.appendChild(skillButton(t("skills_site_download"), () => downloadSkill(skill)));
   card.appendChild(actions);
   return card;
+}
+
+/* A description that fits in a card. The whole of it waits for the mouse:
+   the card carries it as its title. */
+function shorten(text) {
+  return text.length > DESCRIPTION ? `${text.slice(0, DESCRIPTION)}…` : text;
 }
 
 function sitePager(pages) {

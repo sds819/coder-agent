@@ -255,15 +255,16 @@ Gitee 是国内开发者放技能的地方，所以它有自己的来源种类�
 
 **站点**：网页上的三个标签页，各对应一个仓库：
 
-| 站点 | 仓库 | 技能 |
-|---|---|---|
-| `superpowers` | `obra/superpowers` | `skills/` 下的 15 个：规划、调试、写测试 |
-| `anthropic` | `anthropics/skills` | `skills/` 下的 19 个：文档、幻灯片、表格等等 |
-| `composio` | `ComposioHQ/awesome-claude-skills` | 仓库根下的 864 个：写作、表格、很多服务的自动化 |
+| 站点 | 仓库 | 技能 | 中文名 |
+|---|---|---|---|
+| `official` | `oschina/gitee-agent-skills` | 25 个：Gitee MCP 服务器的那些技能 | Gitee 官方 |
+| `personal` | `yang_huai_qiang1/agent-skills` | 12 个：记忆、测试、开发流程 | 个人收藏 |
+| `tools` | `jianchaoteng/agent-skills` | 3 个：读代码库、部署、查模型信息 | 日常工具 |
 
 站点的清单从 clone 里读（`src/coderagent/skills/sites.py`），clone 缓存在
-`~/.coderagent/cache/skills/sites/` 里半天。排名靠的是 star 加上「真的有多少 `SKILL.md`」：
-只放链接的合集不算站点。
+`~/.coderagent/cache/skills/sites/` 里半天。**码云上的 star 说明不了什么**（技能仓库几乎都是 0），
+所以排名靠的是社区的认得度：谁维护、有多少技能、多久动一次。
+每个站点有一个中文名和一句介绍（中英文各一套，在 `web/i18n.py` 的 `STRINGS` 里）。
 
 网页把**站点的全部技能**都取回来，一页显示六个（`ROWS = 6`），剩下的由前端的翻页按钮摊开；
 标签页上的「同步更新」按钮带 `refresh=true`，把缓存的 clone 扔掉重新取一次。
@@ -454,12 +455,14 @@ front matter 里的 `name` 不合法时，**先把它收拾干净**（转小写�
 │ 已知注册表： [my registry] [另一个]                   │
 └───────────────────────────────────────────┘
 ┌─ 技能站点 ────────────────────────────────┐
-│ [●obra/superpowers][●anthropics/skills][●ComposioHQ…] │
-│ ● obra/superpowers  (15 个技能) [同步更新]          │
-│ 一套讲 agent 怎么干活的技能：规划、调试、写测试        │
-│ ┌ (B) brainstorming  [已安装]             [下载] │ │
-│ │     Use this skill when…                      │ │
-│ └     skills/brainstorming                       │ │
+│ [●Gitee 官方][●个人收藏][●日常工具]                │
+│ ● Gitee 官方  oschina/gitee-agent-skills          │
+│   Gitee 官方仓库：驱动 Gitee MCP 服务器的那些技能      │
+│   25 个技能 [同步更新]                              │
+│ ┌ (C) create-issue  [已安装]             [下载] │ │
+│ │     Use this skill when the user asks to…   │ │
+│ │     （描述最多 50 字，鼠标移上去看全文）        │ │
+│ └     mcp-gitee-skills/skills/create-issue      │ │
 │ …（一页六个）                                     │
 │ [‹][1][2][3][›]  第 1 页，共 3 页                   │
 └───────────────────────────────────────────┘
@@ -642,6 +645,12 @@ skills:
 - [x] 测试：`tests/coderagent/skills/test_sites.py`、`web/test_api_skills.py` 加 3 个
 - [x] 站点换成当下最热门的三个 GitHub 仓库（`obra/superpowers`、`anthropics/skills`、
       `ComposioHQ/awesome-claude-skills`），Gitee 的三个标签页不再出现
+
+### 阶段 G：站点换回国内社区的三个（已做，2026-11-23）
+- [x] 三个标签页换回码云上的三个仓库（`oschina/gitee-agent-skills`、`yang_huai_qiang1/agent-skills`、
+      `jianchaoteng/agent-skills`），`Site.kind` 决定从哪个 host 克隆
+- [x] 每个站点一个中文名和一句介绍（中英文各一套），标签页和站点头都用中文名
+- [x] 卡片的描述最多显示 50 个字，整段放在卡片的 `title` 里，鼠标移上去就是全文
 
 ### 阶段 E：站点页做得好看点 —— 已完成
 
