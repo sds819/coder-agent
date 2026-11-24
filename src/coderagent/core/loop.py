@@ -31,6 +31,23 @@ MAX_SCHEMA_ATTEMPTS = 2
 REVIEW_NOTE = "[the changes that were reviewed are not in the context anymore: read the files again]"
 """What takes the place of the diff of a review when the turn is over."""
 
+STOP_NOTES = {
+    "max_turns": "the turn was cut off: it reached the ceiling of {max_turns} model calls",
+    "cost_exceeded": "the turn stopped: the budget of the session is spent",
+    "token_limit": "the turn stopped: the token limit of the session is reached",
+}
+"""What to say when a turn did not end the way a turn should.
+
+A turn that ends like this has not failed, but it has not finished either: the
+user has to know why the agent went quiet.
+"""
+
+
+def stop_note(stop_reason: str, max_turns: int = 0) -> str:
+    """The line that tells the user why the turn stopped. Empty when it ended well."""
+    note = STOP_NOTES.get(stop_reason, "")
+    return note.format(max_turns=max_turns) if note else ""
+
 
 def _answer_of(messages: list[dict]) -> str:
     """What the agent answered."""

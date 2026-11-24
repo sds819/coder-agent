@@ -157,3 +157,22 @@ def test_a_model_that_fails_ends_the_turn_with_an_error(make_client, send, wait_
     assert items[-1]["stop_reason"] == "error"
     assert items[-1]["error"]
     assert [item["kind"] for item in items if item["kind"] == "error"]
+
+
+def test_a_turn_that_was_cut_off_says_why_it_ended(make_client, send, wait_for):
+    """A turn that stops at the ceiling of the model calls has to say so."""
+    client = make_client(
+        responses=[assistant(tool_calls=[bash_call("echo hello")])],
+        permission_mode="bypass",
+        project_config="agent:\n  max_turns: 1\n",
+    )
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "say hello")
+
+    items = wait_for(client, session_id, "turn_stopped")
+    stopped = [item for item in items if item["kind"] == "turn_stopped"][0]
+
+    assert stopped["stop_reason"] == "max_turns"
+    assert stopped["calls"] == 1
+    assert items[-1]["kind"] == "turn_end"
+    assert items[-1]["stop_reason"] == "max_turns"

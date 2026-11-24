@@ -16,6 +16,14 @@ const MODE_NOTES = {
   bypass: "mode_bypass",
 };
 
+/* The reasons a turn may end before the agent is done. The others end well. */
+const STOP_NOTES = {
+  max_turns: "stop_max_turns",
+  cost_exceeded: "stop_cost_exceeded",
+  token_limit: "stop_token_limit",
+  interrupted: "stop_interrupted",
+};
+
 const state = {
   sessionId: null,
   seq: 0,
@@ -329,6 +337,13 @@ function render(item) {
     case "reflection":
       bubble("separator", t("settled", { cost: (item.cost || 0).toFixed(5) }));
       break;
+    case "turn_stopped": {
+      /* A turn that was cut off says so: the agent went quiet and the user
+         has to know why. */
+      const note = STOP_NOTES[item.stop_reason];
+      if (note) bubble("separator", t(note, { calls: item.calls || 0 }));
+      break;
+    }
     case "reverted":
       bubble("separator", t("rolled_back", { messages: item.messages }));
       break;

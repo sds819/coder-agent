@@ -17,6 +17,7 @@ from textual.widgets import Input, Tree
 from coderagent.config.schema import Config
 from coderagent.core.content import describe_message
 from coderagent.core.events import Event, EventBus, EventType
+from coderagent.core.loop import stop_note
 from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
 from coderagent.models import warm_up_litellm
@@ -393,6 +394,11 @@ class CoderApp(App):
             self._ui(self._add_message, "error", "interrupted")
         elif result.error:
             self._ui(self._add_message, "error", result.error)
+        else:
+            """A turn that was cut off is not a failure, but the user has to know why."""
+            note = stop_note(result.stop_reason, self.loop.max_turns)
+            if note:
+                self._ui(self._add_message, "notice", note)
         self._ui(self._refresh_files)
         self._notify_terminal()
 

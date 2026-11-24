@@ -96,6 +96,17 @@ def normalize(event: Event) -> list[dict]:
                 "user_preferences": payload.get("user_preferences", []),
             }
         ]
+    if event.type == EventType.TURN_END:
+        """Why the turn ended. The browser says it, so that a turn that was cut
+        off does not look like a turn that ended well."""
+        return [
+            {
+                "kind": "turn_stopped",
+                "stop_reason": payload.get("stop_reason", ""),
+                "calls": payload.get("calls", 0),
+                "error": payload.get("error", ""),
+            }
+        ]
     if event.type == EventType.REVERTED:
         return [{"kind": "reverted", "messages": payload.get("messages", 0)}]
     if event.type == EventType.ERROR:

@@ -4,7 +4,7 @@ import logging
 import pytest
 
 from coderagent.core.events import EventBus, EventType
-from coderagent.core.loop import AgentLoop
+from coderagent.core.loop import AgentLoop, stop_note
 from coderagent.core.session import SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway
 from coderagent.testing.factory import AllowAllApprover, build_context, build_executor
@@ -91,6 +91,13 @@ def test_max_turns_stops_the_loop(tmp_path):
     )
     result = loop.run_turn("loop forever")
     assert result.stop_reason == "max_turns"
+
+
+def test_a_turn_that_was_cut_off_says_why():
+    assert stop_note("max_turns", 50) == "the turn was cut off: it reached the ceiling of 50 model calls"
+    assert stop_note("cost_exceeded") == "the turn stopped: the budget of the session is spent"
+    assert stop_note("token_limit") == "the turn stopped: the token limit of the session is reached"
+    assert stop_note("end_turn") == ""
 
 
 def test_the_reason_a_turn_ended_is_in_the_log(tmp_path):

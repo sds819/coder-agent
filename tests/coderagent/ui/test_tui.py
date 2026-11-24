@@ -615,3 +615,29 @@ def test_the_tree_of_the_files_can_be_shown(tmp_path):
             assert "a.py" in [str(node.label) for node in tree.root.children]
 
     asyncio.run(go())
+
+
+def test_a_turn_that_was_cut_off_says_why_it_ended(tmp_path):
+    """The agent goes quiet at the ceiling of the model calls: the user has to know."""
+    call = {
+        "id": "call_1",
+        "type": "function",
+        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+    }
+    app = _app(
+        tmp_path,
+        responses=[{"role": "assistant", "content": "", "tool_calls": [call], "extra": {"cost": 0.0}}],
+        mode="bypass",
+    )
+    app.loop.max_turns = 1
+    notices = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"run it")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: [b for b in app.query(MessageBlock) if b.role == "notice"])
+            notices.extend(b for b in app.query(MessageBlock) if b.role == "notice")
+
+    asyncio.run(go())
+    assert "ceiling of 1 model calls" in notices[0].content

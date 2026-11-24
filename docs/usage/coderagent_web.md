@@ -64,6 +64,10 @@ Three columns:
   view and pulses until you answer it, so that you never have to look for it.
   While it waits, the view stays with the card instead of running away to the
   newest output.
+
+  A turn that was cut off — at the ceiling of the model calls
+  (`agent.max_turns`), at the budget or at the token limit — says so under the
+  last answer. The agent that goes quiet has not crashed: it ran out of room.
 - **Right**: the status bar of the session (model, context size, cost, mode),
   the sub agents with the turns they may really make, the files the session
   changed with their diff, and the file you are looking at.
