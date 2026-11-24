@@ -4554,6 +4554,10 @@ coder<span class="w"> </span>web
 <p>页面本身不滚动，每一栏各滚各的。对话区会跟着新的输出滚到底，除非你往上翻去看别的东西。
 当前这一轮之前的历史折叠在顶部一个块里，点开就能看。
 往上翻的时候，输入框上面会出现一个「跳到最新」的按钮，点它回到对话的末尾。</p>
+<p>输入框旁边的「图片」按钮给下一条消息附上一张图；粘到输入框里的图也一样。附上的图显示在输入框
+上面，发出去之前每张都能单独删掉。图是<strong>跟消息的文字一起进模型那一轮</strong>的，不是落在磁盘上的文件：
+agent 在那一轮里就看得见。类型是模型接口收的那几种（png、jpg、gif、webp），每张上限 5 MB。
+slash 命令不能带图。</p>
 <p>等着人回答的审批卡片会自己滚到视野中间，并一直脉动，直到你回答它——不用自己往下找。
 它在等的时候，视线留在那张卡片上，不会被新的输出带走。</p>
 <p>被切断的一轮（到了模型调用的上限 <code>agent.max_turns</code>、预算上限或者 token 上限）会在最后一条
@@ -4891,7 +4895,7 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <tr>
 <td>POST</td>
 <td><code>/api/sessions/{id}/messages</code></td>
-<td>发消息，或者跑 slash 命令</td>
+<td>发消息（可以带图），或者跑 slash 命令</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -5018,6 +5022,8 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <p>状态码：正忙着在跑一轮时再发消息 → <code>409</code>；审批 id 不认识 → <code>404</code>；会话 id 不认识 → <code>404</code>；
 路径越界 → <code>403</code>；空消息 → <code>400</code>；权限模式不认识 → <code>400</code>；审批的回答不是
 <code>allow</code>/<code>deny</code>/<code>always</code> → <code>400</code>；建会话 → <code>201</code>；消息收下了 → <code>202</code>。</p>
+<p>消息的请求体是 <code>{"text": "...", "images": ["data:image/png;base64,..."]}</code>。<code>images</code> 可以不给；
+给了的话每个都得是模型接口收的类型、且不超过 5 MB 的 data url，不然是 <code>400</code>。</p>
 <h2 id="language">页面的语言</h2>
 <p>页面给中文地区（大陆、香港、澳门、台湾）的人看是中文，其它地方是英文。
 决定的是访客所在的地方。</p>
@@ -5109,6 +5115,11 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <td>有，同一套</td>
 </tr>
 <tr>
+<td>图片</td>
+<td><code>/image</code></td>
+<td>「图片」按钮，或者直接粘</td>
+</tr>
+<tr>
 <td>模型配置</td>
 <td>一个文本文件</td>
 <td>一个表单，外加分层预览</td>
@@ -5133,7 +5144,6 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <li>事件流一轮结束就关。中间长时间不说话的时候流是开着的，但每轮之后浏览器都要重连。</li>
 <li>改过的文件是从会话的检查点来的。没有检查点的改动不会出现在那个列表里。</li>
 <li>每个会话自己一套 MCP server 的线程。server 在会话跑第一轮的时候才起来，会话一多线程就多。</li>
-<li>浏览器里没法发图片。agent 认得图片，但图片得从终端发过来（<code>/image</code>）。</li>
 </ul>
 <p>端口被占了的话，服务会说一声然后停下；换一个端口：<code>--port</code>。</p>
 <h2 id="faq">常见问题</h2>
