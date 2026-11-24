@@ -52,3 +52,45 @@ def test_the_tree_of_a_directory_without_git_shows_the_files(tmp_path):
 
 def test_the_tree_is_hidden_until_it_is_asked_for(tmp_path):
     assert not FileTree(tmp_path).display
+
+
+def test_the_tree_lists_only_the_directories_that_are_open(tmp_path):
+    """The tree shows the directories the user opened to the agent, and nothing else."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "note.txt").write_text("hello\n", encoding="utf-8")
+    (tmp_path / "secret.txt").write_text("no\n", encoding="utf-8")
+
+    tree = FileTree(tmp_path, [workspace])
+    tree.reload()
+
+    assert _labels(tree) == ["note.txt"]
+
+
+def test_every_directory_that_is_open_is_a_node_of_its_own(tmp_path):
+    first = tmp_path / "first"
+    first.mkdir()
+    (first / "a.txt").write_text("a\n", encoding="utf-8")
+    second = tmp_path / "second"
+    second.mkdir()
+    (second / "b.txt").write_text("b\n", encoding="utf-8")
+
+    tree = FileTree(tmp_path, [first, second])
+    tree.reload()
+
+    assert _labels(tree) == ["first/", "second/"]
+    assert [str(child.label) for child in tree.root.children[0].children] == ["a.txt"]
+
+
+def test_the_path_of_a_file_outside_the_working_directory_is_the_whole_one(tmp_path):
+    """The agent can be given the file: the path it gets is one it understands."""
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "note.txt").write_text("hello\n", encoding="utf-8")
+
+    tree = FileTree(cwd, [workspace])
+    tree.reload()
+
+    assert tree.root.children[0].data == (workspace / "note.txt").as_posix()

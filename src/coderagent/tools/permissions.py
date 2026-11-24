@@ -350,6 +350,14 @@ class PermissionPolicy:
             return resolved.relative_to(self.cwd).as_posix()
         return resolved.as_posix()
 
+    def roots(self) -> list[Path]:
+        """The directories that are open to the agent.
+
+        The user opens the directories of the agent to it: the interfaces list those
+        and nothing else. Without them the working directory is the one.
+        """
+        return list(self.include_dirs) or [self.cwd]
+
     def within_bounds(self, path: str) -> bool:
         """Whether a path is inside the working directory or one of the extra directories.
 

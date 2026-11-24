@@ -146,7 +146,7 @@ class CoderApp(App):
         """The last thing the agent said; the notification tells that much."""
 
     def compose(self) -> ComposeResult:
-        yield FileTree(self.cwd, id="files")
+        yield FileTree(self.cwd, self.loop.policy.roots(), id="files")
         yield StatusBar(id="status")
         yield VerticalScroll(id="conversation")
         yield TodoPanel(id="todos")
@@ -506,7 +506,7 @@ class CoderApp(App):
             self.exit()
 
     def action_files(self) -> None:
-        """Show or hide the tree of the files of the working directory."""
+        """Show or hide the tree of the files that are open to the agent."""
         tree = self.query_one("#files", FileTree)
         tree.display = not tree.display
         if tree.display:

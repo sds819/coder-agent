@@ -55,32 +55,51 @@ def changed_files(cwd: Path) -> dict[str, str]:
 
 
 class FileTree(Tree):
-    """The files of the working directory, with the ones that changed marked."""
+    """The files of the directories that are open to the agent, with the ones that changed marked."""
 
-    def __init__(self, cwd: Path, **kwargs) -> None:
-        super().__init__(Path(cwd).name, **kwargs)
+    def __init__(self, cwd: Path, roots: list[Path] | None = None, **kwargs) -> None:
         self.cwd = Path(cwd)
+        self.roots = [Path(root) for root in (roots or [self.cwd])]
+        """The directories the user opened to the agent: the tree lists those and nothing else."""
+        super().__init__(self.roots[0].name if len(self.roots) == 1 else "files", **kwargs)
         self.show_root = False
         self.display = False
         """The tree is hidden until the user asks for it."""
 
     def reload(self) -> None:
-        """Read the directory again and show what is there now."""
+        """Read the directories again and show what is there now."""
         self.clear()
-        changes = changed_files(self.cwd)
-        nodes = {Path("."): self.root}
-        for path, kind in list_entries(self.cwd, MAX_DEPTH):
-            relative = path.relative_to(self.cwd)
-            parent = nodes.get(relative.parent)
-            if parent is None:
+        for root in self.roots:
+            parent = self.root if len(self.roots) == 1 else self.root.add(root.name + "/", data=root.as_posix())
+            self._fill(parent, root)
+
+    def _fill(self, parent, root: Path) -> None:
+        """The entries of a directory, under the node that holds it."""
+        changes = changed_files(root)
+        nodes = {Path("."): parent}
+        for path, kind in list_entries(root, MAX_DEPTH):
+            relative = path.relative_to(root)
+            node_parent = nodes.get(relative.parent)
+            if node_parent is None:
                 continue
             label = f"{relative.name}/" if kind == "d" else relative.name
             mark = mark_of(changes.get(relative.as_posix(), ""))
             if mark:
                 label = f"{mark} {label}"
             node = (
-                parent.add_leaf(label, data=relative.as_posix())
+                node_parent.add_leaf(label, data=self._data(path))
                 if kind == "f"
-                else parent.add(label, data=relative.as_posix())
+                else node_parent.add(label, data=self._data(path))
             )
             nodes[relative] = node
+
+    def _data(self, path: Path) -> str:
+        """The path of a node, the way the agent can be given it.
+
+        A file of the working directory is named relative to it; a file of another
+        directory has to be named with its whole path.
+        """
+        try:
+            return path.relative_to(self.cwd).as_posix()
+        except ValueError:
+            return path.as_posix()

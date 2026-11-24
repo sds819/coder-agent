@@ -38,15 +38,6 @@ def policy_for(config: Config, cwd: Path) -> PermissionPolicy:
     )
 
 
-def roots(policy: PermissionPolicy) -> list[Path]:
-    """The directories the browser may list.
-
-    The user opens the directories of the agent to it: the panel shows those and
-    nothing else. Without them the working directory is the one.
-    """
-    return list(policy.include_dirs) or [policy.cwd]
-
-
 def resolve(cwd: Path, path: str, policy: PermissionPolicy) -> Path:
     """The absolute path of a file of the working directory."""
     target = Path(path or ".")
@@ -65,7 +56,7 @@ def listing(cwd: Path, path: str, depth: int, policy: PermissionPolicy) -> tuple
     Only the directories that are open may be listed: the other files and
     directories of the disk are not shown to the browser.
     """
-    directories = roots(policy)
+    directories = policy.roots()
     if not path or path == ".":
         if len(directories) == 1:
             return _entries(directories[0], depth)

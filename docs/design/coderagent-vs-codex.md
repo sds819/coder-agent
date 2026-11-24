@@ -351,11 +351,13 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
   - 审批卡片上显示的是补丁的 diff（`ui/widgets/diff_view.py` 的 `prospective_diff`）。
 - **TUI 文件树（4.6）**：`src/coderagent/ui/widgets/file_tree.py`，
   textual 的 `Tree`，`ctrl+t` 在左边打开，三层深。
+  - **只列用户开给 agent 的目录**：`permissions.include_dirs`（没有就工作目录），
+    跟网页版左栏一个口径——`PermissionPolicy.roots()`。
   - **改过的文件有标记**：`git status --porcelain` 的结果映射成
     `+`（新增）、`●`（改过）、`-`（删了）、`?`（新文件）。
     不是 git 仓库时就没有标记，树照样能看。
   - **点一下就把路径填进输入框**——接着 `@` 那套补全用。
-  - 每轮跑完刷新一次，文件树跟工作目录同步。
+  - 每轮跑完刷新一次，文件树跟目录同步。
 
 ---
 

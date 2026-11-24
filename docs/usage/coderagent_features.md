@@ -1157,9 +1157,10 @@ $ python -m pytest -q
 - **A panel of the sessions** — `ctrl+o` lists the sessions of this directory;
   `enter` continues the one that is picked, `escape` closes the panel.
 - **A tree of the files** — `ctrl+t` opens it on the left: the files of the
-  working directory, three levels deep, with the ones that changed marked
-  (`+` added, `●` changed, `-` deleted, `?` new). Picking a file puts its
-  path in the input.
+  directories the user opened to the agent (`permissions.include_dirs`; the
+  working directory when there are none), three levels deep, with the ones that
+  changed marked (`+` added, `●` changed, `-` deleted, `?` new). Picking a file
+  puts its path in the input.
 - **The terminal is told when a turn is over** — a notification with the answer
   of the agent, so a long turn is not missed. `ui.notifications: false` turns it off.
 - **A program of your own may say it** — `ui.notify_command` names a program that

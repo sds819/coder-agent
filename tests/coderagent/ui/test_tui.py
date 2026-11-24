@@ -25,9 +25,10 @@ from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
 from coderagent.ui.widgets import FileTree, MarkdownMessage, MessageBlock, ToolCard  # noqa: E402
 
 
-def _app(tmp_path, responses=None, mode="default", markdown=True):
+def _app(tmp_path, responses=None, mode="default", markdown=True, include_dirs=None):
     config = Config()
     config.permissions.mode = mode
+    config.permissions.include_dirs = include_dirs or []
     config.ui.markdown = markdown
     bus = EventBus()
     approver = TUIAprover(bus)
@@ -623,6 +624,26 @@ def test_the_tree_of_the_files_can_be_shown(tmp_path):
             await pilot.pause()
             assert tree.display
             assert "a.py" in [str(node.label) for node in tree.root.children]
+
+    asyncio.run(go())
+
+
+def test_the_tree_of_the_files_shows_the_directories_that_are_open(tmp_path):
+    """`ctrl+t` shows the directories the user opened to the agent, and nothing else."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "note.txt").write_text("hello\n", encoding="utf-8")
+    (tmp_path / "secret.txt").write_text("no\n", encoding="utf-8")
+    app = _app(tmp_path, include_dirs=[str(workspace)])
+
+    async def go():
+        async with app.run_test() as pilot:
+            tree = app.query_one("#files", FileTree)
+            await pilot.press("ctrl+t")
+            await pilot.pause()
+            labels = [str(node.label) for node in tree.root.children]
+            assert "note.txt" in labels
+            assert "secret.txt" not in labels
 
     asyncio.run(go())
 
