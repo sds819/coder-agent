@@ -4524,13 +4524,6 @@ coder<span class="w"> </span>web
   top — click it to look at them.</p>
 <p>When you scroll up, a button (<code>Jump to the newest</code>) appears above the
   composer and takes you back to the end of the conversation.</p>
-<p>The <code>Image</code> button next to the box attaches a picture to the next message; a
-  picture that is pasted into the box is attached the same way. The attached
-  pictures are shown above the box, and each one can be removed before the
-  message is sent. The picture goes to the model with the text of the message,
-  not as a file on the disk: the agent sees it in the turn. The types are the
-  ones a provider takes (png, jpg, gif, webp) and the limit is 5 MB per
-  picture. A slash command cannot carry a picture.</p>
 <p>An approval that waits for an answer scrolls itself into the middle of the
   view and pulses until you answer it, so that you never have to look for it.
   While it waits, the view stays with the card instead of running away to the
@@ -4963,7 +4956,7 @@ do not ask for the header — they start nothing.</p>
 <tr>
 <td>POST</td>
 <td><code>/api/sessions/{id}/messages</code></td>
-<td>Send a message, with its images, or run a slash command</td>
+<td>Send a message, or run a slash command</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -5093,9 +5086,6 @@ not exist. A path outside the working directory is a <code>403</code>. A permiss
 that does not exist is a <code>400</code>, and so is an approval answer that is not
 <code>allow</code>, <code>deny</code> or <code>always</code>. A new session answers <code>201</code>, a message that was
 taken answers <code>202</code>.</p>
-<p>The body of a message is <code>{"text": "...", "images": ["data:image/png;base64,..."]}</code>.
-The images are optional, and each of them is a data url of a type a provider
-takes, up to 5 MB. An image that is not one is a <code>400</code>.</p>
 <h2 id="approvals">Approvals</h2>
 <p>A tool that needs permission waits for you. The card in the conversation has
 three buttons:</p>
@@ -5161,11 +5151,6 @@ minutes by default). A tool that is denied never runs.</p>
 <td>Yes, the same ones</td>
 </tr>
 <tr>
-<td>Pictures</td>
-<td><code>/image</code></td>
-<td>The <code>Image</code> button, or a paste</td>
-</tr>
-<tr>
 <td>The model configuration</td>
 <td>A text file</td>
 <td>A form, plus a preview of the layers</td>
@@ -5198,6 +5183,8 @@ browser shows everything.</p>
 <li>Each session gets its own MCP server threads. The servers are only started
   when a session runs its first turn, but a lot of sessions means a lot of
   threads.</li>
+<li>There is no way to send a picture from the browser. The agent understands
+  images, but the picture has to come from the terminal (<code>/image</code>).</li>
 </ul>
 <p>If the port is taken, the server says so and stops; start it on another one
 with <code>--port</code>.</p>
