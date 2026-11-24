@@ -69,11 +69,6 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 当前这一轮之前的历史折叠在顶部一个块里，点开就能看。
 往上翻的时候，输入框上面会出现一个「跳到最新」的按钮，点它回到对话的末尾。
 
-输入框旁边的「图片」按钮给下一条消息附上一张图；粘到输入框里的图也一样。附上的图显示在输入框
-上面，发出去之前每张都能单独删掉。图是**跟消息的文字一起进模型那一轮**的，不是落在磁盘上的文件：
-agent 在那一轮里就看得见。类型是模型接口收的那几种（png、jpg、gif、webp），每张上限 5 MB。
-slash 命令不能带图。
-
 等着人回答的审批卡片会自己滚到视野中间，并一直脉动，直到你回答它——不用自己往下找。
 它在等的时候，视线留在那张卡片上，不会被新的输出带走。
 
@@ -273,7 +268,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/sessions/{id}/changes` | 这个会话改过的文件和 diff |
 | POST | `/api/sessions/{id}/resume` | 续接日志里的会话 |
 | POST | `/api/sessions/{id}/fork` | 复制一个会话 |
-| POST | `/api/sessions/{id}/messages` | 发消息（可以带图），或者跑 slash 命令 |
+| POST | `/api/sessions/{id}/messages` | 发消息，或者跑 slash 命令 |
 | POST | `/api/sessions/{id}/interrupt` | 停掉正在跑的那一轮 |
 | POST | `/api/sessions/{id}/mode` | 换掉这个会话的权限模式 |
 | POST | `/api/approvals/{id}` | 允许、拒绝、或者永久允许一个工具 |
@@ -302,9 +297,6 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 状态码：正忙着在跑一轮时再发消息 → `409`；审批 id 不认识 → `404`；会话 id 不认识 → `404`；
 路径越界 → `403`；空消息 → `400`；权限模式不认识 → `400`；审批的回答不是
 `allow`/`deny`/`always` → `400`；建会话 → `201`；消息收下了 → `202`。
-
-消息的请求体是 `{"text": "...", "images": ["data:image/png;base64,..."]}`。`images` 可以不给；
-给了的话每个都得是模型接口收的类型、且不超过 5 MB 的 data url，不然是 `400`。
 
 ## 页面的语言 {#language}
 
@@ -370,7 +362,6 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | 流式输出 | 有 | 有，走 SSE |
 | 审批 | 有 | 有，同样三个答案 |
 | slash 命令 | 有 | 有，同一套 |
-| 图片 | `/image` | 「图片」按钮，或者直接粘 |
 | 模型配置 | 一个文本文件 | 一个表单，外加分层预览 |
 | 项目文件 | agent 的工具 | 左边的文件树 |
 | 花费 | `/cost` | 状态条，外加 `/cost` |
@@ -385,6 +376,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 - 事件流一轮结束就关。中间长时间不说话的时候流是开着的，但每轮之后浏览器都要重连。
 - 改过的文件是从会话的检查点来的。没有检查点的改动不会出现在那个列表里。
 - 每个会话自己一套 MCP server 的线程。server 在会话跑第一轮的时候才起来，会话一多线程就多。
+- 浏览器里没法发图片。agent 认得图片，但图片得从终端发过来（`/image`）。
 
 端口被占了的话，服务会说一声然后停下；换一个端口：`--port`。
 
