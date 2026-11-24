@@ -7072,9 +7072,10 @@ $ python -m pytest -q
 <li><strong>A panel of the sessions</strong> — <code>ctrl+o</code> lists the sessions of this directory;
   <code>enter</code> continues the one that is picked, <code>escape</code> closes the panel.</li>
 <li><strong>A tree of the files</strong> — <code>ctrl+t</code> opens it on the left: the files of the
-  working directory, three levels deep, with the ones that changed marked
-  (<code>+</code> added, <code>●</code> changed, <code>-</code> deleted, <code>?</code> new). Picking a file puts its
-  path in the input.</li>
+  directories the user opened to the agent (<code>permissions.include_dirs</code>; the
+  working directory when there are none), three levels deep, with the ones that
+  changed marked (<code>+</code> added, <code>●</code> changed, <code>-</code> deleted, <code>?</code> new). Picking a file
+  puts its path in the input.</li>
 <li><strong>The terminal is told when a turn is over</strong> — a notification with the answer
   of the agent, so a long turn is not missed. <code>ui.notifications: false</code> turns it off.</li>
 <li><strong>A program of your own may say it</strong> — <code>ui.notify_command</code> names a program that

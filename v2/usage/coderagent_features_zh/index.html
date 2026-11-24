@@ -6967,7 +6967,8 @@ $ python -m pytest -q
 <li><strong>用 <code>@</code> 提文件</strong>——敲 <code>@src/app</code> 会把文件的路径补全，<code>→</code> 收下这个补全。</li>
 <li><strong>会话面板</strong>——<code>ctrl+o</code> 列出这个目录的会话，<code>enter</code> 接着选中的那个继续，
   <code>escape</code> 关掉面板。</li>
-<li><strong>文件树</strong>——<code>ctrl+t</code> 在左边打开：工作目录里的文件，三层深，改过的有标记
+<li><strong>文件树</strong>——<code>ctrl+t</code> 在左边打开：用户开给 agent 的那些目录（<code>permissions.include_dirs</code>，
+  一个都没开就是工作目录）里的文件，三层深，改过的有标记
   （<code>+</code> 新增、<code>●</code> 改过、<code>-</code> 删了、<code>?</code> 新文件）。点一个文件就把它的路径
   填进输入框。</li>
 <li><strong>一轮结束时通知终端</strong>——通知里带着 agent 的回答，长的一轮不会错过。

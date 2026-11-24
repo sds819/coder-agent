@@ -5209,11 +5209,13 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
 <li>审批卡片上显示的是补丁的 diff（<code>ui/widgets/diff_view.py</code> 的 <code>prospective_diff</code>）。</li>
 <li><strong>TUI 文件树（4.6）</strong>：<code>src/coderagent/ui/widgets/file_tree.py</code>，
   textual 的 <code>Tree</code>，<code>ctrl+t</code> 在左边打开，三层深。</li>
+<li><strong>只列用户开给 agent 的目录</strong>：<code>permissions.include_dirs</code>（没有就工作目录），
+    跟网页版左栏一个口径——<code>PermissionPolicy.roots()</code>。</li>
 <li><strong>改过的文件有标记</strong>：<code>git status --porcelain</code> 的结果映射成
     <code>+</code>（新增）、<code>●</code>（改过）、<code>-</code>（删了）、<code>?</code>（新文件）。
     不是 git 仓库时就没有标记，树照样能看。</li>
 <li><strong>点一下就把路径填进输入框</strong>——接着 <code>@</code> 那套补全用。</li>
-<li>每轮跑完刷新一次，文件树跟工作目录同步。</li>
+<li>每轮跑完刷新一次，文件树跟目录同步。</li>
 </ul>
 <hr>
 <h2 id="5-p2">5. P2：清理与锦上添花</h2>
