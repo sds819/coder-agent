@@ -63,6 +63,14 @@ Three columns:
   When you scroll up, a button (`Jump to the newest`) appears above the
   composer and takes you back to the end of the conversation.
 
+  The `Image` button next to the box attaches a picture to the next message; a
+  picture that is pasted into the box is attached the same way. The attached
+  pictures are shown above the box, and each one can be removed before the
+  message is sent. The picture goes to the model with the text of the message,
+  not as a file on the disk: the agent sees it in the turn. The types are the
+  ones a provider takes (png, jpg, gif, webp) and the limit is 5 MB per
+  picture. A slash command cannot carry a picture.
+
   An approval that waits for an answer scrolls itself into the middle of the
   view and pulses until you answer it, so that you never have to look for it.
   While it waits, the view stays with the card instead of running away to the
@@ -349,7 +357,7 @@ do not ask for the header — they start nothing.
 | GET | `/api/sessions/{id}/changes` | The files the session changed, with their diff |
 | POST | `/api/sessions/{id}/resume` | Continue a session of the log |
 | POST | `/api/sessions/{id}/fork` | Copy a session |
-| POST | `/api/sessions/{id}/messages` | Send a message, or run a slash command |
+| POST | `/api/sessions/{id}/messages` | Send a message, with its images, or run a slash command |
 | POST | `/api/sessions/{id}/interrupt` | Stop the turn that is running |
 | POST | `/api/sessions/{id}/mode` | Change the permission mode of the session |
 | POST | `/api/approvals/{id}` | Allow, deny or always allow a tool |
@@ -381,6 +389,10 @@ not exist. A path outside the working directory is a `403`. A permission mode
 that does not exist is a `400`, and so is an approval answer that is not
 `allow`, `deny` or `always`. A new session answers `201`, a message that was
 taken answers `202`.
+
+The body of a message is `{"text": "...", "images": ["data:image/png;base64,..."]}`.
+The images are optional, and each of them is a data url of a type a provider
+takes, up to 5 MB. An image that is not one is a `400`.
 
 ## Approvals
 
@@ -431,6 +443,7 @@ Read this before you put it on a network.
 | Streaming | Yes | Yes, over SSE |
 | Approvals | Yes | Yes, with the same three answers |
 | Slash commands | Yes | Yes, the same ones |
+| Pictures | `/image` | The `Image` button, or a paste |
 | The model configuration | A text file | A form, plus a preview of the layers |
 | The files of the project | The tools of the agent | A tree on the left |
 | The cost | `/cost` | The status bar, and `/cost` |
@@ -453,8 +466,6 @@ browser shows everything.
 - Each session gets its own MCP server threads. The servers are only started
   when a session runs its first turn, but a lot of sessions means a lot of
   threads.
-- There is no way to send a picture from the browser. The agent understands
-  images, but the picture has to come from the terminal (`/image`).
 
 If the port is taken, the server says so and stops; start it on another one
 with `--port`.

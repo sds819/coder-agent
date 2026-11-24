@@ -23,8 +23,13 @@
     <div id="messages" class="messages"></div>
     <button id="to-latest" class="to-latest" hidden>Jump to the newest</button>
     <form id="composer" class="composer">
-      <textarea id="input" rows="2" placeholder="Message the agent, or a command like /help"></textarea>
-      <button type="submit" class="primary">Send</button>
+      <div id="attachments" class="attachments"></div>
+      <div class="composer-row">
+        <textarea id="input" rows="2" placeholder="Message the agent, or a command like /help"></textarea>
+        <input type="file" id="attach" accept="image/*" multiple hidden>
+        <button type="button" id="attach-image">Image</button>
+        <button type="submit" class="primary">Send</button>
+      </div>
     </form>
     <div class="row commands">
       <select id="command-list"></select>
