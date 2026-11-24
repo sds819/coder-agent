@@ -6465,6 +6465,9 @@ cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span
   the history grows over it. The running session is never one of them.</li>
 <li><strong>The money</strong> — tokens and cost per session, in the status bar, in <code>/cost</code>
   and in the trace.</li>
+<li><strong>A model without a price</strong> — the money is unknown, not zero: the status bar
+  and <code>/cost</code> show <code>$?</code> instead of a price. The budget of such a model is
+  <code>agent.token_limit</code>.</li>
 <li><strong>The trace</strong> — <code>coder export --format json|otel</code> writes the session out,
   for a dashboard or for OpenTelemetry.</li>
 </ul>
@@ -6532,7 +6535,7 @@ the snapshot.</p>
 </tr>
 <tr>
 <td>A turn ends with <code>stop_reason: max_turns</code></td>
-<td>The agent made 50 model calls (<code>agent.max_turns</code>) without finishing.</td>
+<td>The agent made 100 model calls (<code>agent.max_turns</code>) without finishing.</td>
 <td>Raise <code>agent.max_turns</code>, or make the task smaller.</td>
 </tr>
 <tr>

@@ -6178,7 +6178,7 @@ uvicorn（fastapi 已进核心依赖，uvicorn 还在 <code>web</code> extra 里
 <span class="w">  </span><span class="nt">max_retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 
 <span class="nt">agent</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
 <span class="w">  </span><span class="nt">cost_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
 <span class="w">  </span><span class="nt">token_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 
@@ -6223,7 +6223,7 @@ uvicorn（fastapi 已进核心依赖，uvicorn 还在 <code>web</code> extra 里
 <p>实现与草图的差别：权限模式在 <code>permissions.mode</code>（不是 <code>agent.mode</code>），
 <code>include_dirs</code> 也在 <code>permissions</code> 下面（不是 <code>tools</code>）；
 压缩的开关在 <code>context</code> 段（<code>auto_compact</code> / <code>compact_threshold</code>），不在 <code>agent</code> 段；
-<code>agent.max_turns</code> 数的是<strong>模型调用</strong>次数，默认 50。</p>
+<code>agent.max_turns</code> 数的是<strong>模型调用</strong>次数，默认 100。</p>
 <p>实现与草图的差别：<strong>项目层不再有 <code>model</code></strong>。<code>core/trust.py</code> 的 <code>tightened()</code>
 把项目的 <code>model</code> 整段丢掉——项目的端点会把整段对话，连同用户的 key，
 一起送到别处去。模型是用户的决定。

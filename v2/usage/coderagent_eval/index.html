@@ -4323,7 +4323,9 @@ the report says which is which (<code>"mode"</code>).</p>
 <span class="p">}</span>
 </code></pre></div>
 <p>The cost of a model that litellm does not know is 0, so the tokens are always in
-the report next to it: they come from the provider and they are reliable.</p>
+the report next to it: they come from the provider and they are reliable. The
+text report says <code>$?</code> instead of a price, and the JSON says <code>"priced": false</code>:
+the money of such a model is unknown, not zero.</p>
 <p><code>model_calls</code> counts the calls of the main loop. The calls of the sub agents are
 not in it, their cost is.</p>
 <p><code>tool_errors</code> counts the tool calls that failed, the ones that were denied

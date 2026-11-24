@@ -5472,7 +5472,7 @@
 <h3 id="c3">c3 跑太久 / 轮数多 / 花钱多，怎么卡住？</h3>
 <p><strong>结论</strong>：<code>core/loop.py</code> 在每轮循环顶部依次检查。</p>
 <ul>
-<li><code>agent.max_turns</code>（默认 50，0 = 不限）——<strong>模型调用</strong>上限。</li>
+<li><code>agent.max_turns</code>（默认 100，0 = 不限）——<strong>模型调用</strong>上限。</li>
 <li><code>agent.cost_limit</code>（默认 0.0 = 不限）。</li>
 <li><code>agent.token_limit</code>（默认 0 = 不限）。</li>
 <li>附加提醒：<code>_warn_unpriced()</code>——如果模型没有价格表却配了 <code>cost_limit</code>，会提示改用 <code>agent.token_limit</code>（很多自建端点没有价格，cost 恒为 0）。</li>

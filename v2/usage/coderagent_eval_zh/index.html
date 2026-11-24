@@ -4308,7 +4308,8 @@
 <span class="p">}</span>
 </code></pre></div>
 <p>litellm 的价格表里没有的模型，成本恒为 0，所以 token 一定要和成本一起报：
-token 来自 provider，是可靠的。</p>
+token 来自 provider，是可靠的。文本报告里写的是 <code>$?</code> 而不是价格，JSON 里是
+<code>"priced": false</code>——这种模型的钱是不知道，不是零。</p>
 <p><code>model_calls</code> 只数主循环的调用；子 agent 的调用不在里面，它们的<strong>成本</strong>在。</p>
 <p><code>tool_errors</code> 数失败的工具调用，被权限拒绝的也算。</p>
 <p><code>summary_ratios</code> 每次压缩给一个数：摘要多大，对着它替换掉的那段历史多大。
