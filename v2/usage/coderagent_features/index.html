@@ -6536,6 +6536,11 @@ the snapshot.</p>
 <td>Raise <code>agent.max_turns</code>, or make the task smaller.</td>
 </tr>
 <tr>
+<td>The agent goes quiet without an answer</td>
+<td>The turn was cut off: at the ceiling of the model calls, at the budget, or at the token limit. The interface says so under the last answer.</td>
+<td>Raise the ceiling that the line names (<code>agent.max_turns</code> and the like), or make the task smaller.</td>
+</tr>
+<tr>
 <td>A turn ends with <code>stop_reason: cost_exceeded</code></td>
 <td>The turn cost more than <code>agent.cost_limit</code>. <code>0</code> means no limit.</td>
 <td>Raise <code>agent.cost_limit</code>.</td>

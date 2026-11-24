@@ -6472,6 +6472,11 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 <td>调大 <code>agent.max_turns</code>，或者把任务拆小。</td>
 </tr>
 <tr>
+<td>agent 不出声就停了</td>
+<td>这一轮被切断了：到了模型调用的上限、预算上限或者 token 上限。界面会在最后一条回答下面写明。</td>
+<td>调大那一行里说的上限（<code>agent.max_turns</code> 之类），或者把任务拆小。</td>
+</tr>
+<tr>
 <td>一轮以 <code>stop_reason: cost_exceeded</code> 结束</td>
 <td>这一轮花的钱超过了 <code>agent.cost_limit</code>。<code>0</code> 是没有上限。</td>
 <td>调大 <code>agent.cost_limit</code>。</td>

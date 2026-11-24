@@ -4524,7 +4524,10 @@ coder<span class="w"> </span>web
 <p>An approval that waits for an answer scrolls itself into the middle of the
   view and pulses until you answer it, so that you never have to look for it.
   While it waits, the view stays with the card instead of running away to the
-  newest output.
+  newest output.</p>
+<p>A turn that was cut off — at the ceiling of the model calls
+  (<code>agent.max_turns</code>), at the budget or at the token limit — says so under the
+  last answer. The agent that goes quiet has not crashed: it ran out of room.
 - <strong>Right</strong>: the status bar of the session (model, context size, cost, mode),
   the sub agents with the turns they may really make, the files the session
   changed with their diff, and the file you are looking at.</p>
