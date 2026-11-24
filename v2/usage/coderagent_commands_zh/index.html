@@ -4407,6 +4407,8 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <p>收起来的会话不再出现在 <code>/resume</code> 的列表里，但它还在盘上，
 <code>/resume &lt;session-id&gt;</code> 照样能打开。已经收起来的会话再跑一次 <code>/archive</code>
 就又拿出来了。</p>
+<p><code>/resume</code> 的列表（还有 <code>ctrl+o</code> 的面板、<code>coder --list</code>）列会话用的是<strong>首句提问的概括</strong>，
+不是会话 id；起过名字的会话也把名字列出来。什么都没问过的会话只能列它的 id。</p>
 <p><code>/delete</code> 要会话的 id，而且<strong>不删你正待着的那个会话</strong>：先 <code>/clear</code> 开一个新的。
 会话里的一切——事件日志和它的元数据文件——一起没了。</p>
 <h2 id="_6">用户自己的文件</h2>

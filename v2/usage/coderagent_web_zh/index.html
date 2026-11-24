@@ -4541,7 +4541,8 @@ coder<span class="w"> </span>web
 <p>打开 <code>http://127.0.0.1:8765/</code>。三栏：</p>
 <ul>
 <li><strong>左栏</strong>：这个目录的会话列表，和工作目录的文件树。<code>New session</code> 开一个新会话，
-  点列表里的会话切换过去。</li>
+  点列表里的会话切换过去。会话列的是<strong>首句提问的概括</strong>，不是会话 id；轮数和花费放在
+  那一项的提示里——没有价格的模型算出来的花费不值得摆出来。</li>
 <li><strong>中栏</strong>：对话。消息是气泡，工具调用是卡片（带输出和这次改动的 diff），审批是带三个
   按钮的卡片。下面的输入框既能发消息也能发 slash 命令（<code>/help</code>、<code>/clear</code>、<code>/cost</code>……，
   和终端里是同一套命令，列表在输入框下面的下拉框里，下拉框里还写着每个命令收什么参数）。

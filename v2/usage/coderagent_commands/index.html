@@ -4422,6 +4422,10 @@ purpose <code>side</code>.</p>
 <p>A session that is put away is not in the list of <code>/resume</code> any more, but it is
 still on the disk and <code>/resume &lt;session-id&gt;</code> opens it. <code>/archive</code> on a session
 that is already away takes it out again.</p>
+<p>The list of <code>/resume</code> (and the panel of <code>ctrl+o</code>, and <code>coder --list</code>) shows a
+session under the summary of its first question, not under its id. A session
+that was given a name shows that name as well. A session that was never asked
+anything shows its id.</p>
 <p><code>/delete</code> needs the id of the session, and it never deletes the session you are
 in: start a new one with <code>/clear</code> first. Everything the session holds — the log
 of the events and the file with its metadata — goes with it.</p>
