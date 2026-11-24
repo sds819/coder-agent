@@ -8,7 +8,8 @@ import time
 import pytest
 
 from coderagent.config.schema import Config
-from coderagent.core.events import EventBus, EventType
+from coderagent.core.events import Event, EventBus, EventType
+from coderagent.core.session import SessionStore
 from coderagent.run import build_loop
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import ApprovalDecision
@@ -552,6 +553,21 @@ def test_a_session_can_be_picked(tmp_path):
 
     asyncio.run(go())
     assert commands[0].content == f"Resumed {app.loop.session.id}"
+
+
+def test_the_picker_shows_the_first_question(tmp_path):
+    """The panel of the sessions lists them under their first question."""
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(
+        session.id,
+        Event(type=EventType.USER_MESSAGE, session_id=session.id, timestamp=1.0, payload={"content": "fix the bug"}),
+    )
+
+    label = SessionPicker.label(store.rebuild(session.id))
+
+    assert "fix the bug" in label
+    assert session.id not in label
 
 
 def test_the_turn_is_told_to_the_terminal(tmp_path):

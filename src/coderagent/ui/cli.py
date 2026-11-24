@@ -128,6 +128,7 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
                 {
                     "id": session.id,
                     "name": session.name,
+                    "summary": session.summary,
                     "archived": session.archived,
                     "cwd": str(session.cwd),
                     "created_at": session.created_at,
@@ -142,7 +143,7 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
     if not sessions:
         return "no sessions yet"
     return "\n".join(
-        f"{session.id}  {session.name or '-'}  {session.turn_count:>3} turns  ${session.total_cost:.4f}  {session.cwd}"
+        f"{session.summary or session.id}  {session.name or '-'}  {session.turn_count:>3} turns  {session.cwd}"
         + ("  (archived)" if session.archived else "")
         for session in sessions
     )

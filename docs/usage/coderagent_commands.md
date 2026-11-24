@@ -163,6 +163,11 @@ A session that is put away is not in the list of `/resume` any more, but it is
 still on the disk and `/resume <session-id>` opens it. `/archive` on a session
 that is already away takes it out again.
 
+The list of `/resume` (and the panel of `ctrl+o`, and `coder --list`) shows a
+session under the summary of its first question, not under its id. A session
+that was given a name shows that name as well. A session that was never asked
+anything shows its id.
+
 `/delete` needs the id of the session, and it never deletes the session you are
 in: start a new one with `/clear` first. Everything the session holds — the log
 of the events and the file with its metadata — goes with it.

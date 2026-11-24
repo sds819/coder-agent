@@ -88,7 +88,7 @@ def test_the_cli_picks_the_session_to_continue(tmp_path):
 def test_the_session_list_is_rendered(tmp_path):
     store = _store(tmp_path)
     rendered = render_sessions(list_sessions(store, tmp_path))
-    assert store.list(tmp_path)[0].id in rendered
+    assert "hello" in rendered
     assert "1 turns" in rendered
     assert "no sessions yet" == render_sessions([])
 
@@ -99,6 +99,7 @@ def test_the_session_list_can_be_rendered_as_json(tmp_path):
     store = _store(tmp_path)
     data = json.loads(render_sessions(list_sessions(store, tmp_path), "json"))
     assert data[0]["turns"] == 1
+    assert data[0]["summary"] == "hello"
     assert data[0]["cwd"] == str(tmp_path)
 
 

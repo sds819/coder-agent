@@ -46,4 +46,4 @@ class SessionPicker(ModalScreen[str | None]):
     def label(session: Session) -> str:
         """The line of a session in the list."""
         when = time.strftime("%m-%d %H:%M", time.localtime(session.updated_at))
-        return f"{session.id}  {session.turn_count:>3} turns  {when}"
+        return f"{session.summary or session.id}  {session.turn_count:>3} turns  {when}"

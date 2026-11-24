@@ -170,7 +170,8 @@ def _resume(context: CommandContext, argument: str) -> None:
     if not argument:
         sessions = list_sessions(context.store, context.cwd)
         context.say(
-            "\n".join(f"{item.id}  {item.turn_count:>3} turns  {item.cwd}" for item in sessions) or "No sessions yet."
+            "\n".join(f"{item.summary or item.id}  {item.turn_count:>3} turns  {item.cwd}" for item in sessions)
+            or "No sessions yet."
         )
         return
     session = resume_session(context.store, argument)
