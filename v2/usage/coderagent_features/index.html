@@ -6235,6 +6235,10 @@ it was.</p>
 <li><strong>Five modes</strong> — <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code> and <code>bypass</code>.</li>
 <li><strong><code>bypass</code> asks once</strong> — it takes the guards off, so <code>/mode bypass</code> says what
   it would do and changes nothing; <code>/mode bypass --yes</code> switches it on.</li>
+<li><strong><code>bypass</code> has no ceiling</strong> — the money (<code>agent.cost_limit</code>), the tokens
+  (<code>agent.token_limit</code>) and the number of the model calls (<code>agent.max_turns</code>) do
+  not stop the session in this mode: it runs until the work is done and the user
+  stops it. Every other mode keeps them.</li>
 <li><strong>The model is told</strong> — in <code>plan</code> and <code>readonly</code> the agent knows that it may
   not change anything, and answers with what it found instead.</li>
 <li><strong>The shell has boundaries</strong> — the commands that only look around go through,
@@ -6535,7 +6539,7 @@ the snapshot.</p>
 </tr>
 <tr>
 <td>A turn ends with <code>stop_reason: max_turns</code></td>
-<td>The agent made 100 model calls (<code>agent.max_turns</code>) without finishing.</td>
+<td>The agent made 100 model calls (<code>agent.max_turns</code>) without finishing. In <code>bypass</code> this ceiling does not hold.</td>
 <td>Raise <code>agent.max_turns</code>, or make the task smaller.</td>
 </tr>
 <tr>
@@ -6545,12 +6549,12 @@ the snapshot.</p>
 </tr>
 <tr>
 <td>A turn ends with <code>stop_reason: cost_exceeded</code></td>
-<td>The turn cost more than <code>agent.cost_limit</code>. <code>0</code> means no limit.</td>
+<td>The turn cost more than <code>agent.cost_limit</code>. <code>0</code> means no limit. In <code>bypass</code> this ceiling does not hold.</td>
 <td>Raise <code>agent.cost_limit</code>.</td>
 </tr>
 <tr>
 <td>A turn ends with <code>stop_reason: token_limit</code></td>
-<td>The turn used more tokens than <code>agent.token_limit</code>. <code>0</code> means no limit. This is the budget of a model that has no price, where the money never moves.</td>
+<td>The turn used more tokens than <code>agent.token_limit</code>. <code>0</code> means no limit. This is the budget of a model that has no price, where the money never moves. In <code>bypass</code> this ceiling does not hold.</td>
 <td>Raise <code>agent.token_limit</code>.</td>
 </tr>
 <tr>

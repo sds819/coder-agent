@@ -6194,6 +6194,9 @@ token、密码、私钥——在写和发之前都会换成 <code>[redacted]</co
 <li><strong>五种模式</strong>——<code>default</code>、<code>acceptEdits</code>、<code>plan</code>、<code>readonly</code>、<code>bypass</code>。</li>
 <li><strong><code>bypass</code> 要问一次</strong>——它把护栏全拆了，所以 <code>/mode bypass</code> 只说会做什么、
   什么都不改；<code>/mode bypass --yes</code> 才真的切过去。</li>
+<li><strong><code>bypass</code> 没有上限</strong>——钱（<code>agent.cost_limit</code>）、token（<code>agent.token_limit</code>）
+  和模型调用的次数（<code>agent.max_turns</code>）在这个模式下都不拦这一轮：它一直跑到
+  活干完，用户自己喊停。别的模式照旧拦。</li>
 <li><strong>模型会知道</strong>——<code>plan</code> 和 <code>readonly</code> 下 agent 知道自己改不了东西，
   于是把看到的说出来，而不是动手。</li>
 <li><strong>规则</strong>——<code>~/.coderagent/rules.yaml</code> 和 <code>.coderagent/rules.yaml</code> 按工具
@@ -6470,7 +6473,7 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 </tr>
 <tr>
 <td>一轮以 <code>stop_reason: max_turns</code> 结束</td>
-<td>agent 用了 100 次模型调用还没完（<code>agent.max_turns</code>）。</td>
+<td>agent 用了 100 次模型调用还没完（<code>agent.max_turns</code>）。<code>bypass</code> 模式下这个上限不拦。</td>
 <td>调大 <code>agent.max_turns</code>，或者把任务拆小。</td>
 </tr>
 <tr>
@@ -6480,12 +6483,12 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 </tr>
 <tr>
 <td>一轮以 <code>stop_reason: cost_exceeded</code> 结束</td>
-<td>这一轮花的钱超过了 <code>agent.cost_limit</code>。<code>0</code> 是没有上限。</td>
+<td>这一轮花的钱超过了 <code>agent.cost_limit</code>。<code>0</code> 是没有上限。<code>bypass</code> 模式下这个上限不拦。</td>
 <td>调大 <code>agent.cost_limit</code>。</td>
 </tr>
 <tr>
 <td>一轮以 <code>stop_reason: token_limit</code> 结束</td>
-<td>这一轮用的 token 超过了 <code>agent.token_limit</code>。<code>0</code> 是没有上限。模型没有价格时钱不动，token 就是预算。</td>
+<td>这一轮用的 token 超过了 <code>agent.token_limit</code>。<code>0</code> 是没有上限。模型没有价格时钱不动，token 就是预算。<code>bypass</code> 模式下这个上限不拦。</td>
 <td>调大 <code>agent.token_limit</code>。</td>
 </tr>
 <tr>

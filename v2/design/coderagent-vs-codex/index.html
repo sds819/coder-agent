@@ -4949,7 +4949,9 @@ TUI 小件、死配置清理、OS 级沙箱、图片输入 + 中断粒度 + Mark
   用户机器上的文件，在沙箱外面，用户写的 <code>allow</code> 规则也放宽不了；</li>
 <li><strong>路径边界没有被绕开</strong>：<code>within_bounds()</code> 在所有模式下都生效，还是用户的 <code>allow</code>
   规则放宽不了——这一点在原文里被点名过，实现时照做了；</li>
-<li><strong>闸和沙箱是两层，不是二选一</strong>：<code>bypass</code> 跳过的是审批提问，不是磁盘边界；</li>
+<li><strong>闸和沙箱是两层，不是二选一</strong>：<code>bypass</code> 跳过的是审批提问，不是磁盘边界；
+  <code>bypass</code> 下<strong>这一轮的上限</strong>（钱、token、模型调用次数）也不拦——它跑到活干完，
+  用户喊停；越界、<code>deny_paths</code>、关掉的网络这些安全边界照旧成立；</li>
 <li><strong>可写的目录</strong>：工作目录 + <code>permissions.include_dirs</code> + 系统的临时目录（构建总得
   有地方放东西），<code>read-only</code> 只留临时目录；</li>
 <li><strong>网络在操作系统那一层也关着</strong>：<code>permissions.network: deny</code> 时，Seatbelt 加

@@ -5318,6 +5318,12 @@
 <p><strong>切到 <code>bypass</code> 要问一次</strong>：命令行/TUI 是 <code>/mode bypass --yes</code>（不带 <code>--yes</code> 就只说明它会做什么，不切）；
 网页版是弹一次确认框，请求体里带 <code>confirm: true</code>，否则接口回 400。理由：<code>bypass</code> 把护栏全拆了，
 一个手滑不该拆掉。</p>
+<p><strong><code>bypass</code> 也没有上限</strong>：这一轮的钱（<code>agent.cost_limit</code>）、token（<code>agent.token_limit</code>）和
+模型调用次数（<code>agent.max_turns</code>）在 <code>bypass</code> 下<strong>都不拦</strong>——它跑到活干完，用户自己喊停
+（<code>core/loop.py</code> 的 <code>_ceilings_hold()</code>）。别的模式照旧拦。越界、<code>deny_paths</code>、关掉的网络
+这些<strong>安全边界</strong>在 <code>bypass</code> 下照旧成立，跟「上限」是两回事。
+评测harness 例外：<code>coder eval</code> 用 <code>enforce_ceilings=True</code> 造 loop，任务的
+<code>agent.max_turns</code> 照旧是任务的边界（harness 要的是可比的测量，不是放飞）。</p>
 <h3 id="b6">b6 规则文件在哪？谁说了算？匹配语义是什么？</h3>
 <p><strong>结论</strong>：<code>tools/rules.py</code>。</p>
 <ul>
