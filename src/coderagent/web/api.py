@@ -396,16 +396,19 @@ def check_model(body: dict, request: Request, _: None = Depends(require_client))
 
 @router.get("/files")
 def list_files(request: Request, path: str = "", depth: int = Query(1, ge=-1, le=10)) -> dict[str, Any]:
-    """The entries of a directory of the working directory."""
+    """The entries of a directory that the browser may list.
+
+    Only the directories that the user opened to the agent are listed.
+    """
     cwd = request.app.state.cwd
     policy = files.policy_for(_config(request), cwd)
     try:
-        entries = files.directory(cwd, path, depth, policy)
+        listed, entries = files.listing(cwd, path, depth, policy)
     except files.OutsideBounds as error:
         raise HTTPException(status_code=403, detail=str(error))
     except (NotADirectoryError, OSError) as error:
         raise HTTPException(status_code=400, detail=str(error))
-    return {"path": path, "entries": entries}
+    return {"path": listed, "entries": entries}
 
 
 @router.get("/file")

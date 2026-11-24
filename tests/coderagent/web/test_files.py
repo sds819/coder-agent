@@ -27,7 +27,7 @@ def test_the_directory_is_listed(project):
 def test_the_tree_is_listed_to_the_depth_that_is_asked_for(project):
     entries = project.get("/api/files", params={"path": "", "depth": -1}).json()["entries"]
 
-    assert "sub/nested.txt" in [entry["path"] for entry in entries]
+    assert any(entry["path"].endswith("sub/nested.txt") for entry in entries)
 
 
 def test_a_file_is_read(project):
@@ -63,3 +63,22 @@ def test_a_denied_path_is_refused(make_client, tmp_path):
     project = make_client(project_config="permissions:\n  deny_paths: ['*.env']\n")
 
     assert project.get("/api/file", params={"path": "secret.env"}).status_code == 403
+
+
+def test_only_the_directories_of_the_agent_are_listed(make_client, tmp_path, monkeypatch):
+    """The panel shows the directories the user opened to the agent, and nothing else."""
+    home = tmp_path / "home"
+    home.mkdir()
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "note.txt").write_text("hello\n", encoding="utf-8")
+    (tmp_path / "secret.txt").write_text("no\n", encoding="utf-8")
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text(f"permissions:\n  include_dirs: ['{workspace}']\n", encoding="utf-8")
+
+    project = make_client()
+    listing = project.get("/api/files", params={"path": ""}).json()
+
+    assert [entry["name"] for entry in listing["entries"]] == ["note.txt"]
+    assert listing["path"] == str(workspace)
+    assert project.get("/api/files", params={"path": str(tmp_path)}).status_code == 403

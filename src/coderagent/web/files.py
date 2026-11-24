@@ -4,6 +4,10 @@ The paths the browser asks for have to stay inside the working directory. The
 rules of the user cannot widen that, so the check is done here with
 `within_bounds` and not through `evaluate`, which judges whether a call is
 allowed rather than whether a path is in range.
+
+The panel of the files lists the directories the user opened to the agent
+(`permissions.include_dirs`) and nothing else. Without them the working
+directory is the one.
 """
 
 import subprocess
@@ -34,6 +38,15 @@ def policy_for(config: Config, cwd: Path) -> PermissionPolicy:
     )
 
 
+def roots(policy: PermissionPolicy) -> list[Path]:
+    """The directories the browser may list.
+
+    The user opens the directories of the agent to it: the panel shows those and
+    nothing else. Without them the working directory is the one.
+    """
+    return list(policy.include_dirs) or [policy.cwd]
+
+
 def resolve(cwd: Path, path: str, policy: PermissionPolicy) -> Path:
     """The absolute path of a file of the working directory."""
     target = Path(path or ".")
@@ -46,22 +59,43 @@ def resolve(cwd: Path, path: str, policy: PermissionPolicy) -> Path:
     return resolved
 
 
-def directory(cwd: Path, path: str, depth: int, policy: PermissionPolicy) -> list[dict[str, Any]]:
-    """The entries of a directory, one level or the whole tree."""
+def listing(cwd: Path, path: str, depth: int, policy: PermissionPolicy) -> tuple[str, list[dict[str, Any]]]:
+    """The directory that is listed and the entries of it.
+
+    Only the directories that are open may be listed: the other files and
+    directories of the disk are not shown to the browser.
+    """
+    directories = roots(policy)
+    if not path or path == ".":
+        if len(directories) == 1:
+            return _entries(directories[0], depth)
+        return "", [_entry(directory, True) for directory in directories]
     target = resolve(cwd, path, policy)
+    if not any(target == directory or target.is_relative_to(directory) for directory in directories):
+        raise OutsideBounds(
+            f"'{path}' is not in the directories that are open: {', '.join(str(d) for d in directories)}"
+        )
+    return _entries(target, depth)
+
+
+def _entries(target: Path, depth: int) -> tuple[str, list[dict[str, Any]]]:
+    """The entries of a directory, one level or the whole tree."""
     if not target.is_dir():
-        raise NotADirectoryError(f"'{path}' is not a directory")
+        raise NotADirectoryError(f"'{target}' is not a directory")
     entries = []
     for absolute, kind in list_entries(target, depth):
-        entries.append(
-            {
-                "path": absolute.relative_to(target).as_posix(),
-                "name": absolute.name,
-                "is_dir": kind == "d",
-                "size": absolute.stat().st_size if kind == "f" else 0,
-            }
-        )
-    return entries
+        entries.append(_entry(absolute, kind == "d"))
+    return target.as_posix(), entries
+
+
+def _entry(absolute: Path, is_dir: bool) -> dict[str, Any]:
+    """One entry of the list. The path is absolute: the browser sends it back."""
+    return {
+        "path": absolute.as_posix(),
+        "name": absolute.name,
+        "is_dir": is_dir,
+        "size": absolute.stat().st_size if not is_dir else 0,
+    }
 
 
 def read(cwd: Path, path: str, policy: PermissionPolicy, config: Config) -> dict[str, Any]:
@@ -81,6 +115,9 @@ def read(cwd: Path, path: str, policy: PermissionPolicy, config: Config) -> dict
 def diff(cwd: Path, path: str, policy: PermissionPolicy) -> str:
     """The changes of the working tree for a path."""
     target = resolve(cwd, path, policy)
+    if not target.is_relative_to(cwd):
+        """The file is not in the working tree: it has no diff."""
+        return ""
     result = subprocess.run(["git", "diff", "--", str(target)], cwd=cwd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         return result.stderr.strip() or f"git diff failed with code {result.returncode}"

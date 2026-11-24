@@ -498,6 +498,9 @@ async function listFiles(path) {
     };
     list.appendChild(item);
   }
+  const input = document.getElementById("file-path");
+  /* The panel shows where it is: the directory that was listed. */
+  if (input && data.path) input.value = data.path;
 }
 
 async function showFile(path) {

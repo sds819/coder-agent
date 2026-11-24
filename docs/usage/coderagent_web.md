@@ -42,6 +42,9 @@ Three columns:
   is listed under the summary of its first question and not under its id; the
   counts (turns and cost) are in the tooltip of the entry. A model that has no
   price shows `$?` there: the money is unknown, not zero.
+  The panel of the files lists the directories that are open to the agent
+  (`permissions.include_dirs`) and nothing else: the other files and
+  directories of the disk are refused.
 - **Middle**: the conversation. Messages are bubbles, tool calls are cards with
   the output and the diff of the change, approvals are cards with three
   buttons. The box under the conversation takes a message or a slash command
