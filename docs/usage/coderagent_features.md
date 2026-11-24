@@ -650,9 +650,9 @@ cat /etc/passwd              # refused
   the history grows over it. The running session is never one of them.
 - **The money** — tokens and cost per session, in the status bar, in `/cost`
   and in the trace.
-- **A model without a price** — the money is unknown, not zero: the status bar
-  and `/cost` show `$?` instead of a price. The budget of such a model is
-  `agent.token_limit`.
+- **A model without a price** — the money is unknown, not zero: the status bar,
+  `/cost` and the list of the sessions show `$?` instead of a price. The budget
+  of such a model is `agent.token_limit`.
 - **The trace** — `coder export --format json|otel` writes the session out,
   for a dashboard or for OpenTelemetry.
 

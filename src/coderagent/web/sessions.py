@@ -19,6 +19,7 @@ from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
+from coderagent.models.backends import has_price, priced_name
 from coderagent.run import build_loop, build_store, settle
 from coderagent.tools.permissions import PermissionMode
 from coderagent.web.approver import WebApprover
@@ -294,7 +295,7 @@ class SessionRuntime:
             "tokens": loop.context.estimated_tokens(loop.tools) if loop else 0,
             "window": loop.context.config.context_window if loop else self.config.context.context_window,
             "cost": session.total_cost,
-            "priced": loop.model.priced if loop else True,
+            "priced": loop.model.priced if loop else has_price(self._model_name()),
             "cwd": str(self.cwd),
             "mode": loop.executor.policy.mode.value if loop else self.mode(),
             "state": session.state.value,
@@ -307,6 +308,11 @@ class SessionRuntime:
         if self._loop is not None:
             return self._loop.executor.policy.mode.value
         return self._permission_mode or self.config.permissions.mode
+
+    def _model_name(self) -> str:
+        """The model of the server, with the alias of the config file resolved."""
+        model = self.config.model
+        return priced_name(model.model_name, model.litellm_config)
 
     def set_mode(self, mode: PermissionMode) -> None:
         """Change the mode of the session while it runs.

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from coderagent.core.events import Event, EventType
 from coderagent.core.telemetry import collect
+from coderagent.models.backends import has_price
 from coderagent.paths import config_home
 
 logger = logging.getLogger("coderagent.core.session")
@@ -60,6 +61,17 @@ class Session:
     archived: bool = False
     """Whether the session is put away. An archived session is not in the list."""
     metadata: dict = field(default_factory=dict)
+
+
+def session_priced(session: Session, fallback_model: str = "") -> bool:
+    """Whether the money of a session is known.
+
+    A model without a price spends no money: the cost of the session is unknown,
+    not zero. A session that has not called a model yet belongs to the model of
+    the agent that holds it, so that is where its price is looked up.
+    """
+    model = session.metadata.get("model") or fallback_model
+    return bool(session.metadata.get("priced", True)) and (not model or has_price(model))
 
 
 def default_root() -> Path:
@@ -182,6 +194,8 @@ class SessionStore:
         session.total_tokens = metrics.total_tokens_in + metrics.total_tokens_out
         session.metadata["priced"] = metrics.priced
         """A model without a price: the money of the session is unknown, not zero."""
+        session.metadata["model"] = next(reversed(metrics.per_model_cost), "")
+        """The model that made the calls of the session. Empty when there were none."""
         return session
 
     def list(self, cwd: Path | None = None, archived: bool | None = None) -> list[Session]:

@@ -15,8 +15,10 @@ from pydantic import BaseModel, ValidationError
 
 from coderagent.config.loader import problems
 from coderagent.core.checkpoint import CheckpointStore
+from coderagent.core.session import session_priced
 from coderagent.core.subagent import effective_turns, load_subagents
 from coderagent.core.telemetry import collect
+from coderagent.models.backends import priced_name
 from coderagent.tools.permissions import ApprovalDecision, PermissionMode
 from coderagent.ui.commands import COMMANDS, load_builtins
 from coderagent.ui.widgets.diff_view import make_diff
@@ -81,6 +83,9 @@ def list_sessions(request: Request, cwd: str = "") -> dict[str, Any]:
     """The sessions of a directory, newest first."""
     directory = Path(cwd) if cwd else request.app.state.cwd
     sessions = request.app.state.registry.store.list(directory)
+    model = _config(request).model
+    """A session that has not called a model yet belongs to the model of the server."""
+    name = priced_name(model.model_name, model.litellm_config)
     return {
         "sessions": [
             {
@@ -93,7 +98,7 @@ def list_sessions(request: Request, cwd: str = "") -> dict[str, Any]:
                 "updated_at": session.updated_at,
                 "turns": session.turn_count,
                 "cost": session.total_cost,
-                "priced": bool(session.metadata.get("priced", True)),
+                "priced": session_priced(session, name),
                 "state": session.state.value,
             }
             for session in sessions
@@ -112,6 +117,7 @@ def create_session(request: Request) -> dict[str, Any]:
 def get_session(session_id: str, request: Request) -> dict[str, Any]:
     runtime = _runtime(request, session_id)
     session = runtime.session
+    model = _config(request).model
     return {
         "id": session.id,
         "cwd": str(session.cwd),
@@ -119,6 +125,7 @@ def get_session(session_id: str, request: Request) -> dict[str, Any]:
         "updated_at": session.updated_at,
         "turns": session.turn_count,
         "cost": session.total_cost,
+        "priced": session_priced(session, priced_name(model.model_name, model.litellm_config)),
         "state": session.state.value,
     }
 

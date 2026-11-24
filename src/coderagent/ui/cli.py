@@ -14,7 +14,8 @@ from pydantic import ValidationError
 from coderagent.config.loader import load_config, problems
 from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
-from coderagent.core.session import Session, SessionStore
+from coderagent.core.session import Session, SessionStore, session_priced
+from coderagent.models.backends import priced_name
 from coderagent.run import build_loop, build_store, run_turn
 from coderagent.ui.render import last_message, render
 
@@ -118,7 +119,7 @@ def run_command(
     run(context, task)
 
 
-def render_sessions(sessions: list[Session], output_format: str = "text") -> str:
+def render_sessions(sessions: list[Session], output_format: str = "text", model: str = "") -> str:
     """The session list, as text or as json."""
     if output_format == "json":
         import json
@@ -134,7 +135,7 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
                     "created_at": session.created_at,
                     "turns": session.turn_count,
                     "cost": session.total_cost,
-                    "priced": bool(session.metadata.get("priced", True)),
+                    "priced": session_priced(session, model),
                 }
                 for session in sessions
             ],
@@ -182,7 +183,13 @@ def main(
         config.model.model_name = model_name
     store = build_store(config)
     if list_sessions:
-        typer.echo(render_sessions(store.list(cwd), output_format))
+        typer.echo(
+            render_sessions(
+                store.list(cwd),
+                output_format,
+                priced_name(config.model.model_name, config.model.litellm_config),
+            )
+        )
         return
     session = pick_session(store, cwd, resume, continue_last, fork)
     if not task:

@@ -39,6 +39,7 @@ def _warn_about_the_price(model: str, message: str) -> None:
     logger.warning("Could not calculate cost for model %s: %s", model, message)
 
 
+@cache
 def has_price(model: str) -> bool:
     """Whether litellm knows the price of the model.
 
@@ -49,6 +50,14 @@ def has_price(model: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def priced_name(model_name: str, litellm_config: str = "") -> str:
+    """The name of the model, with the alias of the config file resolved.
+
+    litellm knows the price of the real model, not the price of its alias.
+    """
+    return resolve_alias(litellm_config, model_name)[0] if litellm_config else model_name
 
 
 class LiteLLMBackend:

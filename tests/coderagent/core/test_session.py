@@ -1,11 +1,20 @@
 import json
 
 from coderagent.core.events import Event, EventType
-from coderagent.core.session import SessionStore
+from coderagent.core.session import SessionStore, session_priced
 
 
 def _message(session_id: str, text: str) -> Event:
     return Event(type=EventType.USER_MESSAGE, session_id=session_id, timestamp=1.0, payload={"content": text})
+
+
+def _answer(session_id: str, model: str, cost: float) -> Event:
+    return Event(
+        type=EventType.ASSISTANT_MESSAGE,
+        session_id=session_id,
+        timestamp=2.0,
+        payload={"message": {"role": "assistant", "content": "hi", "extra": {"model": model, "cost": cost}}},
+    )
 
 
 def test_a_broken_line_does_not_lose_the_session(tmp_path):
@@ -129,3 +138,33 @@ def test_the_oldest_sessions_are_deleted_when_the_history_is_too_big(tmp_path):
 
     assert store.events(old.id) == []
     assert store.events(new.id)
+
+
+def test_a_session_without_a_call_belongs_to_the_model_that_holds_it(tmp_path):
+    """A session that has not called a model yet belongs to the model of the agent."""
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+
+    assert session_priced(session, "openai/there-is-no-such-model") is False
+    assert session_priced(session, "gpt-4o") is True
+
+
+def test_the_model_of_the_calls_wins_over_the_model_that_holds_the_session(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(session.id, _answer(session.id, "gpt-4o", 0.5))
+
+    rebuilt = store.rebuild(session.id)
+
+    assert rebuilt.metadata["model"] == "gpt-4o"
+    assert session_priced(rebuilt, "openai/there-is-no-such-model") is True
+
+
+def test_a_call_of_a_model_without_a_price_makes_the_money_unknown(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(session.id, _answer(session.id, "openai/there-is-no-such-model", 0.0))
+
+    rebuilt = store.rebuild(session.id)
+
+    assert session_priced(rebuilt, "gpt-4o") is False

@@ -103,6 +103,18 @@ def test_the_session_list_can_be_rendered_as_json(tmp_path):
     assert data[0]["cwd"] == str(tmp_path)
 
 
+def test_the_session_list_says_that_the_money_of_a_model_without_a_price_is_unknown(tmp_path):
+    import json
+
+    store = _store(tmp_path)
+
+    unpriced = json.loads(render_sessions(list_sessions(store, tmp_path), "json", "openai/there-is-no-such-model"))
+    priced = json.loads(render_sessions(list_sessions(store, tmp_path), "json", "gpt-4o"))
+
+    assert unpriced[0]["priced"] is False
+    assert priced[0]["priced"] is True
+
+
 def test_a_resumed_session_continues_the_conversation(tmp_path):
     from coderagent.core.loop import AgentLoop
     from coderagent.models.gateway import ModelGateway
