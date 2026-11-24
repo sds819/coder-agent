@@ -459,7 +459,7 @@ def test_the_project_may_not_raise_the_ceilings_of_the_session(tmp_path, monkeyp
         },
     )
     config = load_config([], cwd=tmp_path)
-    assert config.agent.max_turns == 50
+    assert config.agent.max_turns == 100
     assert config.agent.subagent_max_parallel == 2
     assert config.tools.bash_timeout == 120
     assert config.tools.max_output_tokens == 8000
@@ -486,4 +486,4 @@ def test_the_project_may_not_remove_a_ceiling_of_the_user(tmp_path, monkeypatch)
     """No ceiling at all is not a lower ceiling."""
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     _project(tmp_path, {"agent": {"max_turns": 0}})
-    assert load_config([], cwd=tmp_path).agent.max_turns == 50
+    assert load_config([], cwd=tmp_path).agent.max_turns == 100

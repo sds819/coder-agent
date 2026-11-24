@@ -92,7 +92,7 @@ class AgentLoop:
         context: ContextEngine | None = None,
         tools: list[dict] | None = None,
         system_prompt: str = "",
-        max_turns: int = 50,
+        max_turns: int = 100,
         cost_limit: float = 0.0,
         token_limit: int = 0,
         checkpoints=None,

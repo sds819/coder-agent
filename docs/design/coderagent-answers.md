@@ -312,7 +312,7 @@
 
 **结论**：`core/loop.py` 在每轮循环顶部依次检查。
 
-- `agent.max_turns`（默认 50，0 = 不限）——**模型调用**上限。
+- `agent.max_turns`（默认 100，0 = 不限）——**模型调用**上限。
 - `agent.cost_limit`（默认 0.0 = 不限）。
 - `agent.token_limit`（默认 0 = 不限）。
 - 附加提醒：`_warn_unpriced()`——如果模型没有价格表却配了 `cost_limit`，会提示改用 `agent.token_limit`（很多自建端点没有价格，cost 恒为 0）。

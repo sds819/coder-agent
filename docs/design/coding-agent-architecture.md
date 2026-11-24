@@ -852,7 +852,7 @@ model:
   max_retries: 5
 
 agent:
-  max_turns: 50
+  max_turns: 100
   cost_limit: 5.0
   token_limit: 0
 
@@ -897,7 +897,7 @@ sandbox:
 > 实现与草图的差别：权限模式在 `permissions.mode`（不是 `agent.mode`），
 > `include_dirs` 也在 `permissions` 下面（不是 `tools`）；
 > 压缩的开关在 `context` 段（`auto_compact` / `compact_threshold`），不在 `agent` 段；
-> `agent.max_turns` 数的是**模型调用**次数，默认 50。
+> `agent.max_turns` 数的是**模型调用**次数，默认 100。
 >
 > 实现与草图的差别：**项目层不再有 `model`**。`core/trust.py` 的 `tightened()`
 > 把项目的 `model` 整段丢掉——项目的端点会把整段对话，连同用户的 key，

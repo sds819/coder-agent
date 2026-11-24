@@ -716,7 +716,7 @@ the snapshot.
 |---|---|---|
 | `ValueError: no checkpoint '<id>' in this session` | `/rewind` was given an id that is not a checkpoint of this session. | `/rewind` without an id lists the checkpoints. |
 | `/resume <unknown id>` starts a session with the directory `.` | A session id that is not in the log does not fail — it makes an empty session. | Check the ids with `coder --list`. |
-| A turn ends with `stop_reason: max_turns` | The agent made 50 model calls (`agent.max_turns`) without finishing. | Raise `agent.max_turns`, or make the task smaller. |
+| A turn ends with `stop_reason: max_turns` | The agent made 100 model calls (`agent.max_turns`) without finishing. | Raise `agent.max_turns`, or make the task smaller. |
 | The agent goes quiet without an answer | The turn was cut off: at the ceiling of the model calls, at the budget, or at the token limit. The interface says so under the last answer. | Raise the ceiling that the line names (`agent.max_turns` and the like), or make the task smaller. |
 | A turn ends with `stop_reason: cost_exceeded` | The turn cost more than `agent.cost_limit`. `0` means no limit. | Raise `agent.cost_limit`. |
 | A turn ends with `stop_reason: token_limit` | The turn used more tokens than `agent.token_limit`. `0` means no limit. This is the budget of a model that has no price, where the money never moves. | Raise `agent.token_limit`. |

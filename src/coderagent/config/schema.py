@@ -187,7 +187,7 @@ class AgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
-    max_turns: int = Field(default=50, ge=0)
+    max_turns: int = Field(default=100, ge=0)
     """Maximum number of model calls per user turn. 0 means no limit."""
     cost_limit: float = Field(default=0.0, ge=0)
     """Stop after exceeding this cost. 0 means no limit."""

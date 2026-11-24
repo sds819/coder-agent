@@ -70,7 +70,7 @@ def test_a_mistake_of_the_project_is_dropped(tmp_path, monkeypatch, text):
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
     _project_config(tmp_path, text)
     config = load_config([], cwd=tmp_path)
-    assert config.agent.max_turns == 50
+    assert config.agent.max_turns == 100
     assert config.tools.enabled
     assert config.permissions.mode == "default"
 

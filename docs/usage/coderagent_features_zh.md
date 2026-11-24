@@ -648,7 +648,7 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 |---|---|---|
 | `ValueError: no checkpoint '<id>' in this session` | `/rewind` 拿到的 id 不是这个会话的检查点。 | 不带 id 的 `/rewind` 会列出检查点。 |
 | `/resume <不存在的 id>` 起了一个目录是 `.` 的会话 | 日志里没有这个 id 不会报错，它会造一个空会话。 | 用 `coder --list` 看看有哪些 id。 |
-| 一轮以 `stop_reason: max_turns` 结束 | agent 用了 50 次模型调用还没完（`agent.max_turns`）。 | 调大 `agent.max_turns`，或者把任务拆小。 |
+| 一轮以 `stop_reason: max_turns` 结束 | agent 用了 100 次模型调用还没完（`agent.max_turns`）。 | 调大 `agent.max_turns`，或者把任务拆小。 |
 | agent 不出声就停了 | 这一轮被切断了：到了模型调用的上限、预算上限或者 token 上限。界面会在最后一条回答下面写明。 | 调大那一行里说的上限（`agent.max_turns` 之类），或者把任务拆小。 |
 | 一轮以 `stop_reason: cost_exceeded` 结束 | 这一轮花的钱超过了 `agent.cost_limit`。`0` 是没有上限。 | 调大 `agent.cost_limit`。 |
 | 一轮以 `stop_reason: token_limit` 结束 | 这一轮用的 token 超过了 `agent.token_limit`。`0` 是没有上限。模型没有价格时钱不动，token 就是预算。 | 调大 `agent.token_limit`。 |

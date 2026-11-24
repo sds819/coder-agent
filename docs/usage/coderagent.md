@@ -232,7 +232,7 @@ model:
     summarize: deepseek/deepseek-flash
 
 agent:
-  max_turns: 50
+  max_turns: 100
   cost_limit: 5.0
 
 tools:

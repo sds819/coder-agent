@@ -17,7 +17,7 @@ def test_defaults_are_loaded(tmp_path, monkeypatch):
     monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
     config = load_config([], cwd=tmp_path)
     assert config.model.model_name == "anthropic/claude-sonnet-4-5"
-    assert config.agent.max_turns == 50
+    assert config.agent.max_turns == 100
     assert config.tools.enabled == BUILTIN_TOOL_NAMES
     assert config.sandbox.type == "local"
 
@@ -182,7 +182,7 @@ def test_a_profile_is_used_when_it_is_selected(tmp_path, monkeypatch):
 
 def test_a_profile_that_is_not_selected_is_not_used(tmp_path, monkeypatch):
     _user_config(tmp_path, monkeypatch, "profiles:\n  fast:\n    agent:\n      max_turns: 3\n")
-    assert load_config([], cwd=tmp_path).agent.max_turns == 50
+    assert load_config([], cwd=tmp_path).agent.max_turns == 100
 
 
 def test_the_user_may_select_a_profile_in_the_configuration(tmp_path, monkeypatch):
@@ -213,7 +213,7 @@ def test_the_profile_of_the_project_is_not_used(tmp_path, monkeypatch):
     project.parent.mkdir(parents=True)
     project.write_text("profile: fast\nprofiles:\n  fast:\n  agent:\n    max_turns: 3\n", encoding="utf-8")
     config = load_config([], cwd=tmp_path)
-    assert config.agent.max_turns == 50
+    assert config.agent.max_turns == 100
     assert config.profiles == {}
 
 
