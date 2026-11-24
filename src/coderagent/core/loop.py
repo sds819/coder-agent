@@ -322,7 +322,11 @@ class AgentLoop:
                 break
             n_calls += 1
             response.setdefault("extra", {}).update(
-                {"purpose": self.purpose, "model": getattr(self.model.backend, "model_name", "")}
+                {
+                    "purpose": self.purpose,
+                    "model": getattr(self.model.backend, "model_name", ""),
+                    "priced": self.model.priced,
+                }
             )
             self._warn_unpriced(response)
             self.context.append(response)

@@ -378,6 +378,7 @@ def _record_reflection(
         timestamp=time.time(),
         payload={
             "cost": cost,
+            "priced": gateway.priced,
             "purpose": "reflect",
             "model": getattr(gateway.backend, "model_name", ""),
             "tokens_in": int(extra.get("tokens_in") or 0),

@@ -8,6 +8,12 @@ function t(key, values = {}) {
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in values ? values[name] : match));
 }
 
+/* The money of a session. A model without a price spends no money: the cost
+   is unknown, not zero. */
+function money(cost, priced) {
+  return priced === false ? "$?" : `$${(cost || 0).toFixed(4)}`;
+}
+
 const MODE_NOTES = {
   default: "mode_default",
   acceptEdits: "mode_acceptEdits",
@@ -335,7 +341,13 @@ function render(item) {
       bubble("separator", t("verified", { failed: (item.failed || []).length }));
       break;
     case "reflection":
-      bubble("separator", t("settled", { cost: (item.cost || 0).toFixed(5) }));
+      /* A model without a price spends no money: the cost is unknown, not zero. */
+      bubble(
+        "separator",
+        item.priced === false
+          ? t("settled_unpriced")
+          : t("settled", { cost: (item.cost || 0).toFixed(5) }),
+      );
       break;
     case "turn_stopped": {
       /* A turn that was cut off says so: the agent went quiet and the user
@@ -392,13 +404,13 @@ async function refreshStatus() {
   try {
     const status = await api(`/api/sessions/${state.sessionId}/status`);
     document.getElementById("status").textContent =
-      `${status.model} | ${status.tokens}/${status.window} | $${status.cost.toFixed(4)} | ${status.mode} | ${status.state}`;
+      `${status.model} | ${status.tokens}/${status.window} | ${money(status.cost, status.priced)} | ${status.mode} | ${status.state}`;
     const fields = document.getElementById("status-fields");
     if (fields) {
       fields.innerHTML = "";
       for (const [key, value] of Object.entries(status)) {
         fields.appendChild(el("dt", "", t(`field_${key}`)));
-        fields.appendChild(el("dd", "", String(value)));
+        fields.appendChild(el("dd", "", key === "cost" ? money(value, status.priced) : String(value)));
       }
     }
     showMode(status.mode);
@@ -444,7 +456,7 @@ async function loadSessions() {
     /* The list shows the first question of the session. The counts are in the
        tooltip: the cost of a model that has no price is not worth showing. */
     const item = el("li", "", session.title);
-    item.title = `${session.id}  ${session.turns}t  $${session.cost.toFixed(4)}  ${session.cwd}`;
+    item.title = `${session.id}  ${session.turns}t  ${money(session.cost, session.priced)}  ${session.cwd}`;
     if (session.id === state.sessionId) item.classList.add("active");
     item.onclick = () => openSession(session.id);
     list.appendChild(item);

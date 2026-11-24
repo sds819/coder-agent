@@ -5,6 +5,7 @@ import pytest
 pytest.importorskip("fastapi")
 
 from coderagent.core.telemetry import collect  # noqa: E402
+from coderagent.testing.scripted_model import ScriptedModel  # noqa: E402
 
 
 def test_a_new_session_is_created_and_listed(make_client):
@@ -34,6 +35,25 @@ def test_the_status_of_a_session_shows_where_it_is(make_client, tmp_path):
     assert status["cwd"] == str(tmp_path)
     assert status["busy"] is False
     assert status["mode"] == "default"
+
+
+def test_the_status_says_that_a_model_without_a_price_has_no_money(make_client, send, wait_for):
+    """A model that litellm cannot price spends no money: the cost is unknown."""
+
+    class UnpricedModel(ScriptedModel):
+        priced = False
+
+    client = make_client(model=UnpricedModel([{"role": "assistant", "content": "hi", "extra": {"cost": 0.0}}]))
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "hello")
+    wait_for(client, session_id, "turn_end")
+
+    status = client.get(f"/api/sessions/{session_id}/status").json()
+    sessions = client.get("/api/sessions").json()["sessions"]
+
+    assert status["priced"] is False
+    assert status["cost"] == pytest.approx(0.0)
+    assert sessions[0]["priced"] is False
 
 
 def test_the_events_of_a_session_are_replayed(make_client, send, wait_for):

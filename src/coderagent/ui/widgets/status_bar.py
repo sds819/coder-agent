@@ -2,6 +2,7 @@
 
 from textual.widgets import Static
 
+from coderagent.core.telemetry import money
 from coderagent.ui.widgets.markup import literal
 
 
@@ -22,6 +23,7 @@ class StatusBar(Static):
         self.tokens = 0
         self.window = 0
         self.cost = 0.0
+        self.priced = True
         self.cwd = ""
         self.mode = ""
         self.state = ""
@@ -35,7 +37,7 @@ class StatusBar(Static):
 
     def render_bar(self) -> None:
         tokens = f"{self.tokens / 1000:.1f}k/{self.window / 1000:.0f}k" if self.window else f"{self.tokens}"
-        parts = [part for part in (self.model, tokens, f"${self.cost:.4f}", self.cwd) if part]
+        parts = [part for part in (self.model, tokens, money(self.cost, self.priced), self.cwd) if part]
         if self.sandbox and self.sandbox != "local":
             parts.append(self.sandbox)
         parts += [part for part in (self.mode, self.state) if part]

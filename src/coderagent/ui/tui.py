@@ -320,6 +320,7 @@ class CoderApp(App):
             tokens=context.estimated_tokens(self.loop.tools),
             window=context.config.context_window,
             cost=self.loop.session.total_cost,
+            priced=self.loop.model.priced,
             cwd=str(self.cwd),
             mode=self.loop.executor.policy.mode.value,
             state=state,

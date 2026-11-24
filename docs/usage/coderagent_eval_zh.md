@@ -136,7 +136,8 @@ coder eval <suite> \
 ```
 
 litellm 的价格表里没有的模型，成本恒为 0，所以 token 一定要和成本一起报：
-token 来自 provider，是可靠的。
+token 来自 provider，是可靠的。文本报告里写的是 `$?` 而不是价格，JSON 里是
+`"priced": false`——这种模型的钱是不知道，不是零。
 
 `model_calls` 只数主循环的调用；子 agent 的调用不在里面，它们的**成本**在。
 

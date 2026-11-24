@@ -58,6 +58,8 @@ class TaskResult:
     error_kind: str = ""
     """`setup` or `script` when the harness failed, empty when the agent did."""
     cost: float = 0.0
+    priced: bool = True
+    """False when the model had no price: the cost of the task is unknown, not zero."""
     tokens_in: int = 0
     tokens_out: int = 0
     model_calls: int = 0
@@ -84,6 +86,7 @@ class TaskResult:
             "error": self.error,
             "error_kind": self.error_kind,
             "cost": self.cost,
+            "priced": self.priced,
             "tokens_in": self.tokens_in,
             "tokens_out": self.tokens_out,
             "model_calls": self.model_calls,
@@ -312,6 +315,7 @@ def run_task(
         error=error,
         error_kind=error_kind,
         cost=metrics.total_cost,
+        priced=metrics.priced,
         tokens_in=metrics.total_tokens_in,
         tokens_out=metrics.total_tokens_out,
         model_calls=metrics.model_calls,

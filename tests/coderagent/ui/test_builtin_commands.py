@@ -191,6 +191,21 @@ def test_the_cost_is_shown(tmp_path):
     assert "cost so far" in _run(context, output, "/cost")
 
 
+def test_the_cost_of_a_model_without_a_price_is_unknown(tmp_path):
+    """A model without a price spends no money: the cost is unknown, not zero."""
+
+    class UnpricedModel(ScriptedModel):
+        priced = False
+
+    context, output = _context(tmp_path)
+    context.loop.model.backend = UnpricedModel([{"role": "assistant", "content": "ok"}])
+
+    text = _run(context, output, "/cost")
+
+    assert "cost so far: $?" in text
+    assert "no price" in text
+
+
 def test_compact_shrinks_the_context(tmp_path):
     context, output = _context(tmp_path)
     for index in range(30):

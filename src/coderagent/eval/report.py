@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from coderagent.config.schema import Config
+from coderagent.core.telemetry import money
 from coderagent.eval.runner import TaskResult
 from coderagent.eval.task import task_overrides
 
@@ -85,10 +86,11 @@ class Report:
                 mark = "!"
             note = f"  {task.error}" if task.error else ""
             lines.append(
-                f"{mark} {task.id:<24} {task.mode:<8} ${task.cost:.4f}  "
+                f"{mark} {task.id:<24} {task.mode:<8} {money(task.cost, task.priced)}  "
                 f"{task.model_calls:>3} calls  {task.tool_calls:>3} tools  {task.duration_seconds:>6.1f}s{note}"
             )
         summary = self.summary
+        priced = all(task.priced for task in self.tasks)
         lines.append(
             f"{summary['tasks']} tasks: {summary['passed']} passed, {summary['failed']} failed, "
             f"{summary['errors']} errors (pass rate {summary['pass_rate'] * 100:.1f}%)"
@@ -96,7 +98,7 @@ class Report:
         if summary["unexpected"]:
             lines.append(f"{summary['unexpected']} tasks did not do what they were supposed to do")
         lines.append(
-            f"cost ${summary['total_cost']:.4f}  tokens {summary['total_tokens_in']} in / "
+            f"cost {money(summary['total_cost'], priced)}  tokens {summary['total_tokens_in']} in / "
             f"{summary['total_tokens_out']} out  {summary['total_model_calls']} model calls"
         )
         if summary["compactions"]:

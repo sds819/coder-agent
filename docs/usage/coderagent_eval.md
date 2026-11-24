@@ -154,7 +154,9 @@ coder eval <suite> \
 ```
 
 The cost of a model that litellm does not know is 0, so the tokens are always in
-the report next to it: they come from the provider and they are reliable.
+the report next to it: they come from the provider and they are reliable. The
+text report says `$?` instead of a price, and the JSON says `"priced": false`:
+the money of such a model is unknown, not zero.
 
 `model_calls` counts the calls of the main loop. The calls of the sub agents are
 not in it, their cost is.

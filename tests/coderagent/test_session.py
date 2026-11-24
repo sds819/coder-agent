@@ -25,6 +25,7 @@ def test_rebuild_matches_appended_events(tmp_path):
         turn_count=1,
         total_cost=0.25,
         summary="fix the bug",
+        metadata={"priced": True},
     )
 
 

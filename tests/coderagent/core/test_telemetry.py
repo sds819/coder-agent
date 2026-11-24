@@ -5,7 +5,7 @@ import json
 import pytest
 
 from coderagent.core.events import Event, EventType
-from coderagent.core.telemetry import TRACE_FORMAT, collect, trace
+from coderagent.core.telemetry import TRACE_FORMAT, collect, money, trace
 
 
 def _event(event_type: EventType, payload: dict, timestamp: float = 1.0) -> Event:
@@ -13,7 +13,12 @@ def _event(event_type: EventType, payload: dict, timestamp: float = 1.0) -> Even
 
 
 def _assistant(
-    cost: float = 0.1, model: str = "m1", purpose: str = "main", tokens: int = 100, timestamp: float = 1.0
+    cost: float = 0.1,
+    model: str = "m1",
+    purpose: str = "main",
+    tokens: int = 100,
+    priced: bool = True,
+    timestamp: float = 1.0,
 ) -> Event:
     return _event(
         EventType.ASSISTANT_MESSAGE,
@@ -27,6 +32,7 @@ def _assistant(
                     "purpose": purpose,
                     "tokens_in": tokens,
                     "tokens_out": tokens // 4,
+                    "priced": priced,
                 },
             },
             "cost": cost,
@@ -55,6 +61,16 @@ def test_the_cost_is_attributed_to_the_purpose():
 def test_the_cost_is_attributed_to_the_model():
     metrics = collect([_assistant(0.1, model="a"), _assistant(0.2, model="b")])
     assert metrics.per_model_cost == {"a": 0.1, "b": 0.2}
+
+
+def test_the_money_of_a_model_without_a_price_is_unknown():
+    """A model without a price spends no money: the cost is unknown, not zero."""
+    metrics = collect([_assistant(0.0, priced=False)])
+
+    assert metrics.priced is False
+    assert "cost: $?" in metrics.report()
+    assert money(0.5) == "$0.5000"
+    assert money(0.0, False) == "$?"
 
 
 def test_the_tools_are_counted():

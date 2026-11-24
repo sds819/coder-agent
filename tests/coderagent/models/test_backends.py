@@ -99,6 +99,21 @@ def test_a_model_without_a_price_is_complained_about_once(caplog):
     assert "openai/SomeModel" in caplog.records[0].getMessage()
 
 
+def test_a_model_without_a_price_has_no_money():
+    """The cost of a model that litellm cannot price is unknown, not zero."""
+    backend = LiteLLMBackend("openai/there-is-no-such-model")
+
+    assert backend.priced is False
+    assert backend._stream_cost({"prompt_tokens": 10, "completion_tokens": 10}) == 0.0
+
+
+def test_a_model_with_a_price_keeps_its_money():
+    backend = LiteLLMBackend("gpt-4o")
+
+    assert backend.priced is True
+    assert backend._stream_cost({"prompt_tokens": 1000, "completion_tokens": 1000}) > 0
+
+
 def test_the_text_of_an_error_says_whether_the_key_is_the_problem():
     assert is_auth_error(Exception("Invalid token: no api key given"))
     assert is_auth_error(Exception("Authentication failed"))

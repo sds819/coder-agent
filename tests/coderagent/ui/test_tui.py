@@ -193,6 +193,16 @@ def test_the_status_bar_shows_the_sandbox_when_it_is_not_local():
     assert "local" not in str(bar.render())
 
 
+def test_the_status_bar_says_that_the_money_of_a_model_without_a_price_is_unknown():
+    from coderagent.ui.widgets import StatusBar
+
+    bar = StatusBar()
+    bar.update_status(model="m", cost=0.0, priced=False)
+    assert "$?" in str(bar.render())
+    bar.update_status(priced=True)
+    assert "$0.0000" in str(bar.render())
+
+
 def test_a_command_is_answered(tmp_path):
     app = _app(tmp_path)
     blocks = []

@@ -90,6 +90,7 @@ def normalize(event: Event) -> list[dict]:
             {
                 "kind": "reflection",
                 "cost": payload.get("cost", 0.0),
+                "priced": payload.get("priced", True),
                 "purpose": payload.get("purpose", ""),
                 "model": payload.get("model", ""),
                 "project_facts": payload.get("project_facts", []),

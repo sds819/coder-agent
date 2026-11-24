@@ -180,6 +180,8 @@ class SessionStore:
         metrics = collect(events)
         session.total_cost = metrics.total_cost
         session.total_tokens = metrics.total_tokens_in + metrics.total_tokens_out
+        session.metadata["priced"] = metrics.priced
+        """A model without a price: the money of the session is unknown, not zero."""
         return session
 
     def list(self, cwd: Path | None = None, archived: bool | None = None) -> list[Session]:

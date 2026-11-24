@@ -39,6 +39,18 @@ def _warn_about_the_price(model: str, message: str) -> None:
     logger.warning("Could not calculate cost for model %s: %s", model, message)
 
 
+def has_price(model: str) -> bool:
+    """Whether litellm knows the price of the model.
+
+    A model without a price spends no money: its cost is unknown, not zero.
+    """
+    try:
+        litellm_module().cost_calculator.cost_per_token(model=model, prompt_tokens=0, completion_tokens=0)
+        return True
+    except Exception:
+        return False
+
+
 class LiteLLMBackend:
     """Calls `litellm.completion` and normalizes the response."""
 
@@ -89,6 +101,8 @@ class LiteLLMBackend:
         self.set_cache_control = set_cache_control
         self.max_retries = max_retries
         """How many times a call is tried at most. 0 lets the retry decide."""
+        self.priced = has_price(name)
+        """False when the model has no price. The cost of such a model is unknown, not zero."""
 
     def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:
         return message_from_events(self.query_stream(messages, tools=tools, **kwargs))
@@ -187,5 +201,6 @@ class LiteLLMBackend:
             )
             return float(prompt_cost) + float(completion_cost)
         except Exception as e:
+            self.priced = False
             _warn_about_the_price(self.model_name, str(e))
             return 0.0

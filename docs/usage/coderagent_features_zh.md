@@ -587,6 +587,8 @@ cat /etc/passwd              # 拒绝
   会话永远不在其中。
 - **花了多少钱**——每个会话的 token 和花费，在状态栏、在 `/cost`、在
   追踪文件里。
+- **没有价格的模型**——钱是不知道，不是零：状态栏和 `/cost` 显示的是 `$?`。
+  这种模型的预算是 `agent.token_limit`。
 - **追踪**——`coder export --format json|otel` 把会话导出来，给看板或者
   OpenTelemetry 用。
 

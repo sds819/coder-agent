@@ -134,6 +134,7 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
                     "created_at": session.created_at,
                     "turns": session.turn_count,
                     "cost": session.total_cost,
+                    "priced": bool(session.metadata.get("priced", True)),
                 }
                 for session in sessions
             ],

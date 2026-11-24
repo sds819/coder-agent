@@ -82,3 +82,13 @@ def test_the_text_report_shows_the_tasks_and_the_totals(tmp_path):
     assert "✓" in text
     assert "✗" in text
     assert "2 tasks: 1 passed, 1 failed, 0 errors" in text
+
+
+def test_the_report_of_a_model_without_a_price_says_that_the_money_is_unknown(tmp_path):
+    report = _report(tmp_path)
+    report.tasks[0].priced = False
+
+    text = report.to_text()
+
+    assert "$?" in text
+    assert "$0.0120" not in text

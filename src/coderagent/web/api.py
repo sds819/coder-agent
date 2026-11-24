@@ -93,6 +93,7 @@ def list_sessions(request: Request, cwd: str = "") -> dict[str, Any]:
                 "updated_at": session.updated_at,
                 "turns": session.turn_count,
                 "cost": session.total_cost,
+                "priced": bool(session.metadata.get("priced", True)),
                 "state": session.state.value,
             }
             for session in sessions

@@ -294,6 +294,7 @@ class SessionRuntime:
             "tokens": loop.context.estimated_tokens(loop.tools) if loop else 0,
             "window": loop.context.config.context_window if loop else self.config.context.context_window,
             "cost": session.total_cost,
+            "priced": loop.model.priced if loop else True,
             "cwd": str(self.cwd),
             "mode": loop.executor.policy.mode.value if loop else self.mode(),
             "state": session.state.value,

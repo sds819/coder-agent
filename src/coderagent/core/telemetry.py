@@ -14,11 +14,22 @@ from coderagent.core.events import Event, EventType
 TRACE_FORMAT = "coder-agent-1.0"
 
 
+def money(cost: float, priced: bool = True) -> str:
+    """The money of a session, as the user sees it.
+
+    A model without a price has no money: the cost of such a model is unknown,
+    not zero. Saying `$0.0000` would be a lie.
+    """
+    return f"${cost:.4f}" if priced else "$?"
+
+
 @dataclass
 class Metrics:
     """What a session cost and how it went."""
 
     total_cost: float = 0.0
+    priced: bool = True
+    """False when a model of the session had no price. The money is unknown, not zero."""
     total_tokens_in: int = 0
     total_tokens_out: int = 0
     model_calls: int = 0
@@ -41,7 +52,7 @@ class Metrics:
 
     def summary(self) -> list[str]:
         return [
-            f"cost: ${self.total_cost:.4f}",
+            f"cost: {money(self.total_cost, self.priced)}",
             f"tokens: {self.total_tokens_in} in, {self.total_tokens_out} out",
             f"model calls: {self.model_calls}",
             f"tool calls: {self.tool_calls}",
@@ -53,10 +64,14 @@ class Metrics:
         lines = []
         if self.per_purpose_cost:
             lines.append("by purpose:")
-            lines += [f"  {purpose:<12} ${cost:.4f}" for purpose, cost in sorted(self.per_purpose_cost.items())]
+            lines += [
+                f"  {purpose:<12} {money(cost, self.priced)}" for purpose, cost in sorted(self.per_purpose_cost.items())
+            ]
         if self.per_model_cost:
             lines.append("by model:")
-            lines += [f"  {model:<24} ${cost:.4f}" for model, cost in sorted(self.per_model_cost.items())]
+            lines += [
+                f"  {model:<24} {money(cost, self.priced)}" for model, cost in sorted(self.per_model_cost.items())
+            ]
         if self.per_tool:
             lines.append("by tool:")
             lines += [f"  {tool:<12} {count}" for tool, count in sorted(self.per_tool.items())]
@@ -98,6 +113,8 @@ def collect(events: list[Event]) -> Metrics:
         elif event.type == EventType.REFLECTION:
             cost = float(payload.get("cost") or 0.0)
             metrics.total_cost += cost
+            if not _is_priced(payload, cost):
+                metrics.priced = False
             metrics.per_purpose_cost["reflect"] = metrics.per_purpose_cost.get("reflect", 0.0) + cost
             metrics.total_tokens_in += int(payload.get("tokens_in") or 0)
             metrics.total_tokens_out += int(payload.get("tokens_out") or 0)
@@ -130,6 +147,9 @@ def _model_call(metrics: Metrics, payload: dict) -> None:
     message = payload.get("message") or {}
     extra = message.get("extra") or {}
     cost = float(extra.get("cost") or payload.get("cost") or 0.0)
+    if not _is_priced(extra, cost):
+        metrics.priced = False
+        """A model without a price: the cost of the session is unknown, not zero."""
     metrics.model_calls += 1
     metrics.total_cost += cost
     metrics.total_tokens_in += int(extra.get("tokens_in") or 0)
@@ -139,6 +159,17 @@ def _model_call(metrics: Metrics, payload: dict) -> None:
     model = str(extra.get("model") or "")
     if model:
         metrics.per_model_cost[model] = metrics.per_model_cost.get(model, 0.0) + cost
+
+
+def _is_priced(extra: dict, cost: float) -> bool:
+    """Whether the model of a call had a price.
+
+    The old logs do not say it: a call that used tokens and cost nothing was a
+    model without a price.
+    """
+    if "priced" in extra:
+        return bool(extra["priced"])
+    return not (extra.get("tokens_in") and not cost)
 
 
 def _sub_agent_cost(metrics: Metrics, tool: str, content: str) -> None:

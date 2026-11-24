@@ -339,16 +339,18 @@ def _init(context: CommandContext, argument: str) -> None:
 
 
 def _cost(context: CommandContext, argument: str) -> None:
-    from coderagent.core.telemetry import collect
+    from coderagent.core.telemetry import collect, money
 
     loop = context.loop
     metrics = collect(context.store.events(context.session.id))
+    priced = metrics.priced and loop.model.priced
+    note = "" if priced else "\nthis model has no price: the money is unknown, the budget is agent.token_limit"
     context.say(
         f"model: {context.config.model.model_name}\n"
         f"calls: {metrics.model_calls}\n"
         f"tokens in the context: {loop.context.estimated_tokens()}\n"
         f"tokens spent: {loop.session.total_tokens}\n"
-        f"cost so far: ${loop.session.total_cost:.4f}\n" + metrics.report()
+        f"cost so far: {money(loop.session.total_cost, priced)}\n" + metrics.report() + note
     )
 
 
@@ -529,13 +531,15 @@ def _lines_of(path: Path) -> list[str]:
 
 
 def _status(context: CommandContext, argument: str) -> None:
+    from coderagent.core.telemetry import money
+
     session = context.session
     context.say(
         f"session: {session.id}\n"
         f"name: {session.name or '(none)'}\n"
         f"state: {session.state.value}\n"
         f"turns: {session.turn_count}\n"
-        f"cost: ${session.total_cost:.4f}\n"
+        f"cost: {money(session.total_cost, context.loop.model.priced)}\n"
         f"cwd: {session.cwd}\n"
         f"mode: {context.policy.mode.value}\n"
         f"sandbox: {context.config.sandbox.type} ({context.config.sandbox.mode})"

@@ -32,6 +32,11 @@ class ModelGateway:
         """The tokens of every call, in and out."""
         return self.total_tokens_in + self.total_tokens_out
 
+    @property
+    def priced(self) -> bool:
+        """Whether the model has a price. A model without one spends no money."""
+        return getattr(self.backend, "priced", True)
+
     def query_stream(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> Iterator[ModelEvent]:
         """The answer as it arrives. The cost is booked when the provider reports it."""
         self.n_calls += 1
