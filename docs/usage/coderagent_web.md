@@ -38,7 +38,10 @@ Open that address in a browser.
 Three columns:
 
 - **Left**: the sessions of the directory and the files of the working
-  directory. `New session` starts one; clicking a session opens it.
+  directory. `New session` starts one; clicking a session opens it. A session
+  is listed under the summary of its first question and not under its id; the
+  counts (turns and cost) are in the tooltip of the entry, because the cost of
+  a model that has no price is not worth showing.
 - **Middle**: the conversation. Messages are bubbles, tool calls are cards with
   the output and the diff of the change, approvals are cards with three
   buttons. The box under the conversation takes a message or a slash command

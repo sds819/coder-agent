@@ -28,6 +28,18 @@ class SessionState(str, Enum):
     ERROR = "error"
 
 
+SUMMARY_LIMIT = 40
+"""How many characters of the first question the list of sessions shows."""
+
+
+def summarize(text: str, limit: int = SUMMARY_LIMIT) -> str:
+    """A short title for a session: the first question, on one line, cut short."""
+    line = " ".join(str(text).split())
+    if len(line) <= limit:
+        return line
+    return line[:limit].rstrip() + "…"
+
+
 @dataclass
 class Session:
     id: str
@@ -43,6 +55,8 @@ class Session:
     """The tokens of the session, in and out. The budget of a model that has no price."""
     name: str = ""
     """The name the user gave to the session."""
+    summary: str = ""
+    """The first question of the session, cut short. It is what the list shows."""
     archived: bool = False
     """Whether the session is put away. An archived session is not in the list."""
     metadata: dict = field(default_factory=dict)
@@ -154,6 +168,9 @@ class SessionStore:
                     session.metadata["parent"] = payload["parent"]
             elif event.type == EventType.USER_MESSAGE:
                 session.turn_count += 1
+                if not session.summary:
+                    """The first question of the session is what the list shows."""
+                    session.summary = summarize(payload.get("original") or payload.get("content", ""))
             elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
                 session.metadata["todos"] = payload["todos"]
             elif event.type == EventType.TURN_END:

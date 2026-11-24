@@ -56,6 +56,26 @@ def test_a_session_can_be_named(tmp_path):
     assert store.rebuild(session.id).name == "the bug of monday"
 
 
+def test_the_summary_of_a_session_is_its_first_question(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(session.id, _message(session.id, "fix the failing test"))
+    store.append(session.id, _message(session.id, "and then the other one"))
+
+    assert store.rebuild(session.id).summary == "fix the failing test"
+
+
+def test_a_long_question_is_cut_short(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    store.append(session.id, _message(session.id, "a line\nand another one " + "x" * 100))
+
+    summary = store.rebuild(session.id).summary
+    assert summary.startswith("a line and another one xxx")
+    assert summary.endswith("…")
+    assert len(summary) == 41
+
+
 def test_a_session_that_is_not_there_cannot_be_named(tmp_path):
     store = SessionStore(tmp_path / "sessions")
     assert store.rename("nope", "the bug of monday") is False

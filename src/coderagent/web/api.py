@@ -86,6 +86,7 @@ def list_sessions(request: Request, cwd: str = "") -> dict[str, Any]:
             {
                 "id": session.id,
                 "name": session.name,
+                "title": session.name or session.summary or session.id,
                 "archived": session.archived,
                 "cwd": str(session.cwd),
                 "created_at": session.created_at,

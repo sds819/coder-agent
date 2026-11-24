@@ -373,8 +373,10 @@ async function loadSessions() {
   const data = await api("/api/sessions");
   list.innerHTML = "";
   for (const session of data.sessions) {
-    const item = el("li", "", `${session.id}  ${session.turns}t  $${session.cost.toFixed(4)}`);
-    item.title = session.cwd;
+    /* The list shows the first question of the session. The counts are in the
+       tooltip: the cost of a model that has no price is not worth showing. */
+    const item = el("li", "", session.title);
+    item.title = `${session.id}  ${session.turns}t  $${session.cost.toFixed(4)}  ${session.cwd}`;
     if (session.id === state.sessionId) item.classList.add("active");
     item.onclick = () => openSession(session.id);
     list.appendChild(item);

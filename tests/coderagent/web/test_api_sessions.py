@@ -51,6 +51,25 @@ def test_the_events_of_a_session_are_replayed(make_client, send, wait_for):
     assert [item["content"] for item in items if item["kind"] == "user_message"] == ["hello"]
 
 
+def test_the_list_shows_the_first_question_of_a_session(make_client, send, wait_for):
+    client = make_client(responses=[{"role": "assistant", "content": "hi", "extra": {"cost": 0.1}}])
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "fix the failing test")
+    wait_for(client, session_id, "turn_end")
+
+    sessions = client.get("/api/sessions").json()["sessions"]
+
+    assert sessions[0]["title"] == "fix the failing test"
+    assert sessions[0]["id"] == session_id
+
+
+def test_a_session_without_a_question_still_has_a_title(make_client):
+    client = make_client()
+    client.post("/api/sessions")
+
+    assert client.get("/api/sessions").json()["sessions"][0]["title"].startswith("20")
+
+
 def test_the_metrics_of_a_session_are_the_cost_of_the_log(make_client, send, wait_for):
     client = make_client(responses=[{"role": "assistant", "content": "hi", "extra": {"cost": 0.25}}])
     session_id = client.post("/api/sessions").json()["id"]
