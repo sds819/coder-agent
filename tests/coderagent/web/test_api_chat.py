@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from tests.coderagent.web.conftest import assistant, bash_call, trust  # noqa: E402
+from tests.coderagent.web.conftest import assistant, bash_call, read_call, trust  # noqa: E402
 
 
 def test_a_turn_shows_the_conversation_and_the_tool(make_client, send, wait_for):
@@ -162,8 +162,8 @@ def test_a_model_that_fails_ends_the_turn_with_an_error(make_client, send, wait_
 def test_a_turn_that_was_cut_off_says_why_it_ended(make_client, send, wait_for):
     """A turn that stops at the ceiling of the model calls has to say so."""
     client = make_client(
-        responses=[assistant(tool_calls=[bash_call("echo hello")])],
-        permission_mode="bypass",
+        responses=[assistant(tool_calls=[read_call("a.txt")])],
+        permission_mode="default",
         project_config="agent:\n  max_turns: 1\n",
     )
     session_id = client.post("/api/sessions").json()["id"]

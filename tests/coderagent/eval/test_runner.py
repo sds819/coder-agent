@@ -27,6 +27,7 @@ def _task(
     expect: str = "pass",
     require_tools: list | None = None,
     prompts: list[str] | None = None,
+    config: list[str] | None = None,
 ) -> Task:
     """A task on the disk, with its fixture."""
     directory = tmp_path / "the-task"
@@ -44,6 +45,7 @@ def _task(
                 "timeout": timeout,
                 "expect": expect,
                 "require_tools": require_tools or [],
+                **({"config": config} if config else {}),
             }
         ),
         encoding="utf-8",
@@ -145,6 +147,20 @@ def test_a_task_that_needs_the_edit_tool_passes_with_it(tmp_path):
     )
     result, _ = _run(task, tmp_path)
     assert result.passed is True
+
+
+def test_the_ceiling_of_a_task_holds_even_in_bypass(tmp_path):
+    """The harness measures a run: the ceiling of the task holds, whatever the mode is."""
+    task = _task(
+        tmp_path,
+        [{"content": "Looking.", "tool_calls": [{"tool": "read", "args": {"path": "calc.py"}}]} for _ in range(5)],
+        {"calc.py": CALC, "tests/test_calc.py": TEST},
+        verify=["true"],
+        config=["agent.max_turns=2"],
+    )
+    result, _ = _run(task, tmp_path, permission_mode="bypass")
+    assert result.stop_reason == "max_turns"
+    assert result.model_calls == 2
 
 
 def test_the_tool_has_to_work_on_the_file_of_the_task(tmp_path):

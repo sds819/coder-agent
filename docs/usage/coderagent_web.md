@@ -233,6 +233,10 @@ The permissions are in two places, and they do different things.
 included, and the model is told about it, so it answers with what it found
 instead of changing anything.
 
+`bypass` has no ceiling either: the money, the tokens and the number of the
+model calls do not stop a turn in this mode — it runs until the work is done
+and you press `Interrupt`. Every other mode keeps those ceilings.
+
 ### The settings page
 
 The form has the mode, the denied paths, the extra directories and the network

@@ -158,6 +158,7 @@ def build_loop(
     approver=None,
     user_home: Path | None = None,
     output_schema: dict | None = None,
+    enforce_ceilings: bool = False,
 ) -> AgentLoop:
     store = store or build_store(config)
     session = session or store.create(cwd)
@@ -316,6 +317,7 @@ def build_loop(
         verify=config.verify,
         exporter=_exporter(config),
         output_schema=output_schema,
+        enforce_ceilings=enforce_ceilings,
     )
     holder["loop"] = loop
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())

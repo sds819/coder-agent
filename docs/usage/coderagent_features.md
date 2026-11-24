@@ -472,6 +472,10 @@ it was.
 - **Five modes** — `default`, `acceptEdits`, `plan`, `readonly` and `bypass`.
 - **`bypass` asks once** — it takes the guards off, so `/mode bypass` says what
   it would do and changes nothing; `/mode bypass --yes` switches it on.
+- **`bypass` has no ceiling** — the money (`agent.cost_limit`), the tokens
+  (`agent.token_limit`) and the number of the model calls (`agent.max_turns`) do
+  not stop the session in this mode: it runs until the work is done and the user
+  stops it. Every other mode keeps them.
 - **The model is told** — in `plan` and `readonly` the agent knows that it may
   not change anything, and answers with what it found instead.
 - **The shell has boundaries** — the commands that only look around go through,
@@ -716,10 +720,10 @@ the snapshot.
 |---|---|---|
 | `ValueError: no checkpoint '<id>' in this session` | `/rewind` was given an id that is not a checkpoint of this session. | `/rewind` without an id lists the checkpoints. |
 | `/resume <unknown id>` starts a session with the directory `.` | A session id that is not in the log does not fail — it makes an empty session. | Check the ids with `coder --list`. |
-| A turn ends with `stop_reason: max_turns` | The agent made 100 model calls (`agent.max_turns`) without finishing. | Raise `agent.max_turns`, or make the task smaller. |
+| A turn ends with `stop_reason: max_turns` | The agent made 100 model calls (`agent.max_turns`) without finishing. In `bypass` this ceiling does not hold. | Raise `agent.max_turns`, or make the task smaller. |
 | The agent goes quiet without an answer | The turn was cut off: at the ceiling of the model calls, at the budget, or at the token limit. The interface says so under the last answer. | Raise the ceiling that the line names (`agent.max_turns` and the like), or make the task smaller. |
-| A turn ends with `stop_reason: cost_exceeded` | The turn cost more than `agent.cost_limit`. `0` means no limit. | Raise `agent.cost_limit`. |
-| A turn ends with `stop_reason: token_limit` | The turn used more tokens than `agent.token_limit`. `0` means no limit. This is the budget of a model that has no price, where the money never moves. | Raise `agent.token_limit`. |
+| A turn ends with `stop_reason: cost_exceeded` | The turn cost more than `agent.cost_limit`. `0` means no limit. In `bypass` this ceiling does not hold. | Raise `agent.cost_limit`. |
+| A turn ends with `stop_reason: token_limit` | The turn used more tokens than `agent.token_limit`. `0` means no limit. This is the budget of a model that has no price, where the money never moves. In `bypass` this ceiling does not hold. | Raise `agent.token_limit`. |
 | A turn ends with `stop_reason: error` | The model call failed after the retries. The text of the error is in `error`. | Look at `error`; it is the message of the provider. |
 | A turn ends with `stop_reason: interrupted` | Somebody pressed `ctrl+c`. | The session is saved; continue it with `--resume`. |
 | The trace does not arrive at the backend | The backend refused it or is not there. The reason is in the log of the agent. | Check `telemetry.otel_endpoint` and the headers. |

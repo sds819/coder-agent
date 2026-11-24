@@ -176,6 +176,13 @@
 网页版是弹一次确认框，请求体里带 `confirm: true`，否则接口回 400。理由：`bypass` 把护栏全拆了，
 一个手滑不该拆掉。
 
+**`bypass` 也没有上限**：这一轮的钱（`agent.cost_limit`）、token（`agent.token_limit`）和
+模型调用次数（`agent.max_turns`）在 `bypass` 下**都不拦**——它跑到活干完，用户自己喊停
+（`core/loop.py` 的 `_ceilings_hold()`）。别的模式照旧拦。越界、`deny_paths`、关掉的网络
+这些**安全边界**在 `bypass` 下照旧成立，跟「上限」是两回事。
+评测harness 例外：`coder eval` 用 `enforce_ceilings=True` 造 loop，任务的
+`agent.max_turns` 照旧是任务的边界（harness 要的是可比的测量，不是放飞）。
+
 ### b6 规则文件在哪？谁说了算？匹配语义是什么？
 
 **结论**：`tools/rules.py`。

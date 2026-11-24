@@ -29,12 +29,13 @@ def _assistant(content: str = "", tool_calls: list[dict] | None = None, cost: fl
     }
 
 
-def _loop(tmp_path, responses, **kwargs):
+def _loop(tmp_path, responses, mode=PermissionMode.BYPASS, **kwargs):
     store = SessionStore(tmp_path)
     session = store.create(tmp_path)
     bus = EventBus()
     model = ModelGateway(ScriptedModel(responses))
-    executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session, bus=bus))
+    context = build_context(tmp_path, session=session, bus=bus, policy=PermissionPolicy(mode, [], cwd=tmp_path))
+    executor = build_executor(tmp_path, store=store, context=context, approver=AllowAllApprover())
     loop = AgentLoop(
         model,
         executor,
@@ -87,6 +88,7 @@ def test_max_turns_stops_the_loop(tmp_path):
     loop, _, _, _ = _loop(
         tmp_path,
         [_assistant(tool_calls=[_bash_call("echo hi")]) for _ in range(5)],
+        mode=PermissionMode.DEFAULT,
         max_turns=2,
     )
     result = loop.run_turn("loop forever")
@@ -104,6 +106,7 @@ def test_the_reason_a_turn_ended_is_in_the_log(tmp_path):
     loop, store, session, _ = _loop(
         tmp_path,
         [_assistant(tool_calls=[_bash_call("echo hi")]) for _ in range(5)],
+        mode=PermissionMode.DEFAULT,
         max_turns=2,
     )
     loop.run_turn("loop forever")
@@ -154,6 +157,7 @@ def test_cost_limit_stops_the_loop(tmp_path):
     loop, _, _, _ = _loop(
         tmp_path,
         [_assistant(tool_calls=[_bash_call("echo hi")], cost=1.0) for _ in range(5)],
+        mode=PermissionMode.DEFAULT,
         cost_limit=1.5,
     )
     result = loop.run_turn("spend money")
@@ -165,11 +169,28 @@ def test_the_token_budget_stops_a_model_that_has_no_price(tmp_path):
     loop, store, session, _ = _loop(
         tmp_path,
         [_assistant(tool_calls=[_bash_call("echo hi")], tokens=100) for _ in range(5)],
+        mode=PermissionMode.DEFAULT,
         token_limit=150,
     )
     result = loop.run_turn("spend tokens")
     assert result.stop_reason == "token_limit"
     assert store.rebuild(session.id).total_tokens == 200
+
+
+def test_bypass_does_not_stop_at_the_ceilings(tmp_path):
+    """In bypass the session runs until the work is done: only the user stops it."""
+    loop, _, _, _ = _loop(
+        tmp_path,
+        [_assistant(tool_calls=[_bash_call("echo hi")], cost=1.0, tokens=100) for _ in range(4)]
+        + [_assistant(content="done", cost=1.0, tokens=100)],
+        max_turns=2,
+        cost_limit=1.5,
+        token_limit=150,
+    )
+    result = loop.run_turn("keep going")
+    assert result.stop_reason == "end_turn"
+    assert loop.session.total_cost == pytest.approx(5.0)
+    assert loop.session.total_tokens == 500
 
 
 def test_a_cost_limit_that_cannot_be_enforced_is_reported(tmp_path, caplog):

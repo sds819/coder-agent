@@ -195,6 +195,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 `plan` 和 `readonly` 会拒掉所有会改东西的工具（`bash` 也算），而且模型会被告知这件事，
 所以它会说出看到的东西，而不是动手去改。
 
+`bypass` 也没有上限：钱、token 和模型调用的次数在这个模式下都不拦这一轮——
+它一直跑到活干完，你按 `Interrupt` 才停。别的模式照旧有这些上限。
+
 ### 设置页
 
 表单里有模式、禁止访问的路径、额外的目录和网络开关，写到和模型同一个用户级文件

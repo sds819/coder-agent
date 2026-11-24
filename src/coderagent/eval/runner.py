@@ -274,7 +274,9 @@ def run_task(
         permission_mode=permission_mode,
         approver=approver,
         user_home=user_home,
+        enforce_ceilings=True,
     )
+    """The harness measures a run: the ceilings of the task hold, whatever the mode is."""
     deadline = time.monotonic() + task.timeout
     loop.cancel = lambda: time.monotonic() > deadline
     started = time.monotonic()

@@ -428,6 +428,9 @@ token、密码、私钥——在写和发之前都会换成 `[redacted]`。日�
 - **五种模式**——`default`、`acceptEdits`、`plan`、`readonly`、`bypass`。
 - **`bypass` 要问一次**——它把护栏全拆了，所以 `/mode bypass` 只说会做什么、
   什么都不改；`/mode bypass --yes` 才真的切过去。
+- **`bypass` 没有上限**——钱（`agent.cost_limit`）、token（`agent.token_limit`）
+  和模型调用的次数（`agent.max_turns`）在这个模式下都不拦这一轮：它一直跑到
+  活干完，用户自己喊停。别的模式照旧拦。
 - **模型会知道**——`plan` 和 `readonly` 下 agent 知道自己改不了东西，
   于是把看到的说出来，而不是动手。
 - **规则**——`~/.coderagent/rules.yaml` 和 `.coderagent/rules.yaml` 按工具
@@ -648,10 +651,10 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 |---|---|---|
 | `ValueError: no checkpoint '<id>' in this session` | `/rewind` 拿到的 id 不是这个会话的检查点。 | 不带 id 的 `/rewind` 会列出检查点。 |
 | `/resume <不存在的 id>` 起了一个目录是 `.` 的会话 | 日志里没有这个 id 不会报错，它会造一个空会话。 | 用 `coder --list` 看看有哪些 id。 |
-| 一轮以 `stop_reason: max_turns` 结束 | agent 用了 100 次模型调用还没完（`agent.max_turns`）。 | 调大 `agent.max_turns`，或者把任务拆小。 |
+| 一轮以 `stop_reason: max_turns` 结束 | agent 用了 100 次模型调用还没完（`agent.max_turns`）。`bypass` 模式下这个上限不拦。 | 调大 `agent.max_turns`，或者把任务拆小。 |
 | agent 不出声就停了 | 这一轮被切断了：到了模型调用的上限、预算上限或者 token 上限。界面会在最后一条回答下面写明。 | 调大那一行里说的上限（`agent.max_turns` 之类），或者把任务拆小。 |
-| 一轮以 `stop_reason: cost_exceeded` 结束 | 这一轮花的钱超过了 `agent.cost_limit`。`0` 是没有上限。 | 调大 `agent.cost_limit`。 |
-| 一轮以 `stop_reason: token_limit` 结束 | 这一轮用的 token 超过了 `agent.token_limit`。`0` 是没有上限。模型没有价格时钱不动，token 就是预算。 | 调大 `agent.token_limit`。 |
+| 一轮以 `stop_reason: cost_exceeded` 结束 | 这一轮花的钱超过了 `agent.cost_limit`。`0` 是没有上限。`bypass` 模式下这个上限不拦。 | 调大 `agent.cost_limit`。 |
+| 一轮以 `stop_reason: token_limit` 结束 | 这一轮用的 token 超过了 `agent.token_limit`。`0` 是没有上限。模型没有价格时钱不动，token 就是预算。`bypass` 模式下这个上限不拦。 | 调大 `agent.token_limit`。 |
 | 一轮以 `stop_reason: error` 结束 | 模型调用重试完了还是失败。错误文本在 `error` 里。 | 看 `error`，那是厂商的消息。 |
 | 一轮以 `stop_reason: interrupted` 结束 | 有人按了 `ctrl+c`。 | 会话已经存下来了，用 `--resume` 接着来。 |
 | 追踪没有到后端 | 后端拒收了它，或者压根不在。原因在 agent 的日志里。 | 查一下 `telemetry.otel_endpoint` 和那几行头。 |

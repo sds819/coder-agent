@@ -81,6 +81,16 @@ def bash_call(command: str, call_id: str = "call_1") -> dict:
     }
 
 
+def read_call(path: str, call_id: str = "call_1") -> dict:
+    import json
+
+    return {
+        "id": call_id,
+        "type": "function",
+        "function": {"name": "read", "arguments": json.dumps({"path": path})},
+    }
+
+
 def trust(project, command: str) -> None:
     """Trust a hook of the project, so that it is used."""
     from coderagent.core.trust import TRUSTED, key_of, remember

@@ -18,6 +18,7 @@ from coderagent.core.session import Session, SessionState, SessionStore
 from coderagent.core.tokens import trim_text
 from coderagent.models.gateway import ModelGateway, is_context_overflow
 from coderagent.models.streaming import ModelEvent, message_from_events
+from coderagent.tools.permissions import PermissionMode
 from minisweagent.environments.local import LocalEnvironment
 
 logger = logging.getLogger("coderagent.core.loop")
@@ -106,6 +107,7 @@ class AgentLoop:
         verify=None,
         exporter=None,
         output_schema: dict | None = None,
+        enforce_ceilings: bool = False,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -120,6 +122,8 @@ class AgentLoop:
         self.cost_limit = cost_limit
         self.token_limit = token_limit
         """Stop after this many tokens. The budget of a model that has no price."""
+        self.enforce_ceilings = enforce_ceilings
+        """Whether the ceilings hold even in bypass. A harness that measures asks for them."""
         self.checkpoints = checkpoints
         self.hooks = hooks
         """The hook runner, when the session has hooks."""
@@ -298,15 +302,16 @@ class AgentLoop:
             if self.cancel is not None and self.cancel():
                 stop_reason = "interrupted"
                 break
-            if self.max_turns and n_calls >= self.max_turns:
-                stop_reason = "max_turns"
-                break
-            if self.cost_limit and self.session.total_cost >= self.cost_limit:
-                stop_reason = "cost_exceeded"
-                break
-            if self.token_limit and self.session.total_tokens >= self.token_limit:
-                stop_reason = "token_limit"
-                break
+            if self._ceilings_hold():
+                if self.max_turns and n_calls >= self.max_turns:
+                    stop_reason = "max_turns"
+                    break
+                if self.cost_limit and self.session.total_cost >= self.cost_limit:
+                    stop_reason = "cost_exceeded"
+                    break
+                if self.token_limit and self.session.total_tokens >= self.token_limit:
+                    stop_reason = "token_limit"
+                    break
             self.context.maybe_compact()
             self._route()
             try:
@@ -461,6 +466,15 @@ class AgentLoop:
         self.session.total_cost += self.model.total_cost - before[0]
         self.session.total_tokens += self.model.total_tokens - before[1]
         return (self.model.total_cost, self.model.total_tokens)
+
+    def _ceilings_hold(self) -> bool:
+        """Whether the ceilings of the session apply.
+
+        Bypass means the session runs until the work is done: the money, the tokens
+        and the number of the calls are not what stops it. The user stops it. A
+        harness that measures asks for the ceilings anyway.
+        """
+        return self.enforce_ceilings or self.policy.mode != PermissionMode.BYPASS
 
     def _warn_unpriced(self, response: dict) -> None:
         """A model without a price spends no money, so a cost limit cannot be enforced."""

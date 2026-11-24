@@ -10,6 +10,7 @@ from coderagent.core.session import SessionStore
 from coderagent.models.gateway import ModelGateway
 from coderagent.testing.factory import build_executor
 from coderagent.testing.scripted_model import ScriptedModel
+from coderagent.tools.permissions import PermissionMode
 
 
 def _bash_call(command: str, call_id: str = "call_1") -> dict:
@@ -24,10 +25,10 @@ def _assistant(content: str = "", tool_calls: list[dict] | None = None, cost: fl
     return {"role": "assistant", "content": content, "tool_calls": tool_calls or [], "extra": {"cost": cost}}
 
 
-def _loop(tmp_path, responses, **kwargs):
+def _loop(tmp_path, responses, mode=PermissionMode.DEFAULT, **kwargs):
     store = SessionStore(tmp_path)
     session = store.create(tmp_path)
-    executor = build_executor(tmp_path)
+    executor = build_executor(tmp_path, mode=mode)
     loop = AgentLoop(
         ModelGateway(ScriptedModel(responses)),
         executor,

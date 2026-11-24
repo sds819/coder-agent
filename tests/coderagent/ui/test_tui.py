@@ -653,12 +653,12 @@ def test_a_turn_that_was_cut_off_says_why_it_ended(tmp_path):
     call = {
         "id": "call_1",
         "type": "function",
-        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+        "function": {"name": "read", "arguments": '{"path": "a.txt"}'},
     }
     app = _app(
         tmp_path,
         responses=[{"role": "assistant", "content": "", "tool_calls": [call], "extra": {"cost": 0.0}}],
-        mode="bypass",
+        mode="default",
     )
     app.loop.max_turns = 1
     notices = []
