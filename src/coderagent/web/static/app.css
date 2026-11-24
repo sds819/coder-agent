@@ -75,8 +75,23 @@ h1 { font-size: 20px; }
 .list li.active { background: #2b3348; }
 .list li.dir { color: var(--accent); }
 
-.conversation { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.conversation { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; position: relative; }
 .messages { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
+
+/* The button that brings the newest content back into view. */
+.to-latest {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #23334d;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+.to-latest[hidden] { display: none; }
 
 .history {
   margin: 0 0 12px;
@@ -139,6 +154,13 @@ h1 { font-size: 20px; }
 
 .approval { border-color: var(--warn); }
 .approval .buttons { padding: 8px 10px; display: flex; gap: 8px; }
+
+/* The card that waits for an answer: it says so without being read. */
+.approval.attention { animation: attention 1.8s ease-in-out infinite; }
+@keyframes attention {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 182, 76, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(224, 182, 76, 0.35); }
+}
 
 .todos { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: #1b2130; }
 .todos div.done { color: var(--muted); text-decoration: line-through; }

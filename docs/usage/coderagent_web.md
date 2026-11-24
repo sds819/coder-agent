@@ -56,6 +56,14 @@ Three columns:
   conversation follows the newest output, unless you scroll up to read
   something. The turns before the current one are folded into a block at the
   top — click it to look at them.
+
+  When you scroll up, a button (`Jump to the newest`) appears above the
+  composer and takes you back to the end of the conversation.
+
+  An approval that waits for an answer scrolls itself into the middle of the
+  view and pulses until you answer it, so that you never have to look for it.
+  While it waits, the view stays with the card instead of running away to the
+  newest output.
 - **Right**: the status bar of the session (model, context size, cost, mode),
   the sub agents with the turns they may really make, the files the session
   changed with their diff, and the file you are looking at.

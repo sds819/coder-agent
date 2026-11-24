@@ -24,6 +24,7 @@ const state = {
   assistant: null,
   current: null,
   stick: true,
+  attention: null,
   mode: "",
 };
 
@@ -92,7 +93,44 @@ function foldTurn() {
 /* The conversation follows the newest content, unless the user scrolled up. */
 function scrollToBottom(force) {
   const box = messages();
+  if (!box) return;
+  /* While a card waits for an answer, the view stays with the card and not
+     with the newest content. */
+  if (state.attention) {
+    keepAttention();
+    return;
+  }
   if (force || state.stick) box.scrollTop = box.scrollHeight;
+}
+
+/* The card that waits for an answer is put in the middle of the view, so that
+   the user does not have to look for it. */
+function scrollToCard(card) {
+  const box = messages();
+  if (!box || !card) return;
+  const top = card.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+  const wanted = Math.max(0, top - (box.clientHeight - card.offsetHeight) / 2);
+  box.scrollTo({ top: wanted, behavior: "smooth" });
+}
+
+/* Whether the whole of a node is in the view of the conversation. */
+function inView(box, node) {
+  const one = node.getBoundingClientRect();
+  const other = box.getBoundingClientRect();
+  return one.top >= other.top && one.bottom <= other.bottom;
+}
+
+/* The card that waits for an answer stays in view while the rest arrives. */
+function keepAttention() {
+  const box = messages();
+  if (!box || !state.attention) return;
+  if (!inView(box, state.attention)) scrollToCard(state.attention);
+}
+
+/* The button that jumps to the newest content. It shows when the user scrolled up. */
+function showLatest() {
+  const button = document.getElementById("to-latest");
+  if (button) button.hidden = state.stick;
 }
 
 function bubble(className, text) {
@@ -125,6 +163,8 @@ function fillTool(card, item) {
   } else {
     body.textContent = item.content || "";
   }
+  /* the output of a tool can be long: the view follows it */
+  scrollToBottom();
 }
 
 function diffView(diff) {
@@ -153,6 +193,8 @@ function renderApproval(item) {
     button.onclick = async () => {
       buttons.innerHTML = "";
       buttons.appendChild(el("span", "", t("answered")));
+      card.classList.remove("attention");
+      if (state.attention === card) state.attention = null;
       try {
         await api(`/api/approvals/${item.id}`, { method: "POST", body: { decision } });
       } catch (error) {
@@ -163,7 +205,9 @@ function renderApproval(item) {
   }
   card.appendChild(buttons);
   target().appendChild(card);
-  scrollToBottom();
+  state.attention = card;
+  card.classList.add("attention");
+  scrollToCard(card);
   return card;
 }
 
@@ -178,6 +222,7 @@ function renderTodos(todos) {
   for (const todo of todos || []) {
     panel.appendChild(el("div", todo.status === "completed" ? "done" : "", todo.content || ""));
   }
+  scrollToBottom();
 }
 
 function render(item) {
@@ -201,6 +246,7 @@ function render(item) {
         /* the answer was streamed into this bubble; the message is the whole of it */
         state.assistant.textContent = content;
         state.assistant = null;
+        scrollToBottom();
         break;
       }
       bubble("assistant", content);
@@ -230,10 +276,17 @@ function render(item) {
     case "approval_response": {
       const card = state.cards[`approval-${item.id}`];
       if (card) {
+        card.classList.remove("attention");
         card.querySelector(".buttons").innerHTML = "";
         card.querySelector(".buttons").appendChild(
           el("span", "", item.timed_out ? t("no_answer") : t("answered_decision", { decision: item.decision }))
         );
+      }
+      if (state.attention === card) {
+        state.attention = null;
+        state.stick = true;
+        scrollToBottom(true);
+        showLatest();
       }
       break;
     }
@@ -389,6 +442,8 @@ async function openSession(id) {
   state.cards = {};
   state.assistant = null;
   state.current = null;
+  state.attention = null;
+  state.stick = true;
   messages().innerHTML = "";
   const data = await api(`/api/sessions/${id}/items`);
   for (const item of data.items) render(item);
@@ -966,7 +1021,17 @@ function wire() {
     box.addEventListener("scroll", () => {
       const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
       state.stick = gap < 40;
+      showLatest();
     });
+  }
+
+  const toLatest = document.getElementById("to-latest");
+  if (toLatest) {
+    toLatest.onclick = () => {
+      state.stick = true;
+      scrollToBottom(true);
+      showLatest();
+    };
   }
 
   const newSession = document.getElementById("new-session");
