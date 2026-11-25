@@ -4819,6 +4819,9 @@ configuration:</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-c<span class="w"> </span>model.model_name<span class="o">=</span>deepseek/deepseek-flash<span class="w"> </span>-c<span class="w"> </span>permissions.mode<span class="o">=</span>plan
 </code></pre></div>
 <h3 id="the-output">The output</h3>
+<p>While the agent works, the terminal shows dots that grow and shrink. The line
+is cleaned when the answer comes. A pipe or a file gets the answer alone: the
+dots are for a terminal, and the json output is never mixed with them.</p>
 <p>The text output is the conversation and one line about the turn:</p>
 <div class="highlight"><pre><span></span><code>[stop_reason=end_turn cost=0.0016 session_cost=0.0019 session=20261106-a1b2c3]
 </code></pre></div>
@@ -4853,6 +4856,9 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 <code>telemetry.otel_endpoint</code> in the configuration, the trace of every turn also
 goes to that OpenTelemetry collector. See <a href="../coderagent_export/">Trace export</a>.</p>
 <h2 id="the-terminal-interface">The terminal interface</h2>
+<p>While the agent is thinking, the conversation ends with dots that grow and
+shrink. They go away as soon as it says or does something: the same dots as
+in the browser.</p>
 <table>
 <thead>
 <tr>
