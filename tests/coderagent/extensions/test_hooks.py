@@ -44,6 +44,7 @@ def _loop(tmp_path, responses, hooks=None):
         EventBus(),
         tools=executor.registry.schemas(),
         hooks=hooks,
+        capabilities={"scripted": {"image": True}},
     )
     return loop, model
 

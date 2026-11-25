@@ -56,6 +56,26 @@ def test_user_config_overrides_project_config(tmp_path, monkeypatch):
     assert load_config([], cwd=tmp_path).agent.max_turns == 9
 
 
+def test_a_project_does_not_say_what_the_model_of_the_user_takes(tmp_path, monkeypatch):
+    """The capabilities of a model are the business of the user, not of the repository."""
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    project = tmp_path / ".coderagent" / "config.yaml"
+    project.parent.mkdir(parents=True)
+    project.write_text("model:\n  capabilities:\n    my/model:\n      image: true\n", encoding="utf-8")
+    (home / "config.yaml").write_text("model:\n  capabilities:\n    my/model:\n      image: false\n", encoding="utf-8")
+    assert load_config([], cwd=tmp_path).model.capabilities == {"my/model": {"image": False}}
+
+
+def test_the_user_may_say_what_a_model_takes(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    (home / "config.yaml").write_text("model:\n  capabilities:\n    my/model:\n      image: true\n", encoding="utf-8")
+    assert load_config([], cwd=tmp_path).model.capabilities == {"my/model": {"image": True}}
+
+
 def test_cli_spec_overrides_everything(tmp_path, monkeypatch):
     home = tmp_path / "home"
     home.mkdir()

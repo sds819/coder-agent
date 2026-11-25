@@ -23,6 +23,13 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 TOKENS_PER_PIXEL = 1 / 750
 """What a pixel of an image costs. The estimate only drives decisions."""
 
+MODALITY_PARTS = {
+    "image_url": "image",
+    "input_audio": "audio",
+    "video_url": "video",
+}
+"""The parts of a message that carry something else than text."""
+
 
 def text_of(content) -> str:
     """The text of a message, whatever shape its content has."""
@@ -66,6 +73,13 @@ def describe_message(content) -> str:
         return text
     note = f"[{len(images)} image{'s' if len(images) > 1 else ''} attached]"
     return f"{text}\n{note}".strip()
+
+
+def modalities_of(content) -> set[str]:
+    """The kinds of content that are not text in a message."""
+    if not content or isinstance(content, str):
+        return set()
+    return {MODALITY_PARTS[part["type"]] for part in content if part.get("type") in MODALITY_PARTS}
 
 
 def data_url(path: Path) -> str:
@@ -116,6 +130,7 @@ __all__ = [
     "describe_message",
     "image_tokens",
     "images_of",
+    "modalities_of",
     "parts",
     "text_of",
     "with_text",

@@ -98,6 +98,23 @@ sent. The picture costs tokens like a text does, so the size of the context grow
 by the size of the image. The answer of the model stays in the conversation, like
 the answer of any other turn.
 
+The agent asks first whether the model takes pictures. A model that cannot see
+one would answer about it anyway, and the answer would be made up: the turn does
+not start, and the agent says which model it is and what to do instead. What a
+model takes is `model.capabilities`:
+
+```yaml
+model:
+  capabilities:
+    my/model:
+      image: true
+```
+
+litellm knows what most models take. For a model it does not know — a relay
+station names its models in its own way — say it here: `image: false` for a
+model that only reads text, `image: true` for one that looks at pictures. A
+project may not say this: the models are yours.
+
 `/mention` sends a **file** to the model, with its content in the message, so
 that the model does not have to read it again with a tool call:
 

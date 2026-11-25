@@ -1063,7 +1063,9 @@ $ python -m pytest -q
   不会弄坏会话。**项目不能挑通知程序**：那个程序跑在用户的机器上。
 - **答案是 Markdown**——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；`ui.markdown: false` 可以让它一直是纯文本。
-- **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。
+- **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。发之前
+  agent 会先问模型看不看得图：看不懂的模型也会照样回答，而且答案是编的。
+  `model.capabilities` 写模型能吃什么，给 litellm 不认识的那些模型用。
 - **文件在你的编辑器里打开**——`/open src/app.py` 用 `ui.file_opener` 指定的
   程序打开它（`vscode`、`cursor`、`windsurf`，或者你自己的命令）。
   **项目不能挑编辑器**。
@@ -1287,7 +1289,7 @@ profile: fast
 
 | 段 | 键 |
 |---|---|
-| `model` | `model_name`、`api_key`、`api_base`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort`、`verbosity`、`review_model` |
+| `model` | `model_name`、`api_key`、`api_base`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control`、`reasoning_effort`、`verbosity`、`review_model`、`capabilities` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit`、`subagent_max_turns`、`subagent_max_parallel` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs`、`network` |

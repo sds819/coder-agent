@@ -90,6 +90,8 @@ class LiteLLMBackend:
         api_base: str = "",
     ) -> None:
         """The name may be an alias of the model list of a litellm config file."""
+        self.alias = model_name
+        """The name the user wrote. The capabilities of a model are said about this name."""
         name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
         self.model_name = name
         merged = params | (model_kwargs or {})

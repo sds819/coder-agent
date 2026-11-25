@@ -96,6 +96,8 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
         _tighten_sandbox(merged, project)
         _tighten_telemetry(merged, project)
         _tighten_limits(merged, defaults, user, recursive_merge(profile, *spec_layers), project)
+        merged.setdefault("model", {})["capabilities"] = base.get("model", {}).get("capabilities", {})
+        """A project does not say what the model of the user takes."""
     model = merged.setdefault("model", {})
     model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
     return Config(**merged)

@@ -318,6 +318,7 @@ def build_loop(
         exporter=_exporter(config),
         output_schema=output_schema,
         enforce_ceilings=enforce_ceilings,
+        capabilities=config.model.capabilities,
     )
     holder["loop"] = loop
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())

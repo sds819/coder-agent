@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from coderagent.core.capabilities import MODALITIES
 from coderagent.core.os_sandbox import MODES
 from coderagent.core.session import PERSISTENCES
 from coderagent.core.shell_env import INHERITS
@@ -152,6 +153,11 @@ class ModelConfig(BaseModel):
     """How much the model says: low, medium, high. Empty is the habit of the model."""
     review_model: str = ""
     """The model that reviews the changes. Empty means: the model of the session."""
+    capabilities: dict[str, dict[str, bool]] = Field(default_factory=dict)
+    """What the models take: the name of a model and the kinds of content it takes.
+
+    The user says it for the models litellm does not know: `{"my/model": {"image": true}}`.
+    """
 
     @field_validator("reasoning_effort")
     @classmethod
@@ -180,6 +186,20 @@ class ModelConfig(BaseModel):
         for purpose in value:
             if purpose not in PURPOSES:
                 raise ValueError(f"unknown purpose '{purpose}'. Use one of: {', '.join(PURPOSES)}.")
+        return value
+
+    @field_validator("capabilities")
+    @classmethod
+    def _known_capabilities(cls, value: dict) -> dict:
+        for model, takes in value.items():
+            for modality, supported in takes.items():
+                if modality not in MODALITIES:
+                    raise ValueError(
+                        f"unknown kind of content '{modality}' for the model '{model}'. "
+                        f"Use one of: {', '.join(MODALITIES)}."
+                    )
+                if not isinstance(supported, bool):
+                    raise ValueError(f"what the model '{model}' takes for {modality} is not true or false.")
         return value
 
 

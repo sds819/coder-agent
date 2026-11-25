@@ -1175,7 +1175,10 @@ $ python -m pytest -q
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; `ui.markdown: false` keeps it plain.
 - **A picture can be sent** — `/image shot.png what is this` sends the picture
-  with the text that goes with it.
+  with the text that goes with it. The agent asks first whether the model takes
+  pictures: a model that cannot see one would answer about it anyway, and the
+  answer would be made up. `model.capabilities` says what a model takes, for the
+  models litellm does not know.
 - **A file opens in your editor** — `/open src/app.py` opens it in the program
   of `ui.file_opener` (`vscode`, `cursor`, `windsurf`, or a command of your own).
   A project may not choose the editor.
@@ -1422,7 +1425,7 @@ The sections and what they hold:
 
 | Section | The keys |
 |---|---|
-| `model` | `model_name`, `api_key`, `api_base`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort`, `verbosity`, `review_model` |
+| `model` | `model_name`, `api_key`, `api_base`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control`, `reasoning_effort`, `verbosity`, `review_model`, `capabilities` |
 | `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit`, `subagent_max_turns`, `subagent_max_parallel` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs`, `network` |

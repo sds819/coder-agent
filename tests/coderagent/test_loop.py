@@ -274,7 +274,11 @@ def test_a_message_with_an_image_reaches_the_model(tmp_path):
     """The model sees the image as a part of the message."""
     from coderagent.core.content import parts
 
-    loop, store, session, _ = _loop(tmp_path, [_assistant(content="done")])
+    loop, store, session, _ = _loop(
+        tmp_path,
+        [_assistant(content="done")],
+        capabilities={"scripted": {"image": True}},
+    )
     url = "data:image/png;base64,AAAA"
     loop.run_turn(parts("what is this?", [url]))
 
@@ -290,7 +294,11 @@ def test_a_message_with_an_image_survives_a_restart(tmp_path):
     """The event log keeps the image, so the session can be continued."""
     from coderagent.core.content import parts
 
-    loop, store, session, _ = _loop(tmp_path, [_assistant(content="done")])
+    loop, store, session, _ = _loop(
+        tmp_path,
+        [_assistant(content="done")],
+        capabilities={"scripted": {"image": True}},
+    )
     url = "data:image/png;base64,AAAA"
     loop.run_turn(parts("what is this?", [url]))
 

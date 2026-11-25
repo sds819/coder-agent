@@ -30,6 +30,8 @@ def _app(tmp_path, responses=None, mode="default", markdown=True, include_dirs=N
     config.permissions.mode = mode
     config.permissions.include_dirs = include_dirs or []
     config.ui.markdown = markdown
+    config.model.capabilities = {"scripted": {"image": True}}
+    """The model of the tests looks at pictures."""
     bus = EventBus()
     approver = TUIAprover(bus)
     model = ScriptedModel(responses or [{"role": "assistant", "content": "hello", "extra": {"cost": 0.0}}])

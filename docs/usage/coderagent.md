@@ -167,6 +167,20 @@ A picture goes to the model with `/image`:
 /image screenshot.png what is wrong with this layout?
 ```
 
+The agent asks first whether the model takes pictures. A model that cannot see
+one would answer about it anyway, and the answer would be made up, so the turn
+does not start. `model.capabilities` says what a model takes:
+
+```yaml
+model:
+  capabilities:
+    my/model:
+      image: true
+```
+
+litellm knows most models. For the ones it does not know — a relay station
+names its models in its own way — say it there.
+
 A file goes to the model with its content in the message, with `/mention` or by
 naming it in the question:
 
@@ -321,6 +335,22 @@ model:
 The rules compare numbers only, they are parsed and not evaluated, so a
 configuration file cannot run code. The interface says in the event stream when
 the model changes and why. See [Model routing](coderagent_routing.md).
+
+`model.capabilities` says what the models take: the name of a model and the
+kinds of content it takes (`image`, `audio`, `video`). The agent asks before
+it sends a picture, so a model that cannot see one does not answer about it
+with a made-up description.
+
+```yaml
+model:
+  capabilities:
+    my/model:
+      image: true
+```
+
+What the user says wins over litellm, which knows most models but few of the
+ones a relay station names in its own way. A project may not say this: the
+models belong to the user.
 
 #### How much the model thinks
 

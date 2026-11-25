@@ -8,7 +8,8 @@ from typing import Any
 
 from coderagent.config.schema import ContextConfig
 from coderagent.core import schema
-from coderagent.core.content import text_of, with_text
+from coderagent.core.capabilities import TAKES, support
+from coderagent.core.content import describe_message, modalities_of, text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.mentions import expand as expand_mentions
@@ -108,6 +109,7 @@ class AgentLoop:
         exporter=None,
         output_schema: dict | None = None,
         enforce_ceilings: bool = False,
+        capabilities: dict | None = None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -145,6 +147,8 @@ class AgentLoop:
         """Where the trace of the session goes. None means: it stays in the event log."""
         self.output_schema = output_schema
         """The shape the answer of the agent has to have. None means: any shape is fine."""
+        self.capabilities = capabilities or {}
+        """What the models take, as the user said it."""
         self._exported = 0
         """How many events of the session the backend has seen."""
         self.cancel = None
@@ -279,6 +283,23 @@ class AgentLoop:
                 prompt = with_text(prompt, f"{text_of(prompt)}\n\n[hook] {hook.additional_context}")
         prompt = with_text(prompt, expand_mentions(text_of(prompt), self.session.cwd, self.policy))
         """The files the user mentions go into the message, with their content."""
+        self._route()
+        """The model of this turn is known before the message goes into the context:
+        what the user sent has to fit the model that answers."""
+        refusal = self._refuses(prompt)
+        if refusal:
+            """The model cannot take what the user sent. It would answer anyway, and make it up."""
+            self.context.append({"role": "user", "content": describe_message(prompt)}, original=original)
+            self.session.turn_count += 1
+            self._publish(EventType.ERROR, {"error": refusal})
+            self._publish(EventType.TURN_END, {"stop_reason": "error", "error": refusal, "calls": 0, "cost": 0.0})
+            return TurnResult(
+                session_id=self.session.id,
+                turn_count=self.session.turn_count,
+                cost=0.0,
+                stop_reason="error",
+                error=refusal,
+            )
         ephemeral = REVIEW_NOTE if self.purpose == "review" else ""
         """The diff of a review is read once. It does not have to stay in the context."""
         self.context.append({"role": "user", "content": prompt}, original=original, ephemeral=ephemeral)
@@ -397,6 +418,33 @@ class AgentLoop:
             error=error,
             output=output,
         )
+
+    def _refuses(self, prompt) -> str:
+        """Why the model cannot take what the user sent. Empty when it can.
+
+        A model that cannot see a picture answers about it anyway, and the answer
+        is made up. So the turn does not start: the user is told what is missing.
+        """
+        wanted = modalities_of(prompt)
+        if not wanted:
+            return ""
+        backend = self.model.backend
+        names = [getattr(backend, "alias", ""), getattr(backend, "model_name", "")]
+        for modality in sorted(wanted):
+            said = support(names, modality, self.capabilities)
+            if said is True:
+                continue
+            name = next((one for one in names if one), "of this session")
+            if said is False:
+                return (
+                    f"The model {name} cannot {TAKES[modality]}, so the turn did not start. "
+                    f"Use a model that can (/model <name>), or say what is in the file."
+                )
+            return (
+                f"Nobody knows whether the model {name} can {TAKES[modality]}, so the turn did not start. "
+                f"Say what it takes in model.capabilities, or use a model that can."
+            )
+        return ""
 
     def _check_schema(self, response: dict) -> tuple[list[str], Any]:
         """The ways the answer does not fit the schema, and the answer when it does."""
