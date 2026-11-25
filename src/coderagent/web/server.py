@@ -65,4 +65,19 @@ def serve(
         )
     check_address(host, port)
     print(f"coder web: http://{host}:{port}", flush=True)
-    uvicorn.run(app, host=host, port=port, log_level="warning")
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=False,
+        timeout_graceful_shutdown=5,
+    )
+    """The log is at info, so that the server says what it waits for.
+
+    A browser tab holds the event stream open. Without a deadline the server
+    waits for that connection forever, and the signal that stops it does not
+    reach it: the stream has to end first, and it only ends when the browser
+    goes away. The access log is off: one line per request drowns the messages
+    that matter.
+    """
