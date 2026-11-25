@@ -5178,6 +5178,13 @@ CRLF 变体和「不唯一」的报错，可读性不错。<strong><code>apply_p
     <code>describe_message()</code>。</li>
 <li><strong>hook 还能改写带图的消息</strong>：<code>UserPromptSubmit</code> 拿到的还是文字，
     改写之后图片原样留着。</li>
+<li><strong>发之前先问模型看不看得图</strong>（<code>core/capabilities.py</code>）：看不懂图的模型也会
+    照样回答，而且答案是编的。所以这一轮不会开始，agent 会说清是哪个模型、
+    该怎么办。<strong>谁能吃什么是三态的</strong>：<code>model.capabilities</code> 里用户写的说了算，
+    其次 litellm 知道的（<code>supports_vision</code> 之类），<strong>都不知道就是不知道</strong>——
+    中转站的模型 litellm 大多不认识，这时候只有用户能说。
+    消息里带了图片/音频/视频就按这个查（<code>core/content.py</code> 的 <code>modalities_of()</code>），
+    项目不能替用户说模型能吃什么（模型是用户的）。</li>
 <li><strong>Markdown（4.3）</strong>：回答说完之后用 textual 的 <code>Markdown</code> 部件渲染
   （<code>ui/widgets/markdown_message.py</code>），代码块、表格、列表跟项目 README 里一样。
   <strong>文字流出来的时候还是纯文本</strong>——半个代码块没什么可渲染的；说完了才换过去。

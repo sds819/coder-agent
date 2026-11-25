@@ -6981,7 +6981,9 @@ $ python -m pytest -q
   不会弄坏会话。<strong>项目不能挑通知程序</strong>：那个程序跑在用户的机器上。</li>
 <li><strong>答案是 Markdown</strong>——代码块、表格、列表长得跟项目 README 里一样。文字流出来
   的时候是纯文本，说完了才渲染；<code>ui.markdown: false</code> 可以让它一直是纯文本。</li>
-<li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。</li>
+<li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。发之前
+  agent 会先问模型看不看得图：看不懂的模型也会照样回答，而且答案是编的。
+  <code>model.capabilities</code> 写模型能吃什么，给 litellm 不认识的那些模型用。</li>
 <li><strong>文件在你的编辑器里打开</strong>——<code>/open src/app.py</code> 用 <code>ui.file_opener</code> 指定的
   程序打开它（<code>vscode</code>、<code>cursor</code>、<code>windsurf</code>，或者你自己的命令）。
   <strong>项目不能挑编辑器</strong>。</li>
@@ -7340,7 +7342,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>、<code>api_key</code>、<code>api_base</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code>、<code>reasoning_effort</code>、<code>verbosity</code>、<code>review_model</code></td>
+<td><code>model_name</code>、<code>api_key</code>、<code>api_base</code>、<code>model_kwargs</code>、<code>max_retries</code>、<code>litellm_config</code>、<code>routing</code>、<code>routing_rules</code>、<code>set_cache_control</code>、<code>reasoning_effort</code>、<code>verbosity</code>、<code>review_model</code>、<code>capabilities</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>

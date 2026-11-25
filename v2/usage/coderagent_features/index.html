@@ -7090,7 +7090,10 @@ $ python -m pytest -q
   way they look in the README of a project. The text is plain while it arrives and
   is rendered when it is complete; <code>ui.markdown: false</code> keeps it plain.</li>
 <li><strong>A picture can be sent</strong> — <code>/image shot.png what is this</code> sends the picture
-  with the text that goes with it.</li>
+  with the text that goes with it. The agent asks first whether the model takes
+  pictures: a model that cannot see one would answer about it anyway, and the
+  answer would be made up. <code>model.capabilities</code> says what a model takes, for the
+  models litellm does not know.</li>
 <li><strong>A file opens in your editor</strong> — <code>/open src/app.py</code> opens it in the program
   of <code>ui.file_opener</code> (<code>vscode</code>, <code>cursor</code>, <code>windsurf</code>, or a command of your own).
   A project may not choose the editor.</li>
@@ -7472,7 +7475,7 @@ configuration of a project.</p>
 <tbody>
 <tr>
 <td><code>model</code></td>
-<td><code>model_name</code>, <code>api_key</code>, <code>api_base</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code>, <code>verbosity</code>, <code>review_model</code></td>
+<td><code>model_name</code>, <code>api_key</code>, <code>api_base</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code>, <code>reasoning_effort</code>, <code>verbosity</code>, <code>review_model</code>, <code>capabilities</code></td>
 </tr>
 <tr>
 <td><code>agent</code></td>

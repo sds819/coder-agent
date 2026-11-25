@@ -4371,6 +4371,17 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <p>图片原样发过去：<code>png</code>、<code>jpg</code>、<code>gif</code>、<code>webp</code> 是模型那边认的格式，超过 5 MB 的
 文件会被拒绝，而不是硬发过去。图片和文本一样算 token，所以上下文会按图片的大小
 变大。模型的回答像别的轮次一样留在对话里。</p>
+<p>发之前 agent 会先问模型看不看得图。看不懂图的模型也会照样回答，而且答案是编的：
+这一轮不会开始，agent 会说清是哪个模型、该怎么办。模型能吃什么写在
+<code>model.capabilities</code> 里：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">capabilities</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">my/model</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>大部分模型 litellm 是知道的。它不知道的（中转站常常自己给模型起名）就自己写：
+只读文本的写 <code>image: false</code>，能看图的写 <code>image: true</code>。项目不能写这个：模型是
+你自己的。</p>
 <p><code>/mention</code> 把一个<strong>文件</strong>发给模型，内容直接进消息，模型不用再花一次工具调用
 去读它：</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>这个文件做什么？

@@ -4378,6 +4378,19 @@ provider takes, and a file that is bigger than 5 MB is refused instead of being
 sent. The picture costs tokens like a text does, so the size of the context grows
 by the size of the image. The answer of the model stays in the conversation, like
 the answer of any other turn.</p>
+<p>The agent asks first whether the model takes pictures. A model that cannot see
+one would answer about it anyway, and the answer would be made up: the turn does
+not start, and the agent says which model it is and what to do instead. What a
+model takes is <code>model.capabilities</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">capabilities</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">my/model</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>litellm knows what most models take. For a model it does not know — a relay
+station names its models in its own way — say it here: <code>image: false</code> for a
+model that only reads text, <code>image: true</code> for one that looks at pictures. A
+project may not say this: the models are yours.</p>
 <p><code>/mention</code> sends a <strong>file</strong> to the model, with its content in the message, so
 that the model does not have to read it again with a tool call:</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
