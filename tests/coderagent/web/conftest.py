@@ -3,6 +3,7 @@
 import time
 
 import pytest
+import yaml
 
 pytest.importorskip("fastapi")
 
@@ -22,16 +23,23 @@ def make_client(tmp_path):
     """A web interface with a scripted model behind it."""
     clients = []
 
-    def build(responses=None, model=None, project_config="", **kwargs):
+    def build(responses=None, model=None, project_config="", capabilities=None, **kwargs):
         project = tmp_path / ".coderagent"
         project.mkdir(exist_ok=True)
         (project / "config.yaml").write_text(BASE_CONFIG + project_config, encoding="utf-8")
+        takes = {"scripted": {"image": True}} if capabilities is None else capabilities
+        spec = tmp_path / "capabilities.yaml"
+        spec.write_text(yaml.safe_dump({"model": {"capabilities": takes}}), encoding="utf-8")
+        """The scripted model looks at pictures. A project may not say what the
+        model of the user takes, so the tests say it here: in a spec, because a
+        session reads the files again and would lose anything said in memory."""
         config = load_config([], cwd=tmp_path)
         app = create_app(
             config,
             tmp_path,
             store=SessionStore(tmp_path / "sessions"),
             model=model or ScriptedModel(responses or []),
+            config_spec=[str(spec)],
             **kwargs,
         )
         client = TestClient(app, headers={"X-Coder-Client": "1"})

@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 
 from coderagent.config.loader import problems
 from coderagent.core.checkpoint import CheckpointStore
+from coderagent.core.content import check_image
 from coderagent.core.session import session_priced
 from coderagent.core.subagent import effective_turns, load_subagents
 from coderagent.core.telemetry import collect
@@ -37,6 +38,8 @@ STREAM_ENDS = ("turn_end", "command_end")
 
 class MessageBody(BaseModel):
     text: str
+    images: list[str] = []
+    """The images of the message, as the data urls a provider takes."""
 
 
 class ApprovalBody(BaseModel):
@@ -221,13 +224,19 @@ def fork(session_id: str, request: Request) -> dict[str, Any]:
 
 @router.post("/sessions/{session_id}/messages", status_code=202)
 def send_message(session_id: str, body: MessageBody, request: Request, _: None = Depends(require_client)) -> dict:
-    """Send a message, or run a slash command."""
+    """Send a message, with the images that go with it, or run a slash command."""
     runtime = _runtime(request, session_id)
     text = body.text.strip()
-    if not text:
+    images = []
+    for url in body.images:
+        try:
+            images.append(check_image(url))
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+    if not text and not images:
         raise HTTPException(status_code=400, detail="the message is empty")
     try:
-        runtime.submit(text)
+        runtime.submit(text, images=images)
     except SessionBusy as error:
         raise HTTPException(status_code=409, detail=str(error))
     return {"accepted": True, "session_id": runtime.session.id}

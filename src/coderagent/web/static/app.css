@@ -165,8 +165,15 @@ h1 { font-size: 20px; }
 .todos { margin: 8px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: #1b2130; }
 .todos div.done { color: var(--muted); text-decoration: line-through; }
 
-.composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
+.composer { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
+.composer-row { display: flex; gap: 8px; }
 .composer textarea { flex: 1; resize: vertical; }
+.attachments { display: flex; gap: 8px; flex-wrap: wrap; }
+.attachments:empty { display: none; }
+.attachment { position: relative; }
+.attachment img { max-height: 72px; border-radius: 6px; }
+.attachment .remove { position: absolute; top: -8px; right: -8px; padding: 0 6px; font-size: 11px; line-height: 1.5; }
+.bubble img.attached { display: block; max-width: 100%; max-height: 320px; margin-top: 8px; border-radius: 6px; }
 .row { display: flex; gap: 8px; align-items: center; }
 .commands { padding: 0 12px 12px; }
 

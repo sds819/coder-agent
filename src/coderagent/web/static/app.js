@@ -40,6 +40,7 @@ const state = {
   stick: true,
   attention: null,
   mode: "",
+  images: [],
 };
 
 function el(tag, className, text) {
@@ -244,7 +245,13 @@ function render(item) {
     case "user_message": {
       foldTurn();
       const original = item.original || "";
-      bubble("user", original || item.content);
+      const node = bubble("user", original || item.text || item.content);
+      for (const url of item.images || []) {
+        const image = el("img", "attached");
+        image.src = url;
+        image.alt = "";
+        node.appendChild(image);
+      }
       if (original && original !== item.content) {
         /* a hook rewrote the prompt: the browser shows what the user typed, and what the model got */
         const note = el("div", "rewritten", t("rewritten", { text: item.content }));
@@ -1043,6 +1050,51 @@ async function downloadSkill(skill) {
   }
 }
 
+// -- the images ------------------------------------------------------------
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/* The types the server takes. The browser and the server have to agree. */
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+
+/* An image that goes with the next message. The model takes a data url. */
+function addImage(file) {
+  if (!IMAGE_TYPES.includes(file.type)) {
+    bubble("error", t("image_bad_type"));
+    return;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    bubble("error", t("image_too_big"));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.images.push(String(reader.result));
+    showImages();
+  };
+  reader.readAsDataURL(file);
+}
+
+/* The images that are waiting to be sent. */
+function showImages() {
+  const box = document.getElementById("attachments");
+  if (!box) return;
+  box.innerHTML = "";
+  state.images.forEach((url, index) => {
+    const item = el("div", "attachment");
+    const image = el("img");
+    image.src = url;
+    image.alt = "";
+    item.appendChild(image);
+    const remove = el("button", "remove", t("remove_image"));
+    remove.onclick = () => {
+      state.images.splice(index, 1);
+      showImages();
+    };
+    item.appendChild(remove);
+    box.appendChild(item);
+  });
+}
+
 // -- the wiring ------------------------------------------------------------
 
 function wire() {
@@ -1072,26 +1124,50 @@ function wire() {
     };
   }
 
+  const input = document.getElementById("input");
   const composer = document.getElementById("composer");
   if (composer) {
     composer.onsubmit = async (event) => {
       event.preventDefault();
-      const input = document.getElementById("input");
       const text = input.value.trim();
-      if (!text || !state.sessionId) return;
+      const images = state.images.slice();
+      if ((!text && !images.length) || !state.sessionId) return;
       input.value = "";
+      state.images = [];
+      showImages();
       try {
-        await api(`/api/sessions/${state.sessionId}/messages`, { method: "POST", body: { text } });
+        await api(`/api/sessions/${state.sessionId}/messages`, { method: "POST", body: { text, images } });
       } catch (error) {
         bubble("error", error.message);
       }
     };
   }
 
+  const attach = document.getElementById("attach");
+  const attachButton = document.getElementById("attach-image");
+  if (attach && attachButton) {
+    attachButton.onclick = () => attach.click();
+    attach.onchange = () => {
+      for (const file of attach.files || []) addImage(file);
+      attach.value = "";
+    };
+  }
+
+  if (input) {
+    input.addEventListener("paste", (event) => {
+      /* The items carry what was copied: a picture of a web page comes as an
+         item of its own, not as a file. */
+      const items = Array.from((event.clipboardData || {}).items || []).filter((item) => item.kind === "file");
+      const files = items.map((item) => item.getAsFile()).filter(Boolean);
+      if (!files.length) return;
+      event.preventDefault();
+      files.forEach(addImage);
+    });
+  }
+
   const runCommand = document.getElementById("run-command");
   if (runCommand) {
     runCommand.onclick = () => {
-      const input = document.getElementById("input");
       const select = document.getElementById("command-list");
       input.value = select.value;
       document.getElementById("composer").requestSubmit();

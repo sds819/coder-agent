@@ -6,7 +6,11 @@ import pytest
 
 pytest.importorskip("fastapi")
 
+from coderagent.testing.scripted_model import ScriptedModel  # noqa: E402
 from tests.coderagent.web.conftest import assistant, bash_call, read_call, trust  # noqa: E402
+
+PNG = "data:image/png;base64,iVBORw0KGgo="
+"""An image of one pixel, as the browser sends it."""
 
 
 def test_a_turn_shows_the_conversation_and_the_tool(make_client, send, wait_for):
@@ -145,6 +149,98 @@ def test_an_empty_message_is_refused(make_client):
     session_id = client.post("/api/sessions").json()["id"]
 
     assert client.post(f"/api/sessions/{session_id}/messages", json={"text": "   "}).status_code == 400
+
+
+def test_a_message_with_an_image_reaches_the_model(make_client, wait_for):
+    """The image goes to the model with the text, not as a file on the disk."""
+    model = ScriptedModel([assistant("all done")])
+    client = make_client(model=model)
+    session_id = client.post("/api/sessions").json()["id"]
+
+    client.post(f"/api/sessions/{session_id}/messages", json={"text": "what is this?", "images": [PNG]})
+    items = wait_for(client, session_id, "turn_end")
+
+    content = model.calls[0][-1]["content"]
+    assert content[0] == {"type": "text", "text": "what is this?"}
+    assert content[1] == {"type": "image_url", "image_url": {"url": PNG}}
+    message = [item for item in items if item["kind"] == "user_message"][0]
+    assert message["text"] == "what is this?"
+    assert message["images"] == [PNG]
+
+
+def test_a_message_with_only_an_image_is_sent(make_client, wait_for):
+    model = ScriptedModel([assistant("all done")])
+    client = make_client(model=model)
+    session_id = client.post("/api/sessions").json()["id"]
+
+    response = client.post(f"/api/sessions/{session_id}/messages", json={"text": "", "images": [PNG]})
+    items = wait_for(client, session_id, "turn_end")
+
+    assert response.status_code == 202
+    assert {"type": "image_url", "image_url": {"url": PNG}} in model.calls[0][-1]["content"]
+    assert [item for item in items if item["kind"] == "user_message"][0]["images"] == [PNG]
+
+
+def test_an_image_that_is_not_an_image_is_refused(make_client):
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+
+    response = client.post(
+        f"/api/sessions/{session_id}/messages", json={"text": "look", "images": ["data:text/plain;base64,aGk="]}
+    )
+
+    assert response.status_code == 400
+    assert "not a type" in response.json()["detail"]
+
+
+def test_an_image_that_is_too_big_is_refused(make_client):
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+
+    response = client.post(
+        f"/api/sessions/{session_id}/messages",
+        json={"text": "look", "images": ["data:image/png;base64," + "A" * (7 * 1024 * 1024)]},
+    )
+
+    assert response.status_code == 400
+    assert "too big" in response.json()["detail"]
+
+
+def test_an_image_that_is_not_base64_is_refused(make_client):
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+
+    response = client.post(
+        f"/api/sessions/{session_id}/messages", json={"text": "look", "images": ["data:image/png,raw"]}
+    )
+
+    assert response.status_code == 400
+    assert "base64" in response.json()["detail"]
+
+
+def test_a_command_cannot_carry_an_image(make_client, wait_for):
+    """A command runs on the session, not on a message."""
+    client = make_client(responses=[assistant("all done")])
+    session_id = client.post("/api/sessions").json()["id"]
+
+    client.post(f"/api/sessions/{session_id}/messages", json={"text": "/help", "images": [PNG]})
+    items = wait_for(client, session_id, "error")
+
+    assert "command" in [item for item in items if item["kind"] == "error"][0]["error"]
+    assert any(item["kind"] == "turn_end" for item in items)
+
+
+def test_a_model_that_cannot_see_the_picture_refuses_the_turn(make_client, wait_for):
+    """The model would answer about the picture anyway, and the answer would be made up."""
+    model = ScriptedModel([assistant("all done")])
+    client = make_client(model=model, capabilities={"scripted": {"image": False}})
+    session_id = client.post("/api/sessions").json()["id"]
+
+    client.post(f"/api/sessions/{session_id}/messages", json={"text": "what is this?", "images": [PNG]})
+    items = wait_for(client, session_id, "error")
+
+    assert not model.calls
+    assert "cannot take pictures" in [item for item in items if item["kind"] == "error"][0]["error"]
 
 
 def test_a_model_that_fails_ends_the_turn_with_an_error(make_client, send, wait_for):

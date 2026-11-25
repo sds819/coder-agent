@@ -93,6 +93,24 @@ def data_url(path: Path) -> str:
     return f"data:{IMAGE_TYPES[suffix]};base64,{base64.b64encode(data).decode('ascii')}"
 
 
+def check_image(url: str) -> str:
+    """The image of a data url, when a provider takes it.
+
+    The url comes from the outside, so it is checked before it reaches the model:
+    only the types of `IMAGE_TYPES` and only up to `MAX_IMAGE_BYTES`.
+    """
+    head, _, payload = url.partition(",")
+    if not payload or not head.startswith("data:"):
+        raise ValueError("the image is not a data url")
+    if "base64" not in head:
+        raise ValueError("the image is not base64")
+    if head.split(";")[0].removeprefix("data:") not in IMAGE_TYPES.values():
+        raise ValueError(f"the image is not a type a provider takes: {', '.join(IMAGE_TYPES)}")
+    if len(payload) * 3 // 4 > MAX_IMAGE_BYTES:
+        raise ValueError(f"the image is too big: the limit is {MAX_IMAGE_BYTES // 1024} KB")
+    return url
+
+
 def image_tokens(content) -> int:
     """What the images of a message cost. An estimate, like the rest of the counting."""
     return sum(max(1, _tokens_of_url(url)) for url in images_of(content))
@@ -126,6 +144,7 @@ def _size_of(encoded: str) -> tuple[int, int] | None:
 __all__ = [
     "IMAGE_TYPES",
     "MAX_IMAGE_BYTES",
+    "check_image",
     "data_url",
     "describe_message",
     "image_tokens",

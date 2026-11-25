@@ -15,6 +15,7 @@ from typing import Any
 
 from coderagent.config.loader import load_config
 from coderagent.config.schema import Config
+from coderagent.core.content import parts
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.protocols import ModelBackend
@@ -127,9 +128,9 @@ class SessionRuntime:
 
     # -- the work ---------------------------------------------------------
 
-    def submit(self, text: str, purpose: str = "") -> None:
+    def submit(self, text: str, purpose: str = "", images: list[str] | None = None) -> None:
         """Queue a message for the worker. Raises `SessionBusy` when it is running."""
-        self._enqueue(lambda: self._execute(text, purpose))
+        self._enqueue(lambda: self._execute(text, purpose, images or []))
 
     def _enqueue(self, job: Callable[[], None]) -> None:
         """Put a job on the worker thread. Only one job runs at a time."""
@@ -171,18 +172,24 @@ class SessionRuntime:
                 self.busy.clear()
                 self._queue.task_done()
 
-    def _execute(self, text: str, purpose: str = "") -> None:
+    def _execute(self, text: str, purpose: str = "", images: list[str] | None = None) -> None:
+        images = images or []
         if text.startswith("/"):
+            if images:
+                """A command runs on the session, not on a message."""
+                self.emit({"kind": "error", "error": "a command cannot carry an image"})
+                self.emit({"kind": "turn_end", "stop_reason": "error", "cost": 0.0, "error": ""})
+                return
             self._run_command(text)
             return
-        self._run_turn(text, purpose)
+        self._run_turn(text, purpose, images)
 
-    def _run_turn(self, text: str, purpose: str = "") -> None:
+    def _run_turn(self, text: str, purpose: str = "", images: list[str] | None = None) -> None:
         loop = self.loop()
         self.cancel.clear()
         loop.cancel = self.cancel.is_set
         try:
-            result = loop.run_turn(text, purpose)
+            result = loop.run_turn(parts(text, images) if images else text, purpose)
         except Exception as error:
             self.emit({"kind": "error", "error": f"{type(error).__name__}: {error}"})
             self.emit({"kind": "turn_end", "stop_reason": "error", "cost": 0.0, "error": str(error)})
