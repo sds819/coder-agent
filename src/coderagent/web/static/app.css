@@ -108,6 +108,9 @@ h1 { font-size: 20px; }
 }
 .history > summary:hover { color: var(--text); }
 .history-body { padding: 0 10px 10px; border-top: 1px solid var(--border); }
+/* A folded history takes no room: the browser keeps the space of the closed
+   details, and the conversation would not get any shorter. */
+.history:not([open]) > .history-body { display: none; }
 
 .bubble {
   margin: 8px 0;

@@ -57,7 +57,7 @@ Three columns:
   The page itself does not scroll: every column has its own scrollbar. The
   conversation follows the newest output, unless you scroll up to read
   something. The turns before the current one are folded into a block at the
-  top — click it to look at them.
+  top — click it to look at them. A new turn folds the block again.
 
   While the agent is thinking, the dots at the end of the conversation grow and
   shrink. They are the same dots as in the terminal, and they go away as soon

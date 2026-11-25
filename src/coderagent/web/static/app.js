@@ -109,6 +109,9 @@ function foldTurn() {
   history.querySelector(".history-body").appendChild(done);
   const count = history.querySelectorAll(".turn").length;
   history.querySelector("summary").textContent = t("earlier_turns", { count });
+  /* A new turn folds the history again: the conversation of the turn that
+     runs is what the user looks at. */
+  history.open = false;
 }
 
 /* The conversation follows the newest content, unless the user scrolled up. */
