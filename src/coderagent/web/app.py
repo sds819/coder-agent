@@ -12,6 +12,7 @@ from coderagent.config.loader import load_config
 from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
+from coderagent.ui.spinner import FRAMES
 from coderagent.web.api import router
 from coderagent.web.i18n import COOKIE, DEFAULT_LANGUAGE, LANGUAGES, STRINGS, Language, locale_of
 from coderagent.web.sessions import SessionRegistry
@@ -70,6 +71,8 @@ def create_app(
                 "language": language,
                 "languages": languages,
                 "strings": STRINGS[language],
+                "dots": list(FRAMES),
+                # the dots that say the agent is working: the same as in the terminal
             },
         )
 

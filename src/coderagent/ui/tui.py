@@ -35,6 +35,7 @@ from coderagent.ui.widgets import (
     StatusBar,
     TodoPanel,
     ToolCard,
+    WorkingDots,
 )
 from coderagent.ui.widgets.diff_view import prospective_diff
 from coderagent.ui.widgets.path_suggester import PathSuggester
@@ -132,6 +133,8 @@ class CoderApp(App):
         """The message the agent is writing right now."""
         self.pending_approval: ApprovalPrompt | None = None
         self.approval_id = ""
+        self.working: WorkingDots | None = None
+        """The dots that say the agent is still working."""
         self.turn_running = threading.Event()
         self.interrupted = threading.Event()
         self.alive = True
@@ -226,7 +229,9 @@ class CoderApp(App):
                 "notice",
                 f"Switched from {payload.get('previous', '?')} to {payload['model']}: {payload.get('reason', '')}",
             )
-        self._ui(self._update_status, payload.get("state", ""))
+        state = payload.get("state", "")
+        self._ui(self._show_working if state == "thinking" else self._hide_working)
+        self._ui(self._update_status, state)
 
     def _on_error(self, event: Event) -> None:
         self._ui(self._add_message, "error", event.payload.get("error", ""))
@@ -281,20 +286,39 @@ class CoderApp(App):
         block.scroll_visible()
 
     def _append_text(self, text: str) -> None:
+        self._hide_working()
+        """The answer is coming: the dots have nothing left to say."""
         if self.current is None:
             self._add_message("assistant", "")
         self.current.append(text)
 
     def _add_reasoning(self, text: str) -> None:
+        self._hide_working()
         if self.current is None:
             self._add_message("assistant", "")
         self.current.add_reasoning(text)
 
     def _add_card(self, action: dict) -> None:
+        self._hide_working()
+        """The card of the tool says that the tool is running."""
         card = ToolCard(action.get("tool", ""), action.get("args", {}), action.get("tool_call_id", ""))
         self.cards[card.call_id] = card
         self.query_one("#conversation", VerticalScroll).mount(card)
         card.start()
+
+    def _show_working(self) -> None:
+        """Say that the agent is still working."""
+        if self.working is not None:
+            return
+        self.working = WorkingDots()
+        self.query_one("#conversation", VerticalScroll).mount(self.working)
+
+    def _hide_working(self) -> None:
+        """The agent said something; the dots go away."""
+        if self.working is None:
+            return
+        self.working.remove()
+        self.working = None
 
     def _finish_card(self, payload: dict) -> None:
         card = self.cards.get(payload.get("tool_call_id", ""))
@@ -391,6 +415,8 @@ class CoderApp(App):
             return
         finally:
             self.turn_running.clear()
+            self._ui(self._hide_working)
+            """The turn is over: the dots have nothing left to say."""
         if result.stop_reason == "interrupted":
             self._ui(self._add_message, "error", "interrupted")
         elif result.error:
@@ -552,6 +578,8 @@ class CoderApp(App):
         self.query_one("#conversation", VerticalScroll).remove_children()
         self.cards.clear()
         self.current = None
+        self.working = None
+        """The dots of the session that was left belong to it."""
         for event in self.store.events(session_id):
             if event.type == EventType.USER_MESSAGE:
                 self._add_message("user", describe_message(event.payload.get("content", "")))

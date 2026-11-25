@@ -26,6 +26,10 @@ the end of each section.
 - **In a benchmark** — the run scripts of mini-swe-agent solve SWE-bench and
   ProgramBench with the same model interface.
 
+While the agent works, the terminal, the terminal interface and the browser
+all show the same dots growing and shrinking. That is the sign that the agent
+is busy: it says nothing, but it is not stuck.
+
 ### Example
 
 ```bash

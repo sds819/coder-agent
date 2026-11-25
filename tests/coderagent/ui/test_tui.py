@@ -22,7 +22,7 @@ pytest.importorskip("textual")
 from textual.widgets import Input  # noqa: E402
 
 from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
-from coderagent.ui.widgets import FileTree, MarkdownMessage, MessageBlock, ToolCard  # noqa: E402
+from coderagent.ui.widgets import FileTree, MarkdownMessage, MessageBlock, ToolCard, WorkingDots  # noqa: E402
 
 
 def _app(tmp_path, responses=None, mode="default", markdown=True, include_dirs=None):
@@ -83,6 +83,59 @@ def test_the_summary_of_the_arguments():
     assert summarize({"path": "a.py"}) == "path=a.py"
     assert summarize({"command": "ls"}) == "command=ls"
     assert summarize({}) == ""
+
+
+def test_the_dots_say_that_the_agent_is_working(tmp_path):
+    """The agent is thinking: the dots show, and they go when it says something."""
+    app = _app(tmp_path)
+    seen = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            app.bus.publish(
+                Event(type=EventType.STATE_CHANGE, session_id="", timestamp=0.0, payload={"state": "thinking"})
+            )
+            await pilot.pause()
+            seen.append(len(list(app.query(WorkingDots))))
+            app.bus.publish(Event(type=EventType.STATE_CHANGE, session_id="", timestamp=0.0, payload={"state": "done"}))
+            await pilot.pause()
+            seen.append(len(list(app.query(WorkingDots))))
+
+    asyncio.run(go())
+    assert seen == [1, 0]
+
+
+def test_no_dots_are_left_after_a_turn(tmp_path):
+    """The dots are the sign that the agent works: a turn that is over has none."""
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"hello")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: _assistant_blocks(app))
+            assert await _wait_for(lambda: not list(app.query(WorkingDots)))
+
+    asyncio.run(go())
+
+
+def test_the_dots_move(tmp_path):
+    """The dots are an animation, not a sign that stands still."""
+    app = _app(tmp_path)
+    frames = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            app.bus.publish(
+                Event(type=EventType.STATE_CHANGE, session_id="", timestamp=0.0, payload={"state": "thinking"})
+            )
+            await pilot.pause()
+            for _ in range(6):
+                frames.append(app.query_one(WorkingDots).content)
+                await asyncio.sleep(0.2)
+
+    asyncio.run(go())
+    assert len(set(frames)) > 1
 
 
 def test_the_app_shows_the_answer(tmp_path):

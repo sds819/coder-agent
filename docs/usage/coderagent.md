@@ -65,6 +65,10 @@ coder -c model.model_name=deepseek/deepseek-flash -c permissions.mode=plan
 
 ### The output
 
+While the agent works, the terminal shows dots that grow and shrink. The line
+is cleaned when the answer comes. A pipe or a file gets the answer alone: the
+dots are for a terminal, and the json output is never mixed with them.
+
 The text output is the conversation and one line about the turn:
 
 ```
@@ -116,6 +120,10 @@ The trace is the event log of the session with the metrics of the session. With
 goes to that OpenTelemetry collector. See [Trace export](coderagent_export.md).
 
 ## The terminal interface
+
+While the agent is thinking, the conversation ends with dots that grow and
+shrink. They go away as soon as it says or does something: the same dots as
+in the browser.
 
 | Key | What it does |
 |---|---|

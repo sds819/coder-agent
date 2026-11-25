@@ -59,6 +59,10 @@ Three columns:
   something. The turns before the current one are folded into a block at the
   top — click it to look at them.
 
+  While the agent is thinking, the dots at the end of the conversation grow and
+  shrink. They are the same dots as in the terminal, and they go away as soon
+  as the agent says or does something.
+
   When you scroll up, a button (`Jump to the newest`) appears above the
   composer and takes you back to the end of the conversation.
 

@@ -23,6 +23,9 @@
 - **跑 benchmark**——mini-swe-agent 的那些运行脚本用同一套模型接口解
   SWE-bench 和 ProgramBench。
 
+agent 在干活的时候，终端、终端界面和浏览器里都是同一串长长短短的点。那是
+「它在忙」的信号：它没说话，但它没卡住。
+
 ### 用法例子
 
 ```bash

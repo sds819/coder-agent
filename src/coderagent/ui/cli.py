@@ -18,6 +18,7 @@ from coderagent.core.session import Session, SessionStore, session_priced
 from coderagent.models.backends import priced_name
 from coderagent.run import build_loop, build_store, run_turn
 from coderagent.ui.render import last_message, render
+from coderagent.ui.spinner import TerminalDots
 
 app = typer.Typer(rich_markup_mode="rich", invoke_without_command=True, no_args_is_help=False)
 
@@ -44,16 +45,22 @@ def main_impl(
     output_last_message: Path | None = None,
 ) -> str:
     """Run one turn and render the result."""
-    result = run_turn(
-        task,
-        config,
-        cwd=cwd,
-        model=model,
-        store=store,
-        session=session,
-        permission_mode=permission_mode,
-        output_schema=output_schema,
-    )
+    dots = TerminalDots(enabled=output_format != "json")
+    """The dots say that the agent is working; a machine reads the answer alone."""
+    dots.start()
+    try:
+        result = run_turn(
+            task,
+            config,
+            cwd=cwd,
+            model=model,
+            store=store,
+            session=session,
+            permission_mode=permission_mode,
+            output_schema=output_schema,
+        )
+    finally:
+        dots.stop()
     if output_last_message is not None:
         """The last answer of the agent, in a file of its own."""
         output_last_message.write_text(last_message(result), encoding="utf-8")
@@ -112,11 +119,22 @@ def run_command(
         checkpoints=loop.checkpoints,
         mcp=loop.mcp,
         output=typer.echo,
-        submit=lambda text, purpose="": typer.echo(render(loop.run_turn(text, purpose), output_format)),
-        submit_side=lambda text, session: typer.echo(render(loop.run_turn(text, "side", session), output_format)),
+        submit=lambda text, purpose="": _turn(loop, text, purpose, output_format),
+        submit_side=lambda text, session: _turn(loop, text, "side", output_format, session),
         quit=lambda: None,
     )
     run(context, task)
+
+
+def _turn(loop, text: str, purpose: str, output_format: str, session=None) -> None:
+    """Run a turn and say what it said; the dots say that the agent is working."""
+    dots = TerminalDots(enabled=output_format != "json")
+    dots.start()
+    try:
+        result = loop.run_turn(text, purpose, session)
+    finally:
+        dots.stop()
+    typer.echo(render(result, output_format))
 
 
 def render_sessions(sessions: list[Session], output_format: str = "text", model: str = "") -> str:

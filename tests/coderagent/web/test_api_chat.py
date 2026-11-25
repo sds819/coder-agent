@@ -298,3 +298,23 @@ def test_the_stream_ends_when_the_server_stops(make_client):
     assert "stream_end" not in kinds
     assert ": keep-alive" not in body
     assert response.status_code == 200
+
+
+def test_the_browser_is_told_when_the_agent_thinks(make_client, send, wait_for):
+    """The dots of the browser show while the agent thinks."""
+    client = make_client(responses=[assistant("hi", cost=0.1)], permission_mode="bypass")
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "hello")
+
+    items = wait_for(client, session_id, "turn_end")
+
+    states = [item["state"] for item in items if item["kind"] == "state"]
+    assert "thinking" in states
+    assert states[-1] == "done"
+
+
+def test_the_page_has_the_dots_of_the_terminal(make_client):
+    """The browser shows the same animation as the terminal."""
+    page = make_client().get("/").text
+
+    assert 'window.DOT_FRAMES = [".", "..", "...", ".."]' in page

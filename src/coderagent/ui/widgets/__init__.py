@@ -10,6 +10,7 @@ from coderagent.ui.widgets.session_picker import SessionPicker
 from coderagent.ui.widgets.status_bar import StatusBar
 from coderagent.ui.widgets.todo_panel import TodoPanel
 from coderagent.ui.widgets.tool_card import ToolCard
+from coderagent.ui.widgets.working_dots import WorkingDots
 
 __all__ = [
     "ApprovalPrompt",
@@ -23,5 +24,6 @@ __all__ = [
     "StatusBar",
     "TodoPanel",
     "ToolCard",
+    "WorkingDots",
     "make_diff",
 ]

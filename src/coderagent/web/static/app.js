@@ -30,6 +30,10 @@ const STOP_NOTES = {
   interrupted: "stop_interrupted",
 };
 
+/* The dots that say the agent is still working. The server hands them over:
+   the same animation as in the terminal. */
+const DOT_FRAMES = window.DOT_FRAMES || [".", "..", "...", ".."];
+
 const state = {
   sessionId: null,
   seq: 0,
@@ -41,6 +45,8 @@ const state = {
   attention: null,
   mode: "",
   images: [],
+  working: null,
+  workingTimer: null,
 };
 
 function el(tag, className, text) {
@@ -155,6 +161,26 @@ function bubble(className, text) {
   return node;
 }
 
+/* The sign that the agent is still working: the dots grow and shrink. */
+function showWorking() {
+  if (state.working) return;
+  state.working = bubble("working", DOT_FRAMES[0]);
+  let step = 0;
+  state.workingTimer = setInterval(() => {
+    step += 1;
+    state.working.textContent = DOT_FRAMES[step % DOT_FRAMES.length];
+  }, 400);
+}
+
+/* The agent said something: the dots go away. */
+function hideWorking() {
+  if (!state.working) return;
+  clearInterval(state.workingTimer);
+  state.workingTimer = null;
+  state.working.remove();
+  state.working = null;
+}
+
 function toolCard(item) {
   const card = el("div", "tool");
   const header = el("header");
@@ -263,6 +289,7 @@ function render(item) {
     }
     case "assistant_message": {
       const content = item.content || "";
+      hideWorking();
       if (state.assistant) {
         /* the answer was streamed into this bubble; the message is the whole of it */
         state.assistant.textContent = content;
@@ -275,6 +302,7 @@ function render(item) {
       break;
     }
     case "text_delta": {
+      hideWorking();
       if (!state.assistant) {
         state.assistant = bubble("assistant", "");
       }
@@ -286,6 +314,7 @@ function render(item) {
     case "reasoning":
       break;
     case "tool_call":
+      hideWorking();
       state.cards[item.tool_call_id] = toolCard(item);
       break;
     case "tool_result":
@@ -313,6 +342,11 @@ function render(item) {
     }
     case "todos":
       renderTodos(item.todos);
+      break;
+    case "state":
+      /* The agent is thinking: the dots say so, until it says something. */
+      if (item.state === "thinking") showWorking();
+      else hideWorking();
       break;
     case "command_output":
       bubble("command", item.text);
@@ -359,6 +393,7 @@ function render(item) {
     case "turn_stopped": {
       /* A turn that was cut off says so: the agent went quiet and the user
          has to know why. */
+      hideWorking();
       const note = STOP_NOTES[item.stop_reason];
       if (note) bubble("separator", t(note, { calls: item.calls || 0 }));
       break;

@@ -25,6 +25,7 @@
   </header>
   {% block content %}{% endblock %}
   <script>window.STRINGS = {{ strings | tojson }};</script>
+  <script>window.DOT_FRAMES = {{ dots | tojson }};</script>
   <script src="/static/app.js"></script>
 </body>
 </html>
