@@ -63,6 +63,8 @@ Three columns:
   shrink. They are the same dots as in the terminal, and they go away as soon
   as the agent says or does something.
 
+  The card of a tool that is running shows the same dots until the tool is done.
+
   When you scroll up, a button (`Jump to the newest`) appears above the
   composer and takes you back to the end of the conversation.
 

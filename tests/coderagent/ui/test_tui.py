@@ -19,6 +19,7 @@ from coderagent.ui.widgets.tool_card import summarize
 
 pytest.importorskip("textual")
 
+from textual.containers import VerticalScroll  # noqa: E402
 from textual.widgets import Input  # noqa: E402
 
 from coderagent.ui.tui import CoderApp, TUIAprover  # noqa: E402
@@ -338,6 +339,26 @@ def test_the_card_of_a_tool_call_is_shown(tmp_path):
     asyncio.run(go())
     assert cards[0].tool == "bash"
     assert "hi" in cards[0].content
+
+
+def test_the_card_of_a_running_tool_shows_the_dots(tmp_path):
+    """The tool is running: the dots grow and shrink, and they are not the old sign."""
+    app = _app(tmp_path)
+    frames = []
+
+    async def go():
+        async with app.run_test() as pilot:
+            card = ToolCard("bash", {"command": "ls"})
+            app.query_one("#conversation", VerticalScroll).mount(card)
+            await pilot.pause()
+            for _ in range(6):
+                frames.append(str(card.render()))
+                await asyncio.sleep(0.2)
+            card.finish("done")
+
+    asyncio.run(go())
+    assert len(set(frames)) > 1
+    assert all("…" not in frame for frame in frames)
 
 
 def test_the_brackets_of_the_model_do_not_break_the_message():

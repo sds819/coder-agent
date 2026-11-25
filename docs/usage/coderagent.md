@@ -125,6 +125,8 @@ While the agent is thinking, the conversation ends with dots that grow and
 shrink. They go away as soon as it says or does something: the same dots as
 in the browser.
 
+The card of a tool that is running shows the same dots until the tool is done.
+
 | Key | What it does |
 |---|---|
 | `ctrl+c` | Stop the turn that is running — and the tool that is running with it. A second time leaves. |

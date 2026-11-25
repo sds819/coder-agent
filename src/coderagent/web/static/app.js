@@ -187,15 +187,25 @@ function toolCard(item) {
   header.appendChild(el("strong", "", item.tool || t("tool")));
   if (item.summary) header.appendChild(el("span", "", item.summary));
   card.appendChild(header);
-  const body = el("div", "body", t("running"));
+  const body = el("div", "body", DOT_FRAMES[0]);
   card.appendChild(body);
   target().appendChild(card);
+  let step = 0;
+  /* The tool is running: the dots grow and shrink until it is done. */
+  card.timer = setInterval(() => {
+    step += 1;
+    body.textContent = DOT_FRAMES[step % DOT_FRAMES.length];
+  }, 400);
   scrollToBottom();
   return card;
 }
 
 function fillTool(card, item) {
   if (!card) return;
+  if (card.timer) {
+    clearInterval(card.timer);
+    card.timer = null;
+  }
   const body = card.querySelector(".body");
   body.className = `body ${item.is_error ? "bad" : "ok"}`;
   if (item.diff) {

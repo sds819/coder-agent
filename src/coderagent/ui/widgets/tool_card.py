@@ -5,6 +5,7 @@ from typing import Any
 
 from textual.widgets import Static
 
+from coderagent.ui.spinner import INTERVAL, dots
 from coderagent.ui.widgets.diff_view import colorize_diff
 from coderagent.ui.widgets.markup import literal
 
@@ -47,6 +48,9 @@ class ToolCard(Static):
         """What the tool returned. It is not markup."""
         self.is_error = False
         self.diff = ""
+        self.step = 0
+        """The frame of the animation that says the tool is running."""
+        self._timer = None
 
     @property
     def content(self) -> str:
@@ -60,11 +64,20 @@ class ToolCard(Static):
         self.clear_cached_dimensions()
         self.refresh(layout=True)
 
+    def on_mount(self) -> None:
+        """The tool is running: the dots grow and shrink until it is done."""
+        self._timer = self.set_interval(INTERVAL, self._tick)
+
+    def _tick(self) -> None:
+        """The next frame of the animation."""
+        self.step += 1
+        self.refresh()
+
     def render(self) -> str:
         summary = summarize(self.args)
         title = f"[bold]Tool: {literal(self.tool)}[/bold]" + (f" ({literal(summary)})" if summary else "")
         if not self.text:
-            return f"{title}  [dim]…[/dim]"
+            return f"{title}  [dim]{dots(self.step)}[/dim]"
         mark = "[red]✗[/red]" if self.is_error else "[green]✓[/green]"
         lines = [f"{title}  {mark} {self.duration * 1000:.0f}ms"]
         if self.diff:
@@ -80,6 +93,10 @@ class ToolCard(Static):
 
     def finish(self, content: str, is_error: bool = False, diff: str = "") -> None:
         """The tool is done."""
+        if self._timer is not None:
+            self._timer.stop()
+            self._timer = None
+            """The dots have nothing left to say."""
         self.duration = time.time() - self.started
         self.content = content
         self.is_error = is_error
