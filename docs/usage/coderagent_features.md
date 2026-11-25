@@ -1237,7 +1237,7 @@ and `○` (pending).
 - **The permissions in two places** — the settings page for the next
   session, the chat page for the session that is running, right away.
 - **The approvals in the browser** — the same three answers.
-- **A picture in the browser** — the `Image` button next to the composer, or a
+- **A picture in the browser** — the `+` button next to the composer, or a
   picture pasted into it. It goes to the model with the message, and the types
   and the limit are the ones of the terminal (`/image`).
 - **The languages** — English and Chinese. The switch in the top bar changes

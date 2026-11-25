@@ -66,7 +66,7 @@ Three columns:
   When you scroll up, a button (`Jump to the newest`) appears above the
   composer and takes you back to the end of the conversation.
 
-  The `Image` button next to the box attaches a picture to the next message; a
+  The `+` button next to the box attaches a picture to the next message; a
   picture that is pasted into the box is attached the same way. The attached
   pictures are shown above the box, and each one can be removed before the
   message is sent. The picture goes to the model with the text of the message,
@@ -446,7 +446,7 @@ Read this before you put it on a network.
 | Streaming | Yes | Yes, over SSE |
 | Approvals | Yes | Yes, with the same three answers |
 | Slash commands | Yes | Yes, the same ones |
-| Pictures | `/image` | The `Image` button, or a paste |
+| Pictures | `/image` | The `+` button, or a paste |
 | The model configuration | A text file | A form, plus a preview of the layers |
 | The files of the project | The tools of the agent | A tree on the left |
 | The cost | `/cost` | The status bar, and `/cost` |

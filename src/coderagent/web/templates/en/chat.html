@@ -25,9 +25,13 @@
     <form id="composer" class="composer">
       <div id="attachments" class="attachments"></div>
       <div class="composer-row">
+        <button type="button" id="attach-image" class="attach" title="{{ strings.attach_image }}" aria-label="{{ strings.attach_image }}">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" />
+          </svg>
+        </button>
         <textarea id="input" rows="2" placeholder="Message the agent, or a command like /help"></textarea>
         <input type="file" id="attach" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
-        <button type="button" id="attach-image">Image</button>
         <button type="submit" class="primary">Send</button>
       </div>
     </form>
