@@ -4548,9 +4548,7 @@ coder<span class="w"> </span>web
   一律拒绝。</li>
 <li><strong>中栏</strong>：对话。消息是气泡，工具调用是卡片（带输出和这次改动的 diff），审批是带三个
   按钮的卡片。下面的输入框既能发消息也能发 slash 命令（<code>/help</code>、<code>/clear</code>、<code>/cost</code>……，
-  和终端里是同一套命令，列表在输入框下面的下拉框里，下拉框里还写着每个命令收什么参数）。
-  <code>评审改动</code> 评审工作区里的改动：diff 进单独的一轮，浏览器先把被评审的 diff 显示出来，
-  下面才是模型说的问题。<code>Interrupt</code> 停掉正在跑的那一轮。</li>
+  和终端里是同一套命令）。</li>
 </ul>
 <p>页面本身不滚动，每一栏各滚各的。对话区会跟着新的输出滚到底，除非你往上翻去看别的东西。
 当前这一轮之前的历史折叠在顶部一个块里，点开就能看。
@@ -4786,7 +4784,7 @@ slash 命令不能带图。</p>
 <p><code>plan</code> 和 <code>readonly</code> 会拒掉所有会改东西的工具（<code>bash</code> 也算），而且模型会被告知这件事，
 所以它会说出看到的东西，而不是动手去改。</p>
 <p><code>bypass</code> 也没有上限：钱、token 和模型调用的次数在这个模式下都不拦这一轮——
-它一直跑到活干完，你按 <code>Interrupt</code> 才停。别的模式照旧有这些上限。</p>
+它一直跑到活干完，你把它停掉。别的模式照旧有这些上限。</p>
 <h3 id="_3">设置页</h3>
 <p>表单里有模式、禁止访问的路径、额外的目录和网络开关，写到和模型同一个用户级文件
 <code>~/.coderagent/config.yaml</code>（或者 <code>$MSWEA_CODER_HOME/config.yaml</code>）。项目级的文件永远不写，
@@ -5156,7 +5154,7 @@ key 确实不在：配置文件里没有，环境里也没有对应厂商的变�
 <p><strong>「接口返回 403」</strong>
 少了 <code>X-Coder-Client: 1</code> 头。浏览器里不用管，页面自己会带。</p>
 <p><strong>「发消息返回 409」</strong>
-这个会话正忙着在跑一轮。等它跑完，或者先 <code>Interrupt</code>。</p>
+这个会话正忙着在跑一轮。等它跑完，或者先用 <code>POST /api/sessions/{id}/interrupt</code> 把它停掉。</p>
 <p><strong>「读文件返回 403」</strong>
 路径在工作目录外面。要么改路径，要么在配置里加 <code>permissions.include_dirs</code>。</p>
 <p><strong>「页面打开是空的 / 连不上」</strong>
