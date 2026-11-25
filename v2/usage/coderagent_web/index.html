@@ -4461,8 +4461,8 @@ coder<span class="w"> </span>web
 <div class="highlight"><pre><span></span><code>coder web: http://127.0.0.1:8765
 </code></pre></div>
 <p>Open that address in a browser.</p>
-<p>The server runs until <code>ctrl+c</code> stops it. The browser holds the event stream
-open, so the server gives that stream five seconds to end before it stops.</p>
+<p>The server runs until <code>ctrl+c</code> stops it. A browser tab holds the event stream
+open; the server ends those streams itself, so it stops at once.</p>
 <h2 id="the-command-line">The command line</h2>
 <table>
 <thead>

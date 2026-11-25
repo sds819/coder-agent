@@ -4500,7 +4500,7 @@ coder<span class="w"> </span>web
 <div class="highlight"><pre><span></span><code>coder web: http://127.0.0.1:8765
 </code></pre></div>
 <p>浏览器打开这个地址就能用。服务一直开着，按 <code>ctrl+c</code> 停掉。</p>
-<p>浏览器占着事件流，服务会先给它五秒钟收尾，然后才停。</p>
+<p>浏览器占着事件流，服务会先把这些流收掉，然后自己停掉。</p>
 <h2 id="cli">命令行选项</h2>
 <table>
 <thead>
