@@ -178,7 +178,10 @@ h1 { font-size: 20px; }
 .attachment .remove { position: absolute; top: -8px; right: -8px; padding: 0 6px; font-size: 11px; line-height: 1.5; }
 .bubble img.attached { display: block; max-width: 100%; max-height: 320px; margin-top: 8px; border-radius: 6px; }
 .row { display: flex; gap: 8px; align-items: center; }
-.commands { padding: 0 12px 12px; }
+.commands { display: none; }
+/* The row of the commands is hidden for now: the dropdown and the three
+   buttons under the box are a lot of noise, and the commands are typed in the
+   box anyway. Take the `display` away and they are back. */
 
 input, textarea, select, button {
   font: inherit;

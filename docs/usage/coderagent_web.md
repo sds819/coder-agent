@@ -52,11 +52,7 @@ Three columns:
   the output and the diff of the change, approvals are cards with three
   buttons. The box under the conversation takes a message or a slash command
   (`/help`, `/clear`, `/cost`, … — the same commands as the terminal
-  interface). The dropdown under the box lists them and says what each one
-  takes. `Review the changes` reviews the changes of the working tree: the
-  diff goes into a turn of its own, and the browser shows the diff that is
-  being reviewed above the findings. `Interrupt` stops the turn that is
-  running.
+  interface).
 
   The page itself does not scroll: every column has its own scrollbar. The
   conversation follows the newest output, unless you scroll up to read
@@ -246,7 +242,7 @@ instead of changing anything.
 
 `bypass` has no ceiling either: the money, the tokens and the number of the
 model calls do not stop a turn in this mode — it runs until the work is done
-and you press `Interrupt`. Every other mode keeps those ceilings.
+and you stop it. Every other mode keeps those ceilings.
 
 ### The settings page
 
@@ -490,7 +486,8 @@ away.
 The header `X-Coder-Client: 1` is missing. The browser sends it by itself.
 
 **"Sending a message answers 409"**
-The session is busy running a turn. Wait for it, or press `Interrupt` first.
+The session is busy running a turn. Wait for it, or stop it first with
+`POST /api/sessions/{id}/interrupt`.
 
 **"Reading a file answers 403"**
 The path is outside the working directory. Change the path, or add the
