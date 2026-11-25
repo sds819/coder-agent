@@ -65,7 +65,7 @@ def serve(
         )
     check_address(host, port)
     print(f"coder web: http://{host}:{port}", flush=True)
-    uvicorn.run(
+    config = uvicorn.Config(
         app,
         host=host,
         port=port,
@@ -81,3 +81,20 @@ def serve(
     goes away. The access log is off: one line per request drowns the messages
     that matter.
     """
+
+    class Server(uvicorn.Server):
+        """A server that lets the browsers go before it stops."""
+
+        def handle_exit(self, sig: int, frame: object) -> None:
+            """The streams of the sessions end first.
+
+            The server waits for its connections before it stops. The event
+            stream of a browser tab is one of them, and it never ends by
+            itself: the server has to end it, or it waits until the deadline
+            and cancels it, which it reports as an error.
+            """
+            for runtime in app.state.registry.runtimes():
+                runtime.end_streams()
+            super().handle_exit(sig, frame)
+
+    Server(config=config).run()

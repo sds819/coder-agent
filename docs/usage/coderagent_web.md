@@ -20,8 +20,8 @@ coder web: http://127.0.0.1:8765
 
 Open that address in a browser.
 
-The server runs until `ctrl+c` stops it. The browser holds the event stream
-open, so the server gives that stream five seconds to end before it stops.
+The server runs until `ctrl+c` stops it. A browser tab holds the event stream
+open; the server ends those streams itself, so it stops at once.
 
 ## The command line
 

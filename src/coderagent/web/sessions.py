@@ -126,6 +126,21 @@ class SessionRuntime:
         with self._lock:
             self._subscribers = [(loop, item) for loop, item in self._subscribers if item is not subscriber]
 
+    def end_streams(self) -> None:
+        """Tell the browsers that listen that the stream is over.
+
+        The server stops before the browser goes away. A stream that waits for
+        its end keeps the server waiting for the connection, and the server
+        that gives up on it says so with an error.
+        """
+        with self._lock:
+            subscribers = list(self._subscribers)
+        for loop, subscriber in subscribers:
+            try:
+                loop.call_soon_threadsafe(subscriber.put_nowait, {"kind": "stream_end"})
+            except RuntimeError:  # pragma: no cover - the loop is gone
+                pass
+
     # -- the work ---------------------------------------------------------
 
     def submit(self, text: str, purpose: str = "", images: list[str] | None = None) -> None:

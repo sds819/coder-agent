@@ -166,6 +166,9 @@ async def stream(session_id: str, request: Request, since: int = 0) -> Streaming
                 except asyncio.TimeoutError:
                     yield ": keep-alive\n\n"
                     continue
+                if item.get("kind") == "stream_end":
+                    """The server is stopping: the stream ends here."""
+                    break
                 yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
                 if item.get("kind") in STREAM_ENDS:
                     break

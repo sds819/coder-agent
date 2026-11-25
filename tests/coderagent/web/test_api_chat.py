@@ -1,6 +1,9 @@
 """A turn that runs in the browser: the items, the tool output and the cost."""
 
+import json
 import sys
+import threading
+import time
 
 import pytest
 
@@ -272,3 +275,26 @@ def test_a_turn_that_was_cut_off_says_why_it_ended(make_client, send, wait_for):
     assert stopped["calls"] == 1
     assert items[-1]["kind"] == "turn_end"
     assert items[-1]["stop_reason"] == "max_turns"
+
+
+def test_the_stream_ends_when_the_server_stops(make_client):
+    """The server waits for its connections before it stops: the stream has to end."""
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+    runtime = client.app.state.registry.get(session_id)
+
+    def stop():
+        time.sleep(0.5)
+        runtime.end_streams()
+
+    stopper = threading.Thread(target=stop)
+    stopper.start()
+    with client.stream("GET", f"/api/sessions/{session_id}/stream") as response:
+        body = "".join(response.iter_text())
+    stopper.join()
+
+    kinds = [json.loads(line[6:])["kind"] for line in body.splitlines() if line.startswith("data: ")]
+
+    assert "stream_end" not in kinds
+    assert ": keep-alive" not in body
+    assert response.status_code == 200
