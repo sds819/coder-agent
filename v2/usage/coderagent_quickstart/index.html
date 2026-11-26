@@ -622,6 +622,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="安装">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        可选依赖
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        装完有哪些文件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        装完检查一下
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1912,6 +1951,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="安装">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        可选依赖
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        装完有哪些文件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        装完检查一下
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2083,15 +2161,99 @@
 <li><a href="#faq">常见问题</a></li>
 </ul>
 <h2 id="install">安装</h2>
-<p>从源码装（要改代码就用这个）：</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sds819/coder-agent.git
-<span class="nb">cd</span><span class="w"> </span>coder-agent
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-</code></pre></div>
-<p>只想用、不改代码的话，直接从仓库装：</p>
+<p>要 Python 3.10 或更新的版本；从仓库装还要有 <code>git</code>。</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
 </code></pre></div>
-<p>（这个包还没发到 PyPI 上，所以只有从仓库装这一条路。）</p>
+<p>这就是全部的安装步骤。这个包还没发到 PyPI 上，所以是从仓库装的；以后发了之后，
+<code>pip install coder-agent</code> 说的是同一件事。</p>
+<p>要改代码就在克隆里干活：</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sds819/coder-agent.git
+<span class="nb">cd</span><span class="w"> </span>coder-agent
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span>
+</code></pre></div>
+<p>用 <code>uv</code> 或 <code>pipx</code> 的话，这个包会变成 path 上的一个命令：</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<p>在 conda 环境里：</p>
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>coder-agent<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>activate<span class="w"> </span>coder-agent
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<h3 id="extras">可选依赖</h3>
+<table>
+<thead>
+<tr>
+<th>extra</th>
+<th>装什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不装</td>
+<td>agent 本身：litellm、textual、typer、fastapi</td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td>MCP 服务器</td>
+</tr>
+<tr>
+<td><code>sandbox</code></td>
+<td>远端的沙箱：swe-rex、modal、boto3、contree-sdk</td>
+</tr>
+<tr>
+<td><code>web</code></td>
+<td>网页版：uvicorn 和 jinja2（fastapi 本来就在核心依赖里）</td>
+</tr>
+<tr>
+<td><code>full</code></td>
+<td>一切：<code>dev</code> + <code>sandbox</code> + <code>mcp</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full] @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<h3 id="files">装完有哪些文件</h3>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>是什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.coderagent/config.yaml</code></td>
+<td>用户的配置：模型、权限、hook</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/.env</code></td>
+<td>模型的 key，每次启动都会读</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/rules.yaml</code></td>
+<td>用户的权限规则</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/CLAUDE.md</code></td>
+<td>让 agent 记住的关于你的事</td>
+</tr>
+<tr>
+<td><code>&lt;项目&gt;/.coderagent/config.yaml</code></td>
+<td>项目的配置</td>
+</tr>
+<tr>
+<td><code>&lt;项目&gt;/.coderagent/rules.yaml</code></td>
+<td>项目的权限规则</td>
+</tr>
+</tbody>
+</table>
+<p>只有模型的 key 是必须写的，其余都有默认值。<code>MSWEA_CODER_HOME</code> 能把上面这一整套
+挪到别的目录。</p>
+<h3 id="verify">装完检查一下</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--help
+coder<span class="w"> </span>--list
+</code></pre></div>
 <p>装完有一个命令：</p>
 <table>
 <thead>
@@ -2107,10 +2269,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </tr>
 </tbody>
 </table>
-<p>可选依赖：</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[mcp]"</span><span class="w">    </span><span class="c1"># MCP 服务器</span>
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span><span class="w">   </span><span class="c1"># 沙箱（swerex / modal / contree）等一切</span>
-</code></pre></div>
+<p><code>coder</code> 在真终端里开界面，不在终端里就跑一轮然后回答。</p>
 <h2 id="model">配置模型和 API key</h2>
 <p>模型走 <a href="https://github.com/BerriAI/litellm">litellm</a>，所以任何 litellm 支持的模型都能用，只要带上厂商前缀（<code>anthropic/…</code>、<code>deepseek/…</code>）。</p>
 <p>API key 从环境变量读，名字就是厂商的名字：<code>ANTHROPIC_API_KEY</code>、<code>OPENAI_API_KEY</code>、<code>DEEPSEEK_API_KEY</code>、<code>OPENROUTER_API_KEY</code>……厂商前缀就是路由，见下面的表。</p>
@@ -2210,7 +2369,7 @@ coder
 </code></pre></div>
 <p>agent 会自己读代码、改文件、跑测试。写入文件前它会先存一个 checkpoint，可以用 <code>/rewind</code> 退回去。</p>
 <h2 id="web">也可以在浏览器里跑</h2>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[web]"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web] @ git+https://github.com/sds819/coder-agent"</span>
 coder<span class="w"> </span>web
 </code></pre></div>
 <p>同一个 agent，在浏览器里跑：聊天页是终端界面的窗口版，设置页可以把模型和 API key 配好（API key 只写进用户级的 <code>~/.coderagent/config.yaml</code>，永远不明文回浏览器）。</p>

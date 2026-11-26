@@ -530,6 +530,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-files-of-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The files of the installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-first-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2120,6 +2170,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-files-of-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The files of the installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-first-session" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2502,12 +2602,105 @@
 <h1 id="the-coding-agent">The coding agent</h1>
 <p><code>coder</code> is an interactive agent that works in a code repository. It reads the
 code, writes the code, runs the commands and tells you what it changed. It
-is the <code>coder-agent</code> package:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w">            </span><span class="c1"># the agent</span>
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[mcp]"</span><span class="w">     </span><span class="c1"># with the MCP servers</span>
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span><span class="w">    </span><span class="c1"># with everything: swerex, modal, contree</span>
+is the <code>coder-agent</code> package.</p>
+<h2 id="installation">Installation</h2>
+<p>Python 3.10 or newer is needed, and <code>git</code> when the package comes from the
+repository.</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
 </code></pre></div>
-<p>The command is <code>coder</code>.</p>
+<p>That is the whole installation. The package is not on PyPI yet, so it is
+installed from the repository; once it is published, <code>pip install coder-agent</code>
+does the same.</p>
+<p>To change the code, work in a clone:</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sds819/coder-agent.git
+<span class="nb">cd</span><span class="w"> </span>coder-agent
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span>
+</code></pre></div>
+<p>With <code>uv</code> or <code>pipx</code> the package becomes a command on the path:</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<p>In a conda environment:</p>
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>coder-agent<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>activate<span class="w"> </span>coder-agent
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<h3 id="the-extras">The extras</h3>
+<table>
+<thead>
+<tr>
+<th>Extra</th>
+<th>What it adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none</td>
+<td>The agent: litellm, textual, typer, fastapi</td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td>The MCP servers</td>
+</tr>
+<tr>
+<td><code>sandbox</code></td>
+<td>The remote sandboxes: swe-rex, modal, boto3, contree-sdk</td>
+</tr>
+<tr>
+<td><code>web</code></td>
+<td>The web interface: uvicorn and jinja2 (fastapi is in the core)</td>
+</tr>
+<tr>
+<td><code>full</code></td>
+<td>Everything: <code>dev</code> + <code>sandbox</code> + <code>mcp</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full] @ git+https://github.com/sds819/coder-agent"</span>
+</code></pre></div>
+<h3 id="the-files-of-the-installation">The files of the installation</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.coderagent/config.yaml</code></td>
+<td>The configuration of the user: the model, the permissions, the hooks</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/.env</code></td>
+<td>The keys of the models. Read at every start</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/rules.yaml</code></td>
+<td>The permission rules of the user</td>
+</tr>
+<tr>
+<td><code>~/.coderagent/CLAUDE.md</code></td>
+<td>What the agent should remember about you</td>
+</tr>
+<tr>
+<td><code>&lt;project&gt;/.coderagent/config.yaml</code></td>
+<td>The configuration of the project</td>
+</tr>
+<tr>
+<td><code>&lt;project&gt;/.coderagent/rules.yaml</code></td>
+<td>The permission rules of the project</td>
+</tr>
+</tbody>
+</table>
+<p>Only the key of the model is needed; everything else has a default.
+<code>MSWEA_CODER_HOME</code> moves the whole directory of the user somewhere else.</p>
+<h3 id="the-check">The check</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--help
+coder<span class="w"> </span>--list
+</code></pre></div>
+<p>The command is <code>coder</code>. It opens the terminal interface when the terminal is
+interactive, and takes one task and answers when it is not.</p>
 <h2 id="the-first-session">The first session</h2>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-project
 coder
@@ -2723,7 +2916,7 @@ be inside the working directory. A project may not choose the editor: that
 program runs on your machine, so the choice is yours.</p>
 <h2 id="the-web-interface">The web interface</h2>
 <p>The same agent, in the browser:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[web]"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web] @ git+https://github.com/sds819/coder-agent"</span>
 coder<span class="w"> </span>web
 </code></pre></div>
 <p>The chat page is the terminal interface with a window around it, and the
