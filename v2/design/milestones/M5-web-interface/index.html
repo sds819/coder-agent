@@ -2894,7 +2894,7 @@
 <td>F5.7</td>
 <td>Slash 命令</td>
 <td>P1</td>
-<td>复用 <code>ui/commands</code> 的 25 个内置命令与自定义命令</td>
+<td>复用 <code>ui/commands</code> 的 35 个内置命令与自定义命令</td>
 </tr>
 <tr>
 <td>F5.8</td>
@@ -3160,7 +3160,7 @@ executor._prepare()
 </ul>
 <hr>
 <h2 id="7-slash">7. Slash 命令</h2>
-<p>原样复用 <code>ui/commands/__init__.py:82</code> 的 <code>run(context, line)</code>——25 个内置命令和自定义命令
+<p>原样复用 <code>ui/commands/__init__.py:82</code> 的 <code>run(context, line)</code>——35 个内置命令和自定义命令
 都只通过 <code>context.say(...)</code> 说话，零 textual 依赖。</p>
 <ul>
 <li><code>CommandContext.output</code> 接到 <code>runtime.emit({"kind": "command_output", "text": ...})</code>。</li>
