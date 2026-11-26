@@ -1920,18 +1920,18 @@
 <blockquote>
 <p>中文版：<a href="../readme_zh/">README_zh.md</a></p>
 </blockquote>
-<p><a href="https://github.com/sds819/coder-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a>
-<a href="https://pypi.org/project/coder-agent/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=black&amp;color=deeppink"></a></p>
+<p><a href="https://github.com/sds819/coder-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a></p>
 <p><code>coder</code> is an interactive coding agent: it reads the code, writes the code, runs
 the commands and tells you what it changed. It runs in the terminal <strong>and</strong> in
 the browser, and it is a library too.</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
 <span class="nb">cd</span><span class="w"> </span>my-project
 
 coder<span class="w">                        </span><span class="c1"># the terminal interface</span>
 coder<span class="w"> </span>web<span class="w">                    </span><span class="c1"># the same agent in the browser</span>
 coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>path/to/suite<span class="w">     </span><span class="c1"># run a task suite against the agent</span>
 </code></pre></div>
+<p>The package is not on PyPI yet, so install it from the repository.</p>
 <h2 id="what-it-does">What it does</h2>
 <p><strong>Tools.</strong> Fourteen built-ins: <code>read</code>, <code>write</code>, <code>edit</code>, <code>multi_edit</code> and <code>apply_patch</code> to change
 files; <code>glob</code>, <code>grep</code> and <code>ls</code> to find code; <code>bash</code>, <code>bash_output</code> and <code>bash_kill</code> to run commands

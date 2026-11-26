@@ -1982,7 +1982,7 @@
 </table>
 <p>远端的沙箱是随 mini-swe-agent 一起搬过来的那些环境：coding agent 不自己写容器。
 它们要 extra <code>sandbox</code> 里的那些包：</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'coder-agent[sandbox]'</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[sandbox] @ git+https://github.com/sds819/coder-agent"</span>
 </code></pre></div>
 <p>没有那些包，本地的沙箱照样能用；远端的那个会说出缺的是哪个包。</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>

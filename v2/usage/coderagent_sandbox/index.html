@@ -1984,7 +1984,7 @@ machine of the user.</p>
 <p>The remote sandboxes are the environments that came with mini-swe-agent: the
 coding agent does not write containers of its own. They need the packages of the extra
 <code>sandbox</code>:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'coder-agent[sandbox]'</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[sandbox] @ git+https://github.com/sds819/coder-agent"</span>
 </code></pre></div>
 <p>Without them the local sandbox still works, and a remote one says which
 package is missing.</p>

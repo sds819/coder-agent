@@ -1768,13 +1768,14 @@
 <p><code>coder</code> is an interactive coding agent: it reads the code, writes the code, runs
 the commands and tells you what it changed. It runs in the terminal <strong>and</strong> in
 the browser, and it is a library too.</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
 <span class="nb">cd</span><span class="w"> </span>my-project
 
 coder<span class="w">                        </span><span class="c1"># the terminal interface</span>
 coder<span class="w"> </span>web<span class="w">                    </span><span class="c1"># the same agent in the browser</span>
 coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>path/to/suite<span class="w">     </span><span class="c1"># run a task suite against the agent</span>
 </code></pre></div>
+<p>The package is not on PyPI yet, so install it from the repository.</p>
 <div class="admonition info">
 <p class="admonition-title">中文</p>
 <p>这份文档有中文版：<a href="usage/coderagent_quickstart/">快速开始</a>、
