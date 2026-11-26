@@ -104,7 +104,7 @@ def _run(command: str, cwd: str, env: dict[str, str], timeout: int) -> subproces
 def is_local(environment: Any) -> bool:
     """Whether the commands of the environment run on this machine.
 
-    The remote sandboxes are the ones of mini-swe-agent: none of them has the
-    environment of the commands, the local ones have it.
+    None of the remote sandboxes has the environment of the commands, the local
+    one has it.
     """
     return hasattr(environment, "env_override")

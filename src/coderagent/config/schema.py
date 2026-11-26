@@ -38,17 +38,17 @@ BUILTIN_TOOL_NAMES = [
 ]
 
 ENVIRONMENT_CLASSES = {
-    "docker": "minisweagent.environments.docker.DockerEnvironment",
-    "singularity": "minisweagent.environments.singularity.SingularityEnvironment",
-    "swerex_docker": "minisweagent.environments.extra.swerex_docker.SwerexDockerEnvironment",
-    "swerex_modal": "minisweagent.environments.extra.swerex_modal.SwerexModalEnvironment",
-    "bubblewrap": "minisweagent.environments.extra.bubblewrap.BubblewrapEnvironment",
-    "contree": "minisweagent.environments.extra.contree.ContreeEnvironment",
+    "docker": "coderagent.environments.docker.DockerEnvironment",
+    "singularity": "coderagent.environments.singularity.SingularityEnvironment",
+    "swerex_docker": "coderagent.environments.swerex_docker.SwerexDockerEnvironment",
+    "swerex_modal": "coderagent.environments.swerex_modal.SwerexModalEnvironment",
+    "bubblewrap": "coderagent.environments.bubblewrap.BubblewrapEnvironment",
+    "contree": "coderagent.environments.contree.ContreeEnvironment",
 }
 """The remote sandboxes: the name the user writes and the class that runs it.
 
-The implementations are the ones of mini-swe-agent. They are the whole of
-mini-swe-agent that the coding agent uses.
+The classes are imported only when the sandbox is used: the packages of the
+remote sandboxes are an extra of their own.
 """
 
 ENVIRONMENT_TYPES = ("local", *ENVIRONMENT_CLASSES)
@@ -446,7 +446,7 @@ class SandboxConfig(BaseModel):
     """The options of the environment, like `image` for a container."""
 
     type: str = "local"
-    """The kind of environment. `local` or one of the environments of mini-swe-agent."""
+    """The kind of environment. `local` or one of the remote sandboxes."""
     mode: str = "full-access"
     """How much the commands of the agent may do on this machine.
 
@@ -466,7 +466,7 @@ class SandboxConfig(BaseModel):
     @classmethod
     def _known_type(cls, value: str) -> str:
         if value not in ENVIRONMENT_TYPES and "." not in value:
-            """A path to a class of mini-swe-agent is a kind of environment too."""
+            """A path to a class of the user is a kind of environment too."""
             raise ValueError(f"unknown environment '{value}'. Use one of: {', '.join(ENVIRONMENT_TYPES)}.")
         return value
 

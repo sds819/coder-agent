@@ -11,9 +11,7 @@ from contree_sdk.config import ContreeConfig
 from contree_sdk.sdk.objects.image import ContreeImageSync
 from pydantic import BaseModel
 
-from minisweagent import Environment
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +50,13 @@ class ExecutionResult(TypedDict):
     extra: NotRequired[dict[str, Any]]
 
 
-class ContreeEnvironment(Environment):
+class ContreeEnvironment:
     def __init__(self, *, config_class: type[ContreeEnvironmentConfig] = ContreeEnvironmentConfig, **kwargs):
         """This class executes bash commands in a [ConTree](https://contree.dev) container
         using [contree-sdk](https://github.com/nebius/contree-sdk)"""
 
         self.config: ContreeEnvironmentConfig = config_class(**kwargs)
-        self.logger = logging.getLogger("minisweagent.environment")
+        self.logger = logging.getLogger("coderagent.environment")
 
         if isinstance(self.config.contree_config, dict):
             self.config = self.config.model_copy(update={"contree_config": ContreeConfig(**self.config.contree_config)})

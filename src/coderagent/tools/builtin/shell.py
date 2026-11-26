@@ -12,8 +12,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from coderagent.compat import LocalEnvironment, is_local
 from coderagent.core.tokens import trim_text
+from coderagent.environments import LocalEnvironment, is_local
 from coderagent.tools.base import ToolContext, ToolResult
 
 CHARS_PER_TOKEN = 3.5
@@ -25,7 +25,7 @@ _TASKS: list[dict] = []
 
 
 class CodingEnvironment(LocalEnvironment):
-    """Local environment without mini-swe-agent's `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` magic.
+    """The local environment of the coding agent.
 
     A coding agent ends a turn when the model says so, not when a shell command prints a
     sentinel string.
@@ -40,7 +40,7 @@ class CodingEnvironment(LocalEnvironment):
         The turn can be interrupted while a command is running. The command is then
         killed, together with the children it started, and the output it produced so
         far is returned. A command in a remote sandbox cannot be killed, which is why
-        this is here and not in the environment of mini-swe-agent.
+        this is here and not in the remote environments.
         """
         command = action.get("command", "")
         cwd = cwd or self.config.cwd or os.getcwd()

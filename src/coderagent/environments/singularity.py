@@ -11,8 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 
 class SingularityEnvironmentConfig(BaseModel):
@@ -39,7 +38,7 @@ class SingularityEnvironment:
         self, *, config_class: type = SingularityEnvironmentConfig, logger: logging.Logger | None = None, **kwargs
     ):
         """Singularity environment. See `SingularityEnvironmentConfig` for kwargs."""
-        self.logger = logger or logging.getLogger("minisweagent.environment")
+        self.logger = logger or logging.getLogger("coderagent.environment")
         self.config = config_class(**kwargs)
         self.sandbox_dir = self._build_sandbox()
 
@@ -47,7 +46,7 @@ class SingularityEnvironment:
         # Building the sandbox can fail (very rarely), so we retry it
         max_retries = self.config.sandbox_build_retries
         for attempt in range(max_retries):
-            sandbox_dir = Path(tempfile.gettempdir()) / f"minisweagent-{uuid.uuid4().hex[:8]}"
+            sandbox_dir = Path(tempfile.gettempdir()) / f"coderagent-{uuid.uuid4().hex[:8]}"
             try:
                 subprocess.run(
                     [self.config.executable, "build", "--sandbox", sandbox_dir, self.config.image],

@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from swerex.deployment.docker import DockerDeployment
 from swerex.runtime.abstract import Command as RexCommand
 
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 
 class SwerexDockerEnvironmentConfig(BaseModel):

@@ -6,7 +6,6 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
-from coderagent.compat import is_local
 from coderagent.config.schema import ContextConfig
 from coderagent.core import schema
 from coderagent.core.capabilities import TAKES, support
@@ -18,6 +17,7 @@ from coderagent.core.otel import build_trace
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
 from coderagent.core.tokens import trim_text
+from coderagent.environments import is_local
 from coderagent.models.gateway import ModelGateway, is_context_overflow
 from coderagent.models.streaming import ModelEvent, message_from_events
 from coderagent.tools.permissions import PermissionMode

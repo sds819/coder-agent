@@ -7,7 +7,6 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from coderagent.compat import is_local
 from coderagent.config.schema import Config, ContextConfig
 from coderagent.core import os_sandbox, shell_env
 from coderagent.core.budget import context_window_for
@@ -22,6 +21,7 @@ from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubAgentRunner, load_subagents, subagent_index
 from coderagent.core.telemetry import collect
+from coderagent.environments import is_local
 from coderagent.extensions.hooks import HookRunner
 from coderagent.extensions.plugins import load as load_plugins
 from coderagent.extensions.reflect import (

@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from swerex.deployment.modal import ModalDeployment
 from swerex.runtime.abstract import Command as RexCommand
 
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 
 class SwerexModalEnvironmentConfig(BaseModel):

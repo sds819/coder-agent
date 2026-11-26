@@ -6,7 +6,6 @@ import pytest
 
 from coderagent.compat import (
     FormatError,
-    LocalEnvironment,
     Submitted,
     get_config_from_spec,
     recursive_merge,
@@ -14,6 +13,7 @@ from coderagent.compat import (
     set_cache_control,
 )
 from coderagent.compat.serialize import UNSET
+from coderagent.environments import LocalEnvironment
 
 
 def test_the_later_dictionaries_win():

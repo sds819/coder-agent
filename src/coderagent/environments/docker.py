@@ -8,8 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 
 class DockerEnvironmentConfig(BaseModel):
@@ -53,7 +52,7 @@ class DockerEnvironment:
         """This class executes bash commands in a Docker container using direct docker commands.
         See `DockerEnvironmentConfig` for keyword arguments.
         """
-        self.logger = logger or logging.getLogger("minisweagent.environment")
+        self.logger = logger or logging.getLogger("coderagent.environment")
         self.container_id: str | None = None
         self.config = config_class(**kwargs)
         self._start_container()
@@ -73,7 +72,7 @@ class DockerEnvironment:
 
     def _start_container(self):
         """Start the Docker container and return the container ID."""
-        container_name = f"minisweagent-{uuid.uuid4().hex[:8]}"
+        container_name = f"coderagent-{uuid.uuid4().hex[:8]}"
         cmd = [
             self.config.executable,
             "run",

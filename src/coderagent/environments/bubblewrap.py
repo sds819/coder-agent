@@ -22,8 +22,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from minisweagent.exceptions import Submitted
-from minisweagent.utils.serialize import recursive_merge
+from coderagent.compat import Submitted, recursive_merge
 
 
 class BubblewrapEnvironmentConfig(BaseModel):
@@ -73,9 +72,9 @@ class BubblewrapEnvironment:
         """This class executes bash commands in a bubblewrap environment and a separate working
         directory for each environment. See `BubblewrapEnvironmentConfig` for kwargs.
         """
-        self.logger = logger or logging.getLogger("minisweagent.environment")
+        self.logger = logger or logging.getLogger("coderagent.environment")
         self.config = config_class(**kwargs)
-        self.working_dir = Path(tempfile.gettempdir()) / f"minisweagent-{uuid.uuid4().hex[:8]}"
+        self.working_dir = Path(tempfile.gettempdir()) / f"coderagent-{uuid.uuid4().hex[:8]}"
         self.working_dir.mkdir(parents=True, exist_ok=True)
 
     def execute(self, action: dict, cwd: str = "", *, timeout: int | None = None) -> dict[str, Any]:

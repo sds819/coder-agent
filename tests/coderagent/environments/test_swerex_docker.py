@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from minisweagent.environments.extra.swerex_docker import SwerexDockerEnvironment
+from coderagent.environments.swerex_docker import SwerexDockerEnvironment
 
 
 def _is_docker_available():

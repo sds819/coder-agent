@@ -1,9 +1,8 @@
 """The sandbox: the place where the commands of the agent run.
 
 The local sandbox runs the commands on the machine of the user. The other
-sandboxes are the ones of mini-swe-agent: a Docker container through SWE-ReX,
-Modal, bubblewrap or contree. They are chosen with `sandbox.type` in the
-configuration:
+sandboxes are containers: a Docker container through SWE-ReX, Modal, bubblewrap
+or contree. They are chosen with `sandbox.type` in the configuration:
 
 ```yaml
 sandbox:
@@ -23,9 +22,9 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-from coderagent.compat import is_local
 from coderagent.config.schema import ENVIRONMENT_CLASSES, ENVIRONMENT_TYPES, SandboxConfig
 from coderagent.core.os_sandbox import FULL_ACCESS
+from coderagent.environments import is_local
 from coderagent.tools.builtin.shell import CodingEnvironment
 
 LOCAL = "local"
@@ -46,7 +45,7 @@ def sandbox_class(kind: str) -> type:
         if kind not in ENVIRONMENT_CLASSES:
             raise
         raise ImportError(
-            f"The sandbox '{kind}' needs the packages of the remote sandboxes: pip install 'mini-swe-agent[sandbox]'"
+            f"The sandbox '{kind}' needs the packages of the remote sandboxes: pip install 'coder-agent[sandbox]'"
         ) from error
 
 
@@ -56,7 +55,7 @@ def build_environment(config: SandboxConfig, cwd: Path) -> Any:
         return CodingEnvironment(cwd=str(cwd))
     options = config.model_dump(exclude={"type"})
     kind = options.pop("environment_class", config.type)
-    """The way of mini-swe-agent to name an environment."""
+    """The way of mini-swe-agent to name an environment, kept for the old configurations."""
     environment = sandbox_class(kind)(**options)
     if is_local(environment):
         """A local environment works in the directory of the session."""

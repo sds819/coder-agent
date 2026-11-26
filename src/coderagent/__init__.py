@@ -5,7 +5,8 @@ See `docs/design/coding-agent-architecture.md` for the architecture this package
 
 import os
 
-# mini-swe-agent greets the user on import; the coder CLI has its own output.
+# mini-swe-agent greets the user on import when it is installed next to us;
+# the coder CLI has its own output.
 os.environ.setdefault("MSWEA_SILENT_STARTUP", "1")
 
 # litellm fetches the price table from GitHub while it is imported: seconds of waiting,
