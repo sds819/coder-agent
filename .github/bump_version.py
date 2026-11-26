@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Bump the mini-swe-agent version in __init__.py."""
+"""Bump the version of the coding agent."""
 
 import re
 import subprocess
 import sys
 from pathlib import Path
 
-INIT_FILE = Path(__file__).resolve().parents[1] / "src" / "minisweagent" / "__init__.py"
+VERSION_FILE = Path(__file__).resolve().parents[1] / "src" / "coderagent" / "version.py"
 VERSION_RE = re.compile(r'^__version__\s*=\s*"([^"]+)"', re.MULTILINE)
 
 
 def main() -> None:
-    text = INIT_FILE.read_text()
+    text = VERSION_FILE.read_text()
     match = VERSION_RE.search(text)
     if not match:
-        print("Error: could not find __version__ in", INIT_FILE)
+        print("Error: could not find __version__ in", VERSION_FILE)
         sys.exit(1)
 
     current = match.group(1)
@@ -26,12 +26,12 @@ def main() -> None:
         sys.exit(1)
 
     updated = text[: match.start(1)] + new + text[match.end(1) :]
-    INIT_FILE.write_text(updated)
-    print(f"Updated {INIT_FILE.relative_to(Path.cwd())}: {current} -> {new}")
+    VERSION_FILE.write_text(updated)
+    print(f"Updated {VERSION_FILE.relative_to(Path.cwd())}: {current} -> {new}")
 
     # Commit the changes
     try:
-        subprocess.run(["git", "add", str(INIT_FILE)], check=True)
+        subprocess.run(["git", "add", str(VERSION_FILE)], check=True)
         subprocess.run(["git", "commit", "-m", "Bump version"], check=True)
         print("Changes committed with message 'Bump version'")
     except subprocess.CalledProcessError as e:

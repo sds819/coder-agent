@@ -5,8 +5,6 @@ See `docs/design/coding-agent-architecture.md` for the architecture this package
 
 import os
 
-__version__ = "0.1.0"
-
 # mini-swe-agent greets the user on import; the coder CLI has its own output.
 os.environ.setdefault("MSWEA_SILENT_STARTUP", "1")
 
@@ -16,6 +14,7 @@ os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "true")
 
 from coderagent.core.protocols import ModelBackend, ToolExecutor  # noqa: E402
 from coderagent.paths import load_global_env  # noqa: E402
+from coderagent.version import __version__  # noqa: E402
 
 load_global_env()
 """The keys of the models come from the files of the user: they have to be in

@@ -110,7 +110,7 @@ coder = "coderagent.ui.cli:app"
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = {attr = "minisweagent.__version__"}
+version = {attr = "coderagent.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

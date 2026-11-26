@@ -83,11 +83,13 @@ coderagent 已经是 mini 的 3.5 倍大。mini 现在更像一个「被借用�
 - `__init__.py:31` 打印版本横幅（`coderagent/__init__.py:11` 用 `MSWEA_SILENT_STARTUP` 把它关掉了）；
 - `__init__.py:36` `dotenv.load_dotenv(dotenv_path=global_config_file)` 加载
   `user_config_dir("mini-swe-agent")/.env`；
-- `__init__.py:11` 定义 `__version__`，`pyproject.toml:113` 的 `dynamic version` 指向它。
+- `__init__.py:11` 定义 `__version__`（第 2 步之后，`pyproject.toml` 的 `dynamic version`
+  指向的是 `coderagent/version.py`，不再指向它）。
 
 第 2 条是**功能性的**：provider 的 API key 走 `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` 这类环境变量，
-环境变量来自这个 `.env`。今天 `coder` 能用上它，是因为 `config/loader.py:13` 顶层 import 了
-`minisweagent.config`，顺带把父包 `minisweagent/__init__.py` 跑了一遍。
+环境变量来自这个 `.env`。搬 import 之前，`coder` 能用上它，是因为 `config/loader.py:13` 顶层 import 了
+`minisweagent.config`，顺带把父包 `minisweagent/__init__.py` 跑了一遍；
+第 1 步之后由 `coderagent/paths.py:load_global_env()` 接手（见[第 1 步](#step-1)）。
 
 **如果只把 9 处 import 改掉而不补这一条，用户会突然发现 key 读不到了，而且没有任何报错**——
 表现是「认证失败」或者更糟：中转站返 500，模型重试 10 次之后才放弃。
@@ -109,9 +111,9 @@ coderagent 已经是 mini 的 3.5 倍大。mini 现在更像一个「被借用�
   和 `docs/advanced/`、`docs/models/` 是 mini 的使用文档。合计约 2800 行。
 - `mkdocs.yml:66-95` 的 nav 里，mini 的条目和 coderagent 的条目是**平级**的两段。
 - `.github/workflows/pylint.yaml:33` 只 lint `minisweagent/`——删掉之后这个 workflow 就没内容可查了。
-- `.github/workflows/release.yaml:31` 用 `grep` 从 `src/minisweagent/__init__.py` 取版本号；
-  冒烟测试跑的是 `pipx run mini-swe-agent --help`。
-- `.github/bump_version.py:9` 指向 `src/minisweagent/__init__.py`。
+- `.github/workflows/release.yaml` 用 `grep` 取版本号（第 2 步之后取的是 `src/coderagent/version.py`）；
+  冒烟测试跑的是 `pipx run mini-swe-agent --help`（装的是上游的包）。
+- `.github/bump_version.py` 第 2 步之后指向 `src/coderagent/version.py`。
 
 ---
 
@@ -210,14 +212,17 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
 **没有报错**，只是认证失败或模型重试 10 次后放弃。
 **对策**：在 `coderagent/paths.py` 旁边加一个自己的 `.env` 加载，路径保持不变（兼容老用户），
 或者改到 `~/.coderagent/.env` 并同时读两个（老路径优先）。**这一步必须在删包之前做完并有测试。**
+（第 1 步已经做完了：`coderagent/paths.py:load_global_env()`，
+测试在 `tests/coderagent/test_paths.py`。）
 
 ### P0-2：发布流水线与包名 {#p0-2}
 
 - `pyproject.toml:7` 的 `name = "mini-swe-agent"` 决定了 PyPI 上的包名。删掉 mini 核心之后，
   这个名字和内容对不上。
-- `pyproject.toml:113` 的 `version = {attr = "minisweagent.__version__"}` 会直接失效。
-- `.github/workflows/release.yaml:31` 用 `grep` 读版本号的位置，冒烟测试跑
-  `pipx run mini-swe-agent --help`。
+- `pyproject.toml` 的 `version = {attr = ...}` 原来指向 `minisweagent.__version__`，
+  删掉 mini 就会失效——第 2 步已经改成指向 `coderagent.version.__version__`。
+- `.github/workflows/release.yaml` 用 `grep` 读版本号的位置（第 2 步已改），
+  冒烟测试跑 `pipx run mini-swe-agent --help`（装的是上游的包，没测我们的产物）。
 - **取舍**：PyPI 上的 `mini-swe-agent` 是上游 SWE-agent/mini-swe-agent 的名字，**不能占**。
   要么保持 `mini-swe-agent` 这个名字（和上游冲突，不建议），要么换名（`coderagent`？需要查重名），
   要么不发 PyPI、只发 GitHub release。
@@ -274,9 +279,10 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
 
 ### P2-2：版本号与 bump 脚本 {#p2-2}
 
-`pyproject.toml:113` 和 `.github/bump_version.py:9` 都指向 `src/minisweagent/__init__.py`。
-coderagent 自己已经有 `__version__ = "0.1.0"`（`src/coderagent/__init__.py:8`），
-但它是**手写**的、没进发布流程。合并成一个版本源时要定一个。
+原来 `pyproject.toml` 和 `.github/bump_version.py` 都指向 `src/minisweagent/__init__.py`，
+而 coderagent 自己的 `__version__` 是**手写**的、没进发布流程。
+第 2 步（[第 2 步](#step-2)）定了：**版本源是 `src/coderagent/version.py`**，
+发行包的版本号跟 coding agent 走；mini 保留自己的 `2.4.6`，那只是 mini 代码的版本。
 
 ---
 
@@ -285,7 +291,7 @@ coderagent 自己已经有 `__version__ = "0.1.0"`（`src/coderagent/__init__.py
 分 5 步，每步一个提交，每步都能独立通过测试和 CI。**第 4 步之前，仓库里一直有 mini**，
 所以任何一步都能停下来。
 
-### 第 0 步：加一道闸（半天）
+### 第 0 步：加一道闸（半天） {#step-0}
 
 把 coderagent 对 mini 的 9 处 import 收敛到一个模块，比如
 `coderagent/compat/__init__.py`，让「coderagent 依赖 mini」这件事变成**一个文件**里的决定。
@@ -293,7 +299,7 @@ coderagent 自己已经有 `__version__ = "0.1.0"`（`src/coderagent/__init__.py
 
 **验收**：`grep -rn "minisweagent" src/coderagent/` 只剩一个文件。
 
-### 第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26）
+### 第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26） {#step-1}
 
 把 6 个模块复制进 `coderagent/compat/`，改 import，**不改逻辑**。
 `LocalEnvironment` 的子类关系保留（`CodingEnvironment` 照旧继承它）。
@@ -317,15 +323,32 @@ coderagent 自己已经有 `__version__ = "0.1.0"`（`src/coderagent/__init__.py
 只剩 `core/sandbox.py` 的远程沙箱注册表；`tests/coderagent/compat/` 和 `tests/coderagent/test_paths.py`
 是这一轮新增的测试。
 
-### 第 2 步：版本号（半天）
+### 第 2 步：版本号（半天）—— ✅ 已做（2026-11-26） {#step-2}
 
-- `pyproject.toml` 的 `dynamic version` 改成指向 `coderagent.__version__`，
+- `pyproject.toml` 的 `dynamic version` 改成指向 `coderagent.version.__version__`，
   `.github/bump_version.py` 同步改。
 - （`.env` 的部分已经在第 1 步做完了。）
 
-**验收**：`python -m build` 出来的包有正确的版本号。
+**两处和计划不一样的地方**：
 
-### 第 3 步：决定沙箱层（1–3 天）
+1. **版本号放在自己的模块里**（`src/coderagent/version.py`），而不是 `coderagent/__init__.py`。
+   原因：构建时的 `attr:` 要读这个值，`coderagent/__init__.py` 会 import 整个包
+   （`core.protocols` → pydantic），构建环境里没有这些依赖。`version.py` 只有一个赋值，
+   setuptools 读它不用 import 任何东西。
+
+2. **mini 的 `__version__ = "2.4.6"` 留着**。它是 mini 自己的版本（横幅和
+   `agents/default.py:173` 的 `mini_version` 都用它），跟这个仓库发布的是两件事。
+   但发布流水线现在只认 coding agent 的版本号：release.yaml 的校验改成 grep
+   `src/coderagent/version.py`。
+
+**后果**：这个仓库的发行包版本号现在是 `0.1.0`（coding agent 的），
+而 PyPI 上 `mini-swe-agent` 这个名字是上游的——包名的事仍然留在第 4 步
+（[P0-2](#p0-2)）。冒烟测试还在跑 `pipx run mini-swe-agent --help`，
+它装的是**上游**的包，不是我们的产物；改它要等包名定了。
+
+**验收**：`uv build --wheel` 出来的包是 `mini_swe_agent-0.1.0-py3-none-any.whl`。
+
+### 第 3 步：决定沙箱层（1–3 天） {#step-3}
 
 三选一：
 
@@ -337,7 +360,7 @@ coderagent 自己已经有 `__version__ = "0.1.0"`（`src/coderagent/__init__.py
 
 **验收**：`tests/coderagent/core/test_sandbox.py` 里现有的沙箱测试全绿（不 mock）。
 
-### 第 4 步：删包 + 收尾（1–2 天）
+### 第 4 步：删包 + 收尾（1–2 天） {#step-4}
 
 删 `src/minisweagent/` 和 mini 的测试、文档；改 `mkdocs.yml` 的 nav；
 改 `pylint.yaml` 指向 `coderagent/`；处理 PyPI 包名（[P0-2](#p0-2)）。
