@@ -4008,7 +4008,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#0" class="md-nav__link">
+  <a href="#step-0" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 0 步：加一道闸（半天）
@@ -4019,7 +4019,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#1-311-2026-11-26" class="md-nav__link">
+  <a href="#step-1" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26）
@@ -4030,10 +4030,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2" class="md-nav__link">
+  <a href="#step-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        第 2 步：版本号（半天）
+        第 2 步：版本号（半天）—— ✅ 已做（2026-11-26）
       
     </span>
   </a>
@@ -4041,7 +4041,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-13" class="md-nav__link">
+  <a href="#step-3" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 3 步：决定沙箱层（1–3 天）
@@ -4052,7 +4052,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-12" class="md-nav__link">
+  <a href="#step-4" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 4 步：删包 + 收尾（1–2 天）
@@ -4748,7 +4748,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#0" class="md-nav__link">
+  <a href="#step-0" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 0 步：加一道闸（半天）
@@ -4759,7 +4759,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#1-311-2026-11-26" class="md-nav__link">
+  <a href="#step-1" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26）
@@ -4770,10 +4770,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2" class="md-nav__link">
+  <a href="#step-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        第 2 步：版本号（半天）
+        第 2 步：版本号（半天）—— ✅ 已做（2026-11-26）
       
     </span>
   </a>
@@ -4781,7 +4781,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-13" class="md-nav__link">
+  <a href="#step-3" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 3 步：决定沙箱层（1–3 天）
@@ -4792,7 +4792,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-12" class="md-nav__link">
+  <a href="#step-4" class="md-nav__link">
     <span class="md-ellipsis">
       
         第 4 步：删包 + 收尾（1–2 天）
@@ -5068,11 +5068,13 @@ coderagent 现在从 mini 借的那 311 行代码，原样搬过来比重写更�
 <li><code>__init__.py:31</code> 打印版本横幅（<code>coderagent/__init__.py:11</code> 用 <code>MSWEA_SILENT_STARTUP</code> 把它关掉了）；</li>
 <li><code>__init__.py:36</code> <code>dotenv.load_dotenv(dotenv_path=global_config_file)</code> 加载
   <code>user_config_dir("mini-swe-agent")/.env</code>；</li>
-<li><code>__init__.py:11</code> 定义 <code>__version__</code>，<code>pyproject.toml:113</code> 的 <code>dynamic version</code> 指向它。</li>
+<li><code>__init__.py:11</code> 定义 <code>__version__</code>（第 2 步之后，<code>pyproject.toml</code> 的 <code>dynamic version</code>
+  指向的是 <code>coderagent/version.py</code>，不再指向它）。</li>
 </ul>
 <p>第 2 条是<strong>功能性的</strong>：provider 的 API key 走 <code>OPENAI_API_KEY</code> / <code>DEEPSEEK_API_KEY</code> 这类环境变量，
-环境变量来自这个 <code>.env</code>。今天 <code>coder</code> 能用上它，是因为 <code>config/loader.py:13</code> 顶层 import 了
-<code>minisweagent.config</code>，顺带把父包 <code>minisweagent/__init__.py</code> 跑了一遍。</p>
+环境变量来自这个 <code>.env</code>。搬 import 之前，<code>coder</code> 能用上它，是因为 <code>config/loader.py:13</code> 顶层 import 了
+<code>minisweagent.config</code>，顺带把父包 <code>minisweagent/__init__.py</code> 跑了一遍；
+第 1 步之后由 <code>coderagent/paths.py:load_global_env()</code> 接手（见<a href="#step-1">第 1 步</a>）。</p>
 <p><strong>如果只把 9 处 import 改掉而不补这一条，用户会突然发现 key 读不到了，而且没有任何报错</strong>——
 表现是「认证失败」或者更糟：中转站返 500，模型重试 10 次之后才放弃。</p>
 <h3 id="mini-only">mini 提供了、coderagent 没有的东西</h3>
@@ -5123,9 +5125,9 @@ coderagent 现在从 mini 借的那 311 行代码，原样搬过来比重写更�
   和 <code>docs/advanced/</code>、<code>docs/models/</code> 是 mini 的使用文档。合计约 2800 行。</li>
 <li><code>mkdocs.yml:66-95</code> 的 nav 里，mini 的条目和 coderagent 的条目是<strong>平级</strong>的两段。</li>
 <li><code>.github/workflows/pylint.yaml:33</code> 只 lint <code>minisweagent/</code>——删掉之后这个 workflow 就没内容可查了。</li>
-<li><code>.github/workflows/release.yaml:31</code> 用 <code>grep</code> 从 <code>src/minisweagent/__init__.py</code> 取版本号；
-  冒烟测试跑的是 <code>pipx run mini-swe-agent --help</code>。</li>
-<li><code>.github/bump_version.py:9</code> 指向 <code>src/minisweagent/__init__.py</code>。</li>
+<li><code>.github/workflows/release.yaml</code> 用 <code>grep</code> 取版本号（第 2 步之后取的是 <code>src/coderagent/version.py</code>）；
+  冒烟测试跑的是 <code>pipx run mini-swe-agent --help</code>（装的是上游的包）。</li>
+<li><code>.github/bump_version.py</code> 第 2 步之后指向 <code>src/coderagent/version.py</code>。</li>
 </ul>
 <hr>
 <h2 id="options">三个方案</h2>
@@ -5264,14 +5266,17 @@ mini 变成一个<strong>只有 <code>mini</code> CLI 还在用</strong>的独�
 <code>~/Library/Application Support/mini-swe-agent/.env</code>）里的 key 不再生效。
 <strong>没有报错</strong>，只是认证失败或模型重试 10 次后放弃。
 <strong>对策</strong>：在 <code>coderagent/paths.py</code> 旁边加一个自己的 <code>.env</code> 加载，路径保持不变（兼容老用户），
-或者改到 <code>~/.coderagent/.env</code> 并同时读两个（老路径优先）。<strong>这一步必须在删包之前做完并有测试。</strong></p>
+或者改到 <code>~/.coderagent/.env</code> 并同时读两个（老路径优先）。<strong>这一步必须在删包之前做完并有测试。</strong>
+（第 1 步已经做完了：<code>coderagent/paths.py:load_global_env()</code>，
+测试在 <code>tests/coderagent/test_paths.py</code>。）</p>
 <h3 id="p0-2">P0-2：发布流水线与包名</h3>
 <ul>
 <li><code>pyproject.toml:7</code> 的 <code>name = "mini-swe-agent"</code> 决定了 PyPI 上的包名。删掉 mini 核心之后，
   这个名字和内容对不上。</li>
-<li><code>pyproject.toml:113</code> 的 <code>version = {attr = "minisweagent.__version__"}</code> 会直接失效。</li>
-<li><code>.github/workflows/release.yaml:31</code> 用 <code>grep</code> 读版本号的位置，冒烟测试跑
-  <code>pipx run mini-swe-agent --help</code>。</li>
+<li><code>pyproject.toml</code> 的 <code>version = {attr = ...}</code> 原来指向 <code>minisweagent.__version__</code>，
+  删掉 mini 就会失效——第 2 步已经改成指向 <code>coderagent.version.__version__</code>。</li>
+<li><code>.github/workflows/release.yaml</code> 用 <code>grep</code> 读版本号的位置（第 2 步已改），
+  冒烟测试跑 <code>pipx run mini-swe-agent --help</code>（装的是上游的包，没测我们的产物）。</li>
 <li><strong>取舍</strong>：PyPI 上的 <code>mini-swe-agent</code> 是上游 SWE-agent/mini-swe-agent 的名字，<strong>不能占</strong>。
   要么保持 <code>mini-swe-agent</code> 这个名字（和上游冲突，不建议），要么换名（<code>coderagent</code>？需要查重名），
   要么不发 PyPI、只发 GitHub release。</li>
@@ -5356,19 +5361,20 @@ mini 变成一个<strong>只有 <code>mini</code> CLI 还在用</strong>的独�
 </tbody>
 </table>
 <h3 id="p2-2">P2-2：版本号与 bump 脚本</h3>
-<p><code>pyproject.toml:113</code> 和 <code>.github/bump_version.py:9</code> 都指向 <code>src/minisweagent/__init__.py</code>。
-coderagent 自己已经有 <code>__version__ = "0.1.0"</code>（<code>src/coderagent/__init__.py:8</code>），
-但它是<strong>手写</strong>的、没进发布流程。合并成一个版本源时要定一个。</p>
+<p>原来 <code>pyproject.toml</code> 和 <code>.github/bump_version.py</code> 都指向 <code>src/minisweagent/__init__.py</code>，
+而 coderagent 自己的 <code>__version__</code> 是<strong>手写</strong>的、没进发布流程。
+第 2 步（<a href="#step-2">第 2 步</a>）定了：<strong>版本源是 <code>src/coderagent/version.py</code></strong>，
+发行包的版本号跟 coding agent 走；mini 保留自己的 <code>2.4.6</code>，那只是 mini 代码的版本。</p>
 <hr>
 <h2 id="plan">迁移路线</h2>
 <p>分 5 步，每步一个提交，每步都能独立通过测试和 CI。<strong>第 4 步之前，仓库里一直有 mini</strong>，
 所以任何一步都能停下来。</p>
-<h3 id="0">第 0 步：加一道闸（半天）</h3>
+<h3 id="step-0">第 0 步：加一道闸（半天）</h3>
 <p>把 coderagent 对 mini 的 9 处 import 收敛到一个模块，比如
 <code>coderagent/compat/__init__.py</code>，让「coderagent 依赖 mini」这件事变成<strong>一个文件</strong>里的决定。
 此时行为不变，但边界清楚了。</p>
 <p><strong>验收</strong>：<code>grep -rn "minisweagent" src/coderagent/</code> 只剩一个文件。</p>
-<h3 id="1-311-2026-11-26">第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26）</h3>
+<h3 id="step-1">第 1 步：搬 311 行（半天）—— ✅ 已做（2026-11-26）</h3>
 <p>把 6 个模块复制进 <code>coderagent/compat/</code>，改 import，<strong>不改逻辑</strong>。
 <code>LocalEnvironment</code> 的子类关系保留（<code>CodingEnvironment</code> 照旧继承它）。</p>
 <p><strong>两处和计划不一样的地方</strong>：</p>
@@ -5392,14 +5398,33 @@ coderagent 自己已经有 <code>__version__ = "0.1.0"</code>（<code>src/codera
 <p><strong>验收</strong>：<code>pytest tests/coderagent -q</code> 全绿（1468 passed）；<code>grep -rn "minisweagent" src/coderagent/</code>
 只剩 <code>core/sandbox.py</code> 的远程沙箱注册表；<code>tests/coderagent/compat/</code> 和 <code>tests/coderagent/test_paths.py</code>
 是这一轮新增的测试。</p>
-<h3 id="2">第 2 步：版本号（半天）</h3>
+<h3 id="step-2">第 2 步：版本号（半天）—— ✅ 已做（2026-11-26）</h3>
 <ul>
-<li><code>pyproject.toml</code> 的 <code>dynamic version</code> 改成指向 <code>coderagent.__version__</code>，
+<li><code>pyproject.toml</code> 的 <code>dynamic version</code> 改成指向 <code>coderagent.version.__version__</code>，
   <code>.github/bump_version.py</code> 同步改。</li>
 <li>（<code>.env</code> 的部分已经在第 1 步做完了。）</li>
 </ul>
-<p><strong>验收</strong>：<code>python -m build</code> 出来的包有正确的版本号。</p>
-<h3 id="3-13">第 3 步：决定沙箱层（1–3 天）</h3>
+<p><strong>两处和计划不一样的地方</strong>：</p>
+<ol>
+<li>
+<p><strong>版本号放在自己的模块里</strong>（<code>src/coderagent/version.py</code>），而不是 <code>coderagent/__init__.py</code>。
+   原因：构建时的 <code>attr:</code> 要读这个值，<code>coderagent/__init__.py</code> 会 import 整个包
+   （<code>core.protocols</code> → pydantic），构建环境里没有这些依赖。<code>version.py</code> 只有一个赋值，
+   setuptools 读它不用 import 任何东西。</p>
+</li>
+<li>
+<p><strong>mini 的 <code>__version__ = "2.4.6"</code> 留着</strong>。它是 mini 自己的版本（横幅和
+   <code>agents/default.py:173</code> 的 <code>mini_version</code> 都用它），跟这个仓库发布的是两件事。
+   但发布流水线现在只认 coding agent 的版本号：release.yaml 的校验改成 grep
+   <code>src/coderagent/version.py</code>。</p>
+</li>
+</ol>
+<p><strong>后果</strong>：这个仓库的发行包版本号现在是 <code>0.1.0</code>（coding agent 的），
+而 PyPI 上 <code>mini-swe-agent</code> 这个名字是上游的——包名的事仍然留在第 4 步
+（<a href="#p0-2">P0-2</a>）。冒烟测试还在跑 <code>pipx run mini-swe-agent --help</code>，
+它装的是<strong>上游</strong>的包，不是我们的产物；改它要等包名定了。</p>
+<p><strong>验收</strong>：<code>uv build --wheel</code> 出来的包是 <code>mini_swe_agent-0.1.0-py3-none-any.whl</code>。</p>
+<h3 id="step-3">第 3 步：决定沙箱层（1–3 天）</h3>
 <p>三选一：</p>
 <ul>
 <li><strong>搬</strong>：把 mini 的 environment 复制进 <code>coderagent/sandbox/</code>（新名字，避免和
@@ -5409,7 +5434,7 @@ coderagent 自己已经有 <code>__version__ = "0.1.0"</code>（<code>src/codera
 <li><strong>删</strong>：只保留 local 沙箱，改 <code>sandbox.type</code> 的文档。</li>
 </ul>
 <p><strong>验收</strong>：<code>tests/coderagent/core/test_sandbox.py</code> 里现有的沙箱测试全绿（不 mock）。</p>
-<h3 id="4-12">第 4 步：删包 + 收尾（1–2 天）</h3>
+<h3 id="step-4">第 4 步：删包 + 收尾（1–2 天）</h3>
 <p>删 <code>src/minisweagent/</code> 和 mini 的测试、文档；改 <code>mkdocs.yml</code> 的 nav；
 改 <code>pylint.yaml</code> 指向 <code>coderagent/</code>；处理 PyPI 包名（<a href="#p0-2">P0-2</a>）。</p>
 <p><strong>验收</strong>：<code>uv sync --locked --extra full &amp;&amp; uv run --locked --extra full pytest -q</code> 全绿；
