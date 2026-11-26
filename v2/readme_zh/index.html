@@ -5,24 +5,22 @@
       
       
       
-        <link rel="canonical" href="https://mini-swe-agent.com/latest/readme_zh/">
+      
+        <link rel="prev" href="../readme/">
       
       
-        <link rel="prev" href="../usage/coderagent_web_zh/">
-      
-      
-        <link rel="next" href="../usage/coderagent_commands_zh/">
+        <link rel="next" href="../usage/coderagent_quickstart/">
       
       
         
       
       
-      <link rel="icon" href="../assets/mini_square.svg">
+      <link rel="icon" href="../assets/coder.svg">
       <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.2">
     
     
       
-        <title>Overview (中文) - mini-SWE-agent documentation</title>
+        <title>Overview (中文) - The coding agent</title>
       
     
     
@@ -54,13 +52,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
-    
       <link rel="stylesheet" href="../assets/custom.css">
     
       <link rel="stylesheet" href="../assets/gif-controls.css">
-    
-      <link rel="stylesheet" href="../assets/mkdocstrings.css">
     
       <link rel="stylesheet" href="../assets/image_theme.css">
     
@@ -73,16 +67,6 @@
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
-  
-
-
-  
-  
-
-<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-SG2NC1GDRD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-SG2NC1GDRD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-SG2NC1GDRD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
-  
-    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
-  
 
     
     
@@ -115,31 +99,12 @@
     <div data-md-component="skip">
       
         
-        <a href="#ai-agent" class="md-skip">
+        <a href="#coding-agent" class="md-skip">
           Skip to content
         </a>
       
     </div>
     <div data-md-component="announce">
-      
-        <aside class="md-banner">
-          <div class="md-banner__inner md-grid md-typeset">
-            
-              <button class="md-banner__button md-icon" aria-label="Don't show this again">
-                
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
-              </button>
-            
-            
-<a href="../usage/programbench/">
-  🎉 Run mini-swe-agent on our new &amp; extremely challenging benchmark, ProgramBench
-</a>
-
-          </div>
-          
-            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
-          
-        </aside>
       
     </div>
     
@@ -154,9 +119,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="mini-SWE-agent documentation" class="md-header__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+    <a href=".." title="The coding agent" class="md-header__button md-logo" aria-label="The coding agent" data-md-component="logo">
       
-  <img src="../assets/mini_square.svg" alt="logo">
+  <img src="../assets/coder.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -167,7 +132,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            mini-SWE-agent documentation
+            The coding agent
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -263,13 +228,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/sds819/mini-swe-agent" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
-    SWE-agent/mini-SWE-agent
+    sds819/mini-swe-agent
   </div>
 </a>
       </div>
@@ -298,29 +263,7 @@
   
     
   
-  Getting Started
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="../reference/" class="md-tabs__link">
-          
-  
-  
-    
-  
-  API Reference
+  The coding agent
 
         </a>
       </li>
@@ -347,44 +290,6 @@
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="https://www.swebench.com/blog.html" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Blog
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="https://swebench.com" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Leaderboard
-
-      </a>
-    </li>
   
 
       
@@ -416,22 +321,22 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="mini-SWE-agent documentation" class="md-nav__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+    <a href=".." title="The coding agent" class="md-nav__button md-logo" aria-label="The coding agent" data-md-component="logo">
       
-  <img src="../assets/mini_square.svg" alt="logo">
+  <img src="../assets/coder.svg" alt="logo">
 
     </a>
-    mini-SWE-agent documentation
+    The coding agent
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/sds819/mini-swe-agent" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
-    SWE-agent/mini-SWE-agent
+    sds819/mini-swe-agent
   </div>
 </a>
     </div>
@@ -451,6 +356,38 @@
       
         
           
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
         
       
         
@@ -496,7 +433,7 @@
   <span class="md-ellipsis">
     
   
-    Getting Started
+    The coding agent
   
 
     
@@ -518,994 +455,12 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Getting Started
+    The coding agent
   
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview (中文)
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview (中文)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        开始用吧！
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coding-agentcoder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coding agent（coder）
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Coding agent（coder）">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        它能做什么
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        它从哪儿来
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        再读点别的
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        致谢
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../quickstart/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick start
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4">
-        
-          
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Command line usage
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Command line usage
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/mini/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    <code>mini</code>
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Config
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/swebench/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SWE-bench
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/programbench/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ProgramBench
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/inspector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Inspector
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/output_files/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Output files
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" checked="">
-        
-          
-          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Coding agent
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_1_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Coding agent
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_quickstart/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    快速开始
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5_2" checked="">
-        
-          
-          <label class="md-nav__link" for="__nav_1_5_2" id="__nav_1_5_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    中文
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_5_2_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_1_5_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    中文
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_features_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    功能
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_web_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    网页版
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview (中文)
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview (中文)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        开始用吧！
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coding-agentcoder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coding agent（coder）
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Coding agent（coder）">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        它能做什么
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        它从哪儿来
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        再读点别的
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        致谢
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_commands_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    命令
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_subagents_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    子 agent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_skills_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    技能
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_hooks_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Hooks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_sandbox_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    沙箱
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/coderagent_eval_zh/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    评测
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
               
             
               
@@ -1522,7 +477,7 @@
   <span class="md-ellipsis">
     
   
-    Overview
+    The whole thing
   
 
     
@@ -1550,7 +505,154 @@
   <span class="md-ellipsis">
     
   
-    English README
+    The README
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview (中文)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview (中文)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        它能做什么
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        模型
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        文档
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        来历
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/coderagent_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
   
 
     
@@ -1599,6 +701,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage/coderagent_features_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features (中文)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage/coderagent_web/" class="md-nav__link">
         
   
@@ -1606,7 +736,35 @@
   <span class="md-ellipsis">
     
   
-    Web interface
+    The web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/coderagent_web_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The web interface (中文)
   
 
     
@@ -1655,6 +813,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage/coderagent_commands_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands (中文)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage/coderagent_subagents/" class="md-nav__link">
         
   
@@ -1683,6 +869,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage/coderagent_subagents_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sub agents (中文)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage/coderagent_skills/" class="md-nav__link">
         
   
@@ -1691,6 +905,34 @@
     
   
     Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/coderagent_skills_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills (中文)
   
 
     
@@ -1823,6 +1065,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../usage/coderagent_hooks_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks (中文)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../usage/coderagent_plugins/" class="md-nav__link">
         
   
@@ -1859,6 +1129,34 @@
     
   
     Sandbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/coderagent_sandbox_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandbox (中文)
   
 
     
@@ -1928,72 +1226,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6">
-        
-          
-          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Language models
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Language models
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
               
                 
   
@@ -2001,14 +1233,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../models/quickstart/" class="md-nav__link">
+      <a href="../usage/coderagent_eval_zh/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Quick start
+    Evals (中文)
   
 
     
@@ -2017,1586 +1249,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../models/local_models/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Local models
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../models/troubleshooting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7">
-        
-          
-          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Configuration
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_7">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Configuration
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/global_configuration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Global configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/yaml_configuration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Yaml config files
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8">
-        
-          
-          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Python bindings &amp; more
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_8">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Python bindings &amp; more
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/python_bindings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Basic Python bindings
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/control_flow/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Understanding the agent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/cookbook/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Subclassing and more
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/environments/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Environments
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced/v2_migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    v2 migration guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../faq/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    FAQ
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Contributing
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../reference/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API Reference
-  
-
-    
-  </span>
-  
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    API Reference
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
-        
-          
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Agents
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Agents
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/agents/default/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DefaultAgent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/agents/interactive/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    InteractiveAgent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
-        
-          
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Models
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Models
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/overview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/litellm/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LitellmModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/litellm_response_toolcall/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LitellmResponseModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/openrouter/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    OpenRouterModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/requesty/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    RequestyModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/portkey/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    PortkeyModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/portkey_response/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    PortkeyResponse
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/test_models/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DeterministicModel
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/extra/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Extra Models
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/models/utils/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Model Utilities
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4">
-        
-          
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Environments
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Environments
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/local/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LocalEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/docker/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    DockerEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/singularity/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SingularityEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/swerex_docker/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SwerexDockerEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/bubblewrap/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    BubblewrapEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/contree/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ContreeEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/environments/swerex_modal/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SwerexModalEnvironment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5">
-        
-          
-          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Run Scripts
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Run Scripts
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix="">
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/hello_world/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Hello World
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/mini/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    mini
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/mini_extra/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    mini-extra
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Config
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/inspector/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Inspector
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/swebench/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SWE-bench (batch)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/swebench_single/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SWE-bench (single)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/run/programbench/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ProgramBench
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -3663,7 +1315,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
         
           
           <div class="md-nav__link md-nav__container">
@@ -3685,14 +1337,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4131,60 +1783,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="https://www.swebench.com/blog.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Blog
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="https://swebench.com" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Leaderboard
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -4215,68 +1813,40 @@
   <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        开始用吧！
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coding-agentcoder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coding agent（coder）
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Coding agent（coder）">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
         它能做什么
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        它从哪儿来
+        模型
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        再读点别的
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        致谢
+        文档
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        来历
       
     </span>
   </a>
@@ -4301,7 +1871,7 @@
 
 
   
-    <a href="https://github.com/SWE-agent/mini-SWE-agent/edit/main/docs/readme_zh.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/sds819/mini-swe-agent/edit/main/docs/readme_zh.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
     </a>
@@ -4312,271 +1882,63 @@
 <blockquote>
 <p>这份 README 的中文版在仓库根目录的 <code>README_zh.md</code> 里。</p>
 </blockquote>
-<div align="center">
-<a href="https://mini-swe-agent.com/latest/"><img src="https://github.com/SWE-agent/mini-swe-agent/raw/main/docs/assets/mini-swe-agent-banner.svg" alt="mini-swe-agent banner" style="height: 7em"></a>
-</div>
-
-<h1 id="ai-agent">极简的 AI 软件工程 agent</h1>
+<h1 id="coding-agent">coding agent</h1>
 <blockquote>
 <p>英文版：<a href="../readme/">README.md</a></p>
 </blockquote>
-<p>📣 <a href="https://labs.ramp.com/swebench">mini-swe-agent 现在支撑着 Ramp SWE-Bench</a><br>
-📣 <a href="https://deepswe.datacurve.ai/blog#evaluation-harness">mini-swe-agent 在 DeepSWE 上胜过 Claude Code 和 Codex</a><br>
-📣 <a href="https://mini-swe-agent.com/latest/usage/programbench/">在新而极难的基准 ProgramBench 上跑 mini-swe-agent</a><br>
-📣 <a href="https://minimal-agent.com/">写极简 AI agent 的新教程</a></p>
-<p><a href="https://mini-swe-agent.com/latest/"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a>
-<a href="https://join.slack.com/t/swe-bench/shared_invite/zt-36pj9bu5s-o3_yXPZbaH2wVnxnss1EkQ"><img alt="Slack" src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&amp;logo=slack&amp;logoColor=white"></a>
-<a href="https://pypi.org/project/mini-swe-agent/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/mini-swe-agent?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=black&amp;color=deeppink"></a></p>
-<blockquote>
-<p><strong>警告</strong></p>
-<p>这是 <strong>mini-swe-agent v2</strong>。请读<a href="https://mini-swe-agent.com/latest/advanced/v2_migration/">迁移指南</a>。要旧版本的话，看 <a href="https://github.com/SWE-agent/mini-swe-agent/tree/v1">v1 分支</a>。</p>
-</blockquote>
-<p>2024 年，我们做了 <a href="https://github.com/swe-bench/SWE-bench">SWE-bench</a> 和 <a href="https://github.com/swe-agent/swe-agent">SWE-agent</a>，帮着点燃了 coding agent 这场革命。</p>
-<p>现在我们要问：<strong>如果我们的 agent 简单 100 倍，效果却几乎一样好呢？</strong></p>
-<p><code>mini</code> 是</p>
-<ul>
-<li><strong>用得广</strong>：Meta、NVIDIA、Essential AI、IBM、Nebius、Anyscale、普林斯顿大学、斯坦福大学都在用。</li>
-<li><strong>极简</strong>：<a href="https://github.com/SWE-agent/mini-swe-agent/blob/main/src/minisweagent/agents/default.py">agent 类</a>只有大约 100 行 python
-  （<a href="https://github.com/SWE-agent/mini-swe-agent/blob/main/src/minisweagent/environments/local.py">环境</a>、
-  <a href="https://github.com/SWE-agent/mini-swe-agent/blob/main/src/minisweagent/models/litellm_model.py">模型</a> 和
-  <a href="https://github.com/SWE-agent/mini-swe-agent/blob/main/src/minisweagent/run/hello_world.py">运行脚本</a> 各多一点点）——没有花哨的依赖！</li>
-<li><strong>能打</strong>：<a href="https://www.swebench.com/">SWE-bench verified 基准</a>上分数 &gt;74%；启动比 Claude Code 快得多</li>
-<li><strong>能部署</strong>：支持<strong>本地环境</strong>、<strong>docker/podman</strong>、<strong>singularity/apptainer</strong>、<strong>bubblewrap</strong>、<strong>contree</strong>，还有更多</li>
-<li><strong>兼容</strong>：通过 <strong>litellm</strong>、<strong>openrouter</strong>、<strong>portkey</strong> 支持所有模型。支持 <code>/completion</code> 和 <code>/response</code> 端点、交错思考等</li>
-<li>出自 <a href="https://swebench.com">SWE-bench</a>、<a href="https://swe-agent.com">SWE-agent</a> 背后的普林斯顿与斯坦福团队</li>
-<li><strong>测过</strong>：<a href="https://codecov.io/gh/SWE-agent/mini-swe-agent"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/swe-agent/mini-swe-agent?style=flat-square"></a></li>
-</ul>
-<details>
-
-<summary>更多的动机（面向研究）</summary>
-
-[SWE-agent](https://swe-agent.com/latest/) 在 2024 年点燃了 AI agent 的开发。那时候我们很看重给 agent 配工具和专用接口。
-但一年之后，随着模型变强，这里面的很多东西根本不需要了，照样能做出一个有用的 agent！
-实际上 `mini` agent
-
-- **除了 bash 没有别的工具**——它甚至不需要用上模型的 tool-calling 接口。
-  这意味着任何模型都能跑它。在沙箱里跑的时候，你也不用装任何包——它只要 bash 就够了。
-- **历史完全线性**——agent 的每一步只是往消息列表里追加一句，完事。
-  所以轨迹和你传给模型的消息没有区别。调试和微调都方便。
-- **用 `subprocess.run` 执行动作**——每个动作都是完全独立的（而不是维持一个有状态的 shell 会话）。
-  这让在沙箱里执行动作变得毫无负担（把 `subprocess.run` 换成 `docker exec` 就行），扩展起来也不费劲。
-  说真的，这[是件大事](https://mini-swe-agent.com/latest/faq/#why-no-shell-session)，信我。
-
-这让它非常适合当基线系统，也适合当那种把语言模型（而不是 agent 脚手架）放在注意力中心的位置。
-你可以在 [SWE-bench（只用 bash）](https://www.swebench.com/) 排行榜上看到结果——那个榜就是用 `mini` 评测不同模型的。
-
-</details>
-
-<details>
-<summary>更多的动机（当成工具用）</summary>
-
-有些 agent 是过拟合的研究产物，有些是界面很重的前端怪物。
-
-`mini` agent 想当一个可以随手改的工具，不是一个黑盒。
-
-- **简单**，一眼就能看懂
-- **顺手**，日常流程里用得舒服
-- **灵活**，容易扩展
-
-和别的 agent（包括我们自己的 [swe-agent](https://swe-agent.com/latest/)）不同，它简单得多，因为它：
-
-- **除了 bash 没有别的工具**——它甚至不需要用上模型的 tool-calling 接口。
-  与其给 agent 可能想做的每件具体事都实现一个专用工具，重心完全放在让模型充分发挥 shell 的能力上。
-  想让它做某件具体的事，比如开一个 PR？
-  直接告诉模型让它自己想办法，而不是在 agent 里花时间实现。
-- **用 `subprocess.run` 执行动作**——每个动作都是完全独立的（而不是维持一个有状态的 shell 会话）。
-  对 agent 的稳定性来说这[是件大事](https://mini-swe-agent.com/latest/faq/#why-no-shell-session)，信我。
-- **历史完全线性**——agent 的每一步只是往传给模型的消息里追加一句，完事。
-  这对调试和理解模型被喂了什么，非常有用。
-
-</details>
-
-<details>
-<summary>我该用 SWE-agent 还是 mini-SWE-agent？</summary>
-
-你应该默认选 `mini-swe-agent`。具体来说，下面这些情况选它：
-
-- 你想要一个能在本地跑起来的命令行工具
-- 你想要一个控制流极简的 agent
-- 你想要更快、更简单、更稳的沙箱和基准评测
-- 你在做微调或强化学习，不想过拟合到某个特定的 agent 脚手架
-
-下面这些情况选 `swe-agent`：
-
-- 你想试验不同的工具集合，每个工具有自己的接口
-- 你想试验不同的历史处理器
-
-两者都能给你
-
-- SWE-Bench 上的好成绩
-- 一个轨迹浏览器
-
-</details>
-
-<table>
-<tbody><tr>
-<td width="50%">
-<a href="https://mini-swe-agent.com/latest/usage/mini/"><strong>命令行</strong></a>（<code>mini</code>）
-</td>
-<td>
-<a href="https://mini-swe-agent.com/latest/usage/swebench/"><strong>批量推理</strong></a>
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-![mini](https://github.com/SWE-agent/swe-agent-media/blob/main/media/mini/gif/mini.gif?raw=true)
-
-</td>
-<td>
-
-![swebench](https://github.com/SWE-agent/swe-agent-media/blob/main/media/mini/gif/swebench.gif?raw=true)
-
-</td>
-</tr>
-<tr>
-<td>
-<a href="https://mini-swe-agent.com/latest/usage/inspector/"><strong>轨迹浏览器</strong></a>
-</td>
-<td>
-<a href="https://mini-swe-agent.com/latest/advanced/cookbook/"><strong>Python 绑定</strong></a>
-</td>
-</tr>
-<tr>
-<td>
-
-![inspector](https://github.com/SWE-agent/swe-agent-media/blob/main/media/mini/gif/inspector.gif?raw=true)
-
-</td>
-<td>
-
-<div class="highlight"><pre><span></span><code><span class="n">agent</span> <span class="o">=</span> <span class="n">DefaultAgent</span><span class="p">(</span>
-    <span class="n">LitellmModel</span><span class="p">(</span><span class="n">model_name</span><span class="o">=...</span><span class="p">),</span>
-    <span class="n">LocalEnvironment</span><span class="p">(),</span>
-<span class="p">)</span>
-<span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"Write a sudoku game"</span><span class="p">)</span>
-</code></pre></div>
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-<a href="https://github.com/sds819/mini-swe-agent/blob/main/docs/readme.md"><strong>English README</strong></a>
-</td>
-<td>
-</td>
-</tr>
-</tbody></table>
-
-<h2 id="_1">开始用吧！</h2>
-<p><strong>方式 1：</strong> 只想试试命令行（在匿名虚拟环境里装这个包）</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>uv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>uvx<span class="w"> </span>mini-swe-agent
-<span class="c1"># 或者</span>
-pip<span class="w"> </span>install<span class="w"> </span>pipx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pipx<span class="w"> </span>ensurepath<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pipx<span class="w"> </span>run<span class="w"> </span>mini-swe-agent
-</code></pre></div>
-<p><strong>方式 2：</strong> 在当前环境里装命令行和 python 绑定</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>mini-swe-agent
-mini<span class="w">  </span><span class="c1"># 跑命令行</span>
-</code></pre></div>
-<p><strong>方式 3：</strong> 从源码装（开发者的装法）</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/SWE-agent/mini-swe-agent.git
-<span class="nb">cd</span><span class="w"> </span>mini-swe-agent<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-mini<span class="w">  </span><span class="c1"># 跑命令行</span>
-</code></pre></div>
-<p>我们的<a href="https://mini-swe-agent.com/latest/">文档</a>里还有更多：</p>
-<ul>
-<li><a href="https://mini-swe-agent.com/latest/quickstart/">快速开始</a></li>
-<li><a href="https://mini-swe-agent.com/latest/usage/mini/">用 <code>mini</code> 命令行</a></li>
-<li><a href="https://mini-swe-agent.com/latest/advanced/global_configuration/">全局配置</a></li>
-<li><a href="https://mini-swe-agent.com/latest/advanced/yaml_configuration/">Yaml 配置文件</a></li>
-<li><a href="https://mini-swe-agent.com/latest/advanced/cookbook/">用 cookbook 增强它</a></li>
-<li><a href="https://mini-swe-agent.com/latest/faq/">常见问题</a></li>
-<li><a href="https://mini-swe-agent.com/latest/contributing/">来贡献！</a></li>
-<li><a href="../readme/">English README</a>——英文版的那份介绍</li>
-</ul>
-<h2 id="coding-agentcoder">Coding agent（<code>coder</code>）</h2>
-<p>这个仓库还带着 <code>coder</code>：一个交互式 coding agent，它<strong>复用 mini-swe-agent 的模型层和环境层</strong>
-（见下面的<a href="#where-it-comes-from">它从哪儿来</a>），在上面加了日常驱动真正需要的东西——
-带权限的工具系统、能续接和分叉的会话、上下文压缩、记忆、子 agent、MCP server、hooks——
-而且它既能在<strong>终端</strong>里跑，也能在<strong>浏览器</strong>里跑。</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[web]"</span><span class="w">      </span><span class="c1"># 网页版需要 uvicorn 和 jinja2</span>
+<p><a href="https://github.com/sds819/mini-swe-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a>
+<a href="https://pypi.org/project/coder-agent/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=black&amp;color=deeppink"></a></p>
+<p><code>coder</code> 是一个交互式 coding agent：它读代码、写代码、跑命令，然后告诉你它改了什么。
+它能跑在终端里，<strong>也能</strong>跑在浏览器里，还是一个能当库用的东西。</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 <span class="nb">cd</span><span class="w"> </span>my-project
 
 coder<span class="w">                        </span><span class="c1"># 终端界面</span>
 coder<span class="w"> </span>web<span class="w">                    </span><span class="c1"># 同一个 agent，跑在浏览器里</span>
 coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>path/to/suite<span class="w">     </span><span class="c1"># 拿一个任务集跑这个 agent</span>
 </code></pre></div>
-<h3 id="_2">它能做什么</h3>
-<p><strong>工具。</strong> 十四个内置工具：<code>read</code>、<code>write</code>、<code>edit</code>、<code>multi_edit</code> 和 <code>apply_patch</code> 用来改文件；
-<code>glob</code>、<code>grep</code> 和 <code>ls</code> 用来找代码；<code>bash</code>、<code>bash_output</code> 和 <code>bash_kill</code> 用来跑命令（也能放到后台跑）；
-<code>todo_write</code> 用来记任务清单；<code>task</code> 用来开子 agent；<code>skill</code> 用来加载技能。</p>
-<p><strong>权限。</strong> 五种模式：<code>default</code>（凡是会改东西的都问）、<code>acceptEdits</code>（写操作直接放行，其余的还是要问）、
-<code>plan</code> 和 <code>readonly</code>（什么都不改）以及 <code>bypass</code>（什么都不问）。规则写在 <code>~/.coderagent/rules.yaml</code>（你的）
-和 <code>.coderagent/rules.yaml</code>（项目的）里；<code>deny</code> 永远压过 <code>allow</code>。</p>
+<h2 id="_1">它能做什么</h2>
+<p><strong>工具。</strong> 十四个内置工具：<code>read</code>、<code>write</code>、<code>edit</code>、<code>multi_edit</code> 和 <code>apply_patch</code> 改文件；
+<code>glob</code>、<code>grep</code> 和 <code>ls</code> 找代码；<code>bash</code>、<code>bash_output</code> 和 <code>bash_kill</code> 跑命令（也能放后台跑）；
+<code>todo_write</code> 记任务清单；<code>task</code> 起一个子 agent；<code>skill</code> 加载技能。</p>
+<p><strong>权限。</strong> 五种模式：<code>default</code>（凡是会改动东西的都问）、<code>acceptEdits</code>（写文件直接过，其余
+还是问）、<code>plan</code> 和 <code>readonly</code>（什么都不改）以及 <code>bypass</code>（什么都不问）。规则写在
+<code>~/.coderagent/rules.yaml</code>（你的）和 <code>.coderagent/rules.yaml</code>（项目的）里；<code>deny</code> 永远压过
+<code>allow</code>。</p>
 <p><strong>会话。</strong> 每个会话都有一份事件日志，所以它能被续接（<code>coder --resume</code>）、分叉（<code>/fork</code>）、
 回退（<code>/rewind</code>）和导出（<code>coder export</code>）；会话的轨迹还能发给 OpenTelemetry 采集器。
-浏览器里开的会话能在终端里接着聊，反过来也一样。</p>
-<p><strong>上下文。</strong> 对话占满预算的 80% 时会被压缩；摘要里留着目标、发现、决定、动过的文件和还没解决的问题。
-一轮结束前三道闸门按这个顺序过：<code>Stop</code> hook、项目的 <code>verify.commands</code>、输出格式。</p>
+浏览器里开的会话能在终端里接着跑，反过来也一样。</p>
+<p><strong>上下文。</strong> 对话到预算的 80% 会被压缩；摘要留着目标、发现、决定、动过的文件和还没解决的问题。
+一轮结束前按顺序过三道闸门：<code>Stop</code> hook、项目的 <code>verify.commands</code>、输出 schema。</p>
 <p><strong>记忆。</strong> 项目把记忆写在 <code>.coderagent/memory/*.md</code>，你自己的偏好写在 <code>~/.coderagent/CLAUDE.md</code>，
-<code>/init</code> 会给仓库写一份 <code>AGENTS.md</code>。</p>
-<p><strong>子 agent 和路由。</strong> <code>task</code> 用来开子 agent（<code>code-explorer</code>、<code>verifier</code>、<code>refactorer</code>，也可以是你自己的）。
-不同的活可以用不同的模型：<code>main</code>、<code>cheap</code>、<code>strong</code>、<code>summarize</code>、<code>reflect</code> 和 <code>review</code>。</p>
+<code>/init</code> 给仓库写一份 <code>AGENTS.md</code>。</p>
+<p><strong>子 agent 和路由。</strong> <code>task</code> 起一个子 agent（<code>code-explorer</code>、<code>verifier</code>、<code>refactorer</code>，
+还有你自己写的）。不同的活可以用不同的模型：<code>main</code>、<code>cheap</code>、<code>strong</code>、<code>summarize</code>、
+<code>reflect</code> 和 <code>review</code>。</p>
 <p><strong>扩展。</strong> 九个事件上的 hook（<code>PreToolUse</code>、<code>PostToolUse</code>、<code>UserPromptSubmit</code>、<code>Stop</code>、
 <code>SessionStart</code>、<code>SessionEnd</code>、<code>SubagentStop</code>、<code>PreCompact</code>、<code>PostCompact</code>）、MCP server、插件、
 技能和自定义 slash 命令。</p>
 <p><strong>沙箱。</strong> 命令可以跑在 <code>local</code>、<code>docker</code>、<code>singularity</code>、<code>bubblewrap</code>、<code>contree</code>
-或 SWE-ReX（<code>swerex_docker</code>、<code>swerex_modal</code>）里。</p>
-<p><strong>35 条 slash 命令</strong>，终端里有（<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/review</code>、<code>/diff</code>、<code>/cost</code>、
-<code>/context</code>、<code>/compact</code>、<code>/resume</code>、<code>/fork</code>、<code>/agents</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/sandbox</code>……），
+或者 SWE-ReX（<code>swerex_docker</code>、<code>swerex_modal</code>）里。</p>
+<p><strong>35 个 slash 命令</strong>（<code>/model</code>、<code>/mode</code>、<code>/plan</code>、<code>/review</code>、<code>/diff</code>、<code>/cost</code>、
+<code>/context</code>、<code>/compact</code>、<code>/resume</code>、<code>/fork</code>、<code>/agents</code>、<code>/permissions</code>、<code>/hooks</code>、<code>/sandbox</code> 等）——
 浏览器里是同一套。</p>
 <p><strong>网页版。</strong> <code>coder web</code> 提供聊天页、设置页（模型和权限都是表单）、文件树和这一轮改动的 diff。
-每个动作都是普通的 HTTP 调用，所以浏览器也能被脚本驱动；API 文档在 <code>/api/docs</code>。</p>
+每个动作都是普通 HTTP 调用，所以脚本也能驱动它；API 文档在 <code>/api/docs</code>。</p>
 <p><strong>评测。</strong> <code>coder eval &lt;suite&gt;</code> 拿一个任务集跑 agent，并报告每个任务的结果；
 <code>coder eval-compare</code> 比对两份报告，指出哪些任务退化了。</p>
 <blockquote>
 <p><strong>警告</strong></p>
-<p>网页版<strong>没有认证</strong>：能访问这个端口的人就能驱动 agent，在工作目录里跑 shell 命令。
-把它留在 <code>127.0.0.1</code> 上。</p>
+<p>网页版<strong>没有认证</strong>：能访问端口的人就能驱动 agent 在当前目录里跑命令，所以默认只听 <code>127.0.0.1</code>。</p>
 </blockquote>
-<p><a id="where-it-comes-from"></a></p>
-<h3 id="_3">它从哪儿来</h3>
-<p><code>coder</code> 不是碰巧住在 mini-swe-agent 旁边的另一个项目——它就是 mini-swe-agent 的模型层和环境层，
-上面换了另一个前端。下面这些部分是 mini-swe-agent 的，原样拿来用：</p>
-<table>
-<thead>
-<tr>
-<th>来自 mini-swe-agent</th>
-<th><code>coder</code> 拿它做什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>minisweagent.environments</code>（<code>local</code>、<code>docker</code>、<code>singularity</code>、<code>bubblewrap</code>、<code>contree</code>、SWE-ReX）</td>
-<td>命令跑在哪种沙箱里</td>
-</tr>
-<tr>
-<td><code>minisweagent.config.get_config_from_spec</code></td>
-<td>命令行上的 <code>key=value</code> 配置</td>
-</tr>
-<tr>
-<td><code>minisweagent.utils.serialize.recursive_merge</code></td>
-<td>合并各层配置</td>
-</tr>
-<tr>
-<td><code>minisweagent.models.utils.retry</code> 和 <code>...cache_control</code></td>
-<td>重试失败的调用、提示词缓存</td>
-</tr>
-<tr>
-<td><code>minisweagent.exceptions.FormatError</code></td>
-<td>模型回答解析不出来</td>
-</tr>
-</tbody>
-</table>
-<p>其余都是新写的：agent 主循环、工具系统和权限层、会话和事件日志、上下文引擎和它的压缩、记忆、
-子 agent 和模型路由、扩展（hooks、MCP、插件、技能）、终端界面、网页版和评测工具。</p>
-<h3 id="_4">再读点别的</h3>
-<p>中文文档在 <code>docs/usage</code> 里：</p>
+<h2 id="_2">模型</h2>
+<p>模型走 <a href="https://github.com/BerriAI/litellm">litellm</a>，所以 litellm 支持的模型都能用，只要带上
+厂商前缀（<code>anthropic/…</code>、<code>deepseek/…</code>）。厂商的 key 从环境变量读（<code>ANTHROPIC_API_KEY</code>、
+<code>OPENAI_API_KEY</code> 等），或者从 <code>~/.coderagent/.env</code> 读。</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<span class="w"> </span>--task<span class="w"> </span><span class="s2">"修好那个失败的测试"</span>
+</code></pre></div>
+<h2 id="_3">文档</h2>
+<p><code>docs/usage</code> 里：</p>
 <ul>
 <li><a href="../usage/coderagent_quickstart/">快速开始</a>——装上、配置模型、跑第一轮</li>
 <li><a href="../usage/coderagent_features_zh/">功能</a>——一页看完所有功能，外加你可能撞到的报错</li>
@@ -4586,28 +1948,40 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
 <li><a href="../usage/coderagent_hooks_zh/">Hooks</a>——九个事件上的 hook</li>
 <li><a href="../usage/coderagent_sandbox_zh/">沙箱</a>——命令跑在哪里</li>
 <li><a href="../usage/coderagent_eval_zh/">评测</a>——任务集、报告和对比</li>
-<li><a href="../readme/">English README</a>——英文版的那份介绍</li>
-</ul>
-<p>下面这几页只有英文版：</p>
-<ul>
-<li><a href="../usage/coderagent_routing/">模型路由</a>——哪个模型干哪活</li>
 <li><a href="../usage/coderagent_memory/">记忆</a>——项目记忆和你的偏好</li>
 <li><a href="../usage/coderagent_skills/">技能</a>——agent 能加载的技能</li>
 <li><a href="../usage/coderagent_plugins/">插件</a>——扩展它的插件</li>
 <li><a href="../usage/coderagent_mcp/">MCP server</a>——别的 server 带来的工具</li>
 <li><a href="../usage/coderagent_export/">会话的轨迹</a>——导出轨迹，发给采集器</li>
 </ul>
-<p>英文的概览在 <a href="../usage/coderagent/">The coding agent</a>。</p>
-<p>想知道它是怎么设计的，看 <code>docs/design</code>（英文）：</p>
+<p>英文的文档：</p>
 <ul>
-<li><a href="../design/coding-agent-architecture/">架构</a>——分层、模块、接口、关键决定</li>
+<li><a href="../usage/coderagent_quickstart/">Quick start</a></li>
+<li><a href="../usage/coderagent_features/">Features</a></li>
+<li><a href="../usage/coderagent_web/">The web interface</a></li>
+<li><a href="../usage/coderagent_commands/">Commands</a></li>
+<li><a href="../usage/coderagent_subagents/">Sub agents</a></li>
+<li><a href="../usage/coderagent_hooks/">Hooks</a></li>
+<li><a href="../usage/coderagent_plugins/">Plugins</a></li>
+<li><a href="../usage/coderagent_sandbox/">Sandbox</a></li>
+<li><a href="../usage/coderagent_eval/">Evals</a></li>
+<li><a href="../usage/coderagent_routing/">Model routing</a></li>
+<li><a href="../usage/coderagent_mcp/">MCP servers</a></li>
+<li><a href="../usage/coderagent_export/">The trace of a session</a></li>
+</ul>
+<p>想看它是怎么设计出来的，去 <code>docs/design</code>：</p>
+<ul>
+<li><a href="../design/coding-agent-architecture/">架构</a>——层次、模块、接口、关键决定</li>
 <li><a href="../design/coderagent-design-logic/">设计逻辑</a>——它为什么长成这样：承重的决定、不变量、取舍</li>
 </ul>
-<h2 id="_5">致谢</h2>
-<p><code>coder</code> 这个 coding agent 建立在<strong>本仓库里的 mini-swe-agent</strong> 之上：它用了 mini-swe-agent 的模型层和环境层、
-它的配置处理和它的工具库（见<a href="#where-it-comes-from">它从哪儿来</a>）。mini-swe-agent 本身是 SWE-agent 团队的
-研究项目，那一半代码的参考就是它自己的论文和发布。</p>
-<p>如果这个工作对你有帮助，欢迎在成果里引用 <a href="https://arxiv.org/abs/2405.15793">SWE-agent 论文</a>：</p>
+<h2 id="_4">来历</h2>
+<p>这个 agent 建立在 <a href="https://github.com/SWE-agent/mini-swe-agent">mini-swe-agent</a> 的想法之上：
+消息的线性历史、只用 <code>bash</code> 一个工具跑命令、litellm 的模型层，以及随它而来的那些沙箱环境
+（Docker、Singularity、bubblewrap、contree、SWE-ReX）。其余的——agent 的循环、工具系统和权限层、
+会话和事件日志、上下文引擎和它的压缩、记忆、子 agent 和模型路由、扩展（hook、MCP、插件、
+技能）、终端界面、网页界面和评测工具——都是新的。</p>
+<p>mini-swe-agent 本身是 SWE-agent 团队的研究项目。如果你觉得那部分有用，请在你的工作里引用
+<a href="https://arxiv.org/abs/2405.15793">SWE-agent 的论文</a>：</p>
 <div class="highlight"><pre><span></span><code><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">yang2024sweagent</span><span class="p">,</span>
 <span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{{SWE}-agent: Agent-Computer Interfaces Enable Automated Software Engineering}</span><span class="p">,</span>
 <span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{John Yang and Carlos E Jimenez and Alexander Wettig and Kilian Lieret and Shunyu Yao and Karthik R Narasimhan and Ofir Press}</span><span class="p">,</span>
@@ -4616,20 +1990,6 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
 <span class="w">  </span><span class="na">url</span><span class="p">=</span><span class="s">{https://arxiv.org/abs/2405.15793}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>我们的其它项目：</p>
-<div align="center">
-  <a href="https://github.com/SWE-agent/SWE-agent"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sweagent_logo_text_below.svg" alt="SWE-agent" height="120px"></a>
-   &nbsp;&nbsp;
-  <a href="https://github.com/SWE-agent/SWE-ReX"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swerex_logo_text_below.svg" alt="SWE-ReX" height="120px"></a>
-   &nbsp;&nbsp;
-  <a href="https://github.com/SWE-bench/SWE-bench"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swebench_logo_text_below.svg" alt="SWE-bench" height="120px"></a>
-   &nbsp;&nbsp;
-  <a href="https://github.com/SWE-bench/SWE-smith"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swesmith_logo_text_below.svg" alt="SWE-smith" height="120px"></a>
-   &nbsp;&nbsp;
-  <a href="https://github.com/codeclash-ai/codeclash"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/codeclash_logo_text_below.svg" alt="CodeClash" height="120px"></a>
-   &nbsp;&nbsp;
-  <a href="https://github.com/SWE-bench/sb-cli"><img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sbcli_logo_text_below.svg" alt="sb-cli" height="120px"></a>
-</div>
 
 
 
@@ -4638,8 +1998,6 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
 
 
 
-
-  
 
 
 
@@ -4697,7 +2055,7 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
       <nav class="md-footer__inner md-grid" aria-label="Footer">
         
           
-          <a href="../usage/coderagent_web_zh/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 网页版">
+          <a href="../readme/" class="md-footer__link md-footer__link--prev" aria-label="Previous: The README">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
@@ -4707,20 +2065,20 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
                 Previous
               </span>
               <div class="md-ellipsis">
-                网页版
+                The README
               </div>
             </div>
           </a>
         
         
           
-          <a href="../usage/coderagent_commands_zh/" class="md-footer__link md-footer__link--next" aria-label="Next: 命令">
+          <a href="../usage/coderagent_quickstart/" class="md-footer__link md-footer__link--next" aria-label="Next: Quick start">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                命令
+                Quick start
               </div>
             </div>
             <div class="md-footer__button md-icon">
