@@ -4235,6 +4235,11 @@
 </tr>
 </tbody>
 </table>
+<p>远端的沙箱是 mini-swe-agent 的那些环境：coding agent 不自己写容器。它们要 extra
+<code>sandbox</code> 里的那些包：</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'mini-swe-agent[sandbox]'</span>
+</code></pre></div>
+<p>没有那些包，本地的沙箱照样能用；远端的那个会说出缺的是哪个包。</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swerex_docker</span>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.11</span>

@@ -4044,7 +4044,7 @@
   <a href="#step-3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        第 3 步：决定沙箱层（1–3 天）
+        第 3 步：决定沙箱层（1–3 天）—— ✅ 已做（2026-11-26），选「留」
       
     </span>
   </a>
@@ -4784,7 +4784,7 @@
   <a href="#step-3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        第 3 步：决定沙箱层（1–3 天）
+        第 3 步：决定沙箱层（1–3 天）—— ✅ 已做（2026-11-26），选「留」
       
     </span>
   </a>
@@ -5424,7 +5424,7 @@ mini 变成一个<strong>只有 <code>mini</code> CLI 还在用</strong>的独�
 （<a href="#p0-2">P0-2</a>）。冒烟测试还在跑 <code>pipx run mini-swe-agent --help</code>，
 它装的是<strong>上游</strong>的包，不是我们的产物；改它要等包名定了。</p>
 <p><strong>验收</strong>：<code>uv build --wheel</code> 出来的包是 <code>mini_swe_agent-0.1.0-py3-none-any.whl</code>。</p>
-<h3 id="step-3">第 3 步：决定沙箱层（1–3 天）</h3>
+<h3 id="step-3">第 3 步：决定沙箱层（1–3 天）—— ✅ 已做（2026-11-26），选「留」</h3>
 <p>三选一：</p>
 <ul>
 <li><strong>搬</strong>：把 mini 的 environment 复制进 <code>coderagent/sandbox/</code>（新名字，避免和
@@ -5433,7 +5433,24 @@ mini 变成一个<strong>只有 <code>mini</code> CLI 还在用</strong>的独�
   <code>core/sandbox.py</code> 改成 try-import。这是方案 B 的终态。</li>
 <li><strong>删</strong>：只保留 local 沙箱，改 <code>sandbox.type</code> 的文档。</li>
 </ul>
-<p><strong>验收</strong>：<code>tests/coderagent/core/test_sandbox.py</code> 里现有的沙箱测试全绿（不 mock）。</p>
+<p><strong>选了「留」</strong>：方案 B 的终态。远端的沙箱还是 mini-swe-agent 的那些环境，
+coding agent 不自己写容器。</p>
+<p><strong>做了什么</strong>：</p>
+<ol>
+<li><strong>耦合点变成一张表</strong>（<code>config/schema.py:ENVIRONMENT_CLASSES</code>）：名字 → 类的路径。
+   <code>core/sandbox.py:sandbox_class()</code> 按路径 import，所以 mini 只在<strong>用远端沙箱</strong>的时候
+   才被 import，本地的沙箱跟 mini 一点关系都没有。</li>
+<li><strong>mini 的 <code>environment_class</code> 写法留着</strong>：<code>sandbox.type</code> 之外，<code>environment_class</code>
+   仍然能点名环境（mini 的老写法），行为不变。</li>
+<li><strong>多了一个 extra <code>sandbox</code></strong>（<code>pyproject.toml</code>）：<code>swe-rex</code> / <code>modal</code> / <code>boto3</code> /
+   <code>contree-sdk</code>——远端沙箱要的那些包。缺包的时候报的是那句话
+   （<code>pip install 'mini-swe-agent[sandbox]'</code>），不是 mini 原来那句
+   「Unknown environment type」。</li>
+<li><strong>文档</strong>：中英两版的沙箱文档都写了远端沙箱的来历和怎么装。</li>
+</ol>
+<p><strong>验收</strong>：<code>tests/coderagent/core/test_sandbox.py</code> 15 例全绿（不 mock）；
+<code>grep -rn "minisweagent" src/coderagent/</code> 现在只剩 <code>config/schema.py</code> 的那张表
+和 <code>core/sandbox.py</code> 的那句错误提示。</p>
 <h3 id="step-4">第 4 步：删包 + 收尾（1–2 天）</h3>
 <p>删 <code>src/minisweagent/</code> 和 mini 的测试、文档；改 <code>mkdocs.yml</code> 的 nav；
 改 <code>pylint.yaml</code> 指向 <code>coderagent/</code>；处理 PyPI 包名（<a href="#p0-2">P0-2</a>）。</p>
@@ -5444,19 +5461,21 @@ mini 变成一个<strong>只有 <code>mini</code> CLI 还在用</strong>的独�
 <h2 id="questions">需要拍板的问题</h2>
 <blockquote>
 <p>第 1 步做完后，「远程沙箱」这个问题更急了一点：<code>core/sandbox.py</code> 现在是 coderagent 里
-<strong>唯一</strong>还 import mini 的地方，它决定了 <code>sandbox.type</code> 能不能用 docker / swerex / bubblewrap。</p>
+<strong>唯一</strong>还 import mini 的地方，它决定了 <code>sandbox.type</code> 能不能用 docker / swerex / bubblewrap。
+第 3 步已经定了：远端的沙箱留着（mini 的实现），coupling 变成一张表。</p>
 </blockquote>
 <ol>
 <li><strong>SWE-bench 还跑不跑？</strong> 如果要跑，mini 的 <code>run/benchmarks/</code> 和 <code>datasets</code> 依赖必须留着
    （<a href="#option-b">方案 B</a> 或「搬但不删」）。如果这个仓库以后只做 coding agent，
    那就该删——但要接受失去刷榜能力。</li>
-<li><strong>远程沙箱保留几种？</strong> 全搬（要 <code>swe-rex</code>/<code>modal</code>/<code>contree-sdk</code>）、只搬 docker/singularity、
-   还是只留 local？这决定了第 3 步的工作量。</li>
-<li><strong>包名怎么办？</strong> <code>mini-swe-agent</code> 是上游的名字，不能占。是改名发 PyPI，还是只发 GitHub release？</li>
+<li>~~<strong>远程沙箱保留几种？</strong>~~ 已定（第 3 步）：六种都留着，实现还是 mini 的。</li>
+<li><strong>包名怎么办？</strong> <code>mini-swe-agent</code> 是上游的名字，不能占。是改名发 PyPI，还是只发 GitHub release？
+   （发行包的版本号已经是 coding agent 的了，见<a href="#step-2">第 2 步</a>。）</li>
 <li><strong>mini 的历史文档留不留？</strong> 删掉就干净，但 <code>docs/reference/</code> 28 页是一次性的沉没成本；
    也可以移到 <code>docs/legacy/</code> 之外（不进 nav）。</li>
 <li><strong><code>.env</code> 的新位置？</strong> 保持 <code>~/.config/mini-swe-agent/.env</code>（兼容，但名字和项目不符），
-   还是改成 <code>~/.coderagent/.env</code>（干净，但要兼容读旧的）？</li>
+   还是改成 <code>~/.coderagent/.env</code>（干净，但要兼容读旧的）？
+   （第 1 步已经两个都读了，新的优先。）</li>
 </ol>
 <hr>
 <h2 id="appendix-a">附录 A：coderagent 借用的接口清单</h2>
