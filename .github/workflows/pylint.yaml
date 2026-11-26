@@ -52,4 +52,4 @@ jobs:
         run: |
           # Run pylint with errors-only flag to only fail on real errors (E and F level)
           # This will show all messages but only exit with error code for errors, not warnings/advice
-          .venv/bin/pylint minisweagent/ --errors-only
+          .venv/bin/pylint src/coderagent/ --errors-only

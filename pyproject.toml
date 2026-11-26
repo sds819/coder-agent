@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "mini-swe-agent"
+name = "coder-agent"
 dynamic = ["version"]
-description = "Mini SWE Agent - A simple AI software engineering agent"
+description = "A coding agent for the terminal, for the browser and as a library"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
-keywords = ["nlp", "agents", "code"]
+keywords = ["nlp", "agents", "code", "coding-agent"]
 authors = [
     {name = "Kilian Lieret", email = "kilian.lieret@posteo.de" },
     {name = "Carlos E. Jimenez", email = "carlosej@princeton.edu" },
@@ -42,29 +42,22 @@ dependencies = [
     "typer",
     "platformdirs",
     "textual",
-    "prompt_toolkit",
-    "datasets",
-    "openai != 1.100.0,!=1.100.1",  # https://github.com/SWE-agent/mini-swe-agent/issues/446
     "fastapi>=0.115",  # the web interface of the coding agent
 ]
 
 [project.optional-dependencies]
 full = [
-    "mini-swe-agent[dev]",
-    "mini-swe-agent[sandbox]",
+    "coder-agent[dev]",
+    "coder-agent[sandbox]",
+    "coder-agent[mcp]",
 ]
 
-# The remote sandboxes of the coding agent: the environments of mini-swe-agent.
+# The remote sandboxes: the containers the commands of the agent can run in.
 sandbox = [
     "swe-rex>=1.4.0",
     "modal",
     "boto3",
     "contree-sdk>=0.2.0,<0.3",
-]
-
-modal = [
-    "modal",
-    "boto3",
 ]
 
 dev = [
@@ -80,15 +73,10 @@ dev = [
     "mkdocs-material",
     "mkdocs-glightbox",
     "mkdocs-redirects",
-    "portkey-ai",
-    "swe-rex",
+    "coder-agent[sandbox]",
     "uvicorn>=0.30",
     "jinja2>=3.1.5",
     "httpx>=0.27",
-]
-
-contree = [
-    "contree-sdk>=0.2.0,<0.3",
 ]
 
 web = [
@@ -101,15 +89,10 @@ mcp = [
 ]
 
 [project.urls]
-Documentation = "https://mini-swe-agent.com/latest/"
-Repository = "https://github.com/SWE-agent/mini-swe-agent"
-"Bug Tracker" = "https://github.com/SWE-agent/mini-swe-agent/issues"
+Repository = "https://github.com/sds819/mini-swe-agent"
+"Bug Tracker" = "https://github.com/sds819/mini-swe-agent/issues"
 
 [project.scripts]
-mini = "minisweagent.run.mini:app"
-mini-swe-agent = "minisweagent.run.mini:app"
-mini-extra = "minisweagent.run.utilities.mini_extra:main"
-mini-e= "minisweagent.run.utilities.mini_extra:main"
 coder = "coderagent.ui.cli:app"
 
 [tool.setuptools]
@@ -120,10 +103,9 @@ version = {attr = "coderagent.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["minisweagent*", "coderagent*"]
+include = ["coderagent*"]
 
 [tool.setuptools.package-data]
-minisweagent = ["config/**/*"]
 coderagent = [
     "config/*.yaml",
     "web/templates/*/*.html",
@@ -309,7 +291,6 @@ markers = [
 
 [dependency-groups]
 dev = [
-    "datasets>=4.5.0",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",

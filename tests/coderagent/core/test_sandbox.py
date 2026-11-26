@@ -28,15 +28,15 @@ def test_the_local_sandbox_runs_the_commands_on_this_machine(tmp_path):
 
 
 def test_the_environment_of_the_type_is_used(tmp_path):
-    """A dotted path is a way to name any environment of mini-swe-agent."""
-    environment = build_environment(SandboxConfig(type="minisweagent.environments.local.LocalEnvironment"), tmp_path)
+    """A dotted path is a way to name any environment."""
+    environment = build_environment(SandboxConfig(type="coderagent.environments.local.LocalEnvironment"), tmp_path)
     assert type(environment).__name__ == "LocalEnvironment"
     assert environment.config.cwd == str(tmp_path)
 
 
 def test_the_sentinel_of_mini_is_not_used_in_the_remote_sandbox(tmp_path):
     """A coding agent ends a turn when the model says so."""
-    environment = build_environment(SandboxConfig(type="minisweagent.environments.local.LocalEnvironment"), tmp_path)
+    environment = build_environment(SandboxConfig(type="coderagent.environments.local.LocalEnvironment"), tmp_path)
     output = {"output": "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT\nthe answer", "returncode": 0}
     assert environment._check_finished(output) is None
 
@@ -44,21 +44,21 @@ def test_the_sentinel_of_mini_is_not_used_in_the_remote_sandbox(tmp_path):
 def test_the_options_of_the_configuration_reach_the_environment(tmp_path):
     """Every option of `sandbox` is passed on to the environment."""
     environment = build_environment(
-        SandboxConfig(type="minisweagent.environments.local.LocalEnvironment", cwd="/elsewhere", timeout=7), tmp_path
+        SandboxConfig(type="coderagent.environments.local.LocalEnvironment", cwd="/elsewhere", timeout=7), tmp_path
     )
     assert environment.config.cwd == str(tmp_path)
     assert environment.config.timeout == 7
 
 
 def test_the_sandbox_of_the_configuration_is_the_one_of_mini_swe_agent():
-    """The name of the configuration stands for the environment of mini-swe-agent."""
+    """The name of the configuration stands for the environment."""
     assert sandbox_class("docker").__name__ == "DockerEnvironment"
     assert sandbox_class("bubblewrap").__name__ == "BubblewrapEnvironment"
 
 
 def test_a_path_names_any_environment():
     """A dotted path is a way to name an environment of the user."""
-    assert sandbox_class("minisweagent.environments.local.LocalEnvironment").__name__ == "LocalEnvironment"
+    assert sandbox_class("coderagent.environments.local.LocalEnvironment").__name__ == "LocalEnvironment"
 
 
 def test_a_name_that_is_no_environment_says_so():
@@ -70,7 +70,7 @@ def test_a_name_that_is_no_environment_says_so():
 def test_the_environment_can_be_named_the_way_of_mini_swe_agent(tmp_path):
     """The option `environment_class` names the environment, as it does in mini-swe-agent."""
     environment = build_environment(
-        SandboxConfig(type="swerex_docker", environment_class="minisweagent.environments.local.LocalEnvironment"),
+        SandboxConfig(type="swerex_docker", environment_class="coderagent.environments.local.LocalEnvironment"),
         tmp_path,
     )
     assert type(environment).__name__ == "LocalEnvironment"
@@ -122,7 +122,7 @@ def test_the_agent_runs_the_commands_in_its_sandbox(tmp_path):
     from coderagent.testing.scripted_model import ScriptedModel
 
     config = Config()
-    config.sandbox.type = "minisweagent.environments.local.LocalEnvironment"
+    config.sandbox.type = "coderagent.environments.local.LocalEnvironment"
     loop = build_loop(
         config,
         tmp_path,

@@ -1,20 +1,23 @@
-# mini-SWE-agent overview
+# The coding agent
 
-- mini-SWE-agent implements an AI software engineering agent that solves github issues and similar programming challenges
+- The coding agent (`coder`) is an interactive AI software engineering agent: it reads the code,
+  writes the code, runs the commands and tells the user what it changed.
 - The idea of this project is to write the simplest, smallest, most readable agent.
 
 The project is structured as
 
 ```bash
-minisweagent/__init__  # Protocols/interfaces for all base classes
-minisweagent/agents  # Agent control flow & loop
-minisweagent/environments  # Executing agent actions
-minisweagent/models  # LM interfaces
-minisweagent/run  # Run scripts that serve as an entry point
+coderagent/core  # The agent loop, the session, the context engine, the sandbox
+coderagent/tools  # The tools the agent has and the permission layer around them
+coderagent/models  # LM interfaces (litellm), streaming, routing
+coderagent/environments  # The sandboxes the commands run in
+coderagent/ui  # The terminal interface, the web interface
+coderagent/extensions  # Hooks, plugins, skills, MCP servers
+coderagent/run.py  # The entry point into the agent from another program
 ```
 
 - The project embraces polymorphism: Every individual class should be simple, but we offer alternatives
-- Every use case should start with a run script, that picks one agent, environment, and model class to run
+- Every use case should start with the run script, that picks one model and one environment to run
 
 # Environment
 
@@ -107,11 +110,12 @@ Flag the following style issue as minor:
 
 Use these component names in parentheses for `fix`, `feat`, `enh`, and `ref` commits:
 
-- `models` - Changes to model interfaces (litellm, anthropic, openai, portkey, openrouter)
-- `agents` - Changes to agent classes (default, interactive, multimodal)
+- `models` - Changes to model interfaces (litellm, streaming, routing)
+- `agents` - Changes to the agent loop and the context engine
 - `env` - Changes to environments (docker, local, singularity, bubblewrap, swerex)
 - `config` - Changes to configuration files or config handling
-- `run` - Changes to run scripts (mini, hello_world)
-- `benchmarks` - Changes to benchmark runners (swebench, inspector)
+- `run` - Changes to the run script
+- `tools` - Changes to the tools and the permission layer
+- `ui` - Changes to the terminal and the web interface
 - `cli` - Changes to CLI argument handling
 - `deps` - Dependency updates
