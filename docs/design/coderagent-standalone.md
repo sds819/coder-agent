@@ -49,6 +49,9 @@
 
 ## 现状：事实清单 {#facts}
 
+> 这一节记的是**计划写的时候**（2026-11-25）仓库的样子。mini 在[第 4 步](#step-4)之后
+> 已经删掉了，事实清单留着是为了对照——下面的行号现在指向的文件已经不在了。
+
 ### 规模
 
 | | 文件数 | 行数 | 测试 |
@@ -227,6 +230,8 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
   要么保持 `mini-swe-agent` 这个名字（和上游冲突，不建议），要么换名（`coderagent`？需要查重名），
   要么不发 PyPI、只发 GitHub release。
 - **对策**：改名前先确认发布方式；这一步会让 CI 多跑几轮。
+- **已定（2026-11-26，第 4 步）**：包名 **`coder-agent`**（`coderagent` / `coder_agent`
+  在 PyPI 上也都空着）。发行包只有 `coder` 一个命令；冒烟测试装我们自己的轮子跑 `coder --help`。
 
 ### P0-3：SWE-bench 身份 {#p0-3}
 
@@ -346,7 +351,7 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
 （[P0-2](#p0-2)）。冒烟测试还在跑 `pipx run mini-swe-agent --help`，
 它装的是**上游**的包，不是我们的产物；改它要等包名定了。
 
-**验收**：`uv build --wheel` 出来的包是 `mini_swe_agent-0.1.0-py3-none-any.whl`。
+**验收**：`uv build --wheel` 出来的包是 `coder_agent-0.1.0-py3-none-any.whl`（第 4 步改包名之后）。
 
 ### 第 3 步：决定沙箱层（1–3 天）—— ✅ 已做（2026-11-26），选「留」 {#step-3}
 
@@ -366,11 +371,12 @@ coding agent 不自己写容器。
 1. **耦合点变成一张表**（`config/schema.py:ENVIRONMENT_CLASSES`）：名字 → 类的路径。
    `core/sandbox.py:sandbox_class()` 按路径 import，所以 mini 只在**用远端沙箱**的时候
    才被 import，本地的沙箱跟 mini 一点关系都没有。
+   （第 4 步之后更彻底：那些实现搬进了 `coderagent/environments/`，mini 已经不在仓库里了。）
 2. **mini 的 `environment_class` 写法留着**：`sandbox.type` 之外，`environment_class`
    仍然能点名环境（mini 的老写法），行为不变。
 3. **多了一个 extra `sandbox`**（`pyproject.toml`）：`swe-rex` / `modal` / `boto3` /
    `contree-sdk`——远端沙箱要的那些包。缺包的时候报的是那句话
-   （`pip install 'mini-swe-agent[sandbox]'`），不是 mini 原来那句
+   （`pip install 'coder-agent[sandbox]'`），不是 mini 原来那句
    「Unknown environment type」。
 4. **文档**：中英两版的沙箱文档都写了远端沙箱的来历和怎么装。
 
@@ -378,7 +384,7 @@ coding agent 不自己写容器。
 `grep -rn "minisweagent" src/coderagent/` 现在只剩 `config/schema.py` 的那张表
 和 `core/sandbox.py` 的那句错误提示。
 
-### 第 4 步：删包 + 收尾（1–2 天） {#step-4}
+### 第 4 步：删包 + 收尾（1–2 天）—— ✅ 已做（2026-11-26） {#step-4}
 
 删 `src/minisweagent/` 和 mini 的测试、文档；改 `mkdocs.yml` 的 nav；
 改 `pylint.yaml` 指向 `coderagent/`；处理 PyPI 包名（[P0-2](#p0-2)）。
@@ -386,6 +392,21 @@ coding agent 不自己写容器。
 **验收**：`uv sync --locked --extra full && uv run --locked --extra full pytest -q` 全绿；
 `ruff check src tests`、`ruff format --check src tests` 干净；`mkdocs build --strict` 无死链；
 四个 workflow 绿。
+
+**做了什么**：
+
+- `src/minisweagent/` 和 mini 的测试（`tests/{agents,config,models,run,utils,environments}`、
+  `tests/test_data`）全部删掉；`src/coderagent/environments/` 是第 3 步搬过来的沙箱，
+  现在是这个仓库唯一的沙箱实现。
+- **PyPI 包名定了**：`coder-agent`（`coderagent` / `coder_agent` 也都空着）。发行包只有
+  `coder` 一个命令；依赖去掉了 mini 独有的 `prompt_toolkit`、`datasets`、`openai`。
+- **文档**：mini 的 `docs/reference/`（28 页）、`docs/advanced/`、`docs/models/`、
+  `docs/usage/{mini,swebench,programbench,inspector,config,python_bindings,output_files}.md`、
+  `docs/{quickstart,faq,contributing}.md` 全删；`mkdocs.yml` 只剩 coding agent 和设计文档。
+  根 `README.md` / `README_zh.md` 重写成 coding agent 的介绍。
+- **CI**：`pylint.yaml` 改指 `src/coderagent/`；`pytest.yaml` 去掉了 `mini-extra config set`
+  （那个命令没有了），密钥改成环境变量；`release.yaml` 的冒烟测试装 `coder-agent` 跑 `coder --help`。
+- `full` 这个 extra 现在带上 `mcp`——pylint 会 import 它，缺了会报 import-error。
 
 ---
 
@@ -395,14 +416,10 @@ coding agent 不自己写容器。
 > **唯一**还 import mini 的地方，它决定了 `sandbox.type` 能不能用 docker / swerex / bubblewrap。
 > 第 3 步已经定了：远端的沙箱留着（mini 的实现），coupling 变成一张表。
 
-1. **SWE-bench 还跑不跑？** 如果要跑，mini 的 `run/benchmarks/` 和 `datasets` 依赖必须留着
-   （[方案 B](#option-b) 或「搬但不删」）。如果这个仓库以后只做 coding agent，
-   那就该删——但要接受失去刷榜能力。
+1. ~~**SWE-bench 还跑不跑？**~~ 已定（2026-11-26）：不跑了，mini 整个删掉（第 4 步）。
 2. ~~**远程沙箱保留几种？**~~ 已定（第 3 步）：六种都留着，实现还是 mini 的。
-3. **包名怎么办？** `mini-swe-agent` 是上游的名字，不能占。是改名发 PyPI，还是只发 GitHub release？
-   （发行包的版本号已经是 coding agent 的了，见[第 2 步](#step-2)。）
-4. **mini 的历史文档留不留？** 删掉就干净，但 `docs/reference/` 28 页是一次性的沉没成本；
-   也可以移到 `docs/legacy/` 之外（不进 nav）。
+3. ~~**包名怎么办？**~~ 已定（第 4 步）：`coder-agent`。
+4. ~~**mini 的历史文档留不留？**~~ 已定（第 4 步）：删掉。
 5. **`.env` 的新位置？** 保持 `~/.config/mini-swe-agent/.env`（兼容，但名字和项目不符），
    还是改成 `~/.coderagent/.env`（干净，但要兼容读旧的）？
    （第 1 步已经两个都读了，新的优先。）

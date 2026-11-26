@@ -23,8 +23,6 @@ the end of each section.
   script can drive the agent.
 - **As a library** — `coderagent.run.run_turn` and `build_loop` put the agent
   into another Python program.
-- **In a benchmark** — the run scripts of mini-swe-agent solve SWE-bench and
-  ProgramBench with the same model interface.
 
 While the agent works, the terminal, the terminal interface and the browser
 all show the same dots growing and shrinking. That is the sign that the agent
@@ -1016,7 +1014,7 @@ find them. The command of the project wins when both have the same name.
 
 - **Local by default** — the commands run in the working directory.
 - **Or in a container** — `docker`, `singularity`, `bubblewrap`, `contree`,
-  and the remote sandboxes of SWE-rex. The same environments as
+  and the remote sandboxes of SWE-rex. The environments that came with
   mini-swe-agent.
 - **Three modes** — `sandbox.mode` is `full-access` (the default),
   `workspace-write` or `read-only`. The operating system enforces them:
@@ -1579,39 +1577,6 @@ comes from `GET /api/commands`.
 | `Git does not know '{revision}'` | `/review` was given a range that git does not know. | Check the range with `git log --oneline`. |
 | `{path} already exists.` | `/init` does not overwrite an `AGENTS.md`. | Edit the file yourself. |
 | `No sessions yet.` | `/resume` without an id found nothing in this directory. | Run a turn first. |
-
-## The benchmark part of mini-swe-agent
-
-- **`mini`** — a run script: a task, a model, an environment, and a
-  trajectory file.
-- **SWE-bench** — the whole dataset, in parallel, with a slice and a filter.
-- **SWE-bench, one instance** — for a single problem.
-- **ProgramBench** — the programming benchmark.
-- **The inspector** — reads a trajectory file and shows what the agent did.
-- **The environments** — local, docker, singularity, bubblewrap, contree,
-  SWE-rex docker and SWE-rex modal.
-- **The models** — litellm for most providers, and portkey, openrouter,
-  requesty, the text based models and the roulette model besides.
-
-### Example
-
-```bash
-mini --model litellm/deepseek/deepseek-flash --environment-class docker \
-  --task "the failing test is in test_api.py"
-
-mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \
-  --slice 0:100
-```
-
-The trajectory of a run is a JSON file with the messages, the tool calls and
-the cost of every step; `inspector` reads it.
-
-### When something goes wrong
-
-| What you see | What it means | What to do |
-|---|---|---|
-| The environment cannot be built | The image is missing or the binary of the environment is not installed. | The same errors as the sandbox of the coding agent. |
-| The model answers without a tool call | The model of the benchmark is a text based one, or the format of the answer is wrong. | Use a model that speaks the tool protocol, or a model class of the benchmark that wraps it. |
 
 ## Where the details are
 

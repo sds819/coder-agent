@@ -20,8 +20,6 @@
 - **当 API 用**——浏览器做的每个动作都是普通 HTTP 调用，脚本也能驱动它。
 - **当库用**——`coderagent.run.run_turn` 和 `build_loop` 把 agent 放进别的
   Python 程序里。
-- **跑 benchmark**——mini-swe-agent 的那些运行脚本用同一套模型接口解
-  SWE-bench 和 ProgramBench。
 
 agent 在干活的时候，终端、终端界面和浏览器里都是同一串长长短短的点。那是
 「它在忙」的信号：它没说话，但它没卡住。
@@ -925,7 +923,7 @@ Commit everything with the message: $ARGUMENTS
 
 - **默认是本机**——命令就在工作目录里跑。
 - **也可以是容器**——`docker`、`singularity`、`bubblewrap`、`contree`，
-  还有 SWE-rex 的远程沙箱。和 mini-swe-agent 用的是同一批环境。
+  还有 SWE-rex 的远程沙箱。是随 mini-swe-agent 一起搬过来的那一批环境。
 - **三档**——`sandbox.mode` 是 `full-access`（默认）、`workspace-write` 或者
   `read-only`。由**操作系统**来执行：macOS 上是 Seatbelt，Linux 上是 bubblewrap。
 - **只有 `bash` 进沙箱**——文件工具还在工作目录里。`read-only` 那一档把它们也拒了。
@@ -1420,38 +1418,6 @@ agent 的回答。agent 正在干活的时候敲命令会被拒绝。
 | `Git does not know '{revision}'` | `/review` 拿到的范围 git 不认。 | 用 `git log --oneline` 看看范围。 |
 | `{path} already exists.` | `/init` 不会覆盖已有的 `AGENTS.md`。 | 自己改那个文件。 |
 | `No sessions yet.` | `/resume` 不带 id 时，这个目录里什么都没有。 | 先跑一轮。 |
-
-## mini-swe-agent 的 benchmark 那部分
-
-- **`mini`**——一个运行脚本：任务、模型、环境，外加一个轨迹文件。
-- **SWE-bench**——整个数据集，能并行，能切片能过滤。
-- **SWE-bench 单个实例**——一道题。
-- **ProgramBench**——编程 benchmark。
-- **Inspector**——读轨迹文件，看 agent 干了什么。
-- **环境**——local、docker、singularity、bubblewrap、contree、SWE-rex 的
-  docker 和 modal。
-- **模型**——litellm 覆盖大多数厂商，另外还有 portkey、openrouter、
-  requesty、基于文本的模型和 roulette 模型。
-
-### 用法例子
-
-```bash
-mini --model litellm/deepseek/deepseek-flash --environment-class docker \
-  --task "the failing test is in test_api.py"
-
-mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \
-  --slice 0:100
-```
-
-一次运行的轨迹是一个 JSON 文件，里面有每一步的消息、工具调用和花费；
-`inspector` 读它。
-
-### 出错时怎么办
-
-| 你看到的 | 什么意思 | 怎么办 |
-|---|---|---|
-| 环境建不起来 | 镜像没有，或者这个环境的二进制没装。 | 和 coding agent 的沙箱那些错误一样。 |
-| 模型回答里没有工具调用 | benchmark 用的模型是基于文本的，或者回答的格式不对。 | 换一个会说工具协议的模型，或者用 benchmark 里有包装的那个模型类。 |
 
 ## 细节在哪
 

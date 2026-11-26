@@ -19,17 +19,16 @@
 从源码装（要改代码就用这个）：
 
 ```bash
-git clone https://github.com/SWE-agent/mini-swe-agent.git
+git clone https://github.com/sds819/mini-swe-agent.git
 cd mini-swe-agent
 pip install -e .
 ```
 
-装完有两个命令：
+装完有一个命令：
 
 | 命令 | 是什么 |
 |---|---|
 | `coder` | 交互式 coding agent，本页的主角 |
-| `mini` | mini-swe-agent 本体，跑 SWE-bench 之类的任务 |
 
 可选依赖：
 
@@ -42,14 +41,14 @@ pip install -e ".[full]"   # 沙箱（swerex / modal / contree）等一切
 
 模型走 [litellm](https://github.com/BerriAI/litellm)，所以任何 litellm 支持的模型都能用，只要带上厂商前缀（`anthropic/…`、`deepseek/…`）。
 
-API key 从环境变量读，名字就是厂商的名字：`ANTHROPIC_API_KEY`、`OPENAI_API_KEY`、`DEEPSEEK_API_KEY`、`OPENROUTER_API_KEY`……完整列表见[模型配置](../models/quickstart.md)。
+API key 从环境变量读，名字就是厂商的名字：`ANTHROPIC_API_KEY`、`OPENAI_API_KEY`、`DEEPSEEK_API_KEY`、`OPENROUTER_API_KEY`……厂商前缀就是路由，见下面的表。
 
 有三种写法，任选一种：
 
 ```bash
 # 1. 写进全局 .env（推荐，一次搞定，所有会话都能用）
-mini-extra config set ANTHROPIC_API_KEY sk-...
-mini-extra config set MSWEA_MODEL_NAME anthropic/claude-sonnet-4-5
+echo 'ANTHROPIC_API_KEY=sk-...' >> ~/.coderagent/.env
+echo 'MSWEA_MODEL_NAME=anthropic/claude-sonnet-4-5' >> ~/.coderagent/.env
 
 # 2. 当前 shell 的环境变量（重启 shell 就没了）
 export ANTHROPIC_API_KEY=sk-...
@@ -59,8 +58,7 @@ export MSWEA_MODEL_NAME=anthropic/claude-sonnet-4-5
 coder -m deepseek/deepseek-flash --task "..."
 ```
 
-全局 `.env` 在 `mini-extra config edit` 打印的那个路径（macOS 上是
-`~/Library/Application Support/mini-swe-agent/.env`）。
+全局 `.env` 在 `~/.coderagent/.env`（也能放在 mini-swe-agent 以前用的那个路径里，两个都读）。
 
 模型的优先级是：**配置文件里的 `model.model_name` > 环境变量 `MSWEA_MODEL_NAME` > 内置默认值**。
 没配置时默认用 `anthropic/claude-sonnet-4-5`。
@@ -341,9 +339,8 @@ coder export --session <id> --format otel --out trace.otlp
 ## 常见问题 {#faq}
 
 **「找不到 API key」**
-key 必须在环境变量里，或者在 `mini-extra config edit` 打印的那个 `.env` 里。
-`coder` 启动时会读这个 `.env`（启动横幅会打印它的路径，想安静就设
-`MSWEA_SILENT_STARTUP=1`），读不到就报认证错误。
+key 必须在环境变量里，或者在 `~/.coderagent/.env` 里。
+`coder` 启动时会读这个 `.env`，读不到就报认证错误。
 查一下当前进程里到底有没有：
 
 ```bash

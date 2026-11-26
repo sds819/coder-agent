@@ -9,7 +9,7 @@ sandbox:
 
 ## 远端的沙箱
 
-mini-swe-agent 的那些沙箱照原样使用：
+那些沙箱是随 mini-swe-agent 一起搬过来的，照原样使用：
 
 | `sandbox.type` | 它做什么 |
 |---|---|
@@ -21,11 +21,11 @@ mini-swe-agent 的那些沙箱照原样使用：
 | `bubblewrap` | 一个不需要 root 的沙箱 |
 | `contree` | 一个不需要 root 的容器 |
 
-远端的沙箱是 mini-swe-agent 的那些环境：coding agent 不自己写容器。它们要 extra
-`sandbox` 里的那些包：
+远端的沙箱是随 mini-swe-agent 一起搬过来的那些环境：coding agent 不自己写容器。
+它们要 extra `sandbox` 里的那些包：
 
 ```bash
-pip install 'mini-swe-agent[sandbox]'
+pip install 'coder-agent[sandbox]'
 ```
 
 没有那些包，本地的沙箱照样能用；远端的那个会说出缺的是哪个包。
@@ -118,7 +118,7 @@ environment: swerex_docker
 
 ## 环境自己没有策略
 
-远端的沙箱是 mini-swe-agent 的环境，所以它们没有网络策略，也没有可写目录的
+远端的沙箱是随 mini-swe-agent 一起搬过来的环境，所以它们没有网络策略，也没有可写目录的
 清单。网络策略是环境的属性，写在环境那里——用环境认识的那些选项。`docker`
 沙箱吃的是 `docker` 命令的参数：
 
@@ -144,9 +144,9 @@ agent 能碰哪些路径是 agent 的属性，不是容器的。它们由权限�
 ## 还是本地的那些
 
 读写文件的工具（`read`、`write`、`edit`……）动的是用户机器上的文件，因为
-mini-swe-agent 的环境只跑命令。只有 `bash` 工具的命令进沙箱。
+沙箱环境只跑命令。只有 `bash` 工具的命令进沙箱。
 
 `read-only` 那一档把写文件的工具也拒了：它们写的是用户的机器，在沙箱外面。
 
-mini-swe-agent 那个魔法——命令打印 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`
+随 mini-swe-agent 一起搬过来的那个魔法——命令打印 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`
 就算任务结束——在远端沙箱里也是关掉的：coding agent 的一轮是模型说结束才结束。

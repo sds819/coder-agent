@@ -13,8 +13,8 @@ Without `--out` the trace goes to the standard output.
 
 ## The json format
 
-The format is `coder-agent-1.0`, next to the `mini-swe-agent-1.1` of
-mini-swe-agent:
+The format is `coder-agent-1.0`. It follows the shape that mini-swe-agent used
+for its traces (`mini-swe-agent-1.1`), with the fields of the coding agent:
 
 ```json
 {

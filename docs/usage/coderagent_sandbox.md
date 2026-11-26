@@ -10,7 +10,7 @@ sandbox:
 
 ## The remote sandboxes
 
-The sandboxes of mini-swe-agent are used as they are:
+The sandboxes are the ones of mini-swe-agent, used as they are:
 
 | `sandbox.type` | What it does |
 |---|---|
@@ -22,12 +22,12 @@ The sandboxes of mini-swe-agent are used as they are:
 | `bubblewrap` | A sandbox without root |
 | `contree` | A container without root |
 
-The remote sandboxes are the environments of mini-swe-agent: the coding agent
-does not write containers of its own. They need the packages of the extra
+The remote sandboxes are the environments that came with mini-swe-agent: the
+coding agent does not write containers of its own. They need the packages of the extra
 `sandbox`:
 
 ```bash
-pip install 'mini-swe-agent[sandbox]'
+pip install 'coder-agent[sandbox]'
 ```
 
 Without them the local sandbox still works, and a remote one says which
@@ -132,8 +132,8 @@ The options that are in effect are listed between the type and the environment.
 
 ## The environment has no policy of its own
 
-The remote sandboxes are the environments of mini-swe-agent, so they have no
-network policy and no list of writable directories. A network policy is a
+The remote sandboxes are the environments that came with mini-swe-agent, so
+they have no network policy and no list of writable directories. A network policy is a
 property of the environment, and it is written there — with the options that the environment
 knows. The `docker` sandbox takes the arguments of the `docker` command:
 
@@ -162,13 +162,13 @@ keeps working: they are unknown options now, and unknown options are ignored.
 ## What is still local
 
 The tools that read and write files (`read`, `write`, `edit`, …) work on the
-files of the machine of the user, because the environment of mini-swe-agent
-only runs commands. Only the commands of the `bash` tool go into the sandbox.
+files of the machine of the user, because the sandbox environment only runs
+commands. Only the commands of the `bash` tool go into the sandbox.
 
 The `read-only` mode refuses the tools that write as well: they write on the
 machine of the user, outside of the sandbox.
 
-The magic of mini-swe-agent, where a command that prints
+The magic of mini-swe-agent brought with it, where a command that prints
 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` ends the task, is switched off in the
 remote sandboxes as well: a turn of the coding agent ends when the model says
 so.

@@ -2,7 +2,7 @@
 
 `coder` is an interactive agent that works in a code repository. It reads the
 code, writes the code, runs the commands and tells you what it changed. It
-lives in the same package as `mini`, next to it:
+is the `coder-agent` package:
 
 ```bash
 pip install -e .            # the agent
@@ -30,8 +30,8 @@ Without a terminal there is one turn and then the answer:
 coder --task "fix the failing test in tests/test_parser.py"
 ```
 
-The keys of the model come from the environment or from the `.env` file of
-mini-swe-agent (see [Global configuration](../advanced/global_configuration.md)).
+The keys of the model come from the environment or from the `.env` file of the
+user (`~/.coderagent/.env`; the file that mini-swe-agent used is read too).
 The name of the model is `model.model_name` in the configuration, or
 `MSWEA_MODEL_NAME` in the environment.
 
@@ -918,7 +918,7 @@ The tools of an [MCP](https://modelcontextprotocol.io) server are available
 under the name `mcp__<server>__<tool>`. The MCP SDK is optional:
 
 ```bash
-pip install "mini-swe-agent[mcp]"
+pip install "coder-agent[mcp]"
 ```
 
 ```yaml

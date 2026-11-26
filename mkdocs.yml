@@ -1,13 +1,12 @@
-site_name: mini-SWE-agent documentation
-site_url: https://mini-swe-agent.com
+site_name: The coding agent
 theme:
   name: material
   icon:
     repo: fontawesome/brands/github
     annotation: material/chevron-right-circle
   custom_dir: docs/overrides
-  logo: assets/mini_square.svg
-  favicon: assets/mini_square.svg
+  logo: assets/coder.svg
+  favicon: assets/coder.svg
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -59,92 +58,33 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 nav:
-  - Getting Started:
-    - "Overview": index.md
-    - "Overview (中文)": readme_zh.md
-    - "Quick start": quickstart.md
-    - "Command line usage":
-      - "<code>mini</code>": usage/mini.md
-      - "Config": usage/config.md
-      - "SWE-bench": usage/swebench.md
-      - "ProgramBench": usage/programbench.md
-      - "Inspector": usage/inspector.md
-      - "Output files": usage/output_files.md
-    - "Coding agent":
-      - "快速开始": usage/coderagent_quickstart.md
-      - "中文":
-        - "功能": usage/coderagent_features_zh.md
-        - "网页版": usage/coderagent_web_zh.md
-        - "中文版 README": readme_zh.md
-        - "命令": usage/coderagent_commands_zh.md
-        - "子 agent": usage/coderagent_subagents_zh.md
-        - "技能": usage/coderagent_skills_zh.md
-        - "Hooks": usage/coderagent_hooks_zh.md
-        - "沙箱": usage/coderagent_sandbox_zh.md
-        - "评测": usage/coderagent_eval_zh.md
-      - "Overview": usage/coderagent.md
-      - "English README": readme.md
+  - The coding agent:
+      - "Overview": index.md
+      - "The whole thing": usage/coderagent.md
+      - "The README": readme.md
+      - "Overview (中文)": readme_zh.md
+      - "Quick start": usage/coderagent_quickstart.md
       - "Features": usage/coderagent_features.md
-      - "Web interface": usage/coderagent_web.md
+      - "Features (中文)": usage/coderagent_features_zh.md
+      - "The web interface": usage/coderagent_web.md
+      - "The web interface (中文)": usage/coderagent_web_zh.md
       - "Commands": usage/coderagent_commands.md
+      - "Commands (中文)": usage/coderagent_commands_zh.md
       - "Sub agents": usage/coderagent_subagents.md
+      - "Sub agents (中文)": usage/coderagent_subagents_zh.md
       - "Skills": usage/coderagent_skills.md
+      - "Skills (中文)": usage/coderagent_skills_zh.md
       - "Memory": usage/coderagent_memory.md
       - "Model routing": usage/coderagent_routing.md
       - "MCP servers": usage/coderagent_mcp.md
       - "Hooks": usage/coderagent_hooks.md
+      - "Hooks (中文)": usage/coderagent_hooks_zh.md
       - "Plugins": usage/coderagent_plugins.md
       - "Sandbox": usage/coderagent_sandbox.md
+      - "Sandbox (中文)": usage/coderagent_sandbox_zh.md
       - "Trace export": usage/coderagent_export.md
       - "Evals": usage/coderagent_eval.md
-    - "Language models":
-      - "Quick start": models/quickstart.md
-      - "Local models": models/local_models.md
-      - "Troubleshooting": models/troubleshooting.md
-    - "Configuration":
-      - "Global configuration": advanced/global_configuration.md
-      - "Yaml config files": advanced/yaml_configuration.md
-    - "Python bindings & more":
-      - "Basic Python bindings": usage/python_bindings.md
-      - "Understanding the agent": advanced/control_flow.md
-      - "Subclassing and more": advanced/cookbook.md
-      - "Environments": advanced/environments.md
-      - "v2 migration guide": advanced/v2_migration.md
-    - "FAQ": faq.md
-    - "Contributing": contributing.md
-  - API Reference:
-    - "reference/index.md"
-    - Agents:
-      - "DefaultAgent": "reference/agents/default.md"
-      - "InteractiveAgent": "reference/agents/interactive.md"
-    - Models:
-      - "Overview": "reference/models/overview.md"
-      - "LitellmModel": "reference/models/litellm.md"
-      - "LitellmResponseModel": "reference/models/litellm_response_toolcall.md"
-      - "OpenRouterModel": "reference/models/openrouter.md"
-      - "RequestyModel": "reference/models/requesty.md"
-      - "PortkeyModel": "reference/models/portkey.md"
-      - "PortkeyResponse": "reference/models/portkey_response.md"
-      - "DeterministicModel": "reference/models/test_models.md"
-      - "Extra Models": "reference/models/extra.md"
-      - "Model Utilities": "reference/models/utils.md"
-    - Environments:
-      - "LocalEnvironment": "reference/environments/local.md"
-      - "DockerEnvironment": "reference/environments/docker.md"
-      - "SingularityEnvironment": "reference/environments/singularity.md"
-      - "SwerexDockerEnvironment": "reference/environments/swerex_docker.md"
-      - "BubblewrapEnvironment": "reference/environments/bubblewrap.md"
-      - "ContreeEnvironment": "reference/environments/contree.md"
-      - "SwerexModalEnvironment": "reference/environments/swerex_modal.md"
-    - Run Scripts:
-      - "Hello World": "reference/run/hello_world.md"
-      - "mini": "reference/run/mini.md"
-      - "mini-extra": "reference/run/mini_extra.md"
-      - "Config": "reference/run/config.md"
-      - "Inspector": "reference/run/inspector.md"
-      - "SWE-bench (batch)": "reference/run/swebench.md"
-      - "SWE-bench (single)": "reference/run/swebench_single.md"
-      - "ProgramBench": "reference/run/programbench.md"
+      - "Evals (中文)": usage/coderagent_eval_zh.md
   - Design (WIP):
     - "Overview": design/README.md
     - "Architecture": design/coding-agent-architecture.md
@@ -162,43 +102,15 @@ nav:
     - "M4 — Advanced": design/milestones/M4-advanced.md
     - "M5 — Web interface": design/milestones/M5-web-interface.md
     - "M5 — Web modules": design/milestones/M5-web-modules.md
-  - Blog: https://www.swebench.com/blog.html
-  - Leaderboard: https://swebench.com
 plugins:
-  - redirects:
-      redirect_maps:
-        'advanced/local_models.md': 'models/local_models.md'
   - glightbox
   - search
   - include-markdown
   - mike:
       canonical_version: latest
       version_selector: true
-  - mkdocstrings:
-      default_handler: python
-      handlers:
-        python:
-          paths: [src]
-          options:
-            merge_init_into_class: true
-            summary: false
-            show_root_heading: true
-            heading_level: 2
-            docstring_style: google
-            show_if_no_docstring: true
-            show_signature: true
-            show_signature_annotations: true
-            signature_crossrefs: true
-            separate_signature: true
-            show_symbol_type_heading: true
-            show_symbol_type_toc: true
-            members_order: source
-            filters:
-              - "!^_"
-              - "!^model_config"
-              - "!^model_post_init"
-repo_url: https://github.com/SWE-agent/mini-SWE-agent
-repo_name: SWE-agent/mini-SWE-agent
+repo_url: https://github.com/sds819/mini-swe-agent
+repo_name: sds819/mini-swe-agent
 edit_uri: edit/main/docs/
 extra_javascript:
   - assets/js/sh-annotation.js
@@ -206,7 +118,6 @@ extra_javascript:
 extra_css:
   - assets/custom.css
   - assets/gif-controls.css
-  - assets/mkdocstrings.css
   - assets/image_theme.css
   - assets/bubbles.css
   - assets/navigation_cards.css
@@ -214,6 +125,3 @@ extra_css:
 extra:
   version:
     provider: mike
-  analytics:
-    provider: google
-    property: G-SG2NC1GDRD
