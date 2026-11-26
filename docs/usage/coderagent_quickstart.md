@@ -19,7 +19,7 @@
 从源码装（要改代码就用这个）：
 
 ```bash
-git clone https://github.com/sds819/mini-swe-agent.git
+git clone https://github.com/sds819/coder-agent.git
 cd mini-swe-agent
 pip install -e .
 ```

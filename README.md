@@ -2,7 +2,7 @@
 
 > 中文版：[README_zh.md](docs/readme_zh.md)
 
-[![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/mini-swe-agent/tree/main/docs)
+[![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
 [![PyPI - Version](https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&logo=python&logoColor=white&labelColor=black&color=deeppink)](https://pypi.org/project/coder-agent/)
 
 `coder` is an interactive coding agent: it reads the code, writes the code, runs

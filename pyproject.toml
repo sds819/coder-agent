@@ -89,8 +89,8 @@ mcp = [
 ]
 
 [project.urls]
-Repository = "https://github.com/sds819/mini-swe-agent"
-"Bug Tracker" = "https://github.com/sds819/mini-swe-agent/issues"
+Repository = "https://github.com/sds819/coder-agent"
+"Bug Tracker" = "https://github.com/sds819/coder-agent/issues"
 
 [project.scripts]
 coder = "coderagent.ui.cli:app"

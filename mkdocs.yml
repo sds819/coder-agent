@@ -109,8 +109,8 @@ plugins:
   - mike:
       canonical_version: latest
       version_selector: true
-repo_url: https://github.com/sds819/mini-swe-agent
-repo_name: sds819/mini-swe-agent
+repo_url: https://github.com/sds819/coder-agent
+repo_name: sds819/coder-agent
 edit_uri: edit/main/docs/
 extra_javascript:
   - assets/js/sh-annotation.js

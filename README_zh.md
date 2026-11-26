@@ -2,7 +2,7 @@
 
 > 英文版：[README.md](docs/readme.md)
 
-[![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/mini-swe-agent/tree/main/docs)
+[![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
 [![PyPI - Version](https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&logo=python&logoColor=white&labelColor=black&color=deeppink)](https://pypi.org/project/coder-agent/)
 
 `coder` 是一个交互式 coding agent：它读代码、写代码、跑命令，然后告诉你它改了什么。
