@@ -22,6 +22,17 @@ The sandboxes of mini-swe-agent are used as they are:
 | `bubblewrap` | A sandbox without root |
 | `contree` | A container without root |
 
+The remote sandboxes are the environments of mini-swe-agent: the coding agent
+does not write containers of its own. They need the packages of the extra
+`sandbox`:
+
+```bash
+pip install 'mini-swe-agent[sandbox]'
+```
+
+Without them the local sandbox still works, and a remote one says which
+package is missing.
+
 ```yaml
 sandbox:
   type: swerex_docker

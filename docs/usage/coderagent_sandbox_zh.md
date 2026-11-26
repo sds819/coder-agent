@@ -21,6 +21,15 @@ mini-swe-agent 的那些沙箱照原样使用：
 | `bubblewrap` | 一个不需要 root 的沙箱 |
 | `contree` | 一个不需要 root 的容器 |
 
+远端的沙箱是 mini-swe-agent 的那些环境：coding agent 不自己写容器。它们要 extra
+`sandbox` 里的那些包：
+
+```bash
+pip install 'mini-swe-agent[sandbox]'
+```
+
+没有那些包，本地的沙箱照样能用；远端的那个会说出缺的是哪个包。
+
 ```yaml
 sandbox:
   type: swerex_docker

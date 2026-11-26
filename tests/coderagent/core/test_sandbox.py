@@ -1,7 +1,9 @@
 """The sandbox: where the commands of the agent run."""
 
+import pytest
+
 from coderagent.config.schema import SandboxConfig
-from coderagent.core.sandbox import build_environment, describe
+from coderagent.core.sandbox import build_environment, describe, sandbox_class
 from coderagent.testing.factory import build_context
 from coderagent.tools.builtin.shell import BashTool, CodingEnvironment
 
@@ -46,6 +48,32 @@ def test_the_options_of_the_configuration_reach_the_environment(tmp_path):
     )
     assert environment.config.cwd == str(tmp_path)
     assert environment.config.timeout == 7
+
+
+def test_the_sandbox_of_the_configuration_is_the_one_of_mini_swe_agent():
+    """The name of the configuration stands for the environment of mini-swe-agent."""
+    assert sandbox_class("docker").__name__ == "DockerEnvironment"
+    assert sandbox_class("bubblewrap").__name__ == "BubblewrapEnvironment"
+
+
+def test_a_path_names_any_environment():
+    """A dotted path is a way to name an environment of the user."""
+    assert sandbox_class("minisweagent.environments.local.LocalEnvironment").__name__ == "LocalEnvironment"
+
+
+def test_a_name_that_is_no_environment_says_so():
+    """A name that stands for nothing cannot be run."""
+    with pytest.raises(ValueError, match="unknown sandbox"):
+        sandbox_class("nowhere")
+
+
+def test_the_environment_can_be_named_the_way_of_mini_swe_agent(tmp_path):
+    """The option `environment_class` names the environment, as it does in mini-swe-agent."""
+    environment = build_environment(
+        SandboxConfig(type="swerex_docker", environment_class="minisweagent.environments.local.LocalEnvironment"),
+        tmp_path,
+    )
+    assert type(environment).__name__ == "LocalEnvironment"
 
 
 def test_the_environment_is_described(tmp_path):

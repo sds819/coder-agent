@@ -19,25 +19,45 @@ the operating system (see `coderagent.core.os_sandbox`), so they hold even
 when the permission layer lets everything through.
 """
 
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
 from coderagent.compat import is_local
-from coderagent.config.schema import SandboxConfig
+from coderagent.config.schema import ENVIRONMENT_CLASSES, ENVIRONMENT_TYPES, SandboxConfig
 from coderagent.core.os_sandbox import FULL_ACCESS
 from coderagent.tools.builtin.shell import CodingEnvironment
 
 LOCAL = "local"
 
 
+def sandbox_class(kind: str) -> type:
+    """The class of the environment that the name stands for.
+
+    A dotted path is a way to name any environment: the class of the user.
+    """
+    path = ENVIRONMENT_CLASSES.get(kind, kind)
+    if "." not in path:
+        raise ValueError(f"unknown sandbox '{kind}'. Use one of: {', '.join(ENVIRONMENT_TYPES)}.")
+    module_name, class_name = path.rsplit(".", 1)
+    try:
+        return getattr(import_module(module_name), class_name)
+    except ImportError as error:
+        if kind not in ENVIRONMENT_CLASSES:
+            raise
+        raise ImportError(
+            f"The sandbox '{kind}' needs the packages of the remote sandboxes: pip install 'mini-swe-agent[sandbox]'"
+        ) from error
+
+
 def build_environment(config: SandboxConfig, cwd: Path) -> Any:
     """The environment of the session."""
     if config.type == LOCAL:
         return CodingEnvironment(cwd=str(cwd))
-    from minisweagent.environments import get_environment
-
     options = config.model_dump(exclude={"type"})
-    environment = get_environment(options, default_type=config.type)
+    kind = options.pop("environment_class", config.type)
+    """The way of mini-swe-agent to name an environment."""
+    environment = sandbox_class(kind)(**options)
     if is_local(environment):
         """A local environment works in the directory of the session."""
         environment.config.cwd = str(cwd)
@@ -60,4 +80,4 @@ def describe(environment: Any, kind: str = "", mode: str = "") -> str:
     return kind
 
 
-__all__ = ["LOCAL", "build_environment", "describe"]
+__all__ = ["LOCAL", "build_environment", "describe", "sandbox_class"]

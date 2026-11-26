@@ -348,7 +348,7 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
 
 **验收**：`uv build --wheel` 出来的包是 `mini_swe_agent-0.1.0-py3-none-any.whl`。
 
-### 第 3 步：决定沙箱层（1–3 天） {#step-3}
+### 第 3 步：决定沙箱层（1–3 天）—— ✅ 已做（2026-11-26），选「留」 {#step-3}
 
 三选一：
 
@@ -358,7 +358,25 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
   `core/sandbox.py` 改成 try-import。这是方案 B 的终态。
 - **删**：只保留 local 沙箱，改 `sandbox.type` 的文档。
 
-**验收**：`tests/coderagent/core/test_sandbox.py` 里现有的沙箱测试全绿（不 mock）。
+**选了「留」**：方案 B 的终态。远端的沙箱还是 mini-swe-agent 的那些环境，
+coding agent 不自己写容器。
+
+**做了什么**：
+
+1. **耦合点变成一张表**（`config/schema.py:ENVIRONMENT_CLASSES`）：名字 → 类的路径。
+   `core/sandbox.py:sandbox_class()` 按路径 import，所以 mini 只在**用远端沙箱**的时候
+   才被 import，本地的沙箱跟 mini 一点关系都没有。
+2. **mini 的 `environment_class` 写法留着**：`sandbox.type` 之外，`environment_class`
+   仍然能点名环境（mini 的老写法），行为不变。
+3. **多了一个 extra `sandbox`**（`pyproject.toml`）：`swe-rex` / `modal` / `boto3` /
+   `contree-sdk`——远端沙箱要的那些包。缺包的时候报的是那句话
+   （`pip install 'mini-swe-agent[sandbox]'`），不是 mini 原来那句
+   「Unknown environment type」。
+4. **文档**：中英两版的沙箱文档都写了远端沙箱的来历和怎么装。
+
+**验收**：`tests/coderagent/core/test_sandbox.py` 15 例全绿（不 mock）；
+`grep -rn "minisweagent" src/coderagent/` 现在只剩 `config/schema.py` 的那张表
+和 `core/sandbox.py` 的那句错误提示。
 
 ### 第 4 步：删包 + 收尾（1–2 天） {#step-4}
 
@@ -375,17 +393,19 @@ mini 变成一个**只有 `mini` CLI 还在用**的独立包。
 
 > 第 1 步做完后，「远程沙箱」这个问题更急了一点：`core/sandbox.py` 现在是 coderagent 里
 > **唯一**还 import mini 的地方，它决定了 `sandbox.type` 能不能用 docker / swerex / bubblewrap。
+> 第 3 步已经定了：远端的沙箱留着（mini 的实现），coupling 变成一张表。
 
 1. **SWE-bench 还跑不跑？** 如果要跑，mini 的 `run/benchmarks/` 和 `datasets` 依赖必须留着
    （[方案 B](#option-b) 或「搬但不删」）。如果这个仓库以后只做 coding agent，
    那就该删——但要接受失去刷榜能力。
-2. **远程沙箱保留几种？** 全搬（要 `swe-rex`/`modal`/`contree-sdk`）、只搬 docker/singularity、
-   还是只留 local？这决定了第 3 步的工作量。
+2. ~~**远程沙箱保留几种？**~~ 已定（第 3 步）：六种都留着，实现还是 mini 的。
 3. **包名怎么办？** `mini-swe-agent` 是上游的名字，不能占。是改名发 PyPI，还是只发 GitHub release？
+   （发行包的版本号已经是 coding agent 的了，见[第 2 步](#step-2)。）
 4. **mini 的历史文档留不留？** 删掉就干净，但 `docs/reference/` 28 页是一次性的沉没成本；
    也可以移到 `docs/legacy/` 之外（不进 nav）。
 5. **`.env` 的新位置？** 保持 `~/.config/mini-swe-agent/.env`（兼容，但名字和项目不符），
    还是改成 `~/.coderagent/.env`（干净，但要兼容读旧的）？
+   （第 1 步已经两个都读了，新的优先。）
 
 ---
 

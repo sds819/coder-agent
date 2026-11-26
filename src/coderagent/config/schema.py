@@ -37,15 +37,21 @@ BUILTIN_TOOL_NAMES = [
     "skill",
 ]
 
-ENVIRONMENT_TYPES = (
-    "local",
-    "docker",
-    "singularity",
-    "swerex_docker",
-    "swerex_modal",
-    "bubblewrap",
-    "contree",
-)
+ENVIRONMENT_CLASSES = {
+    "docker": "minisweagent.environments.docker.DockerEnvironment",
+    "singularity": "minisweagent.environments.singularity.SingularityEnvironment",
+    "swerex_docker": "minisweagent.environments.extra.swerex_docker.SwerexDockerEnvironment",
+    "swerex_modal": "minisweagent.environments.extra.swerex_modal.SwerexModalEnvironment",
+    "bubblewrap": "minisweagent.environments.extra.bubblewrap.BubblewrapEnvironment",
+    "contree": "minisweagent.environments.extra.contree.ContreeEnvironment",
+}
+"""The remote sandboxes: the name the user writes and the class that runs it.
+
+The implementations are the ones of mini-swe-agent. They are the whole of
+mini-swe-agent that the coding agent uses.
+"""
+
+ENVIRONMENT_TYPES = ("local", *ENVIRONMENT_CLASSES)
 """The kinds of environment the commands of the agent may run in."""
 
 HOOK_EVENTS = (
