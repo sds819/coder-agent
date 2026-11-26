@@ -440,6 +440,11 @@ def env_api_key(model_name: str) -> str:
     return os.getenv(ENV_KEYS.get(provider_of(model_name), ""), "")
 
 
+def key_of(effective: dict) -> str:
+    """The key of a run: the one of the settings or the one of the environment."""
+    return str(effective["model_kwargs"].get("api_key") or env_api_key(effective["model_name"]))
+
+
 def effective_api_key(cwd: Path) -> str:
     """The key the agent would use: the one of the settings, the one of the alias or the one of the environment."""
     config = load_config([], cwd=cwd)
@@ -504,7 +509,8 @@ def test_connection(effective: dict) -> dict[str, Any]:
 
     name = effective["model_name"]
     kwargs = effective["model_kwargs"]
-    key = str(kwargs.get("api_key") or "")
+    key = key_of(effective)
+    """The key of the environment counts too: the call below uses it."""
     report: dict[str, Any] = {
         "ok": False,
         "resolved": {

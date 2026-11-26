@@ -272,6 +272,24 @@ def test_the_page_says_the_key_is_set_when_it_comes_from_the_environment(make_cl
     assert view["api_key_hint"] == "********" + "sk-env-value"[-4:]
 
 
+def test_the_test_panel_counts_the_key_of_the_environment(monkeypatch):
+    """The panel of the test says which key is used: the one of the environment counts too."""
+    from coderagent.web import config_api
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
+    effective = {
+        "model_name": "deepseek/deepseek-flash",
+        "model_kwargs": {"api_base": "http://127.0.0.1:1/v1"},
+    }
+
+    report = config_api.test_connection(effective)
+
+    assert report["resolved"]["api_key_set"] is True
+    assert report["resolved"]["api_key_hint"] == "********" + "sk-env-value"[-4:]
+    assert report["ok"] is False
+    """Nothing listens on that port, so the call fails. The key is still the one of the environment."""
+
+
 def test_the_table_says_the_key_comes_from_the_environment(make_client, monkeypatch):
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
     client = make_client()
