@@ -2,15 +2,81 @@
 
 `coder` is an interactive agent that works in a code repository. It reads the
 code, writes the code, runs the commands and tells you what it changed. It
-is the `coder-agent` package:
+is the `coder-agent` package.
+
+## Installation
+
+Python 3.10 or newer is needed, and `git` when the package comes from the
+repository.
 
 ```bash
-pip install -e .            # the agent
-pip install -e ".[mcp]"     # with the MCP servers
-pip install -e ".[full]"    # with everything: swerex, modal, contree
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 ```
 
-The command is `coder`.
+That is the whole installation. The package is not on PyPI yet, so it is
+installed from the repository; once it is published, `pip install coder-agent`
+does the same.
+
+To change the code, work in a clone:
+
+```bash
+git clone https://github.com/sds819/coder-agent.git
+cd coder-agent
+pip install -e ".[full]"
+```
+
+With `uv` or `pipx` the package becomes a command on the path:
+
+```bash
+uv tool install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pipx install "coder-agent @ git+https://github.com/sds819/coder-agent"
+```
+
+In a conda environment:
+
+```bash
+conda create -n coder-agent python=3.11
+conda activate coder-agent
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+```
+
+### The extras
+
+| Extra | What it adds |
+|---|---|
+| none | The agent: litellm, textual, typer, fastapi |
+| `mcp` | The MCP servers |
+| `sandbox` | The remote sandboxes: swe-rex, modal, boto3, contree-sdk |
+| `web` | The web interface: uvicorn and jinja2 (fastapi is in the core) |
+| `full` | Everything: `dev` + `sandbox` + `mcp` |
+
+```bash
+pip install "coder-agent[full] @ git+https://github.com/sds819/coder-agent"
+```
+
+### The files of the installation
+
+| File | What it is |
+|---|---|
+| `~/.coderagent/config.yaml` | The configuration of the user: the model, the permissions, the hooks |
+| `~/.coderagent/.env` | The keys of the models. Read at every start |
+| `~/.coderagent/rules.yaml` | The permission rules of the user |
+| `~/.coderagent/CLAUDE.md` | What the agent should remember about you |
+| `<project>/.coderagent/config.yaml` | The configuration of the project |
+| `<project>/.coderagent/rules.yaml` | The permission rules of the project |
+
+Only the key of the model is needed; everything else has a default.
+`MSWEA_CODER_HOME` moves the whole directory of the user somewhere else.
+
+### The check
+
+```bash
+coder --help
+coder --list
+```
+
+The command is `coder`. It opens the terminal interface when the terminal is
+interactive, and takes one task and answers when it is not.
 
 ## The first session
 
@@ -221,7 +287,7 @@ program runs on your machine, so the choice is yours.
 The same agent, in the browser:
 
 ```bash
-pip install -e ".[web]"
+pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"
 coder web
 ```
 

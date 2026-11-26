@@ -16,21 +16,72 @@
 
 ## 安装 {#install}
 
-从源码装（要改代码就用这个）：
-
-```bash
-git clone https://github.com/sds819/coder-agent.git
-cd coder-agent
-pip install -e .
-```
-
-只想用、不改代码的话，直接从仓库装：
+要 Python 3.10 或更新的版本；从仓库装还要有 `git`。
 
 ```bash
 pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 ```
 
-（这个包还没发到 PyPI 上，所以只有从仓库装这一条路。）
+这就是全部的安装步骤。这个包还没发到 PyPI 上，所以是从仓库装的；以后发了之后，
+`pip install coder-agent` 说的是同一件事。
+
+要改代码就在克隆里干活：
+
+```bash
+git clone https://github.com/sds819/coder-agent.git
+cd coder-agent
+pip install -e ".[full]"
+```
+
+用 `uv` 或 `pipx` 的话，这个包会变成 path 上的一个命令：
+
+```bash
+uv tool install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pipx install "coder-agent @ git+https://github.com/sds819/coder-agent"
+```
+
+在 conda 环境里：
+
+```bash
+conda create -n coder-agent python=3.11
+conda activate coder-agent
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+```
+
+### 可选依赖 {#extras}
+
+| extra | 装什么 |
+|---|---|
+| 不装 | agent 本身：litellm、textual、typer、fastapi |
+| `mcp` | MCP 服务器 |
+| `sandbox` | 远端的沙箱：swe-rex、modal、boto3、contree-sdk |
+| `web` | 网页版：uvicorn 和 jinja2（fastapi 本来就在核心依赖里） |
+| `full` | 一切：`dev` + `sandbox` + `mcp` |
+
+```bash
+pip install "coder-agent[full] @ git+https://github.com/sds819/coder-agent"
+```
+
+### 装完有哪些文件 {#files}
+
+| 文件 | 是什么 |
+|---|---|
+| `~/.coderagent/config.yaml` | 用户的配置：模型、权限、hook |
+| `~/.coderagent/.env` | 模型的 key，每次启动都会读 |
+| `~/.coderagent/rules.yaml` | 用户的权限规则 |
+| `~/.coderagent/CLAUDE.md` | 让 agent 记住的关于你的事 |
+| `<项目>/.coderagent/config.yaml` | 项目的配置 |
+| `<项目>/.coderagent/rules.yaml` | 项目的权限规则 |
+
+只有模型的 key 是必须写的，其余都有默认值。`MSWEA_CODER_HOME` 能把上面这一整套
+挪到别的目录。
+
+### 装完检查一下 {#verify}
+
+```bash
+coder --help
+coder --list
+```
 
 装完有一个命令：
 
@@ -38,12 +89,7 @@ pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 |---|---|
 | `coder` | 交互式 coding agent，本页的主角 |
 
-可选依赖：
-
-```bash
-pip install -e ".[mcp]"    # MCP 服务器
-pip install -e ".[full]"   # 沙箱（swerex / modal / contree）等一切
-```
+`coder` 在真终端里开界面，不在终端里就跑一轮然后回答。
 
 ## 配置模型和 API key {#model}
 
@@ -133,7 +179,7 @@ agent 会自己读代码、改文件、跑测试。写入文件前它会先存�
 ## 也可以在浏览器里跑 {#web}
 
 ```bash
-pip install -e ".[web]"
+pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"
 coder web
 ```
 
