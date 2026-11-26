@@ -20,9 +20,17 @@
 
 ```bash
 git clone https://github.com/sds819/coder-agent.git
-cd mini-swe-agent
+cd coder-agent
 pip install -e .
 ```
+
+只想用、不改代码的话，直接从仓库装：
+
+```bash
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+```
+
+（这个包还没发到 PyPI 上，所以只有从仓库装这一条路。）
 
 装完有一个命令：
 

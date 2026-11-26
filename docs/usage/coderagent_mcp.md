@@ -4,7 +4,7 @@ The coding agent can use the tools of an [MCP](https://modelcontextprotocol.io)
 server. The MCP SDK is optional:
 
 ```bash
-pip install "coder-agent[mcp]"
+pip install "coder-agent[mcp] @ git+https://github.com/sds819/coder-agent"
 ```
 
 ## The configuration

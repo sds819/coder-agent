@@ -25,7 +25,7 @@ sandbox:
 它们要 extra `sandbox` 里的那些包：
 
 ```bash
-pip install 'coder-agent[sandbox]'
+pip install "coder-agent[sandbox] @ git+https://github.com/sds819/coder-agent"
 ```
 
 没有那些包，本地的沙箱照样能用；远端的那个会说出缺的是哪个包。

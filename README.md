@@ -3,20 +3,21 @@
 > 中文版：[README_zh.md](docs/readme_zh.md)
 
 [![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
-[![PyPI - Version](https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&logo=python&logoColor=white&labelColor=black&color=deeppink)](https://pypi.org/project/coder-agent/)
 
 `coder` is an interactive coding agent: it reads the code, writes the code, runs
 the commands and tells you what it changed. It runs in the terminal **and** in
 the browser, and it is a library too.
 
 ```bash
-pip install coder-agent
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 cd my-project
 
 coder                        # the terminal interface
 coder web                    # the same agent in the browser
 coder eval path/to/suite     # run a task suite against the agent
 ```
+
+The package is not on PyPI yet, so install it from the repository.
 
 ## What it does
 

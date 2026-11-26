@@ -3,19 +3,20 @@
 > 英文版：[README.md](docs/readme.md)
 
 [![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
-[![PyPI - Version](https://img.shields.io/pypi/v/coder-agent?style=for-the-badge&logo=python&logoColor=white&labelColor=black&color=deeppink)](https://pypi.org/project/coder-agent/)
 
 `coder` 是一个交互式 coding agent：它读代码、写代码、跑命令，然后告诉你它改了什么。
 它能跑在终端里，**也能**跑在浏览器里，还是一个能当库用的东西。
 
 ```bash
-pip install coder-agent
+pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 cd my-project
 
 coder                        # 终端界面
 coder web                    # 同一个 agent，跑在浏览器里
 coder eval path/to/suite     # 拿一个任务集跑这个 agent
 ```
+
+这个包还没发到 PyPI 上，所以从仓库里装。
 
 ## 它能做什么
 
