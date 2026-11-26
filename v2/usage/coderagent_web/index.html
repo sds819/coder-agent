@@ -2355,7 +2355,7 @@ what it cost.</p>
 </tr>
 <tr>
 <td>API key</td>
-<td><code>model.api_key</code>, or the key of the provider in the environment. A click shows it, a second click hides it again</td>
+<td><code>model.api_key</code>, or the key of the provider in the environment. A click shows it, a second click hides it again. The page says where the key comes from: the settings, or which variable of the environment</td>
 </tr>
 <tr>
 <td>Retries</td>
@@ -2407,7 +2407,7 @@ file, and the key of the endpoint stays in that file instead of the settings of
 the agent.</p>
 <p><code>Test connection</code> sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
-reports five things:</p>
+reports seven things:</p>
 <table>
 <thead>
 <tr>
@@ -2421,12 +2421,20 @@ reports five things:</p>
 <td>The model the call goes to, and the alias it comes from</td>
 </tr>
 <tr>
+<td>The provider</td>
+<td>The provider the name worked out to</td>
+</tr>
+<tr>
 <td>The API base</td>
 <td>The address the call goes to</td>
 </tr>
 <tr>
 <td>The API key</td>
 <td>Whether a key is set, and its last four characters</td>
+</tr>
+<tr>
+<td>The key source</td>
+<td>Whether the key comes from the settings or from the environment</td>
 </tr>
 <tr>
 <td>The aliases file</td>

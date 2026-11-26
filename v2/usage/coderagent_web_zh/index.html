@@ -2371,7 +2371,7 @@ slash 命令不能带图。</p>
 </tr>
 <tr>
 <td>API key</td>
-<td><code>model.api_key</code>。点一下显示，再点一下收起</td>
+<td><code>model.api_key</code>。点一下显示，再点一下收起。页面会写明 key 的来源：设置里的，还是环境变量里的</td>
 </tr>
 <tr>
 <td>Max retries</td>
@@ -2414,7 +2414,7 @@ slash 命令不能带图。</p>
 页面底部的表格列出所有层，含密钥的项都被抹成 <code>***</code>。页面读的是<strong>配置文件</strong>；命令行上的
 <code>-m</code> 和 <code>-c</code> 是给会话用的，所以 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是
 文件里的那个模型。</p>
-<p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。它报五件事：</p>
+<p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。它报七件事：</p>
 <table>
 <thead>
 <tr>
@@ -2428,12 +2428,20 @@ slash 命令不能带图。</p>
 <td>这次调用打到哪个模型，是哪个别名</td>
 </tr>
 <tr>
+<td>厂商</td>
+<td>名字算出来是哪个厂商</td>
+</tr>
+<tr>
 <td>接口地址</td>
 <td>这次调用打到哪个地址</td>
 </tr>
 <tr>
 <td>API key</td>
 <td>有没有配 key，以及末四位</td>
+</tr>
+<tr>
+<td>key 的来源</td>
+<td>key 是设置里的，还是环境变量里的</td>
 </tr>
 <tr>
 <td>别名文件</td>
