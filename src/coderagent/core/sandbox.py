@@ -22,6 +22,7 @@ when the permission layer lets everything through.
 from pathlib import Path
 from typing import Any
 
+from coderagent.compat import is_local
 from coderagent.config.schema import SandboxConfig
 from coderagent.core.os_sandbox import FULL_ACCESS
 from coderagent.tools.builtin.shell import CodingEnvironment
@@ -34,11 +35,10 @@ def build_environment(config: SandboxConfig, cwd: Path) -> Any:
     if config.type == LOCAL:
         return CodingEnvironment(cwd=str(cwd))
     from minisweagent.environments import get_environment
-    from minisweagent.environments.local import LocalEnvironment
 
     options = config.model_dump(exclude={"type"})
     environment = get_environment(options, default_type=config.type)
-    if isinstance(environment, LocalEnvironment):
+    if is_local(environment):
         """A local environment works in the directory of the session."""
         environment.config.cwd = str(cwd)
     if hasattr(environment, "_check_finished"):

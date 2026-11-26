@@ -1,4 +1,4 @@
-"""Coding agent built on top of mini-swe-agent's reusable primitives.
+"""The coding agent: a coding agent for the terminal, for the browser and as a library.
 
 See `docs/design/coding-agent-architecture.md` for the architecture this package implements.
 """
@@ -15,5 +15,10 @@ os.environ.setdefault("MSWEA_SILENT_STARTUP", "1")
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "true")
 
 from coderagent.core.protocols import ModelBackend, ToolExecutor  # noqa: E402
+from coderagent.paths import load_global_env  # noqa: E402
+
+load_global_env()
+"""The keys of the models come from the files of the user: they have to be in
+the environment before the first call to a model."""
 
 __all__ = ["ModelBackend", "ToolExecutor", "__version__"]

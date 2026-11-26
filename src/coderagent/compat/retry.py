@@ -1,0 +1,27 @@
+"""The retries of the calls to the model."""
+
+import logging
+import os
+
+from tenacity import Retrying, before_sleep_log, retry_if_not_exception_type, stop_after_attempt, wait_exponential
+
+
+def retry(*, logger: logging.Logger, abort_exceptions: list[type[Exception]], attempts: int = 0) -> Retrying:
+    """The retries of a call to the model.
+
+    Args:
+        logger: Logger to use for reporting retries
+        abort_exceptions: Exceptions to abort on.
+        attempts: How many times a call is tried at most. 0 takes the environment
+            variable `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`, or ten.
+
+    Returns:
+        A tenacity.Retrying object.
+    """
+    return Retrying(
+        reraise=True,
+        stop=stop_after_attempt(int(os.getenv("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT", attempts or 10))),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        retry=retry_if_not_exception_type(tuple(abort_exceptions)),
+    )

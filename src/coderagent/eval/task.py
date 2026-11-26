@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from minisweagent.config import get_config_from_spec
+from coderagent.compat import get_config_from_spec
 
 TASK_FILE = "task.yaml"
 """The file that describes a task. The other yaml files are part of the fixture."""

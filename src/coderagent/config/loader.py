@@ -6,12 +6,11 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ValidationError
 
+from coderagent.compat import get_config_from_spec, recursive_merge
 from coderagent.config.schema import Config
 from coderagent.core.os_sandbox import FULL_ACCESS, MODES
 from coderagent.core.trust import tightened, waiting, without_untrusted
 from coderagent.paths import config_home
-from minisweagent.config import get_config_from_spec
-from minisweagent.utils.serialize import recursive_merge
 
 DEFAULTS_PATH = Path(__file__).parent / "defaults.yaml"
 PROJECT_CONFIG = Path(".coderagent") / "config.yaml"

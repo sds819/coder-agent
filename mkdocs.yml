@@ -154,6 +154,7 @@ nav:
     - "Topic — Context & compaction": design/coderagent-context.md
     - "Topic — Compared with Codex": design/coderagent-vs-codex.md
     - "Topic — Skill hub & the skills page": design/coderagent-skill-hub.md
+    - "Topic — Standing on its own": design/coderagent-standalone.md
     - "M0 — Skeleton & config": design/milestones/M0-skeleton.md
     - "M1 — Tools & permissions": design/milestones/M1-tools-permissions.md
     - "M2 — Context & sessions": design/milestones/M2-context-session.md

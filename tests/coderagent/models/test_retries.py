@@ -2,11 +2,11 @@
 
 import logging
 
+from coderagent.compat import retry
 from coderagent.config.schema import Config
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.router import ModelRouter
 from coderagent.run import build_model
-from minisweagent.models.utils.retry import retry
 
 
 def _attempts(attempts: int = 0) -> int:

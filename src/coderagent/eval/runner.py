@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from coderagent.compat import recursive_merge
 from coderagent.config.schema import Config
 from coderagent.core.events import EventType
 from coderagent.core.sandbox import build_environment
@@ -20,7 +21,6 @@ from coderagent.run import build_loop, build_model
 from coderagent.testing.factory import AllowAllApprover
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import ApprovalDecision
-from minisweagent.utils.serialize import recursive_merge
 
 SCRIPT_ERROR = "ran out of responses"
 """What the scripted model says when the script is too short."""

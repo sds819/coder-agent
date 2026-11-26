@@ -1,17 +1,16 @@
-"""Model backends. Reuses mini-swe-agent's retry and cache-control primitives."""
+"""Model backends: the calls to the model, their retries and their cache control."""
 
 import logging
 from collections.abc import Iterator
 from functools import cache, cached_property
 from typing import Any
 
+from coderagent.compat import retry, set_cache_control
 from coderagent.models import litellm_module
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.reasoning import translate
 from coderagent.models.streaming import ModelEvent, ToolCallAccumulator, message_from_events
-from minisweagent.models.utils.cache_control import set_cache_control
-from minisweagent.models.utils.retry import retry
 
 logger = logging.getLogger("coderagent.backend")
 

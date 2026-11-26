@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
+from coderagent.compat import is_local
 from coderagent.config.schema import ContextConfig
 from coderagent.core import schema
 from coderagent.core.capabilities import TAKES, support
@@ -20,7 +21,6 @@ from coderagent.core.tokens import trim_text
 from coderagent.models.gateway import ModelGateway, is_context_overflow
 from coderagent.models.streaming import ModelEvent, message_from_events
 from coderagent.tools.permissions import PermissionMode
-from minisweagent.environments.local import LocalEnvironment
 
 logger = logging.getLogger("coderagent.core.loop")
 
@@ -494,7 +494,7 @@ class AgentLoop:
         from coderagent.tools.builtin.shell import CodingEnvironment
 
         environment = self.sandbox or CodingEnvironment(cwd=str(self.session.cwd))
-        cwd = str(self.session.cwd) if isinstance(environment, LocalEnvironment) else ""
+        cwd = str(self.session.cwd) if is_local(environment) else ""
         result = environment.execute({"command": command}, cwd=cwd, timeout=self.verify.timeout)
         output = str(result.get("output", ""))
         if result.get("exception_info"):

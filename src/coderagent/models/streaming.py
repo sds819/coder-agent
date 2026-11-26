@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from minisweagent.exceptions import FormatError
+from coderagent.compat import FormatError
 
 
 @dataclass
@@ -23,7 +23,7 @@ class ModelEvent:
 
 
 def _format_error(message: str) -> FormatError:
-    """minisweagent's FormatError keeps the details in `messages`, not in the text."""
+    """The FormatError keeps the details in `messages`, not in the text."""
     error = FormatError({"error": message})
     error.args = (message,)
     return error

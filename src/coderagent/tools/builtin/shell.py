@@ -12,9 +12,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from coderagent.compat import LocalEnvironment, is_local
 from coderagent.core.tokens import trim_text
 from coderagent.tools.base import ToolContext, ToolResult
-from minisweagent.environments.local import LocalEnvironment
 
 CHARS_PER_TOKEN = 3.5
 POLL_SECONDS = 0.05
@@ -205,7 +205,7 @@ class BashTool:
 
         env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
         """A remote sandbox has its own working directory, the path of the host means nothing there."""
-        cwd = str(ctx.cwd) if isinstance(env, LocalEnvironment) else ""
+        cwd = str(ctx.cwd) if is_local(env) else ""
         result = self._execute(env, _confined(command, ctx), cwd, timeout, ctx)
         output = str(result.get("output", ""))
         content = trim_output(output, ctx.config.max_output_tokens)
@@ -242,7 +242,7 @@ class BashTool:
         session.
         """
         env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
-        if not isinstance(env, LocalEnvironment):
+        if not is_local(env):
             return ToolResult(
                 "Error: a background task cannot run in this environment: it would run outside of it. "
                 "Run the command in the foreground instead.",

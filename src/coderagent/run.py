@@ -7,6 +7,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from coderagent.compat import is_local
 from coderagent.config.schema import Config, ContextConfig
 from coderagent.core import os_sandbox, shell_env
 from coderagent.core.budget import context_window_for
@@ -52,7 +53,6 @@ from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rul
 from coderagent.tools.registry import estimate_tokens
 from coderagent.tools.rules import load_rules
 from coderagent.ui.commands import register as register_command
-from minisweagent.environments.local import LocalEnvironment
 
 logger = logging.getLogger("coderagent.run")
 
@@ -131,9 +131,7 @@ def _confinement(config: Config, environment: Any, cwd: Path) -> Confinement | N
     A container is its own boundary, so the mode only reaches the commands
     that run on the machine of the user.
     """
-    from minisweagent.environments.local import LocalEnvironment
-
-    if not isinstance(environment, LocalEnvironment):
+    if not is_local(environment):
         return None
     return os_sandbox.build(config.sandbox.mode, cwd, config.permissions.include_dirs, config.permissions.network)
 
@@ -187,7 +185,7 @@ def build_loop(
     specs = load_subagents(cwd, user_home)
     skills = load_skills(cwd, user_home)
     environment = build_environment(config.sandbox, cwd)
-    if isinstance(environment, LocalEnvironment):
+    if is_local(environment):
         """The commands of the agent do not see the keys of the user, unless he says so."""
         environment.env_override = shell_env.build(
             config.shell_environment.inherit,

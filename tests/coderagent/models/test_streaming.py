@@ -2,8 +2,8 @@
 
 import pytest
 
+from coderagent.compat import FormatError
 from coderagent.models.streaming import ModelEvent, ToolCallAccumulator, message_from_events
-from minisweagent.exceptions import FormatError
 
 
 def test_the_arguments_of_a_tool_call_are_joined():
