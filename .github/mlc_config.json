@@ -10,6 +10,9 @@
       "pattern": "https://docs.vllm.ai/.*"
     },
     {
+      "pattern": "https://jinja.palletsprojects.com/.*"
+    },
+    {
       "pattern": "https://join.slack.com/.*"
     },
     {
