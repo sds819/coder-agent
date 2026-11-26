@@ -7,6 +7,8 @@ a number of tokens to think with. The translation happens here, once.
 
 from typing import Any
 
+from coderagent.models.provider import provider_of
+
 EFFORTS = ("minimal", "low", "medium", "high")
 """The levels the user may ask for. Empty means: the default of the model."""
 
@@ -21,6 +23,6 @@ def translate(model_name: str, effort: str) -> dict[str, Any]:
     """The parameter the provider of this model understands."""
     if effort not in EFFORTS:
         raise ValueError(f"unknown reasoning effort '{effort}'. Use one of: {', '.join(EFFORTS)}.")
-    if model_name.split("/")[0] == "anthropic":
+    if provider_of(model_name) == "anthropic":
         return {"thinking": {"type": "enabled", "budget_tokens": BUDGETS[effort]}}
     return {"reasoning_effort": effort}

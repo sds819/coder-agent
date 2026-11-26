@@ -4,8 +4,6 @@ The api key is only ever written to the user level configuration file, and it
 never leaves the server in clear text.
 """
 
-import contextlib
-import io
 import os
 import time
 from pathlib import Path
@@ -15,10 +13,11 @@ import yaml
 
 from coderagent.config.loader import DEFAULTS_PATH, config_layers, load_config
 from coderagent.config.schema import PURPOSES, ModelConfig, PermissionConfig, check_routing_rule
-from coderagent.models import litellm_module
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import locate
 from coderagent.models.litellm_config import resolve as resolve_alias
+from coderagent.models.provider import PROVIDERS, env_key, env_var, normalize
+from coderagent.models.provider import provider_of as provider_of_model
 from coderagent.models.reasoning import EFFORTS
 from coderagent.models.verbosity import VERBOSITIES
 from coderagent.paths import config_home
@@ -55,23 +54,7 @@ MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")
 SECRET_FIELDS = ("api_base", "api_key")
 """The settings of the model that have a field of their own, next to `model_kwargs`."""
 
-ENV_KEYS = {
-    "openai": "OPENAI_API_KEY",
-    "anthropic": "ANTHROPIC_API_KEY",
-    "deepseek": "DEEPSEEK_API_KEY",
-    "gemini": "GEMINI_API_KEY",
-    "openrouter": "OPENROUTER_API_KEY",
-    "groq": "GROQ_API_KEY",
-    "mistral": "MISTRAL_API_KEY",
-    "xai": "XAI_API_KEY",
-    "together_ai": "TOGETHERAI_API_KEY",
-    "fireworks_ai": "FIREWORKS_API_KEY",
-    "azure": "AZURE_API_KEY",
-    "cohere": "COHERE_API_KEY",
-    "moonshot": "MOONSHOT_API_KEY",
-    "nvidia_nim": "NVIDIA_NIM_API_KEY",
-    "perplexity": "PERPLEXITYAI_API_KEY",
-}
+ENV_KEYS = PROVIDERS
 """The environment variable of the key of a provider. The name of the model says which provider it is."""
 
 
@@ -121,6 +104,7 @@ def sources(cwd: Path) -> dict[str, str]:
     layers = config_layers(cwd)
     merged = load_config([], cwd=cwd)
     name, params = resolve_alias(merged.model.litellm_config, merged.model.model_name)
+    base = str(merged.model.api_base or merged.model.model_kwargs.get("api_base") or params.get("api_base") or "")
     result = {}
     for field in (*MODEL_FIELDS, *merged.model.model_kwargs):
         source = "defaults"
@@ -131,7 +115,7 @@ def sources(cwd: Path) -> dict[str, str]:
             source = "alias"
         if source == "defaults" and field == "model_name" and os.getenv("MSWEA_MODEL_NAME"):
             source = "env"
-        if source == "defaults" and field == "api_key" and env_api_key(name):
+        if source == "defaults" and field == "api_key" and env_api_key(name, base):
             source = "env"
         result[field] = source
     return result
@@ -143,15 +127,22 @@ def model_view(cwd: Path) -> dict[str, Any]:
     model = config.model
     kwargs = dict(model.model_kwargs)
     api_key = effective_api_key(cwd)
-    _, alias = resolve_alias(model.litellm_config, model.model_name)
+    resolved, alias = resolve_alias(model.litellm_config, model.model_name)
+    base = str(model.api_base or kwargs.get("api_base") or alias.get("api_base") or "")
+    provider = provider_of(resolved, base)
+    own_key = model.api_key or kwargs.get("api_key") or alias.get("api_key")
     return {
         "model_name": model.model_name,
+        "provider": provider,
+        "resolved_model_name": normalize(resolved, base),
         "litellm_config": model.litellm_config,
         "api_base": str(model.api_base or kwargs.get("api_base") or ""),
         "alias_api_base": str(alias.get("api_base") or ""),
         # The field of the user stays empty: the aliases file holds the address.
         "api_key_set": bool(api_key),
         "api_key_hint": hint(api_key),
+        "key_source": key_source(own_key, provider),
+        "key_env": env_var(provider),
         "max_retries": model.max_retries,
         "set_cache_control": model.set_cache_control or "",
         "reasoning_effort": model.reasoning_effort,
@@ -413,43 +404,53 @@ def effective_model(cwd: Path, overrides: dict) -> dict:
     if isinstance(extra, dict):
         kwargs.update({key: value for key, value in extra.items() if key not in ("api_key", "api_base")})
     resolved, params = resolve_alias(aliases, name)
+    merged = params | kwargs
+    base = str(merged.get("api_base") or "")
     return {
-        "model_name": resolved,
+        "model_name": normalize(resolved, base),
         "requested": name,
         "alias": name if resolved != name else "",
+        "provider": provider_of(resolved, base),
         "litellm_config": aliases,
-        "model_kwargs": params | kwargs,
+        "model_kwargs": merged,
         "reasoning_effort": config.model.reasoning_effort,
     }
 
 
-def provider_of(model_name: str) -> str:
-    """The provider of a model: the part before the slash, or what litellm makes of the name."""
-    if "/" in model_name:
-        return model_name.split("/", 1)[0].lower()
-    try:
-        with contextlib.redirect_stdout(io.StringIO()):
-            _, provider, _, _ = litellm_module().utils.get_llm_provider(model=model_name)
-    except Exception:
-        return ""
-    return provider
+def provider_of(model_name: str, api_base: str = "") -> str:
+    """The provider of a model: the name says it, the endpoint does, the family does."""
+    return provider_of_model(model_name, api_base)
 
 
-def env_api_key(model_name: str) -> str:
+def env_api_key(model_name: str, api_base: str = "") -> str:
     """The key the environment has for the provider of the model."""
-    return os.getenv(ENV_KEYS.get(provider_of(model_name), ""), "")
+    return env_key(model_name, api_base)
+
+
+def key_source(own_key: str, provider: str) -> str:
+    """Where the key comes from: the settings, or the environment of the provider."""
+    if own_key:
+        return "settings"
+    return "env" if os.getenv(env_var(provider), "") else ""
 
 
 def key_of(effective: dict) -> str:
     """The key of a run: the one of the settings or the one of the environment."""
-    return str(effective["model_kwargs"].get("api_key") or env_api_key(effective["model_name"]))
+    kwargs = effective["model_kwargs"]
+    return str(kwargs.get("api_key") or env_api_key(effective["model_name"], str(kwargs.get("api_base") or "")))
 
 
 def effective_api_key(cwd: Path) -> str:
     """The key the agent would use: the one of the settings, the one of the alias or the one of the environment."""
     config = load_config([], cwd=cwd)
     name, params = resolve_alias(config.model.litellm_config, config.model.model_name)
-    key = config.model.api_key or config.model.model_kwargs.get("api_key") or params.get("api_key") or env_api_key(name)
+    base = str(config.model.api_base or config.model.model_kwargs.get("api_base") or params.get("api_base") or "")
+    key = (
+        config.model.api_key
+        or config.model.model_kwargs.get("api_key")
+        or params.get("api_key")
+        or env_api_key(name, base)
+    )
     return str(key or "")
 
 
@@ -509,16 +510,21 @@ def test_connection(effective: dict) -> dict[str, Any]:
 
     name = effective["model_name"]
     kwargs = effective["model_kwargs"]
+    base = str(kwargs.get("api_base") or "")
+    provider = effective.get("provider") or provider_of(name, base)
     key = key_of(effective)
     """The key of the environment counts too: the call below uses it."""
     report: dict[str, Any] = {
         "ok": False,
         "resolved": {
             "model_name": name,
+            "provider": provider,
             "alias": effective.get("alias", ""),
-            "api_base": str(kwargs.get("api_base") or ""),
+            "api_base": base,
             "api_key_set": bool(key),
             "api_key_hint": hint(key),
+            "key_source": key_source(str(kwargs.get("api_key") or ""), provider),
+            "key_env": env_var(provider),
         },
         "file": check_litellm_config(effective.get("litellm_config", ""), effective.get("requested", "")),
     }

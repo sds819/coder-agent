@@ -13,7 +13,8 @@
     <label>模型名
       <input id="model-name" placeholder="deepseek/deepseek-flash">
       <small id="source-model_name" class="source"></small>
-      <small class="source">名字前面那个厂商决定调谁：第三方端点写 <code>openai/MiniMax-M2.7</code>，DeepSeek 写 <code>deepseek/deepseek-flash</code></small>
+      <small id="model-provider" class="source"></small>
+      <small class="source">厂商可以写在名字前面（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）。不写的时候由接口地址和模型系列来定</small>
     </label>
     <label>Litellm 配置文件
       <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
@@ -27,6 +28,7 @@
     <label>API key
       <input id="api-key" type="password" placeholder="点一下显示">
       <small id="source-api_key" class="source"></small>
+      <small id="model-key-source" class="source"></small>
       <small class="source">点一下显示 key，再点一下收起来</small>
     </label>
     <label>最多重试
@@ -128,7 +130,7 @@ model:
     </label>
     <label>模型名
       <input id="test-model-name" placeholder="MiniMax-M2.7">
-      <small class="source">名字前面那个厂商决定调谁：<code>openai/MiniMax-M2.7</code>。没写就补上 <code>openai/</code>——这个地址是 OpenAI 兼容的那种</small>
+      <small class="source">名字就按写的发过去：厂商可以写在前头（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）。调谁由服务端来定</small>
     </label>
     <div class="row">
       <button type="submit" class="primary">测一下连接</button>

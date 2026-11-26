@@ -102,7 +102,7 @@ slash 命令不能带图。
 
 | 字段 | 落到哪 |
 |---|---|
-| Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。名字前面那个厂商决定调谁：第三方端点写 `openai/MiniMax-M2.7`，DeepSeek 写 `deepseek/deepseek-flash` |
+| Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。厂商可以写在前面（`openai/MiniMax-M2.7`、`openai:MiniMax-M2.7`），也可以不写（`MiniMax-M2.7`）：页面会显示算出来的厂商 |
 | Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
 | API base | `model.api_base`——第三方模型的地址。地址写在别名文件里时，这一栏是空的，页面把它显示在下面 |
 | API key | `model.api_key`。点一下显示，再点一下收起 |
@@ -143,7 +143,7 @@ slash 命令不能带图。
 |---|---|
 | Endpoint | 厂商的地址。可以直接粘完整的 `https://api.example.com/v1/chat/completions`：`/v1` 后面那段会被剪掉，因为 litellm 自己会加 |
 | API Key | 这个地址的 key。点一下显示上面设置里的 key，再点一下收起来 |
-| Model Name | 模型名。前面那个厂商决定调谁：`openai/MiniMax-M2.7`。没写就补 `openai/`——这个地址是 OpenAI 兼容的那种 |
+| Model Name | 模型名，按写的发过去：`openai/MiniMax-M2.7`、`openai:MiniMax-M2.7` 或者 `MiniMax-M2.7`。调谁由服务端来定：先看名字，再看接口地址，最后看模型系列 |
 
 地址或 key 留空，就用上面设置里的。结果和表单那边的测试一样，也是那几行。
 
@@ -157,7 +157,7 @@ slash 命令不能带图。
   当前这个会话想立刻换模型，用 `/model <名字>`。
 - **环境变量里的 key 也算数**。页面先读配置文件，再读环境：`DEEPSEEK_API_KEY` 这类变量
   里的 key 一样会显示出来，`api_key_set` 是 true，字段下面那行写着来源是 `env`。
-  看哪个变量由模型名决定：`openai/…` 找 `OPENAI_API_KEY`，`deepseek/…` 找 `DEEPSEEK_API_KEY`。
+  看哪个变量由模型的厂商决定：`openai/…` 找 `OPENAI_API_KEY`，`deepseek/…` 找 `DEEPSEEK_API_KEY`。
 - **key 那一栏**。平时只显示 `set (********1234)`，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
   配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。
@@ -397,7 +397,8 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 
 **「设置页里 `api_key_set` 是 false」**
 key 确实不在：配置文件里没有，环境里也没有对应厂商的变量（`DEEPSEEK_API_KEY` 之类）。
-模型名前面那个厂商决定看哪个变量——`openai/…` 找 `OPENAI_API_KEY`。
+模型的厂商决定看哪个变量——`openai/…` 找 `OPENAI_API_KEY`。页面会显示算出来的厂商，
+以及 key 是从哪儿来的。
 
 **「改了设置没生效」**
 对**新会话**生效。当前这个会话还在用启动时的配置，想立刻换就 `/model <名字>`。

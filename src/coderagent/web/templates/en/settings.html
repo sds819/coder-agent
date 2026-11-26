@@ -14,7 +14,8 @@
     <label>Model name
       <input id="model-name" placeholder="deepseek/deepseek-flash">
       <small id="source-model_name" class="source"></small>
-      <small class="source">the provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code> for a third party endpoint, <code>deepseek/deepseek-flash</code> for DeepSeek</small>
+      <small id="model-provider" class="source"></small>
+      <small class="source">the provider may be written in front of the name (<code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code>) or left out (<code>MiniMax-M2.7</code>). Without one, the endpoint and the family of the model decide</small>
     </label>
     <label>Litellm config file
       <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
@@ -28,6 +29,7 @@
     <label>API key
       <input id="api-key" type="password" placeholder="click to show it">
       <small id="source-api_key" class="source"></small>
+      <small id="model-key-source" class="source"></small>
       <small class="source">a click shows the key, a second click hides it again</small>
     </label>
     <label>Max retries
@@ -130,7 +132,7 @@ model:
     </label>
     <label>Model Name
       <input id="test-model-name" placeholder="MiniMax-M2.7">
-      <small class="source">the provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code>. Without one, <code>openai/</code> is added: the endpoint is an OpenAI compatible one</small>
+      <small class="source">the name is written as it is: the provider may be in front of it (<code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code>) or not at all (<code>MiniMax-M2.7</code>). The server works out who is called</small>
     </label>
     <div class="row">
       <button type="submit" class="primary">Test connection</button>

@@ -84,7 +84,7 @@ def _model(context: CommandContext, argument: str) -> None:
         )
         return
     context.config.model.model_name = argument
-    context.loop.model.backend = LiteLLMBackend(
+    backend = LiteLLMBackend(
         argument,
         model_kwargs=context.config.model.model_kwargs,
         litellm_config=context.config.model.litellm_config,
@@ -93,9 +93,10 @@ def _model(context: CommandContext, argument: str) -> None:
         api_key=context.config.model.api_key,
         api_base=context.config.model.api_base,
     )
+    context.loop.model.backend = backend
     if context.loop.router is not None:
         context.loop.router.override = argument
-    context.say(f"model: {argument}")
+    context.say(f"model: {backend.model_name}")
 
 
 def _mode(context: CommandContext, argument: str) -> None:

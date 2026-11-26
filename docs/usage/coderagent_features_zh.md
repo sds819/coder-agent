@@ -167,7 +167,8 @@ schema 的 JSON——schema 在系统提示词里——答案出来之后才查�
 ## 模型
 
 - **litellm 认识的任何厂商**——OpenAI、DeepSeek、Anthropic、Gemini、
-  Mistral、OpenRouter……名字前面那个厂商决定调谁：`deepseek/deepseek-flash`。
+  Mistral、OpenRouter……厂商可以写在名字前面（`deepseek/deepseek-flash`），
+  也可以不写：由接口地址和模型系列来定。
 - **第三方端点**——`api_base` 里写一个 OpenAI 兼容的地址，配它自己的 key。
   地址可以直接粘完整的 `/chat/completions`，`/v1` 后面那段会被剪掉，
   因为 litellm 自己会加。
@@ -192,7 +193,7 @@ schema 的 JSON——schema 在系统提示词里——答案出来之后才查�
 ### 用法例子
 
 ```bash
-# 厂商就是斜杠前面那段。
+# 厂商写在名字前面（也可以不写，由地址和模型系列来定）。
 coder -t "..." -m deepseek/deepseek-flash
 
 # 一个说 OpenAI 协议的第三方端点。
@@ -240,7 +241,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 
 | 你看到的 | 什么意思 | 怎么办 |
 |---|---|---|
-| `LLM Provider NOT provided` | 模型名前面没有厂商。 | OpenAI 兼容的端点写 `openai/<名字>`，或者 `deepseek/<名字>`。 |
+| `LLM Provider NOT provided` | 名字里没有厂商，接口地址和模型系列也说不出来。 | OpenAI 兼容的端点写 `openai/<名字>`，或者 `deepseek/<名字>`。 |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end`，也不是空的。 | 用 `default_end`，或者删掉这一行。 |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` 不是 `minimal`、`low`、`medium`、`high` 里的一个。 | 用那四个里的一个，或者删掉这一行（用模型的默认）。 |
 | `unknown verbosity '{level}'` | `verbosity` 不是 `low`、`medium`、`high` 里的一个。 | 用那三个里的一个，或者删掉这一行（用模型自己的习惯）。 |

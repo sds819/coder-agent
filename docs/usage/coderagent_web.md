@@ -108,7 +108,7 @@ The model configuration, in a form:
 
 | Field | What it is |
 |---|---|
-| Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider in front of the name says who is called: `openai/MiniMax-M2.7` for a third party endpoint, `deepseek/deepseek-flash` for DeepSeek |
+| Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider may be in front of the name (`openai/MiniMax-M2.7`, `openai:MiniMax-M2.7`) or left out (`MiniMax-M2.7`): the page shows the provider it worked out |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.api_base` — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it |
 | API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
@@ -158,7 +158,7 @@ button. It is the shape a provider hands them out in.
 |---|---|
 | Endpoint | The address of the provider. The full address of the chat completions (`https://api.example.com/v1/chat/completions`) is fine — the part behind `/v1` is cut off, because litellm adds it itself |
 | API Key | The key of that endpoint. A click shows the key of the settings above, a second click hides it again |
-| Model Name | The name of the model. The provider in front of the name says who is called: `openai/MiniMax-M2.7`. Without one, the provider `openai` is added, because the endpoint is an OpenAI compatible one |
+| Model Name | The name of the model, written as it is: `openai/MiniMax-M2.7`, `openai:MiniMax-M2.7` or `MiniMax-M2.7`. The server works out who is called: the name first, then the address of the endpoint, then the family of the model |
 
 An empty endpoint or an empty key means the one of the settings above. The
 result is the same four lines as the test of the form.
@@ -480,8 +480,9 @@ with `--port`.
 **"`api_key_set` is false on the settings page"**
 The key really is not there: not in the configuration file, and not in the
 environment under the name of the provider (`DEEPSEEK_API_KEY` and the like).
-The provider in front of the model name decides which variable is looked at —
-`openai/…` looks at `OPENAI_API_KEY`.
+The provider of the model decides which variable is looked at — `openai/…`
+looks at `OPENAI_API_KEY`. The page shows the provider it worked out and where
+the key comes from.
 
 **"I changed the settings and nothing happened"**
 They apply to a **new** session. The session you are in still runs with the

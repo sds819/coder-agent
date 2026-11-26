@@ -170,6 +170,12 @@ def test_the_model_the_user_picks_wins_over_the_routing(tmp_path):
     assert context.loop.router.resolve("main", {"tokens": 999999}) == "my/model"
 
 
+def test_the_model_command_answers_with_the_name_the_session_calls(tmp_path):
+    """The name of the user may be shorter than the one litellm is called with."""
+    context, output = _context(tmp_path)
+    assert "model: openai/gpt-4o" in _run(context, output, "/model gpt-4o")
+
+
 def test_the_thinking_budget_is_shown_and_survives_a_switch_of_the_model(tmp_path):
     context, output = _context(tmp_path)
     context.config.model.reasoning_effort = "high"

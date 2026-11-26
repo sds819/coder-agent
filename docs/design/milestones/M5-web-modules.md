@@ -356,7 +356,7 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | `SECRET_MARKERS = ("key", "token", "secret", "password")` | 名字里含这些词的一律当密钥 |
 | `DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")` | 直接在 `model:` 下的字段 |
 | `MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")` | 配置页要展示的字段 |
-| `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；模型名斜杠前面那段就是厂商 |
+| `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；从 `models/provider.py` 的 `PROVIDERS` 来 |
 
 ### 9.2 函数
 
@@ -370,9 +370,9 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | `layers_preview(cwd) -> list[dict]` | `[{layer, model}]` | 每一层都过 `redact` |
 | `user_config_path() -> Path` | | `config_home()/"config.yaml"`（`MSWEA_CODER_HOME` 生效） |
 | `write_user_model(payload) -> Path` | 写后的路径 | 见 §9.3 |
-| `effective_model(cwd, overrides) -> dict` | `{model_name, requested, alias, litellm_config, model_kwargs}` | 当前配置 + 表单里的覆盖；别名在这里解析 |
-| `provider_of(model_name) -> str` | | 厂商：名字里有 `/` 就取斜杠前面那段，否则问 litellm |
-| `env_api_key(model_name) -> str` | | 厂商在环境里的 key（`ENV_KEYS` 表） |
+| `effective_model(cwd, overrides) -> dict` | `{model_name, requested, alias, provider, litellm_config, model_kwargs}` | 当前配置 + 表单里的覆盖；别名和厂商在这里解析 |
+| `provider_of(model_name, api_base="") -> str` | | 厂商：转给 `models/provider.py`——名字里有厂商就说了算，其次是地址说的协议，再次是模型系列 |
+| `env_api_key(model_name, api_base="") -> str` | | 厂商在环境里的 key（`ENV_KEYS` 表） |
 | `effective_api_key(cwd) -> str` | | agent 真正会用的 key：**配置 > 别名文件 > 环境变量** |
 | `test_connection(effective: dict) -> dict` | | 一次 `max_tokens=1` 的调用；`effective` 是 `effective_model()` 的结果 |
 

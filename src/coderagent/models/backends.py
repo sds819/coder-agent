@@ -9,6 +9,7 @@ from coderagent.compat import retry, set_cache_control
 from coderagent.models import litellm_module
 from coderagent.models.call import check_reserved
 from coderagent.models.litellm_config import resolve as resolve_alias
+from coderagent.models.provider import normalize
 from coderagent.models.reasoning import translate
 from coderagent.models.streaming import ModelEvent, ToolCallAccumulator, message_from_events
 
@@ -92,7 +93,6 @@ class LiteLLMBackend:
         self.alias = model_name
         """The name the user wrote. The capabilities of a model are said about this name."""
         name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
-        self.model_name = name
         merged = params | (model_kwargs or {})
         check_reserved(merged)
         """The parameters of the call belong to the agent: a user may not set them."""
@@ -103,15 +103,17 @@ class LiteLLMBackend:
             merged["api_base"] = api_base
             """The address has a field of its own: it wins over the one of `model_kwargs`."""
         self.model_kwargs = merged
+        self.model_name = normalize(name, str(merged.get("api_base") or ""))
+        """The name litellm is called with: the provider is in front of the model."""
         if reasoning_effort:
             """The thinking budget, in the words of the provider of this model."""
-            for key, value in translate(name, reasoning_effort).items():
+            for key, value in translate(self.model_name, reasoning_effort).items():
                 self.model_kwargs.setdefault(key, value)
                 """What the user wrote in `model_kwargs` wins over the level."""
         self.set_cache_control = set_cache_control
         self.max_retries = max_retries
         """How many times a call is tried at most. 0 lets the retry decide."""
-        self.priced = has_price(name)
+        self.priced = has_price(self.model_name)
         """False when the model has no price. The cost of such a model is unknown, not zero."""
 
     def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:

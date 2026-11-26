@@ -549,3 +549,47 @@ def test_the_key_of_the_settings_wins_over_the_old_place(make_client):
     user_file.write_text("model:\n  api_key: sk-new\n  model_kwargs:\n    api_key: sk-old\n", encoding="utf-8")
 
     assert client.get("/api/config/model/key").json()["api_key"] == "sk-new"
+
+
+def test_the_settings_page_says_the_provider_of_the_model(make_client):
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    view = client.get("/api/config").json()["model"]
+
+    assert view["provider"] == "deepseek"
+    assert view["resolved_model_name"] == "deepseek/deepseek-flash"
+
+
+def test_the_settings_page_says_where_the_key_comes_from(make_client, monkeypatch):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    view = client.get("/api/config").json()["model"]
+
+    assert view["key_source"] == "env"
+    assert view["key_env"] == "DEEPSEEK_API_KEY"
+
+
+def test_the_test_panel_says_the_provider_of_the_model(make_client):
+    client = make_client()
+
+    answer = client.post(
+        "/api/config/model/test", json={"model_name": "MiniMax-M2.7", "api_base": "https://api.nengpa.com/v1"}
+    ).json()
+
+    assert answer["resolved"]["provider"] == "openai"
+    assert answer["resolved"]["model_name"] == "openai/MiniMax-M2.7"
+
+
+def test_the_test_panel_says_where_the_key_comes_from(make_client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env-value")
+    client = make_client()
+
+    answer = client.post(
+        "/api/config/model/test", json={"model_name": "MiniMax-M2.7", "api_base": "https://api.nengpa.com/v1"}
+    ).json()
+
+    assert answer["resolved"]["key_source"] == "env"
+    assert answer["resolved"]["key_env"] == "OPENAI_API_KEY"

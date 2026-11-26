@@ -467,8 +467,7 @@ A level that does not exist is refused when the configuration is read.
 #### Other providers
 
 The model goes through [litellm](https://github.com/BerriAI/litellm), so every
-model litellm knows works. The name carries the provider in front of it, and
-the key of the provider comes from the environment:
+model litellm knows works. The key of the provider comes from the environment:
 
 | Model name | Provider | Environment variable |
 |---|---|---|
@@ -479,6 +478,37 @@ the key of the provider comes from the environment:
 | `moonshot/kimi-k2.5` | Moonshot | `MOONSHOT_API_KEY` |
 | `minimax/minimax-m2` | MiniMax | `MINIMAX_API_KEY` (and `MINIMAX_API_BASE`) |
 | `openrouter/qwen/qwen3-coder` | OpenRouter | `OPENROUTER_API_KEY` |
+
+##### The name of a model
+
+The name of a model may be written in three ways, and they all mean the same
+model:
+
+```bash
+coder -m openai/MiniMax-M2.7 --task "..."   # the provider in front of the name
+coder -m openai:MiniMax-M2.7 --task "..."   # the same, with a colon
+coder -m MiniMax-M2.7 --task "..."          # no provider at all
+```
+
+Who is called is worked out in this order:
+
+1. **The name carries the provider.** It wins: `openai/MiniMax-M2.7` and
+   `openai:MiniMax-M2.7` are the same model. A colon only counts when what is
+   in front of it is a known provider, so `ft:gpt-4o:acme` stays one name.
+2. **The address of the endpoint says the protocol.** A base that mentions
+   `anthropic` is the Anthropic protocol, any other base is the OpenAI
+   compatible protocol that most providers and relays speak.
+3. **The family of the model says the provider.** `gpt-`, `o1`, `o3` and `o4`
+   are OpenAI, `claude` is Anthropic, `gemini` is Google, `deepseek` is DeepSeek,
+   `grok` is xAI, `qwen` is DashScope, `kimi` is Moonshot, `minimax` is
+   MiniMax, `mistral` is Mistral, `command` is Cohere, `sonar` is Perplexity.
+4. **Nothing is known.** The name stays as it is and litellm says what is
+   missing.
+
+The name of the configuration file is never rewritten behind your back: the
+file keeps what you wrote, and the resolution happens when the model is called.
+The web page shows the provider it worked out, and `/model <name>` in the
+terminal answers with the name the session really calls.
 
 ```bash
 export DASHSCOPE_API_KEY=sk-...

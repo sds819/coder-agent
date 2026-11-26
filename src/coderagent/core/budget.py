@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from coderagent.models.provider import split
+
 MODEL_CONTEXT_WINDOWS = {
     "gpt-": 128000,
     "claude": 200000,
@@ -19,7 +21,7 @@ model name or of the part after the provider."""
 
 def context_window_for(model_name: str, default: int = 200000) -> int:
     """The context window of a model, looked up by name."""
-    name = model_name.split("/")[-1].lower()
+    name = split(model_name)[1].split("/")[-1].lower()
     for prefix, window in MODEL_CONTEXT_WINDOWS.items():
         if name.startswith(prefix):
             return window

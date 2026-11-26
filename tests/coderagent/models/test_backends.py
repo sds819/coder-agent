@@ -183,3 +183,25 @@ def test_the_field_of_its_own_wins_over_the_old_place():
 def test_the_old_place_is_used_when_the_field_is_empty():
     backend = LiteLLMBackend("openai/gpt-4o", model_kwargs={"api_key": "sk-old"})
     assert backend.model_kwargs == {"api_key": "sk-old"}
+
+
+def test_a_name_without_a_provider_is_normalized_for_the_call():
+    """A bare name is not enough for litellm: the provider is put in front of it."""
+    backend = LiteLLMBackend("gpt-4o")
+    assert backend.model_name == "openai/gpt-4o"
+    assert backend.alias == "gpt-4o"
+
+
+def test_a_colon_and_a_slash_are_the_same_model():
+    assert LiteLLMBackend("openai:MiniMax-M2.7").model_name == LiteLLMBackend("openai/MiniMax-M2.7").model_name
+
+
+def test_the_endpoint_decides_the_provider_of_a_bare_name():
+    backend = LiteLLMBackend("MiniMax-M2.7", api_base="https://api.nengpa.com/v1")
+    assert backend.model_name == "openai/MiniMax-M2.7"
+
+
+def test_the_name_the_user_wrote_is_kept():
+    """The alias is what the capabilities are said about."""
+    backend = LiteLLMBackend("MiniMax-M2.7", api_base="https://api.nengpa.com/v1")
+    assert backend.alias == "MiniMax-M2.7"

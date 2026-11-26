@@ -1316,6 +1316,13 @@ function splitLines(text) {
     .filter(Boolean);
 }
 
+function keySource(resolved) {
+  // Where the key comes from: the settings, or a variable of the environment.
+  if (resolved.key_source === "settings") return t("key_source_settings");
+  if (resolved.key_source === "env") return t("key_source_env", { var: resolved.key_env || "" });
+  return t("not_set");
+}
+
 function renderTest(answer, target = "model-test") {
   // What the test found out: the settings, the file, the call and the tools.
   const box = document.getElementById(target);
@@ -1333,8 +1340,10 @@ function renderTest(answer, target = "model-test") {
   }
   const rows = [
     [t("row_model"), `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
+    [t("row_provider"), resolved.provider || t("not_set")],
     [t("row_api_base"), resolved.api_base || t("not_set")],
     [t("row_api_key"), resolved.api_key_set ? `set (${resolved.api_key_hint})` : t("not_set")],
+    [t("row_key_source"), keySource(resolved)],
     [t("row_aliases"), fileText],
     [t("row_tools"), tools.ok ? t("tools_ok") : tools.error || t("not_tried")],
   ];
@@ -1381,6 +1390,10 @@ async function startSettings() {
   const permissions = data.permissions || {};
   document.getElementById("config-path").textContent = data.user_config_path;
   document.getElementById("model-name").value = model.model_name || "";
+  const providerNote = document.getElementById("model-provider");
+  if (providerNote) {
+    providerNote.textContent = model.provider ? t("provider_is", { provider: model.provider }) : "";
+  }
   document.getElementById("litellm-config").value = model.litellm_config || "";
   document.getElementById("api-base").value = model.api_base || "";
   const aliasBase = document.getElementById("alias-api_base");
@@ -1441,6 +1454,8 @@ async function startSettings() {
   const keyPlaceholder = () =>
     model.api_key_set ? t("key_set", { hint: model.api_key_hint }) : t("key_not_set");
   keyInput.placeholder = keyPlaceholder();
+  const keySourceNote = document.getElementById("model-key-source");
+  if (keySourceNote) keySourceNote.textContent = keySource(model);
 
   const message = document.getElementById("config-message");
   const payload = () => {
@@ -1504,10 +1519,6 @@ async function startSettings() {
   document.getElementById("test-form").onsubmit = async (event) => {
     event.preventDefault();
     const body = { model_name: testName.value.trim() };
-    if (body.model_name && !body.model_name.includes("/")) {
-      // The endpoint is an OpenAI compatible one, so that is the provider.
-      body.model_name = `openai/${body.model_name}`;
-    }
     const endpoint = testEndpoint.value.trim();
     if (endpoint) body.api_base = endpoint;
     const key = testKey.value.trim();

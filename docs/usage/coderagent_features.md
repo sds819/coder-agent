@@ -185,8 +185,9 @@ sessions keeps it.
 ## The models
 
 - **Any provider litellm knows** — OpenAI, DeepSeek, Anthropic, Gemini,
-  Mistral, OpenRouter, … The provider in front of the name says who is
-  called: `deepseek/deepseek-flash`.
+  Mistral, OpenRouter, … The provider may be in front of the name
+  (`deepseek/deepseek-flash`) or left out: the address of the endpoint and the
+  family of the model decide.
 - **Third party endpoints** — an OpenAI compatible address in `api_base`, with
   its own key. The address may be pasted with the `/chat/completions` at the
   end; the part behind `/v1` is cut off, because litellm adds it itself.
@@ -265,7 +266,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 
 | What you see | What it means | What to do |
 |---|---|---|
-| `LLM Provider NOT provided` | The model name has no provider in front of it. | Write `openai/<name>` for an OpenAI compatible endpoint, or `deepseek/<name>`. |
+| `LLM Provider NOT provided` | The name says nothing about its provider, and neither the address nor the family does. | Write `openai/<name>` for an OpenAI compatible endpoint, or `deepseek/<name>`. |
 | `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor empty. | Use `default_end`, or remove the line. |
 | `unknown reasoning effort '{level}'` | `reasoning_effort` is not one of `minimal`, `low`, `medium`, `high`. | Use one of those four, or remove the line for the default of the model. |
 | `unknown verbosity '{level}'` | `verbosity` is not one of `low`, `medium`, `high`. | Use one of those three, or remove the line for the habit of the model. |

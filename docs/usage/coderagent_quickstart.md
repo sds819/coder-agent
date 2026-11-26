@@ -93,7 +93,7 @@ coder --list
 
 ## 配置模型和 API key {#model}
 
-模型走 [litellm](https://github.com/BerriAI/litellm)，所以任何 litellm 支持的模型都能用，只要带上厂商前缀（`anthropic/…`、`deepseek/…`）。
+模型走 [litellm](https://github.com/BerriAI/litellm)，所以任何 litellm 支持的模型都能用。厂商前缀可以写（`anthropic/…`、`deepseek/…`），也可以不写，见下面「模型名怎么写」。
 
 API key 从环境变量读，名字就是厂商的名字：`ANTHROPIC_API_KEY`、`OPENAI_API_KEY`、`DEEPSEEK_API_KEY`、`OPENROUTER_API_KEY`……厂商前缀就是路由，见下面的表。
 
@@ -119,7 +119,7 @@ coder -m deepseek/deepseek-flash --task "..."
 
 ### 换别的厂商 {#providers}
 
-litellm 支持的模型都能用，模型名里带厂商前缀，key 从同名环境变量读：
+litellm 支持的模型都能用，key 从同名环境变量读：
 
 | 模型名 | 厂商 | 环境变量 |
 |---|---|---|
@@ -130,6 +130,31 @@ litellm 支持的模型都能用，模型名里带厂商前缀，key 从同名�
 | `moonshot/kimi-k2.5` | 月之暗面 | `MOONSHOT_API_KEY` |
 | `minimax/minimax-m2` | MiniMax | `MINIMAX_API_KEY`（外加 `MINIMAX_API_BASE`） |
 | `openrouter/qwen/qwen3-coder` | OpenRouter | `OPENROUTER_API_KEY` |
+
+### 模型名怎么写 {#model-name}
+
+模型名有三种写法，都是同一个模型：
+
+```bash
+coder -m openai/MiniMax-M2.7 --task "..."   # 厂商写在前面
+coder -m openai:MiniMax-M2.7 --task "..."   # 同一个意思，用冒号
+coder -m MiniMax-M2.7 --task "..."          # 不写厂商
+```
+
+调谁按这个顺序来定：
+
+1. **名字里带了厂商**——它说了算。`openai/MiniMax-M2.7` 和 `openai:MiniMax-M2.7` 是一样的。
+   冒号只有前面是认识的厂商才算数，所以 `ft:gpt-4o:acme` 还是一个名字。
+2. **接口地址说是哪种协议**——地址里有 `anthropic` 就是 Anthropic 那套，其它地址都是
+   OpenAI 兼容的那套（大多数厂商和中转站都讲它）。
+3. **模型系列说是哪家**——`gpt-`、`o1`、`o3`、`o4` 是 OpenAI，`claude` 是 Anthropic，
+   `gemini` 是 Google，`deepseek` 是 DeepSeek，`grok` 是 xAI，`qwen` 是 DashScope，
+   `kimi` 是月之暗面，`minimax` 是 MiniMax，`mistral` 是 Mistral，`command` 是 Cohere，
+   `sonar` 是 Perplexity。
+4. **谁也不认识**——名字原样留着，litellm 自己说是缺了什么。
+
+配置文件里的名字不会被偷偷改掉：文件里写什么就是什么，解析是在调用的时候做的。
+网页上会显示算出来的厂商，终端里的 `/model <名字>` 会回答会话真正调用的名字。
 
 ```bash
 export DASHSCOPE_API_KEY=sk-...
