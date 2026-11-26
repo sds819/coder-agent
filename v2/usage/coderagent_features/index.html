@@ -3446,8 +3446,9 @@ sessions keeps it.</p>
 <h2 id="the-models">The models</h2>
 <ul>
 <li><strong>Any provider litellm knows</strong> — OpenAI, DeepSeek, Anthropic, Gemini,
-  Mistral, OpenRouter, … The provider in front of the name says who is
-  called: <code>deepseek/deepseek-flash</code>.</li>
+  Mistral, OpenRouter, … The provider may be in front of the name
+  (<code>deepseek/deepseek-flash</code>) or left out: the address of the endpoint and the
+  family of the model decide.</li>
 <li><strong>Third party endpoints</strong> — an OpenAI compatible address in <code>api_base</code>, with
   its own key. The address may be pasted with the <code>/chat/completions</code> at the
   end; the part behind <code>/v1</code> is cut off, because litellm adds it itself.</li>
@@ -3525,7 +3526,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tbody>
 <tr>
 <td><code>LLM Provider NOT provided</code></td>
-<td>The model name has no provider in front of it.</td>
+<td>The name says nothing about its provider, and neither the address nor the family does.</td>
 <td>Write <code>openai/&lt;name&gt;</code> for an OpenAI compatible endpoint, or <code>deepseek/&lt;name&gt;</code>.</td>
 </tr>
 <tr>

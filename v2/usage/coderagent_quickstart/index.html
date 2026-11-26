@@ -686,6 +686,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#model-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        模型名怎么写
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2015,6 +2026,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#model-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        模型名怎么写
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2271,7 +2293,7 @@ coder<span class="w"> </span>--list
 </table>
 <p><code>coder</code> 在真终端里开界面，不在终端里就跑一轮然后回答。</p>
 <h2 id="model">配置模型和 API key</h2>
-<p>模型走 <a href="https://github.com/BerriAI/litellm">litellm</a>，所以任何 litellm 支持的模型都能用，只要带上厂商前缀（<code>anthropic/…</code>、<code>deepseek/…</code>）。</p>
+<p>模型走 <a href="https://github.com/BerriAI/litellm">litellm</a>，所以任何 litellm 支持的模型都能用。厂商前缀可以写（<code>anthropic/…</code>、<code>deepseek/…</code>），也可以不写，见下面「模型名怎么写」。</p>
 <p>API key 从环境变量读，名字就是厂商的名字：<code>ANTHROPIC_API_KEY</code>、<code>OPENAI_API_KEY</code>、<code>DEEPSEEK_API_KEY</code>、<code>OPENROUTER_API_KEY</code>……厂商前缀就是路由，见下面的表。</p>
 <p>有三种写法，任选一种：</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># 1. 写进全局 .env（推荐，一次搞定，所有会话都能用）</span>
@@ -2289,7 +2311,7 @@ coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<s
 <p>模型的优先级是：<strong>配置文件里的 <code>model.model_name</code> &gt; 环境变量 <code>MSWEA_MODEL_NAME</code> &gt; 内置默认值</strong>。
 没配置时默认用 <code>anthropic/claude-sonnet-4-5</code>。</p>
 <h3 id="providers">换别的厂商</h3>
-<p>litellm 支持的模型都能用，模型名里带厂商前缀，key 从同名环境变量读：</p>
+<p>litellm 支持的模型都能用，key 从同名环境变量读：</p>
 <table>
 <thead>
 <tr>
@@ -2336,6 +2358,26 @@ coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<s
 </tr>
 </tbody>
 </table>
+<h3 id="model-name">模型名怎么写</h3>
+<p>模型名有三种写法，都是同一个模型：</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-m<span class="w"> </span>openai/MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">   </span><span class="c1"># 厂商写在前面</span>
+coder<span class="w"> </span>-m<span class="w"> </span>openai:MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">   </span><span class="c1"># 同一个意思，用冒号</span>
+coder<span class="w"> </span>-m<span class="w"> </span>MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">          </span><span class="c1"># 不写厂商</span>
+</code></pre></div>
+<p>调谁按这个顺序来定：</p>
+<ol>
+<li><strong>名字里带了厂商</strong>——它说了算。<code>openai/MiniMax-M2.7</code> 和 <code>openai:MiniMax-M2.7</code> 是一样的。
+   冒号只有前面是认识的厂商才算数，所以 <code>ft:gpt-4o:acme</code> 还是一个名字。</li>
+<li><strong>接口地址说是哪种协议</strong>——地址里有 <code>anthropic</code> 就是 Anthropic 那套，其它地址都是
+   OpenAI 兼容的那套（大多数厂商和中转站都讲它）。</li>
+<li><strong>模型系列说是哪家</strong>——<code>gpt-</code>、<code>o1</code>、<code>o3</code>、<code>o4</code> 是 OpenAI，<code>claude</code> 是 Anthropic，
+   <code>gemini</code> 是 Google，<code>deepseek</code> 是 DeepSeek，<code>grok</code> 是 xAI，<code>qwen</code> 是 DashScope，
+   <code>kimi</code> 是月之暗面，<code>minimax</code> 是 MiniMax，<code>mistral</code> 是 Mistral，<code>command</code> 是 Cohere，
+   <code>sonar</code> 是 Perplexity。</li>
+<li><strong>谁也不认识</strong>——名字原样留着，litellm 自己说是缺了什么。</li>
+</ol>
+<p>配置文件里的名字不会被偷偷改掉：文件里写什么就是什么，解析是在调用的时候做的。
+网页上会显示算出来的厂商，终端里的 <code>/model &lt;名字&gt;</code> 会回答会话真正调用的名字。</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">DASHSCOPE_API_KEY</span><span class="o">=</span>sk-...
 coder<span class="w"> </span>-m<span class="w"> </span>dashscope/qwen3-coder-plus<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span>
 

@@ -2343,7 +2343,7 @@ what it cost.</p>
 <tbody>
 <tr>
 <td>Model name</td>
-<td><code>model.model_name</code>, e.g. <code>deepseek/deepseek-flash</code>. The provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code> for a third party endpoint, <code>deepseek/deepseek-flash</code> for DeepSeek</td>
+<td><code>model.model_name</code>, e.g. <code>deepseek/deepseek-flash</code>. The provider may be in front of the name (<code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code>) or left out (<code>MiniMax-M2.7</code>): the page shows the provider it worked out</td>
 </tr>
 <tr>
 <td>Litellm config file</td>
@@ -2459,7 +2459,7 @@ button. It is the shape a provider hands them out in.</p>
 </tr>
 <tr>
 <td>Model Name</td>
-<td>The name of the model. The provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code>. Without one, the provider <code>openai</code> is added, because the endpoint is an OpenAI compatible one</td>
+<td>The name of the model, written as it is: <code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code> or <code>MiniMax-M2.7</code>. The server works out who is called: the name first, then the address of the endpoint, then the family of the model</td>
 </tr>
 </tbody>
 </table>
@@ -2984,8 +2984,9 @@ with <code>--port</code>.</p>
 <p><strong>"<code>api_key_set</code> is false on the settings page"</strong>
 The key really is not there: not in the configuration file, and not in the
 environment under the name of the provider (<code>DEEPSEEK_API_KEY</code> and the like).
-The provider in front of the model name decides which variable is looked at —
-<code>openai/…</code> looks at <code>OPENAI_API_KEY</code>.</p>
+The provider of the model decides which variable is looked at — <code>openai/…</code>
+looks at <code>OPENAI_API_KEY</code>. The page shows the provider it worked out and where
+the key comes from.</p>
 <p><strong>"I changed the settings and nothing happened"</strong>
 They apply to a <strong>new</strong> session. The session you are in still runs with the
 configuration the server started with; use <code>/model &lt;name&gt;</code> to switch right

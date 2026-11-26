@@ -2359,7 +2359,7 @@ slash 命令不能带图。</p>
 <tbody>
 <tr>
 <td>Model name</td>
-<td><code>model.model_name</code>，比如 <code>deepseek/deepseek-flash</code>。名字前面那个厂商决定调谁：第三方端点写 <code>openai/MiniMax-M2.7</code>，DeepSeek 写 <code>deepseek/deepseek-flash</code></td>
+<td><code>model.model_name</code>，比如 <code>deepseek/deepseek-flash</code>。厂商可以写在前面（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）：页面会显示算出来的厂商</td>
 </tr>
 <tr>
 <td>Litellm config file</td>
@@ -2466,7 +2466,7 @@ slash 命令不能带图。</p>
 </tr>
 <tr>
 <td>Model Name</td>
-<td>模型名。前面那个厂商决定调谁：<code>openai/MiniMax-M2.7</code>。没写就补 <code>openai/</code>——这个地址是 OpenAI 兼容的那种</td>
+<td>模型名，按写的发过去：<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code> 或者 <code>MiniMax-M2.7</code>。调谁由服务端来定：先看名字，再看接口地址，最后看模型系列</td>
 </tr>
 </tbody>
 </table>
@@ -2481,7 +2481,7 @@ slash 命令不能带图。</p>
   当前这个会话想立刻换模型，用 <code>/model &lt;名字&gt;</code>。</li>
 <li><strong>环境变量里的 key 也算数</strong>。页面先读配置文件，再读环境：<code>DEEPSEEK_API_KEY</code> 这类变量
   里的 key 一样会显示出来，<code>api_key_set</code> 是 true，字段下面那行写着来源是 <code>env</code>。
-  看哪个变量由模型名决定：<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>，<code>deepseek/…</code> 找 <code>DEEPSEEK_API_KEY</code>。</li>
+  看哪个变量由模型的厂商决定：<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>，<code>deepseek/…</code> 找 <code>DEEPSEEK_API_KEY</code>。</li>
 <li><strong>key 那一栏</strong>。平时只显示 <code>set (********1234)</code>，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
   配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。
@@ -2926,7 +2926,8 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <h2 id="faq">常见问题</h2>
 <p><strong>「设置页里 <code>api_key_set</code> 是 false」</strong>
 key 确实不在：配置文件里没有，环境里也没有对应厂商的变量（<code>DEEPSEEK_API_KEY</code> 之类）。
-模型名前面那个厂商决定看哪个变量——<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>。</p>
+模型的厂商决定看哪个变量——<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>。页面会显示算出来的厂商，
+以及 key 是从哪儿来的。</p>
 <p><strong>「改了设置没生效」</strong>
 对<strong>新会话</strong>生效。当前这个会话还在用启动时的配置，想立刻换就 <code>/model &lt;名字&gt;</code>。</p>
 <p><strong>「接口返回 403」</strong>

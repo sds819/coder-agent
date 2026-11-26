@@ -3450,7 +3450,7 @@
 </tr>
 <tr>
 <td><code>ENV_KEYS = {"openai": "OPENAI_API_KEY", …}</code></td>
-<td>厂商 → 环境变量名；模型名斜杠前面那段就是厂商</td>
+<td>厂商 → 环境变量名；从 <code>models/provider.py</code> 的 <code>PROVIDERS</code> 来</td>
 </tr>
 </tbody>
 </table>
@@ -3506,16 +3506,16 @@
 </tr>
 <tr>
 <td><code>effective_model(cwd, overrides) -&gt; dict</code></td>
-<td><code>{model_name, requested, alias, litellm_config, model_kwargs}</code></td>
-<td>当前配置 + 表单里的覆盖；别名在这里解析</td>
+<td><code>{model_name, requested, alias, provider, litellm_config, model_kwargs}</code></td>
+<td>当前配置 + 表单里的覆盖；别名和厂商在这里解析</td>
 </tr>
 <tr>
-<td><code>provider_of(model_name) -&gt; str</code></td>
+<td><code>provider_of(model_name, api_base="") -&gt; str</code></td>
 <td></td>
-<td>厂商：名字里有 <code>/</code> 就取斜杠前面那段，否则问 litellm</td>
+<td>厂商：转给 <code>models/provider.py</code>——名字里有厂商就说了算，其次是地址说的协议，再次是模型系列</td>
 </tr>
 <tr>
-<td><code>env_api_key(model_name) -&gt; str</code></td>
+<td><code>env_api_key(model_name, api_base="") -&gt; str</code></td>
 <td></td>
 <td>厂商在环境里的 key（<code>ENV_KEYS</code> 表）</td>
 </tr>

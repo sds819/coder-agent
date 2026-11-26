@@ -717,6 +717,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Other providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-name-of-a-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The name of a model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -2357,6 +2374,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Other providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-name-of-a-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The name of a model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -3084,8 +3118,7 @@ is asked for a parameter it may not know.</p>
 <p>A level that does not exist is refused when the configuration is read.</p>
 <h4 id="other-providers">Other providers</h4>
 <p>The model goes through <a href="https://github.com/BerriAI/litellm">litellm</a>, so every
-model litellm knows works. The name carries the provider in front of it, and
-the key of the provider comes from the environment:</p>
+model litellm knows works. The key of the provider comes from the environment:</p>
 <table>
 <thead>
 <tr>
@@ -3132,6 +3165,32 @@ the key of the provider comes from the environment:</p>
 </tr>
 </tbody>
 </table>
+<h5 id="the-name-of-a-model">The name of a model</h5>
+<p>The name of a model may be written in three ways, and they all mean the same
+model:</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-m<span class="w"> </span>openai/MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">   </span><span class="c1"># the provider in front of the name</span>
+coder<span class="w"> </span>-m<span class="w"> </span>openai:MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">   </span><span class="c1"># the same, with a colon</span>
+coder<span class="w"> </span>-m<span class="w"> </span>MiniMax-M2.7<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w">          </span><span class="c1"># no provider at all</span>
+</code></pre></div>
+<p>Who is called is worked out in this order:</p>
+<ol>
+<li><strong>The name carries the provider.</strong> It wins: <code>openai/MiniMax-M2.7</code> and
+   <code>openai:MiniMax-M2.7</code> are the same model. A colon only counts when what is
+   in front of it is a known provider, so <code>ft:gpt-4o:acme</code> stays one name.</li>
+<li><strong>The address of the endpoint says the protocol.</strong> A base that mentions
+   <code>anthropic</code> is the Anthropic protocol, any other base is the OpenAI
+   compatible protocol that most providers and relays speak.</li>
+<li><strong>The family of the model says the provider.</strong> <code>gpt-</code>, <code>o1</code>, <code>o3</code> and <code>o4</code>
+   are OpenAI, <code>claude</code> is Anthropic, <code>gemini</code> is Google, <code>deepseek</code> is DeepSeek,
+   <code>grok</code> is xAI, <code>qwen</code> is DashScope, <code>kimi</code> is Moonshot, <code>minimax</code> is
+   MiniMax, <code>mistral</code> is Mistral, <code>command</code> is Cohere, <code>sonar</code> is Perplexity.</li>
+<li><strong>Nothing is known.</strong> The name stays as it is and litellm says what is
+   missing.</li>
+</ol>
+<p>The name of the configuration file is never rewritten behind your back: the
+file keeps what you wrote, and the resolution happens when the model is called.
+The web page shows the provider it worked out, and <code>/model &lt;name&gt;</code> in the
+terminal answers with the name the session really calls.</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">DASHSCOPE_API_KEY</span><span class="o">=</span>sk-...
 coder<span class="w"> </span>-m<span class="w"> </span>dashscope/qwen3-coder-plus<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">MOONSHOT_API_KEY</span><span class="o">=</span>sk-...

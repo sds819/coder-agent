@@ -3428,7 +3428,8 @@ schema 的 JSON——schema 在系统提示词里——答案出来之后才查�
 <h2 id="_8">模型</h2>
 <ul>
 <li><strong>litellm 认识的任何厂商</strong>——OpenAI、DeepSeek、Anthropic、Gemini、
-  Mistral、OpenRouter……名字前面那个厂商决定调谁：<code>deepseek/deepseek-flash</code>。</li>
+  Mistral、OpenRouter……厂商可以写在名字前面（<code>deepseek/deepseek-flash</code>），
+  也可以不写：由接口地址和模型系列来定。</li>
 <li><strong>第三方端点</strong>——<code>api_base</code> 里写一个 OpenAI 兼容的地址，配它自己的 key。
   地址可以直接粘完整的 <code>/chat/completions</code>，<code>/v1</code> 后面那段会被剪掉，
   因为 litellm 自己会加。</li>
@@ -3451,7 +3452,7 @@ schema 的 JSON——schema 在系统提示词里——答案出来之后才查�
 <li><strong>流式输出</strong>——答案一段一段到，终端和浏览器都是。</li>
 </ul>
 <h3 id="_9">用法例子</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># 厂商就是斜杠前面那段。</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># 厂商写在名字前面（也可以不写，由地址和模型系列来定）。</span>
 coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash
 
 <span class="c1"># 一个说 OpenAI 协议的第三方端点。</span>
@@ -3500,7 +3501,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <tbody>
 <tr>
 <td><code>LLM Provider NOT provided</code></td>
-<td>模型名前面没有厂商。</td>
+<td>名字里没有厂商，接口地址和模型系列也说不出来。</td>
 <td>OpenAI 兼容的端点写 <code>openai/&lt;名字&gt;</code>，或者 <code>deepseek/&lt;名字&gt;</code>。</td>
 </tr>
 <tr>
