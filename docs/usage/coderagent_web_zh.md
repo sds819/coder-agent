@@ -105,7 +105,7 @@ slash 命令不能带图。
 | Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。厂商可以写在前面（`openai/MiniMax-M2.7`、`openai:MiniMax-M2.7`），也可以不写（`MiniMax-M2.7`）：页面会显示算出来的厂商 |
 | Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
 | API base | `model.api_base`——第三方模型的地址。地址写在别名文件里时，这一栏是空的，页面把它显示在下面 |
-| API key | `model.api_key`。点一下显示，再点一下收起 |
+| API key | `model.api_key`。点一下显示，再点一下收起。页面会写明 key 的来源：设置里的，还是环境变量里的 |
 | Max retries | `model.max_retries` |
 | Cache control | `model.set_cache_control`（`default_end` 或空） |
 | Reasoning effort | `model.reasoning_effort`——模型想多久：`minimal`、`low`、`medium`、`high`，留空是模型的默认 |
@@ -124,13 +124,15 @@ slash 命令不能带图。
 `-m` 和 `-c` 是给会话用的，所以 `coder web -m deepseek/deepseek-flash` 时页面显示的还是
 文件里的那个模型。
 
-`Test the connection` 用表单里的设置发一次最便宜的调用，测通了再 `Save`。它报五件事：
+`Test the connection` 用表单里的设置发一次最便宜的调用，测通了再 `Save`。它报七件事：
 
 | 报什么 | 说什么 |
 |---|---|
 | 模型 | 这次调用打到哪个模型，是哪个别名 |
+| 厂商 | 名字算出来是哪个厂商 |
 | 接口地址 | 这次调用打到哪个地址 |
 | API key | 有没有配 key，以及末四位 |
+| key 的来源 | key 是设置里的，还是环境变量里的 |
 | 别名文件 | 文件在不在、能不能解析、里面有哪些别名 |
 | 工具 | 模型会不会调工具——不会的话 agent 干不了活 |
 

@@ -111,7 +111,7 @@ The model configuration, in a form:
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider may be in front of the name (`openai/MiniMax-M2.7`, `openai:MiniMax-M2.7`) or left out (`MiniMax-M2.7`): the page shows the provider it worked out |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.api_base` — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it |
-| API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
+| API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again. The page says where the key comes from: the settings, or which variable of the environment |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
 | Reasoning effort | `model.reasoning_effort` — how much the model thinks: `minimal`, `low`, `medium`, `high`, or empty for the default of the model |
@@ -140,13 +140,15 @@ the agent.
 
 `Test connection` sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
-reports five things:
+reports seven things:
 
 | What | What it tells you |
 |---|---|
 | The model | The model the call goes to, and the alias it comes from |
+| The provider | The provider the name worked out to |
 | The API base | The address the call goes to |
 | The API key | Whether a key is set, and its last four characters |
+| The key source | Whether the key comes from the settings or from the environment |
 | The aliases file | Whether the file exists, whether it parses, and which aliases it has |
 | The tools | Whether the model calls the tools — without that the agent cannot work |
 
