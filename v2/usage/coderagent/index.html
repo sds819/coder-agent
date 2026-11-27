@@ -2970,7 +2970,10 @@ does not start. <code>model.capabilities</code> says what a model takes:</p>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
 <p>litellm knows most models. For the ones it does not know — a relay station
-names its models in its own way — say it there.</p>
+names its models in its own way — the agent asks the model itself: it shows it
+a picture of one color and asks what color it is. The answer is written into
+your own configuration file, so a model is asked only once. Say it there
+yourself, and the agent never asks.</p>
 <p>A file goes to the model with its content in the message, with <code>/mention</code> or by
 naming it in the question:</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
@@ -3138,6 +3141,10 @@ with a made-up description.</p>
 <p>What the user says wins over litellm, which knows most models but few of the
 ones a relay station names in its own way. A project may not say this: the
 models belong to the user.</p>
+<p>When nobody says it, the agent finds out: it shows the model a picture of one
+color and asks what color it is. The answer is written to the file of the user,
+<code>~/.coderagent/config.yaml</code>, and the next time the configuration says it, so
+the model is asked only once.</p>
 <h4 id="how-much-the-model-thinks">How much the model thinks</h4>
 <p><code>model.reasoning_effort</code> says how long the model thinks: <code>minimal</code>, <code>low</code>,
 <code>medium</code> or <code>high</code>. Empty is the default of the model, which is what most of

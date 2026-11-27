@@ -2163,6 +2163,9 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 <p>大部分模型 litellm 是知道的。它不知道的（中转站常常自己给模型起名）就自己写：
 只读文本的写 <code>image: false</code>，能看图的写 <code>image: true</code>。项目不能写这个：模型是
 你自己的。</p>
+<p>什么都不写也行：agent 会自己问模型一次——给它看一张纯色的图，问它是什么颜色。
+答案写进你自己的配置文件 <code>~/.coderagent/config.yaml</code>，下次配置里就有了，模型不用
+再问一遍。</p>
 <p><code>/mention</code> 把一个<strong>文件</strong>发给模型，内容直接进消息，模型不用再花一次工具调用
 去读它：</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>这个文件做什么？

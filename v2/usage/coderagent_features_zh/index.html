@@ -4685,7 +4685,8 @@ $ python -m pytest -q
   的时候是纯文本，说完了才渲染；<code>ui.markdown: false</code> 可以让它一直是纯文本。</li>
 <li><strong>可以发图片</strong>——<code>/image shot.png 这是什么</code> 把图片和这句话一起发过去。发之前
   agent 会先问模型看不看得图：看不懂的模型也会照样回答，而且答案是编的。
-  <code>model.capabilities</code> 写模型能吃什么，给 litellm 不认识的那些模型用。</li>
+  <code>model.capabilities</code> 写模型能吃什么，给 litellm 不认识的那些模型用。
+  没人写的时候，agent 会自己问模型一次，把答案写进用户自己的配置文件。</li>
 <li><strong>文件在你的编辑器里打开</strong>——<code>/open src/app.py</code> 用 <code>ui.file_opener</code> 指定的
   程序打开它（<code>vscode</code>、<code>cursor</code>、<code>windsurf</code>，或者你自己的命令）。
   <strong>项目不能挑编辑器</strong>。</li>

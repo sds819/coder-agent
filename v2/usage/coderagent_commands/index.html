@@ -2176,6 +2176,10 @@ model takes is <code>model.capabilities</code>:</p>
 station names its models in its own way — say it here: <code>image: false</code> for a
 model that only reads text, <code>image: true</code> for one that looks at pictures. A
 project may not say this: the models are yours.</p>
+<p>Say nothing and the agent asks the model itself, once: it shows it a picture
+of one color and asks what color it is. The answer is written to your own
+configuration file, <code>~/.coderagent/config.yaml</code>, and the next time the
+configuration says it.</p>
 <p><code>/mention</code> sends a <strong>file</strong> to the model, with its content in the message, so
 that the model does not have to read it again with a tool call:</p>
 <div class="highlight"><pre><span></span><code>/mention<span class="w"> </span>src/app.py<span class="w"> </span>what<span class="w"> </span>does<span class="w"> </span>this<span class="w"> </span>do?
