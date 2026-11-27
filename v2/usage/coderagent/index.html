@@ -603,6 +603,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-output" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -675,7 +686,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-model" class="md-nav__link">
+  <a href="#the-model_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         The model
@@ -2260,6 +2271,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-output" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2332,7 +2354,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-model" class="md-nav__link">
+  <a href="#the-model_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         The model
@@ -2822,6 +2844,22 @@ The name of the model is <code>model.model_name</code> in the configuration, or
 configuration:</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-c<span class="w"> </span>model.model_name<span class="o">=</span>deepseek/deepseek-flash<span class="w"> </span>-c<span class="w"> </span>permissions.mode<span class="o">=</span>plan
 </code></pre></div>
+<h3 id="the-model">The model</h3>
+<p><code>coder model</code> is a command of its own: it shows the settings of the model, writes
+them down, or tries them out.</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>model<span class="w">                                                   </span><span class="c1"># show the settings</span>
+coder<span class="w"> </span>model<span class="w"> </span>--name<span class="w"> </span>X<span class="w"> </span>--api-base<span class="w"> </span>Y<span class="w"> </span>--api-key<span class="w"> </span>Z<span class="w"> </span>--max-retries<span class="w"> </span>N<span class="w"> </span><span class="c1"># write them down</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w">                                            </span><span class="c1"># try the saved ones out</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w"> </span>--name<span class="w"> </span>X<span class="w">                                   </span><span class="c1"># try these out, write nothing</span>
+</code></pre></div>
+<p>The try-out and the writing are two steps: <code>--test</code> never writes anything, and
+the writing never waits for the try-out. A configuration that does not work yet
+is worth writing down, to be fixed later. The exit code is 1 when the try-out
+fails, so a script can tell.</p>
+<p>The settings are written to the user level file (<code>~/.coderagent/config.yaml</code>); the
+project level file is never written. The key on the command line stays in the
+history of the shell: the environment variable of the provider is the safer place
+for it.</p>
 <h3 id="the-output">The output</h3>
 <p>While the agent works, the terminal shows dots that grow and shrink. The line
 is cleaned when the answer comes. A pipe or a file gets the answer alone: the
@@ -3025,7 +3063,14 @@ project that names a tool that does not exist therefore does not empty the set
 of tools — the tool is dropped and the others stay.</p>
 <p>The layers are the same for the numbers: a project may lower the ceilings of a
 session (<code>agent.max_turns</code> and the like), never raise them.</p>
-<h3 id="the-model">The model</h3>
+<h3 id="the-model_1">The model</h3>
+<p>The model can be written down from the terminal, from the terminal interface and
+from the browser: <code>coder model</code>, <code>/model --save</code> and the settings page write the
+same file, the user level one (<code>~/.coderagent/config.yaml</code>). The project level
+file is never written.</p>
+<p>The try-out is a step of its own in all three: it says whether the settings work
+and it writes nothing. A configuration that does not work yet is worth writing
+down, to be fixed later.</p>
 <p><code>model.model_name</code> is the model of the agent. <code>model.api_key</code> and <code>model.api_base</code>
 are the key and the address of the provider; they have a field of their own, so
 that a key is not one of the many parameters of the call. <code>model.model_kwargs</code>

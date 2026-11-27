@@ -3444,6 +3444,10 @@ schema 的 JSON——schema 在系统提示词里——答案出来之后才查�
 <li><strong>评审用别的模型</strong>——<code>model.review_model</code>。路由里没有 <code>review</code> 时，
   <code>/review</code> 就跑在那个模型上。</li>
 <li><strong>重试</strong>——<code>max_retries</code>，默认三次，终端和浏览器一样。</li>
+<li><strong>哪儿都能配</strong>——终端（<code>coder model</code>）、终端界面（<code>/model</code>）和浏览器（设置页）
+  写的是同一个用户级文件，三边都能试试设置好不好使。</li>
+<li><strong>试试不决定写不写</strong>——试试只说好不好使，什么也不写；写下来不等试试的结果，
+  所以暂时还不好使的设置也值得写下来，以后再修。</li>
 <li><strong>按用途路由</strong>——<code>main</code>、<code>cheap</code>、<code>summarize</code>、<code>reflect</code>、<code>strong</code>、<code>review</code>
   可以各配一个模型。</li>
 <li><strong>按会话状态路由</strong>——像 <code>tokens &gt; 50000</code> 这样的规则会换模型，理由写在
@@ -4746,8 +4750,8 @@ $ python -m pytest -q
 <li><strong>答案是流式到的</strong>——走 SSE，中途才打开页面的浏览器看到的是整段回答。</li>
 <li><strong>设置页</strong>——模型写成表单：模型名、接口地址、API key、最多重试；其余的模型
   设置写在配置文件里。</li>
-<li><strong>连通性测试</strong>——只在 API 里（<code>POST /api/config/model/test</code>）：发一次最便宜
-  的调用，顺带告诉模型会不会调工具。</li>
+<li><strong>连通性测试</strong>——设置页上有个 <strong>Test</strong> 按钮：发一次最便宜的调用，顺带告诉
+  模型会不会调工具，什么也不写。<strong>Save</strong> 是另一件事，不等试试的结果。</li>
 <li><strong>权限在两个地方</strong>——设置页管下一个会话，聊天页管当前这个会话，立刻生效。</li>
 <li><strong>浏览器里也有审批</strong>——同样三个答案。</li>
 <li><strong>浏览器里也能发图</strong>——输入框旁边的「+」按钮，或者直接粘进去。图跟消息

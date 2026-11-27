@@ -1938,15 +1938,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#9-webconfig_apipy-api" class="md-nav__link">
+  <a href="#9-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. web/config_api.py — 配置 API
+        9. 配置 API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="9. web/config_api.py — 配置 API">
+    <nav class="md-nav" aria-label="9. 配置 API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2384,15 +2384,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#9-webconfig_apipy-api" class="md-nav__link">
+  <a href="#9-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. web/config_api.py — 配置 API
+        9. 配置 API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="9. web/config_api.py — 配置 API">
+    <nav class="md-nav" aria-label="9. 配置 API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2679,9 +2679,9 @@
 <tr>
 <td>配置 API</td>
 <td><code>web/config_api.py</code></td>
-<td>配置读取、脱敏、写回、连通性测试</td>
-<td><code>model_view</code>、<code>write_user_model</code>、<code>effective_model</code>、<code>test_connection</code></td>
-<td><code>config.loader</code>、<code>paths</code></td>
+<td>权限的读取与写回</td>
+<td><code>permissions_view</code></td>
+<td><code>config.writer</code>、<code>models.settings</code>、<code>paths</code></td>
 </tr>
 <tr>
 <td>文件浏览</td>
@@ -3426,7 +3426,41 @@
 </tbody>
 </table>
 <hr>
-<h2 id="9-webconfig_apipy-api">9. <code>web/config_api.py</code> — 配置 API</h2>
+<h2 id="9-api">9. 配置 API</h2>
+<p><strong>模型的那部分搬进核心里了</strong>：设置页、终端和终端界面共用一份实现。</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>干什么</th>
+<th>函数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>models/settings.py</code></td>
+<td>多层合并、脱敏后的模型设置</td>
+<td><code>hint</code>、<code>model_view</code>、<code>effective_model</code>、<code>effective_api_key</code>、<code>provider_of</code>、<code>env_api_key</code></td>
+</tr>
+<tr>
+<td><code>models/check.py</code></td>
+<td>试机</td>
+<td><code>test_connection</code>、<code>check_tools</code>、<code>check_litellm_config</code>、<code>report_text</code></td>
+</tr>
+<tr>
+<td><code>config/writer.py</code></td>
+<td>写用户级 <code>config.yaml</code></td>
+<td><code>user_config_path</code>、<code>write_user_model</code>、<code>write_user_permissions</code></td>
+</tr>
+<tr>
+<td><code>web/config_api.py</code></td>
+<td>权限的读取与写回</td>
+<td><code>permissions_view</code>、<code>ENV_KEYS</code>（权限的常量在 <code>config/writer.py</code>）</td>
+</tr>
+</tbody>
+</table>
+<p><code>config/</code> 不 import <code>web/</code>；<code>models/</code> 只 import <code>config.loader</code>——所以这三个模块
+放得下，没有环。</p>
 <h3 id="91">9.1 常量</h3>
 <table>
 <thead>
@@ -3438,7 +3472,7 @@
 <tbody>
 <tr>
 <td><code>SECRET_FIELDS = ("api_base", "api_key")</code></td>
-<td>模型里自有字段的那两个；旧地方是 <code>model_kwargs</code></td>
+<td>模型里自有字段的那两个；旧地方是 <code>model_kwargs</code>（在 <code>config/writer.py</code>）</td>
 </tr>
 <tr>
 <td><code>ENV_KEYS = {"openai": "OPENAI_API_KEY", …}</code></td>
@@ -3552,10 +3586,12 @@
 <strong>已知代价：注释会丢</strong>（<code>yaml.safe_dump</code>，不引 ruamel）。</p>
 <h3 id="94-test_connectioneffective">9.4 <code>test_connection(effective)</code></h3>
 <ul>
-<li>临时把 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> 设成 <code>1</code>（<strong>错的 key 要立刻失败，不是重试十次</strong>），
-  结束后恢复原值。</li>
-<li>成功：<code>{"ok": True, "content": 前 200 字, "cost", "latency_ms"}</code></li>
+<li>后端建的时候 <code>max_retries=1</code>（<strong>错的 key 要立刻失败，不是重试十次</strong>）。</li>
+<li>报告的键：<code>ok</code>、<code>resolved</code>（模型、厂商、别名、地址、key 有没有、掩码、来源、环境变量名）、
+  <code>file</code>（别名文件查得怎么样）、<code>error</code>、<code>content</code>（前 200 字）、<code>cost</code>、<code>latency_ms</code>、
+  <code>tools</code>（模型会不会调工具）。</li>
 <li>失败：<code>{"ok": False, "error": "类型: 消息"}</code> —— <strong>不抛异常</strong>。</li>
+<li><strong>不写任何东西</strong>：写下来是另一步（<code>config/writer.py</code>）。</li>
 </ul>
 <hr>
 <h2 id="10-webfilespy">10. <code>web/files.py</code> — 文件浏览</h2>
@@ -3976,7 +4012,7 @@
 </tr>
 <tr>
 <td>新的模型设置</td>
-<td><code>config_api.py</code> 的 <code>model_view</code> + <code>write_user_model</code> + 设置页加字段</td>
+<td><code>models/settings.py</code> 的 <code>model_view</code> + <code>config/writer.py</code> 的 <code>write_user_model</code> + 设置页加字段</td>
 </tr>
 <tr>
 <td>新的页面</td>

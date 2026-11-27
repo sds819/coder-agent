@@ -3467,6 +3467,12 @@ sessions keeps it.</p>
   that model when the routing has no <code>review</code> of its own.</li>
 <li><strong>Retries</strong> — <code>max_retries</code>, three by default, the same in the terminal and in
   the browser.</li>
+<li><strong>Configured from anywhere</strong> — the terminal (<code>coder model</code>), the terminal
+  interface (<code>/model</code>) and the browser (the settings page) write the same user
+  level file, and each of them can try the settings out.</li>
+<li><strong>The test never decides the save</strong> — the try-out says whether the settings
+  work and writes nothing; the writing does not wait for it, so a setting that
+  does not work yet is worth writing down, to be fixed later.</li>
 <li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
   <code>reflect</code>, <code>strong</code> and <code>review</code>.</li>
 <li><strong>Routing by the state of the session</strong> — a rule like <code>tokens &gt; 50000</code>
@@ -4864,8 +4870,9 @@ and <code>○</code> (pending).</p>
   that comes late reads the whole answer.</li>
 <li><strong>The settings page</strong> — the model as a form: the name, the address, the key and
   the retries. The rest of the model is written in the configuration file.</li>
-<li><strong>The connectivity test</strong> — only in the API (<code>POST /api/config/model/test</code>):
-  one cheap call, and it says whether the model calls the tools at all.</li>
+<li><strong>The connectivity test</strong> — a <strong>Test</strong> button on the settings page: one cheap
+  call, it says whether the model calls the tools at all, and it writes nothing.
+  <strong>Save</strong> is a step of its own and does not wait for the test.</li>
 <li><strong>The permissions in two places</strong> — the settings page for the next
   session, the chat page for the session that is running, right away.</li>
 <li><strong>The approvals in the browser</strong> — the same three answers.</li>

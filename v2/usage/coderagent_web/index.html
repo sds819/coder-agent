@@ -2372,11 +2372,17 @@ writing a file that the agent would not start with.</p>
 <p>The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command
 line are for the sessions, so with <code>coder web -m deepseek/deepseek-flash</code> the
 page still shows the model of the files.</p>
-<p><strong>Testing a model.</strong> The page has no button for it: a test costs two calls to
-the model (one to answer, one to call a tool), and the chat page uses the
-settings anyway. The <strong>API</strong> still has it — <code>POST /api/config/model/test</code> with
-the settings of the form sends one cheap call to the model and reports seven
-things:</p>
+<p><strong>Testing a model.</strong> The page has a <strong>Test</strong> button next to <strong>Save</strong>: it sends
+the settings of the form to the model and reports what came back — the model
+the call went to, the provider, the address, the latency, the cost, whether the
+model calls the tools (without that the agent cannot work), and the error, if
+there is one.</p>
+<p>The test <strong>writes nothing</strong>. Saving is a step of its own: <strong>Save</strong> never waits
+for the test, and a setting that does not work yet is worth writing down, to be
+fixed later. The same two steps are in the terminal (<code>coder model</code>) and in the
+terminal interface (<code>/model --test</code> and <code>/model --save</code>).</p>
+<p>The <strong>API</strong> has it too — <code>POST /api/config/model/test</code> with the settings of the
+form sends one cheap call to the model and reports seven things:</p>
 <table>
 <thead>
 <tr>

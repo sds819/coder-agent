@@ -2350,9 +2350,13 @@ slash 命令不能带图。</p>
 页面直接拒绝，不写进一个 agent 起不来的文件。</p>
 <p>页面读的是<strong>配置文件</strong>；命令行上的 <code>-m</code> 和 <code>-c</code> 是给会话用的，所以
 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是文件里的那个模型。</p>
-<p><strong>测模型</strong>。页面上没有这个按钮：测一次要花两次调用（一次回答，一次调工具），
-而聊天页本来就在用这些设置。<strong>API</strong> 里还有：<code>POST /api/config/model/test</code> 拿设置发一次
-最便宜的调用，报七件事：</p>
+<p><strong>测模型</strong>。<strong>Save</strong> 旁边有个 <strong>Test</strong> 按钮：它拿表单里的设置去问一次模型，把结果报出来——
+打到哪个模型、哪个厂商、哪个地址、延迟多少、花了多少钱、模型会不会调工具（不会的话
+agent 干不了活），以及错在哪。</p>
+<p>试试<strong>什么也不写</strong>。写下来是另一件事：<strong>Save</strong> 不等试试的结果，暂时还不好使的设置
+也值得写下来，以后再修。终端里的 <code>coder model</code> 和终端界面里的 <code>/model --test</code>、
+<code>/model --save</code> 也是这两步。</p>
+<p><strong>API</strong> 里也有：<code>POST /api/config/model/test</code> 拿设置发一次最便宜的调用，报七件事：</p>
 <table>
 <thead>
 <tr>

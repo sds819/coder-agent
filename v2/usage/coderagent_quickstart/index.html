@@ -676,6 +676,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#model-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        把模型写下来
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2016,6 +2027,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#model-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        把模型写下来
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#providers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2310,6 +2332,19 @@ coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<s
 <p>全局 <code>.env</code> 在 <code>~/.coderagent/.env</code>（也能放在 mini-swe-agent 以前用的那个路径里，两个都读）。</p>
 <p>模型的优先级是：<strong>配置文件里的 <code>model.model_name</code> &gt; 环境变量 <code>MSWEA_MODEL_NAME</code> &gt; 内置默认值</strong>。
 没配置时默认用 <code>anthropic/claude-sonnet-4-5</code>。</p>
+<h3 id="model-write">把模型写下来</h3>
+<p>配置也可以直接从终端写进用户级的文件（<code>~/.coderagent/config.yaml</code>）：</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>model<span class="w">                                                   </span><span class="c1"># 看现在的设置</span>
+coder<span class="w"> </span>model<span class="w"> </span>--name<span class="w"> </span>X<span class="w"> </span>--api-base<span class="w"> </span>Y<span class="w"> </span>--api-key<span class="w"> </span>Z<span class="w"> </span>--max-retries<span class="w"> </span>N<span class="w"> </span><span class="c1"># 写下来</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w">                                            </span><span class="c1"># 试试保存下来的设置</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w"> </span>--name<span class="w"> </span>X<span class="w">                                   </span><span class="c1"># 试试这些，什么都不写</span>
+</code></pre></div>
+<p>试试和写下来是两件事：<code>--test</code> 什么也不写，写下来也不等试试的结果——暂时还
+不好使的设置也值得写下来，以后再修。试试失败时退出码是 1，脚本能看出来。</p>
+<p>写的是用户级的文件，<strong>项目级的文件永远不会被写</strong>。命令行上的 key 会留在 shell
+的历史里，放在厂商的环境变量里更安全。</p>
+<p>终端界面里的 <code>/model</code> 有同样的三件事：<code>/model --test</code> 试试，<code>/model --save</code> 写下来，
+<code>/model name=… base=… key=… retries=…</code> 设会话的设置。网页上的设置页也一样。</p>
 <h3 id="providers">换别的厂商</h3>
 <p>litellm 支持的模型都能用，key 从同名环境变量读：</p>
 <table>
@@ -2517,6 +2552,10 @@ coder<span class="w"> </span>web
 <td>看/切权限模式</td>
 </tr>
 <tr>
+<td><code>/model</code></td>
+<td>看/切模型，试试设置（<code>--test</code>），或者写下来（<code>--save</code>）</td>
+</tr>
+<tr>
 <td><code>/cost</code></td>
 <td>这次会话花了多少钱，花在哪</td>
 </tr>
@@ -2649,7 +2688,8 @@ key 必须在环境变量里，或者在 <code>~/.coderagent/.env</code> 里。
 <p><strong>「上一轮改的东西怎么找回来」</strong>
 <code>/rewind</code> 看 checkpoint，带 id 就把文件和对话一起退回去。默认保留最近 50 个（<code>checkpoint.keep</code>）。</p>
 <p><strong>「想换个模型」</strong>
-会话里 <code>/model &lt;名字&gt;</code>，或者 <code>coder -m &lt;名字&gt;</code>。也可以在配置里写 <code>model.routing</code>，让压缩、总结、子 agent 各自用便宜的模型。</p>
+会话里 <code>/model &lt;名字&gt;</code>，或者 <code>coder -m &lt;名字&gt;</code>。想让它记住，用 <code>coder model --name &lt;名字&gt;</code>
+写进用户级的配置，或者会话里 <code>/model --save</code>。也可以在配置里写 <code>model.routing</code>，让压缩、总结、子 agent 各自用便宜的模型。</p>
 <p><strong>「agent 好像忘了项目的事」</strong>
 会话结束时它会把值得记的事实写进 <code>.coderagent/memory/projects.md</code>。用 <code>/memory</code> 看。也可以直接写 <code>AGENTS.md</code> 或 <code>CLAUDE.md</code>，agent 开工前会读。</p>
 <p><strong>「怎么知道它干了什么、花了多少钱」</strong>

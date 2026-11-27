@@ -1955,8 +1955,8 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 </tr>
 <tr>
 <td><code>/model</code>（<code>/m</code>）</td>
-<td>看或者换模型</td>
-<td><code>[model-name]</code></td>
+<td>看或者换模型，试试设置，或者把它们写下来</td>
+<td><code>[model-name\|name=… base=… key=… retries=…\|--test\|--save]</code></td>
 </tr>
 <tr>
 <td><code>/mode</code></td>
@@ -2132,6 +2132,12 @@ coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/he
 多少。</p>
 <p><code>/mode bypass</code> 把护栏全拆了，所以它要问一次：命令只说会做什么，什么都不改。
 <code>/mode bypass --yes</code> 才真的切过去。</p>
+<p><code>/model</code> 有好几种写法：光敲 <code>/model</code> 是看模型的设置，<code>/model &lt;名字&gt;</code> 是换掉
+会话的模型，<code>/model name=… base=… key=… retries=…</code> 是设会话的设置，
+<code>/model --test</code> 是试试这些设置，<code>/model --save</code> 是把它们写进用户级的文件
+（<code>~/.coderagent/config.yaml</code>）。</p>
+<p>试试不写任何东西，写下来也不等试试的结果：暂时还不好使的设置也值得写下来，
+以后再修。终端里的 <code>coder model</code> 和网页上的设置页也是这两步。</p>
 <p><code>/review</code> 让模型看一遍改动，说出哪里有问题。不带范围时审的是工作区里的改动，
 带范围时（<code>/review main..HEAD</code>）审的是那个范围。新加的、还没进版本库的文件
 会被单独点名，模型觉得重要就自己去读。审查是当前会话里的一轮：结果留在对话里，

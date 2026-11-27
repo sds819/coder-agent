@@ -1941,10 +1941,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#84-max_retries" class="md-nav__link">
+  <a href="#84" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.4 max_retries 的接线
+        8.4 试机按钮
       
     </span>
   </a>
@@ -1952,10 +1952,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#85" class="md-nav__link">
+  <a href="#85-max_retries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.5 权限设置
+        8.5 max_retries 的接线
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 权限设置
       
     </span>
   </a>
@@ -2532,10 +2543,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#84-max_retries" class="md-nav__link">
+  <a href="#84" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.4 max_retries 的接线
+        8.4 试机按钮
       
     </span>
   </a>
@@ -2543,10 +2554,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#85" class="md-nav__link">
+  <a href="#85-max_retries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.5 权限设置
+        8.5 max_retries 的接线
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 权限设置
       
     </span>
   </a>
@@ -2944,7 +2966,7 @@
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -&gt; list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写 ~/.coderagent/config.yaml、脱敏、连通性测试
+├── config_api.py    # 权限的读取与写回（模型的设置与试机在核心里）
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：STRINGS、LANGUAGES、地区判断与 cookie
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -3202,7 +3224,7 @@ executor._prepare()
 <tr>
 <td><code>max_retries</code></td>
 <td><code>model.max_retries</code></td>
-<td>死配置，接线见 §8.4</td>
+<td>死配置，接线见 §8.5</td>
 </tr>
 </tbody>
 </table>
@@ -3215,22 +3237,34 @@ executor._prepare()
 <code>model_name</code>、<code>provider</code>、<code>api_base</code>、<code>api_key_set</code>、<code>api_key_hint</code>、<code>key_source</code>、
 <code>key_env</code>、<code>max_retries</code>。</p>
 <p><strong>权限还留着来源</strong>：<code>permissions_view()</code> 的 <code>source</code> 按 <code>config_layers()</code> 逐层判断每个
-权限字段来自哪一层（见 §8.5）。</p>
+权限字段来自哪一层（见 §8.6）。</p>
 <h3 id="83">8.3 写入</h3>
 <p>只写 <code>config_home()/"config.yaml"</code>（<code>paths.py:7</code>），<strong>项目级 <code>.coderagent/config.yaml</code> 永不写</strong>
 （它会进 git）。读现有 YAML → 只改 <code>model:</code> 下用户提交的子键 → <code>yaml.safe_dump(sort_keys=False)</code>
 写回。未知顶层段（<code>agent:</code>/<code>tools:</code>/<code>mcp:</code>…）与未知 <code>model:</code> 子键原样保留。</p>
+<p><strong>这段逻辑在核心里，不在 web 层</strong>：<code>config/writer.py</code> 的 <code>write_user_model()</code> /
+<code>write_user_permissions()</code>。终端的 <code>coder model</code>、TUI 的 <code>/model --save</code> 和页面写的是同一个
+文件，走的是同一份实现。</p>
 <p><strong>已知代价</strong>：注释会丢（不引 ruamel）。</p>
 <p><strong>api_key 语义</strong>：省略/<code>null</code> → 保留原值；非空字符串 → 替换；<code>""</code> → 删除。</p>
 <p><strong>改完不热更新</strong>：运行中的 server 保留启动时的 <code>Config</code>；<strong>新会话</strong>建 loop 时重新
 <code>load_config()</code> 生效（<code>web/sessions.py</code> 的 <code>SessionRegistry.create()</code>）。页面要提示
 「新配置对新会话生效，当前会话用 <code>/model &lt;name&gt;</code> 切换」。</p>
-<h3 id="84-max_retries">8.4 <code>max_retries</code> 的接线</h3>
+<h3 id="84">8.4 试机按钮</h3>
+<p>页面上 <strong>Save</strong> 旁边有个 <strong>Test</strong> 按钮（<code>id="model-test"</code>，结果在 <code>id="model-test-result"</code>）：
+把表单的值发给 <code>POST /api/config/model/test</code>，把报告显示出来——打到哪个模型、哪个厂商、
+延迟多少、花了多少钱、模型会不会调工具、错在哪。</p>
+<p><strong>试机不写任何东西，写下来也不等试机</strong>：试试和保存是两个步骤，一个暂时还不好使的设置
+也值得写下来，以后再修。<strong>Save</strong> 的那条路一点没动。</p>
+<p>试机本身在核心里：<code>models/check.py</code> 的 <code>test_connection()</code>（只试一次，<code>max_retries=1</code>），
+读设置用 <code>models/settings.py</code> 的 <code>effective_model()</code>。终端的 <code>coder model --test</code> 和
+TUI 的 <code>/model --test</code> 用的是同两个函数。</p>
+<h3 id="85-max_retries">8.5 <code>max_retries</code> 的接线</h3>
 <p>mini 的 retry 次数来自 <code>$MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>
 （<code>minisweagent/models/utils/retry.py:21</code>），不是 <code>model.max_retries</code>。
 在 <code>web/server.py</code> 建模型前把这个环境变量设成 <code>model.max_retries</code>，一行解决；
 否则表单里就是个摆设。</p>
-<h3 id="85">8.5 权限设置</h3>
+<h3 id="86">8.6 权限设置</h3>
 <p>权限分两层，作用不同：</p>
 <table>
 <thead>
@@ -3253,7 +3287,7 @@ executor._prepare()
 </tr>
 </tbody>
 </table>
-<p><strong>写</strong>：<code>web/config_api.py</code> 的 <code>write_user_permissions()</code>，和 <code>write_user_model()</code> 同构——
+<p><strong>写</strong>：<code>config/writer.py</code> 的 <code>write_user_permissions()</code>，和 <code>write_user_model()</code> 同构——
 只写用户级文件，只改 <code>permissions.mode</code> / <code>deny_paths</code> / <code>include_dirs</code>，
 <strong><code>permissions.rules</code> 原样保留</strong>（规则是审批卡片上 <code>Always allow</code> 按钮写的，不是页面的事）。</p>
 <p><strong>读</strong>：<code>permissions_view(cwd, server_mode=...)</code> 给出 mode / modes / deny_paths /
