@@ -10,12 +10,11 @@ Python 3.10 or newer is needed, and `git` when the package comes from the
 repository.
 
 ```bash
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 ```
 
-That is the whole installation. The package is not on PyPI yet, so it is
-installed from the repository; once it is published, `pip install coder-agent`
-does the same.
+That is the whole installation. To follow the repository instead:
+`pip install "coder-agent @ git+https://github.com/sds819/coder-agent"`.
 
 To change the code, work in a clone:
 
@@ -28,8 +27,8 @@ pip install -e ".[full]"
 With `uv` or `pipx` the package becomes a command on the path:
 
 ```bash
-uv tool install "coder-agent @ git+https://github.com/sds819/coder-agent"
-pipx install "coder-agent @ git+https://github.com/sds819/coder-agent"
+uv tool install coder-agent
+pipx install coder-agent
 ```
 
 In a conda environment:
@@ -37,7 +36,7 @@ In a conda environment:
 ```bash
 conda create -n coder-agent python=3.11
 conda activate coder-agent
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 ```
 
 ### The extras
@@ -51,7 +50,7 @@ pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 | `full` | Everything: `dev` + `sandbox` + `mcp` |
 
 ```bash
-pip install "coder-agent[full] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[full]"
 ```
 
 ### The files of the installation
@@ -312,7 +311,7 @@ program runs on your machine, so the choice is yours.
 The same agent, in the browser:
 
 ```bash
-pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[web]"
 coder web
 ```
 
@@ -1053,7 +1052,7 @@ The tools of an [MCP](https://modelcontextprotocol.io) server are available
 under the name `mcp__<server>__<tool>`. The MCP SDK is optional:
 
 ```bash
-pip install "coder-agent[mcp] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[mcp]"
 ```
 
 ```yaml

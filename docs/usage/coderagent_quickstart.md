@@ -19,11 +19,11 @@
 要 Python 3.10 或更新的版本；从仓库装还要有 `git`。
 
 ```bash
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 ```
 
-这就是全部的安装步骤。这个包还没发到 PyPI 上，所以是从仓库装的；以后发了之后，
-`pip install coder-agent` 说的是同一件事。
+这就是全部的安装步骤。想跟着仓库走：
+`pip install "coder-agent @ git+https://github.com/sds819/coder-agent"`。
 
 要改代码就在克隆里干活：
 
@@ -36,8 +36,8 @@ pip install -e ".[full]"
 用 `uv` 或 `pipx` 的话，这个包会变成 path 上的一个命令：
 
 ```bash
-uv tool install "coder-agent @ git+https://github.com/sds819/coder-agent"
-pipx install "coder-agent @ git+https://github.com/sds819/coder-agent"
+uv tool install coder-agent
+pipx install coder-agent
 ```
 
 在 conda 环境里：
@@ -45,7 +45,7 @@ pipx install "coder-agent @ git+https://github.com/sds819/coder-agent"
 ```bash
 conda create -n coder-agent python=3.11
 conda activate coder-agent
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 ```
 
 ### 可选依赖 {#extras}
@@ -59,7 +59,7 @@ pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
 | `full` | 一切：`dev` + `sandbox` + `mcp` |
 
 ```bash
-pip install "coder-agent[full] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[full]"
 ```
 
 ### 装完有哪些文件 {#files}
@@ -224,7 +224,7 @@ agent 会自己读代码、改文件、跑测试。写入文件前它会先存�
 ## 也可以在浏览器里跑 {#web}
 
 ```bash
-pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[web]"
 coder web
 ```
 

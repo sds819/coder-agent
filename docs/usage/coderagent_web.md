@@ -7,7 +7,7 @@ configuration for you — which is the part that is tedious in a text editor.
 > 中文版：[网页版](coderagent_web_zh.md)
 
 ```bash
-pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"   # uvicorn and jinja2 (fastapi is in the core)
+pip install "coder-agent[web]"   # uvicorn and jinja2 (fastapi is in the core)
 cd my-project
 coder web
 ```

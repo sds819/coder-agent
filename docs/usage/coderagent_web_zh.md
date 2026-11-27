@@ -22,7 +22,7 @@
 ## 安装与启动 {#install}
 
 ```bash
-pip install "coder-agent[web] @ git+https://github.com/sds819/coder-agent"   # uvicorn 和 jinja2（fastapi 在核心依赖里）
+pip install "coder-agent[web]"   # uvicorn 和 jinja2（fastapi 在核心依赖里）
 cd my-project
 coder web
 ```

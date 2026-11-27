@@ -8,7 +8,7 @@
 它能跑在终端里，**也能**跑在浏览器里，还是一个能当库用的东西。
 
 ```bash
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 cd my-project
 
 coder                        # 终端界面
@@ -16,7 +16,8 @@ coder web                    # 同一个 agent，跑在浏览器里
 coder eval path/to/suite     # 拿一个任务集跑这个 agent
 ```
 
-这个包还没发到 PyPI 上，所以从仓库里装。
+这个包已经发到 PyPI 上。想跟着仓库走：
+`pip install "coder-agent @ git+https://github.com/sds819/coder-agent"`。
 
 ## 它能做什么
 

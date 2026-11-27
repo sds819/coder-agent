@@ -5,7 +5,7 @@ the commands and tells you what it changed. It runs in the terminal **and** in
 the browser, and it is a library too.
 
 ```bash
-pip install "coder-agent @ git+https://github.com/sds819/coder-agent"
+pip install coder-agent
 cd my-project
 
 coder                        # the terminal interface
@@ -13,7 +13,8 @@ coder web                    # the same agent in the browser
 coder eval path/to/suite     # run a task suite against the agent
 ```
 
-The package is not on PyPI yet, so install it from the repository.
+The package is on PyPI. To follow the repository instead:
+`pip install "coder-agent @ git+https://github.com/sds819/coder-agent"`.
 
 !!! info "中文"
 

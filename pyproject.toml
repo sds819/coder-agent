@@ -12,8 +12,7 @@ requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
 keywords = ["nlp", "agents", "code", "coding-agent"]
 authors = [
-    {name = "Kilian Lieret", email = "kilian.lieret@posteo.de" },
-    {name = "Carlos E. Jimenez", email = "carlosej@princeton.edu" },
+    {name = "sailor", email = "sds819@126.com" },
 ]
 
 # Classifiers help users find your project by categorizing it.
@@ -89,8 +88,10 @@ mcp = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/sds819/coder-agent"
 Repository = "https://github.com/sds819/coder-agent"
 "Bug Tracker" = "https://github.com/sds819/coder-agent/issues"
+Documentation = "https://sds819.github.io/coder-agent/latest/"
 
 [project.scripts]
 coder = "coderagent.ui.cli:app"

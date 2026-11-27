@@ -27,7 +27,7 @@ coding agent does not write containers of its own. They need the packages of the
 `sandbox`:
 
 ```bash
-pip install "coder-agent[sandbox] @ git+https://github.com/sds819/coder-agent"
+pip install "coder-agent[sandbox]"
 ```
 
 Without them the local sandbox still works, and a remote one says which
