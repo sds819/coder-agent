@@ -350,7 +350,7 @@ do not ask for the header — they start nothing.
 | POST | `/api/approvals/{id}` | Allow, deny or always allow a tool |
 | GET | `/api/commands` | The slash commands |
 | GET | `/api/agents` | The sub agents, with the turns they may really make |
-| GET | `/api/config` | The model configuration, with the layer of every field |
+| GET | `/api/config` | The model and the permission configuration, as the settings page sees them |
 | GET | `/api/config/model/key` | The key of the model, in clear text |
 | GET | `/lang/{language}` | The language of the pages, remembered in a cookie |
 | GET | `/api/i18n/{language}` | The strings of a language, for a browser that switches without a reload |
@@ -413,10 +413,10 @@ Read this before you put it on a network.
   resolved and checked against the working directory and the directories in
   `permissions.include_dirs`. The rules of the user cannot widen that.
 - **The key is only shown on request.** The settings page only gets
-  `api_key_set` and the last four characters; every secret of the layers the
-  API hands out has been replaced by `***`. The key itself is sent when you
-  click the field of the key, and that request needs the header of the client,
-  so a page somewhere else cannot ask for it.
+  `api_key_set` and the last four characters; the API hands out no other
+  secret. The key itself is sent when you click the field of the key, and that
+  request needs the header of the client, so a page somewhere else cannot ask
+  for it.
 - **The api key is written to the user file only**, never to the project file
   that goes into the repository.
 - **A download cannot reach into the network.** The downloads of the skills

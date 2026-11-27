@@ -1170,7 +1170,7 @@ curl -N http://127.0.0.1:8765/api/sessions/20261109-3f0a91/stream
 | `POST /api/sessions/{id}/mode` | 改这个会话的权限模式 |
 | `POST /api/approvals/{id}` | 回答审批 |
 | `GET /api/commands` | slash 命令 |
-| `GET /api/config` | 配置和它的层 |
+| `GET /api/config` | 模型和权限 |
 | `PUT /api/config/model` | 把模型写进用户级文件 |
 | `GET /api/config/model/key` | 端点的 key |
 | `PUT /api/config/permissions` | 把权限写进用户级文件 |
@@ -1319,7 +1319,7 @@ profile: fast
 | `yaml.scanner.ScannerError` | 某一层的 YAML 解析不了。 | 修 YAML，消息里带着行号。 |
 | `pydantic_core.ValidationError` | 值的类型不对——该是数字的地方写了字符串。 | 消息里说了是哪个字段。 |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | 给了 `-c myconf.yml`，但找的是 `myconf.yaml`。 | 用带 `.yaml` 的名字，或者给全路径。 |
-| 模型不是文件里写的那一个 | 上面的一层赢了。 | 记住顺序；设置页上有各层的列表。 |
+| 模型不是文件里写的那一个 | 上面的一层赢了。 | 记住各层的顺序。 |
 | `ValueError: unknown profile 'slow'. Use one of: fast, careful.` | profile 的名字不在配置的 `profiles` 里。 | 检查拼写，或者把 profile 加进文件。 |
 
 ## 命令

@@ -521,7 +521,7 @@ Codex 还提供压缩前后、通知、子 agent 停止等事件。`PreCompact` 
 | **路径边界** | 由沙箱决定 | `within_bounds()` 在**所有**模式下都生效，**用户的 `allow` 规则也放宽不了** |
 | **事实来源** | 会话状态 | **事件日志是唯一事实来源**，压缩只把原文移出窗口，不删事实 |
 | **离线评测** | 有 `codex exec`，但没有可对比的指纹 | `coder eval` + `coder eval-compare` + 指纹，**能测出「harness 坏了」**（模型会绕开坏掉的 `edit`，只数工具调用是测不出来的） |
-| **网页版** | 有 IDE 扩展，没有完整的网页终端 | 完整的网页版：SSE 流式、三栏、会话列表、设置页分层预览、审批卡片 |
+| **网页版** | 有 IDE 扩展，没有完整的网页终端 | 完整的网页版：SSE 流式、三栏、会话列表、设置页、审批卡片 |
 | **审批粒度** | on-request / on-failure / never | **`Always allow` 会往 `~/.coderagent/rules.yaml` 写规则**，规则本身是文件、可读可改 |
 
 **做 OS 级沙箱时最该小心的一件事**：Codex 的 `approval_policy=never` 允许完全放开；

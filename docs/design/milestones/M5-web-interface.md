@@ -50,7 +50,7 @@ src/coderagent/web/
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -> list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写 ~/.coderagent/config.yaml、分层预览、脱敏、连通性测试
+├── config_api.py    # 读写 ~/.coderagent/config.yaml、脱敏、连通性测试
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：STRINGS、LANGUAGES、地区判断与 cookie
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -235,23 +235,23 @@ executor._prepare()
 | 字段 | 落点 | 说明 |
 |---|---|---|
 | `model_name` | `model.model_name` | 如 `deepseek/deepseek-flash`；厂商写在前面或省略都行 |
-| `api_base` | `model.model_kwargs.api_base` | **显式字段**，因为它直通 litellm |
-| `api_key` | `model.model_kwargs.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
+| `api_base` | `model.api_base` | **显式字段**，因为它直通 litellm |
+| `api_key` | `model.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
 | `max_retries` | `model.max_retries` | 死配置，接线见 §8.4 |
 
 **其余的设置不在页面上**：`set_cache_control`、`litellm_config`、`routing`、
 `routing_rules`、`reasoning_effort`、`verbosity`、`review_model` 和附加 kwargs
 都写在配置文件里。`PUT /api/config/model` 这些字段照样收，不传的保持文件里的原样。
 
-### 8.2 分层预览
+### 8.2 分层来源
 
-`GET /api/config` 返回 `sources: {"model_name": "user", "api_base": "project", ...}`，
-按优先级 defaults < project < user 逐层看，**最后一个定义了该 key 的层**说了算；
-环境变量只在**没有任何层定义**时兜底（目前只有 `model_name` 与 `api_key` 走这条路，
-层名报 `env`）。
+**模型的那一份没有了**：`GET /api/config` 里的 `sources` 和 `layers` 两段都删了——
+页面上没有它们的用处，脚本要查配置就去看文件。剩下的 `model` 段只有页面要的那几项：
+`model_name`、`provider`、`api_base`、`api_key_set`、`api_key_hint`、`key_source`、
+`key_env`、`max_retries`。
 
-**只有 API 有这一层**：页面上不再有「设置来自哪一层」的表格，也不再有每个字段底下
-那行来源——它们和模型表单里那一堆开关一起从页面上拿掉了。
+**权限还留着来源**：`permissions_view()` 的 `source` 按 `config_layers()` 逐层判断每个
+权限字段来自哪一层（见 §8.5）。
 
 ### 8.3 写入
 
@@ -288,8 +288,8 @@ mini 的 retry 次数来自 `$MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
 **`permissions.rules` 原样保留**（规则是审批卡片上 `Always allow` 按钮写的，不是页面的事）。
 
 **读**：`permissions_view(cwd, server_mode=...)` 给出 mode / modes / deny_paths /
-include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判断每个字段来自哪一层，
-和 §8.2 的 `sources()` 同一套办法。
+include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判断每个字段来自哪一层
+（模型那边的来源已经拿掉了，见 §8.2）。
 
 **运行中切换**：`SessionRuntime.set_mode()` 原地改 `loop.executor.policy.mode` 和
 `loop.session.permission_mode`——**和 `/mode` 命令完全相同的两行**。策略是执行器问的那个对象，
@@ -369,7 +369,7 @@ web 直接复用，不重写路径安全逻辑。
 | 无认证 | **明确风险**：能访问端口的人就能驱动 agent 在 `cwd` 内跑 shell。本机单用户工具，信任模型同 `coder` 命令行。写进文档和 CLI help，不藏着 |
 | 浏览器 CSRF | 所有写接口要求 `X-Coder-Client: 1` 头 → 触发预检，而 CORS 未开 → 浏览器跨站发不了；curl 不受影响 |
 | 路径穿越 | `resolve()` + 边界检查，越界 403 |
-| 密钥 | api_key 只写用户级文件；API 只回 `api_key_set` + 掩码；分层预览里所有含 `key`/`token`/`secret` 的项都被抹掉 |
+| 密钥 | api_key 只写用户级文件；API 只回 `api_key_set` + 掩码；明文要带客户端头才取 |
 | 日志污染 | `web/server.py` 里设 `litellm.suppress_debug_info = True`（同 `ui/cli.py:20`），否则 litellm 的 banner 会打乱 SSE |
 
 ---
@@ -408,7 +408,7 @@ web 直接复用，不重写路径安全逻辑。
 
 ### T5.4 文件与配置
 - [x] `web/files.py` + 文件/diff 端点
-- [x] `web/config_api.py` + 配置端点（脱敏、分层、写回、连通性测试）
+- [x] `web/config_api.py` + 配置端点（脱敏、读、写回、连通性测试）
 
 ### T5.5 前端
 - [x] templates + static + 两个页面

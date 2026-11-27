@@ -23,7 +23,7 @@ M5 那篇讲的是「为什么这么做」。本文讲的是「具体是哪个�
 | 应用装配 | `web/app.py` | 组装 app、挂静态资源与模板 | `create_app(...)` | `web.api`、`web.sessions` |
 | 服务入口 | `web/server.py` | uvicorn 启动 | `serve(...)` | `web.app`、litellm |
 | 页面语言 | `web/i18n.py` | 页面文案与语言选择 | `STRINGS`、`LANGUAGES`、`locale_of` | `paths` |
-| 配置 API | `web/config_api.py` | 配置分层、脱敏、写回、连通性测试 | `model_view`、`sources`、`layers_preview`、`write_user_model`、`effective_model`、`test_connection` | `config.loader`、`paths` |
+| 配置 API | `web/config_api.py` | 配置读取、脱敏、写回、连通性测试 | `model_view`、`write_user_model`、`effective_model`、`test_connection` | `config.loader`、`paths` |
 | 文件浏览 | `web/files.py` | 越界检查、列目录、读文件、diff | `policy_for`、`resolve`、`directory`、`read`、`diff`、`OutsideBounds` | `tools.*` |
 | 前端 | `web/static/app.js` + `templates/{en,zh}/*.html` | 三个页面的渲染与交互 | `render(item)` 等 | 纯 REST/SSE |
 
@@ -291,7 +291,7 @@ data: {"seq": 12, "kind": "assistant_message", "content": "..."}\n\n
 
 | 方法 | 路径 | 出参 |
 |---|---|---|
-| GET | `/api/config` | `{"model": model_view, "permissions": permissions_view, "sources": {...}, "layers": [...], "user_config_path": str}` |
+| GET | `/api/config` | `{"model": model_view, "permissions": permissions_view, "user_config_path": str}` |
 | PUT | `/api/config/model` | `{"ok", "path", "model"}` |
 | GET | `/api/config/model/key` | `{"api_key": ...}` —— 设置页要回填密码框 |
 | PUT | `/api/config/permissions` | `{"ok", "path", "permissions"}`；非法模式 → **400** |
@@ -353,21 +353,15 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 
 | 名字 | 含义 |
 |---|---|
-| `SECRET_MARKERS = ("key", "token", "secret", "password")` | 名字里含这些词的一律当密钥 |
-| `DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")` | 直接在 `model:` 下的字段 |
-| `MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")` | 配置页要展示的字段 |
+| `SECRET_FIELDS = ("api_base", "api_key")` | 模型里自有字段的那两个；旧地方是 `model_kwargs` |
 | `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；从 `models/provider.py` 的 `PROVIDERS` 来 |
 
 ### 9.2 函数
 
 | 函数 | 出参 | 契约 |
 |---|---|---|
-| `is_secret(name) -> bool` | | 名字含密钥词 |
-| `redact(value) -> Any` | | 递归：dict 的密钥名是密钥 → 值替换成 `"***"` |
 | `hint(secret) -> str` | | `********abcd`（末 4 位）；短于 4 位 → `********` |
-| `sources(cwd) -> dict[str, str]` | 字段 → 层名 | 层名：`defaults` / `project` / `user` / `env`。**文件赢过环境变量**；`model_name` 与 `api_key` 都会是 `env` |
-| `model_view(cwd) -> dict` | 见下 | **永不含明文密钥** |
-| `layers_preview(cwd) -> list[dict]` | `[{layer, model}]` | 每一层都过 `redact` |
+| `model_view(cwd) -> dict` | 见下 | **永不含明文密钥**；只有页面要的那几项 |
 | `user_config_path() -> Path` | | `config_home()/"config.yaml"`（`MSWEA_CODER_HOME` 生效） |
 | `write_user_model(payload) -> Path` | 写后的路径 | 见 §9.3 |
 | `effective_model(cwd, overrides) -> dict` | `{model_name, requested, alias, provider, litellm_config, model_kwargs}` | 当前配置 + 表单里的覆盖；别名和厂商在这里解析 |
@@ -379,10 +373,11 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 **`model_view` 的字段**
 
 ```python
-{"model_name", "litellm_config", "api_base", "api_key_set": bool, "api_key_hint": str,
- "max_retries", "set_cache_control", "routing", "routing_rules",
- "model_kwargs": {...不含密钥...}}
+{"model_name", "provider", "api_base", "api_key_set": bool, "api_key_hint": str,
+ "key_source", "key_env", "max_retries"}
 ```
+
+只有设置页要的那几项——**没有分层来源，也没有别名的地址**：那些从接口里也拿掉了。
 
 ### 9.3 `write_user_model(payload)` 的写回语义
 
@@ -475,8 +470,7 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 | `openSession(id)` | 切会话：清状态 → 拉 `/items` 渲染 → 开流 |
 | `listFiles(path)` / `showFile(path)` | 文件树与文件内容 |
 | `loadCommands()` | 拉 `/commands` 填下拉框 |
-| `parseKeyValues(text)` / `formatKeyValues(obj)` | 「附加参数」框：先试 JSON，失败按 `key: value` 行解析 |
-| `startSettings()` | 设置页：填表单 → 标每字段来源 → 渲染分层预览 → 保存 / 测试连接 |
+| `startSettings()` | 设置页：填表单 → 写用户级文件 → 保存 |
 
 ### 11.3 条目 → 渲染
 
@@ -568,7 +562,7 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 | 新的事件类型 | `web/events.py` 的 `normalize` 加一个分支 + `app.js` 的 `render` 加一个 case |
 | 新的 API 端点 | `web/api.py` 加路由（写接口记得挂 `Depends(require_client)`） |
 | 新的内置命令 | `ui/commands/builtin.py` —— web **自动就有**（`/api/commands` 与 `run()` 都是复用） |
-| 新的模型设置 | `config_api.py` 的 `DIRECT_FIELDS` + `model_view` + `write_user_model` + 设置页加字段 |
+| 新的模型设置 | `config_api.py` 的 `model_view` + `write_user_model` + 设置页加字段 |
 | 新的页面 | `app.py` 加 `templates.TemplateResponse` + `mkdocs.yml` nav |
 
 ---
@@ -580,7 +574,7 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 | ~~Q1~~ | ~~命令跑完没有 `command_end`~~ → **已修**：`_run_command` 末尾发 `{"kind": "command_end"}` | — |
 | ~~Q2~~ | ~~`turn_end` 的关闭条件带 `not runtime.busy.is_set()`~~ → **已修**：SSE 见到 `turn_end`/`command_end` 就关，不再看 `busy` | — |
 | Q3 | `changes` 端点用 checkpoint 的「之前」对比磁盘上的「现在」 | 没走 checkpoint 的写操作不会出现在变更列表里 |
-| Q4 | `model_view` 的 `model_kwargs` 过滤掉了密钥，所以前端**看不到** `api_base` 之外的额外密钥 | 有意的，但要在设置页说明 |
+| ~~Q4~~ | ~~`model_view` 的 `model_kwargs` 过滤掉了密钥，所以前端**看不到** `api_base` 之外的额外密钥~~ → **已消**：页面上不再有「附加参数」那一栏，`model_view` 也只回那八项 | — |
 | Q5 | 每个会话一个 `AgentLoop` → 每个会话一套 MCP server 线程 | loop 已懒建；会话多了仍会涨 |
 | Q6 | **命令换了会话 id 之后，旧 id 的 `/items` 拿不到命令输出**：环形缓冲跟着 runtime 走（re-key 之后旧 id 下是一个从日志重建的新 runtime），而命令输出**不入日志** | 浏览器走 SSE 不受影响（它收到 `session_switched` 后改订新 id）；但**轮询 `/items` 的客户端会丢命令输出**。要么把命令输出写进日志，要么让 registry 在 re-key 时把旧 id 指向同一个 runtime |
 | ~~Q7~~ | ~~`text_delta` 逐 token 进缓冲，长回答把历史挤出缓冲~~ → **已修**：流式增量是瞬时条目，不进缓冲；整段答案以 `assistant_message` 进缓冲 | — |

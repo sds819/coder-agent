@@ -60,32 +60,35 @@ def test_the_key_never_leaves_the_server(make_client):
     assert view["api_key_hint"] == "********" + "sk-secret-value"[-4:]
     """The hint is the tail of the key. Written as a slice, so that no hook mistakes it for a typo."""
     assert "sk-secret-value" not in client.get("/api/config").text
-    assert "sk-secret-value" not in client.get("/api/config").json()["layers"][0]["model"].get("model_kwargs", {})
 
 
-def test_the_source_of_a_setting_is_the_layer_it_comes_from(make_client):
+def test_the_response_has_no_layers_of_the_configuration(make_client):
+    """The page shows the settings, not where every one of them comes from."""
     client = make_client()
-
-    before = client.get("/api/config").json()["sources"]
     client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
-    after = client.get("/api/config").json()["sources"]
 
-    assert before["model_name"] == "defaults"
-    assert after["model_name"] == "user"
+    answer = client.get("/api/config").json()
+
+    assert "sources" not in answer
+    assert "layers" not in answer
 
 
-def test_the_layers_are_shown_without_the_secrets(make_client):
+def test_the_model_of_the_response_is_the_one_the_page_shows(make_client):
     client = make_client()
-    client.put("/api/config/model", json={"api_key": "sk-secret-value"})
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
 
-    layers = client.get("/api/config").json()["layers"]
-    names = [layer["layer"] for layer in layers]
+    model = client.get("/api/config").json()["model"]
 
-    assert "defaults" in names
-    assert "user" in names
-    assert all(
-        value != "sk-secret-value" for layer in layers for value in (layer["model"].get("model_kwargs") or {}).values()
-    )
+    assert sorted(model) == [
+        "api_base",
+        "api_key_hint",
+        "api_key_set",
+        "key_env",
+        "key_source",
+        "max_retries",
+        "model_name",
+        "provider",
+    ]
 
 
 def test_a_model_that_does_not_work_is_reported_not_raised(make_client):
@@ -98,14 +101,12 @@ def test_a_model_that_does_not_work_is_reported_not_raised(make_client):
     assert response.json()["error"]
 
 
-def test_the_aliases_file_is_written_and_read_back(make_client):
+def test_the_aliases_file_is_written_to_the_user_file(make_client):
     client = make_client()
 
     client.put("/api/config/model", json={"litellm_config": "~/.coderagent/litellm_config.yaml"})
 
-    view = client.get("/api/config").json()
-    assert view["model"]["litellm_config"] == "~/.coderagent/litellm_config.yaml"
-    assert view["sources"]["litellm_config"] == "user"
+    assert _user_file()["model"]["litellm_config"] == "~/.coderagent/litellm_config.yaml"
 
 
 def _aliases_file(tmp_path, alias: str = "my-alias", model: str = "not-a-real-provider/nope") -> str:
@@ -199,16 +200,13 @@ def test_the_key_needs_the_header_of_the_client(make_client):
 
 
 def test_the_aliases_file_is_the_source_of_the_address(make_client, tmp_path):
+    """The address of the aliases file is not copied into the settings of the user."""
     client = make_client()
     path = _aliases_file(tmp_path)
 
     client.put("/api/config/model", json={"model_name": "my-alias", "litellm_config": path})
 
-    view = client.get("/api/config").json()
-    assert view["sources"]["api_base"] == "alias"
-    assert view["model"]["alias_api_base"] == "https://x/v1"
-    assert view["model"]["api_base"] == ""
-    """The field stays empty: the aliases file holds the address, not the settings."""
+    assert "api_base" not in _user_file()["model"]
 
 
 def test_the_address_of_the_user_wins_over_the_alias(make_client, tmp_path):
@@ -219,9 +217,7 @@ def test_the_address_of_the_user_wins_over_the_alias(make_client, tmp_path):
         "/api/config/model", json={"model_name": "my-alias", "litellm_config": path, "api_base": "https://mine/v1"}
     )
 
-    view = client.get("/api/config").json()
-    assert view["sources"]["api_base"] == "user"
-    assert view["model"]["api_base"] == "https://mine/v1"
+    assert _user_file()["model"]["api_base"] == "https://mine/v1"
 
 
 def test_the_key_of_the_alias_file_is_the_key_of_the_agent(make_client, tmp_path):
@@ -290,14 +286,6 @@ def test_the_test_panel_counts_the_key_of_the_environment(monkeypatch):
     """Nothing listens on that port, so the call fails. The key is still the one of the environment."""
 
 
-def test_the_table_says_the_key_comes_from_the_environment(make_client, monkeypatch):
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
-    client = make_client()
-    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
-
-    assert client.get("/api/config").json()["sources"]["api_key"] == "env"
-
-
 def test_the_alias_is_resolved_before_the_environment_is_asked(make_client, monkeypatch, tmp_path):
     """The alias points at a model of another provider, and that provider has the key."""
     monkeypatch.setenv("OPENAI_API_KEY", "sk-env-value")
@@ -341,8 +329,7 @@ def test_the_thinking_budget_is_written_and_read_back(make_client):
 
     client.put("/api/config/model", json={"reasoning_effort": "high"})
 
-    assert client.get("/api/config").json()["model"]["reasoning_effort"] == "high"
-    assert client.get("/api/config").json()["sources"]["reasoning_effort"] == "user"
+    assert _user_file()["model"]["reasoning_effort"] == "high"
 
 
 def test_a_thinking_budget_that_does_not_exist_is_refused(make_client):
@@ -392,8 +379,7 @@ def test_the_verbosity_is_written_and_read_back(make_client):
 
     client.put("/api/config/model", json={"verbosity": "low"})
 
-    assert client.get("/api/config").json()["model"]["verbosity"] == "low"
-    assert client.get("/api/config").json()["sources"]["verbosity"] == "user"
+    assert _user_file()["model"]["verbosity"] == "low"
 
 
 def test_a_verbosity_that_does_not_exist_is_refused(make_client):
@@ -436,7 +422,7 @@ def test_the_model_of_the_review_is_written_and_read_back(make_client):
 
     client.put("/api/config/model", json={"review_model": "anthropic/claude-sonnet-4-5"})
 
-    assert client.get("/api/config").json()["model"]["review_model"] == "anthropic/claude-sonnet-4-5"
+    assert _user_file()["model"]["review_model"] == "anthropic/claude-sonnet-4-5"
 
 
 def test_an_empty_model_of_the_review_removes_it(make_client):
@@ -445,7 +431,7 @@ def test_an_empty_model_of_the_review_removes_it(make_client):
 
     client.put("/api/config/model", json={"review_model": ""})
 
-    assert client.get("/api/config").json()["model"]["review_model"] == ""
+    assert "review_model" not in (_user_file().get("model") or {})
 
 
 def _user_file() -> dict:
@@ -585,7 +571,7 @@ def test_the_settings_page_says_the_provider_of_the_model(make_client):
     view = client.get("/api/config").json()["model"]
 
     assert view["provider"] == "deepseek"
-    assert view["resolved_model_name"] == "deepseek/deepseek-flash"
+    assert view["model_name"] == "deepseek/deepseek-flash"
 
 
 def test_the_settings_page_says_where_the_key_comes_from(make_client, monkeypatch):

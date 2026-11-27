@@ -270,7 +270,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | POST | `/api/approvals/{id}` | 允许、拒绝、或者永久允许一个工具 |
 | GET | `/api/commands` | 有哪些 slash 命令 |
 | GET | `/api/agents` | 有哪些子 agent，它们真正生效的轮数是多少 |
-| GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
+| GET | `/api/config` | 模型和权限的配置，跟设置页看到的一样 |
 | GET | `/api/config/model/key` | 模型的 key，明文 |
 | GET | `/lang/{language}` | 换个语言，记在 cookie 里 |
 | GET | `/api/i18n/{language}` | 一种语言的文案，给不想刷新页面的浏览器用 |

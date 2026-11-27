@@ -538,7 +538,7 @@ coder export           # 导出会话 trace
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -> list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写用户级 config.yaml、分层预览、脱敏、连通性测试
+├── config_api.py    # 读写用户级 config.yaml、脱敏、连通性测试
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：地区判定 + 浏览器文案
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -563,9 +563,9 @@ FastAPI 的事件循环里**绝不**跑 agent 代码——碰文件系统/模型
 `POST /api/approvals/{id}` 送回；**没人回答就是拒绝**（超时自动 DENY，与 TUI 一致）。
 `Always allow` 会往用户级规则文件写一条规则，前端必须提示这一点。
 
-**模型配置页**：显式字段 + 自由 kwargs，附**分层来源预览**（每个字段来自 `defaults` /
-`project` / `user` / `env` 哪一层）与**连通性测试**（一次 `max_tokens=1` 的调用，外加一次
-工具调用测试）。密钥只回 `api_key_set` + 掩码，点击才取明文。写入**只落用户级文件**
+**模型配置页**：四个字段（模型名、接口地址、API key、最多重试），其余的模型设置写在
+配置文件里。**连通性测试只在 API 里**（一次 `max_tokens=1` 的调用，外加一次工具调用测试），
+页面上没有这个按钮。密钥只回 `api_key_set` + 掩码，点击才取明文。写入**只落用户级文件**
 `~/.coderagent/config.yaml`——**项目级 `.coderagent/config.yaml` 永远不写**（它会进 git）。
 
 **权限的两个入口**：设置页写用户级配置文件的 `permissions:` 段（对**下一个**会话生效），
@@ -812,7 +812,7 @@ src/coderagent/
 │   ├── sessions.py          # SessionRuntime / SessionRegistry：线程、环形缓冲、turn
 │   ├── events.py            # normalize(Event) -> 前端条目
 │   ├── approver.py          # WebApprover：阻塞式审批
-│   ├── config_api.py        # 配置分层、脱敏、写回、连通性测试
+│   ├── config_api.py        # 配置读取、脱敏、写回、连通性测试
 │   ├── files.py             # 文件浏览与 diff（路径越界 403）
 │   ├── i18n.py              # 页面语言与地区判定
 │   ├── server.py            # serve()：uvicorn 入口
@@ -1124,7 +1124,7 @@ Web 层的测试在 `tests/coderagent/web/`：测试文件首行有 `pytest.impo
 | 每会话一个 `AgentLoop` ⇒ 每会话一套 MCP server 线程 | 中 | loop 懒建（第一次跑 turn 才建）；会话多了仍会涨，文档说明 |
 | 跨站请求驱动 agent（CSRF） | 中 | 写接口要 `X-Coder-Client: 1` 头，跨站浏览器发不出（预检不通过） |
 | 浏览器读到工作目录外的东西 | 中 | `resolve()` + `within_bounds()`，越界 403；**边界检查不被规则放宽** |
-| 密钥泄漏到仓库或日志 | 高 | 只写用户级文件；API 只回掩码；分层预览里的密钥全抹成 `***` |
+| 密钥泄漏到仓库或日志 | 高 | 只写用户级文件；API 只回掩码，明文要带客户端头才取 |
 
 ---
 

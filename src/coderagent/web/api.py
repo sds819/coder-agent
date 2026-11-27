@@ -352,14 +352,12 @@ def agents(request: Request) -> dict[str, Any]:
 
 @router.get("/config")
 def get_config(request: Request) -> dict[str, Any]:
-    """The model configuration, with the layer every setting comes from."""
+    """The model and the permission configuration, as the settings page sees them."""
     cwd = request.app.state.cwd
     try:
         return {
             "model": config_api.model_view(cwd),
             "permissions": config_api.permissions_view(cwd, server_mode=_server_mode(request)),
-            "sources": config_api.sources(cwd),
-            "layers": config_api.layers_preview(cwd),
             "user_config_path": str(config_api.user_config_path()),
         }
     except ValidationError as error:

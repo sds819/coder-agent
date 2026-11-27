@@ -23,9 +23,6 @@ from coderagent.models.verbosity import VERBOSITIES
 from coderagent.paths import config_home
 from coderagent.tools.permissions import PermissionMode
 
-SECRET_MARKERS = ("key", "token", "secret", "password")
-"""The names of the settings that never leave the server in clear text."""
-
 PERMISSION_MODES = [mode.value for mode in PermissionMode]
 """The permission modes the browser can choose from."""
 
@@ -35,40 +32,11 @@ PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs", "network")
 NETWORK_POLICIES = ("allow", "deny")
 """What the browser may choose for the network."""
 
-DIRECT_FIELDS = (
-    "model_name",
-    "max_retries",
-    "set_cache_control",
-    "routing",
-    "routing_rules",
-    "litellm_config",
-    "reasoning_effort",
-    "verbosity",
-    "review_model",
-)
-"""The settings of the model that live directly under `model:`."""
-
-MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")
-"""The settings the configuration page shows."""
-
 SECRET_FIELDS = ("api_base", "api_key")
 """The settings of the model that have a field of their own, next to `model_kwargs`."""
 
 ENV_KEYS = PROVIDERS
 """The environment variable of the key of a provider. The name of the model says which provider it is."""
-
-
-def is_secret(name: str) -> bool:
-    return any(marker in name.lower() for marker in SECRET_MARKERS)
-
-
-def redact(value: Any) -> Any:
-    """Everything that looks like a secret is replaced by a mask."""
-    if isinstance(value, dict):
-        return {key: ("***" if is_secret(str(key)) else redact(item)) for key, item in value.items()}
-    if isinstance(value, list):
-        return [redact(item) for item in value]
-    return value
 
 
 def hint(secret: str) -> str:
@@ -78,51 +46,13 @@ def hint(secret: str) -> str:
     return f"********{secret[-4:]}" if len(secret) > 4 else "********"
 
 
-def _model_of(layer: dict) -> dict:
-    model = layer.get("model")
-    return model if isinstance(model, dict) else {}
-
-
-def _defines(layer: dict, field: str) -> bool:
-    model = _model_of(layer)
-    kwargs = model.get("model_kwargs")
-    if field in SECRET_FIELDS:
-        """The field of its own, or the old place of `model_kwargs`."""
-        return field in model or (isinstance(kwargs, dict) and field in kwargs)
-    if field in DIRECT_FIELDS:
-        return field in model
-    return isinstance(kwargs, dict) and field in kwargs
-
-
-def sources(cwd: Path) -> dict[str, str]:
-    """Which layer every model setting comes from.
-
-    The files win over the environment, the same way the loader merges them.
-    The aliases file is a layer of its own: what it holds is used when no
-    file of the user sets the setting.
-    """
-    layers = config_layers(cwd)
-    merged = load_config([], cwd=cwd)
-    name, params = resolve_alias(merged.model.litellm_config, merged.model.model_name)
-    base = str(merged.model.api_base or merged.model.model_kwargs.get("api_base") or params.get("api_base") or "")
-    result = {}
-    for field in (*MODEL_FIELDS, *merged.model.model_kwargs):
-        source = "defaults"
-        for name_of_layer, layer in layers:
-            if _defines(layer, field):
-                source = name_of_layer
-        if source == "defaults" and field in params:
-            source = "alias"
-        if source == "defaults" and field == "model_name" and os.getenv("MSWEA_MODEL_NAME"):
-            source = "env"
-        if source == "defaults" and field == "api_key" and env_api_key(name, base):
-            source = "env"
-        result[field] = source
-    return result
-
-
 def model_view(cwd: Path) -> dict[str, Any]:
-    """The model configuration, with the secrets taken out."""
+    """The model configuration, with the secrets taken out.
+
+    Only the settings the settings page shows are here: the rest of the model
+    lives in the configuration file, and the file is the only place it is read
+    from.
+    """
     config = load_config([], cwd=cwd)
     model = config.model
     kwargs = dict(model.model_kwargs)
@@ -134,33 +64,13 @@ def model_view(cwd: Path) -> dict[str, Any]:
     return {
         "model_name": model.model_name,
         "provider": provider,
-        "resolved_model_name": normalize(resolved, base),
-        "litellm_config": model.litellm_config,
         "api_base": str(model.api_base or kwargs.get("api_base") or ""),
-        "alias_api_base": str(alias.get("api_base") or ""),
-        # The field of the user stays empty: the aliases file holds the address.
         "api_key_set": bool(api_key),
         "api_key_hint": hint(api_key),
         "key_source": key_source(own_key, provider),
         "key_env": env_var(provider),
         "max_retries": model.max_retries,
-        "set_cache_control": model.set_cache_control or "",
-        "reasoning_effort": model.reasoning_effort,
-        "efforts": list(EFFORTS),
-        "verbosity": model.verbosity,
-        "verbosities": list(VERBOSITIES),
-        "review_model": model.review_model,
-        "routing": model.routing,
-        "routing_rules": [rule.model_dump() for rule in model.routing_rules],
-        "model_kwargs": {
-            key: value for key, value in kwargs.items() if not is_secret(key) and key not in SECRET_FIELDS
-        },
     }
-
-
-def layers_preview(cwd: Path) -> list[dict[str, Any]]:
-    """Every layer, with the secrets taken out."""
-    return [{"layer": name, "model": redact(_model_of(layer))} for name, layer in config_layers(cwd)]
 
 
 def user_config_path() -> Path:

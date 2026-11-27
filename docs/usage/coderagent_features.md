@@ -1294,7 +1294,7 @@ The endpoints of the API:
 | `POST /api/sessions/{id}/mode` | Change the permission mode of the session |
 | `POST /api/approvals/{id}` | Answer an approval |
 | `GET /api/commands` | The slash commands |
-| `GET /api/config` | The configuration and its layers |
+| `GET /api/config` | The model and the permissions |
 | `PUT /api/config/model` | Write the model to the user level file |
 | `GET /api/config/model/key` | The key of the endpoint |
 | `PUT /api/config/permissions` | Write the permissions to the user level file |
@@ -1455,7 +1455,7 @@ The sections and what they hold:
 | `yaml.scanner.ScannerError` | The YAML of a layer cannot be parsed. | Fix the YAML; the message has the line. |
 | `pydantic_core.ValidationError` | A value has the wrong type — a string where a number belongs. | The message names the field. |
 | `FileNotFoundError: Could not find config file for ... (tried: [...])` | `-c myconf.yml` was given, but the file that is looked for is `myconf.yaml`. | Use the name with `.yaml`, or give the full path. |
-| The model is not the one in the file | A layer above the file wins. | Remember the order; `--list` of the layers is on the settings page. |
+| The model is not the one in the file | A layer above the file wins. | Remember the order of the layers. |
 | `ValueError: unknown profile 'slow'. Use one of: fast, careful.` | The name of the profile is not one of the `profiles` of the configuration. | Check the spelling, or add the profile to the file. |
 
 ## The commands
