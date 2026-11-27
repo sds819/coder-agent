@@ -515,7 +515,7 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 |---|---|---|
 | `base.html` | 外壳：顶栏 + 导航 + `{% block content %}` | `#status` |
 | `chat.html` | 三栏：会话+文件 / 对话 / 状态+变更+文件 | `#sessions`、`#files`、`#messages`、`#composer`、`#input`、`#command-list`、`#run-command`、`#interrupt`、`#status-fields`、`#changes`、`#file-view` |
-| `settings.html` | 模型表单 | `#model-name`、`#api-base`、`#api-key`、`#max-retries`、`#set-cache-control`、`#routing`、`#routing-rules`、`#model-kwargs`、`#layers`、`#config-path`、`#config-message`、`#test-connection`、`source-<field>` |
+| `settings.html` | 模型表单 | `#model-name`、`#api-base`、`#api-key`、`#max-retries`、`#config-path`、`#config-message` |
 | `macros.html` | 两套页面共用的宏 | — |
 
 模板只渲染外壳，**逻辑全在 `app.js`**。语言的选择在 `web/i18n.py`：先看 cookie，

@@ -371,12 +371,20 @@ def test_the_page_offers_the_model_the_address_and_the_key(make_client):
 
 
 def test_the_page_has_no_second_panel_to_test_a_model(make_client):
-    """The button of the model form tests the settings of the form, so a second panel is one too many."""
+    """The button of the model form tested the settings of the form, so a second panel was one too many."""
     page = make_client().get("/settings").text
 
     assert 'id="test-form"' not in page
     assert 'id="test-endpoint"' not in page
     assert 'id="layers"' not in page
+
+
+def test_the_page_has_no_button_to_test_the_model(make_client):
+    """The test costs two calls to the model; the settings are used by the chat page anyway."""
+    page = make_client().get("/settings").text
+
+    assert 'id="test-connection"' not in page
+    assert 'id="model-test"' not in page
 
 
 def test_the_verbosity_is_written_and_read_back(make_client):

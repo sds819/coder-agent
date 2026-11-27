@@ -1292,38 +1292,6 @@ function keySource(resolved) {
   return t("not_set");
 }
 
-function renderTest(answer) {
-  // What the test found out: the settings, the file, the call and the tools.
-  const box = document.getElementById("model-test");
-  box.innerHTML = "";
-  const resolved = answer.resolved || {};
-  const file = answer.file || {};
-  const tools = answer.tools || {};
-  let fileText;
-  if (file.ok) {
-    fileText = `${file.path || "none"}${file.aliases && file.aliases.length ? ` — ${file.aliases.join(", ")}` : ""}`;
-  } else if ((file.error || "").includes("not one of the aliases")) {
-    fileText = `${file.path || "none"} — ${t("not_an_alias")}`;
-  } else {
-    fileText = `${file.path || "none"} — ${file.error}`;
-  }
-  const rows = [
-    [t("row_model"), `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
-    [t("row_provider"), resolved.provider || t("not_set")],
-    [t("row_api_base"), resolved.api_base || t("not_set")],
-    [t("row_api_key"), resolved.api_key_set ? `set (${resolved.api_key_hint})` : t("not_set")],
-    [t("row_key_source"), keySource(resolved)],
-    [t("row_aliases"), fileText],
-    [t("row_tools"), tools.ok ? t("tools_ok") : tools.error || t("not_tried")],
-  ];
-  const list = el("dl");
-  for (const [key, value] of rows) {
-    list.appendChild(el("dt", "", key));
-    list.appendChild(el("dd", "", value));
-  }
-  box.appendChild(list);
-}
-
 function wireApiKey(input, placeholder, note) {
   // A click shows the key of the settings, a second click hides it again.
   let revealed = false;
@@ -1415,19 +1383,6 @@ async function startSettings() {
       message.textContent = t("saved", { path: answer.path });
       document.getElementById("api-key").value = "";
       startSettings();
-    } catch (error) {
-      message.textContent = t("error", { message: error.message });
-    }
-  };
-
-  document.getElementById("test-connection").onclick = async () => {
-    message.textContent = t("trying");
-    try {
-      const answer = await api("/api/config/model/test", { method: "POST", body: payload() });
-      message.textContent = answer.ok
-        ? t("ok_ms", { ms: answer.latency_ms })
-        : t("error", { message: answer.error });
-      renderTest(answer);
     } catch (error) {
       message.textContent = t("error", { message: error.message });
     }

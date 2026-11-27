@@ -129,9 +129,11 @@ The page reads the **configuration files**; the `-m` and `-c` of the command
 line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the
 page still shows the model of the files.
 
-`Test connection` sends one cheap call to the model with the settings of the
-form, so you can see whether the key and the address work before you save. It
-reports seven things:
+**Testing a model.** The page has no button for it: a test costs two calls to
+the model (one to answer, one to call a tool), and the chat page uses the
+settings anyway. The **API** still has it — `POST /api/config/model/test` with
+the settings of the form sends one cheap call to the model and reports seven
+things:
 
 | What | What it tells you |
 |---|---|

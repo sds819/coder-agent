@@ -1231,12 +1231,10 @@ and `○` (pending).
   right.
 - **The answer streams in** — over a server sent event stream, and a browser
   that comes late reads the whole answer.
-- **The settings page** — the model as a form, the layer every field comes
-  from, the preview of all the layers with the secrets taken out.
-- **Test the connection** — one cheap call, and it says whether the model
-  calls the tools at all.
-- **Test a model** — a panel for an endpoint, a key and a model name, without
-  writing anything.
+- **The settings page** — the model as a form: the name, the address, the key and
+  the retries. The rest of the model is written in the configuration file.
+- **The connectivity test** — only in the API (`POST /api/config/model/test`):
+  one cheap call, and it says whether the model calls the tools at all.
 - **The permissions in two places** — the settings page for the next
   session, the chat page for the session that is running, right away.
 - **The approvals in the browser** — the same three answers.
