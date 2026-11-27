@@ -2346,12 +2346,8 @@ what it cost.</p>
 <td><code>model.model_name</code>, e.g. <code>deepseek/deepseek-flash</code>. The provider may be in front of the name (<code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code>) or left out (<code>MiniMax-M2.7</code>): the page shows the provider it worked out</td>
 </tr>
 <tr>
-<td>Litellm config file</td>
-<td><code>model.litellm_config</code> — the file with the aliases of the models</td>
-</tr>
-<tr>
 <td>API base</td>
-<td><code>model.api_base</code> — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it</td>
+<td><code>model.api_base</code> — the address of the provider</td>
 </tr>
 <tr>
 <td>API key</td>
@@ -2361,50 +2357,21 @@ what it cost.</p>
 <td>Retries</td>
 <td><code>model.max_retries</code></td>
 </tr>
-<tr>
-<td>Cache control</td>
-<td><code>model.set_cache_control</code></td>
-</tr>
-<tr>
-<td>Reasoning effort</td>
-<td><code>model.reasoning_effort</code> — how much the model thinks: <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>high</code>, or empty for the default of the model</td>
-</tr>
-<tr>
-<td>Verbosity</td>
-<td><code>model.verbosity</code> — how much the model says: <code>low</code>, <code>medium</code>, <code>high</code>, or empty for the habit of the model</td>
-</tr>
-<tr>
-<td>Review model</td>
-<td><code>model.review_model</code> — the model that reviews the changes. Empty means: the model of the session</td>
-</tr>
-<tr>
-<td>Routing</td>
-<td><code>model.routing</code></td>
-</tr>
-<tr>
-<td>Routing rules</td>
-<td><code>model.routing_rules</code></td>
-</tr>
-<tr>
-<td>Extra parameters</td>
-<td>Everything else of <code>model.model_kwargs</code></td>
-</tr>
 </tbody>
 </table>
+<p>The rest of the model is written in the configuration file, not on the page: the
+thinking budget (<code>model.reasoning_effort</code>), the verbosity (<code>model.verbosity</code>),
+the review model (<code>model.review_model</code>), the routing (<code>model.routing</code> and
+<code>model.routing_rules</code>), the extra parameters (<code>model.model_kwargs</code>) and the
+aliases file (<code>model.litellm_config</code>). The <strong>API</strong> still takes all of them:
+<code>PUT /api/config/model</code> writes what it is given, and a setting that is not
+sent stays as it is in the file.</p>
 <p>The parameters of the call itself (<code>model</code>, <code>messages</code>, <code>tools</code>, <code>stream</code>,
 <code>stream_options</code>) belong to the agent: the page refuses them instead of
 writing a file that the agent would not start with.</p>
-<p>Under every field is the layer it comes from: <code>defaults</code>, <code>user</code>, <code>alias</code> or
-<code>env</code>. The aliases file is a layer of its own: what it holds is used when no
-file of the user sets the setting, and the address of the user wins over it.
-The table at the bottom shows every layer, with the secrets taken out.
-The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command
+<p>The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command
 line are for the sessions, so with <code>coder web -m deepseek/deepseek-flash</code> the
 page still shows the model of the files.</p>
-<p>The <strong>Example</strong> block under the fields shows how a third party endpoint is
-written: the model name is then an alias of the model list of a litellm config
-file, and the key of the endpoint stays in that file instead of the settings of
-the agent.</p>
 <p><code>Test connection</code> sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
 reports seven things:</p>
@@ -2446,33 +2413,6 @@ reports seven things:</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Test a model.</strong> A second panel tries a model out without saving anything:
-the endpoint, the key and the name of the model, and a <code>Test connection</code>
-button. It is the shape a provider hands them out in.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>What it is</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Endpoint</td>
-<td>The address of the provider. The full address of the chat completions (<code>https://api.example.com/v1/chat/completions</code>) is fine — the part behind <code>/v1</code> is cut off, because litellm adds it itself</td>
-</tr>
-<tr>
-<td>API Key</td>
-<td>The key of that endpoint. A click shows the key of the settings above, a second click hides it again</td>
-</tr>
-<tr>
-<td>Model Name</td>
-<td>The name of the model, written as it is: <code>openai/MiniMax-M2.7</code>, <code>openai:MiniMax-M2.7</code> or <code>MiniMax-M2.7</code>. The server works out who is called: the name first, then the address of the endpoint, then the family of the model</td>
-</tr>
-</tbody>
-</table>
-<p>An empty endpoint or an empty key means the one of the settings above. The
-result is the same four lines as the test of the form.</p>
 <p><strong>What is written where</strong>: only the user level file, <code>~/.coderagent/config.yaml</code>
 (or <code>$MSWEA_CODER_HOME/config.yaml</code>). The project level file
 (<code>.coderagent/config.yaml</code>) is <strong>never</strong> written — it is in the repository.
@@ -2485,9 +2425,9 @@ version is dropped the next time the page is saved.</p>
 <p><strong>A key in the environment is in the page.</strong> The page reads the configuration
 files first and then the environment: a provider key that comes from the
 environment (<code>DEEPSEEK_API_KEY</code> and the like) is shown like any other key, and
-<code>api_key_set</code> is true. The layer under the field says <code>env</code> when the key comes
-from there. The name of the model says which variable is looked at: <code>openai/…</code>
-means <code>OPENAI_API_KEY</code>, <code>deepseek/…</code> means <code>DEEPSEEK_API_KEY</code>.</p>
+<code>api_key_set</code> is true. The page says where the key comes from: the settings or
+the environment. The name of the model says which variable is looked at:
+<code>openai/…</code> means <code>OPENAI_API_KEY</code>, <code>deepseek/…</code> means <code>DEEPSEEK_API_KEY</code>.</p>
 <p><strong>The key of the field.</strong> The field of the key shows <code>set (********1234)</code> while
 the key itself stays hidden. A click on the field asks the server for the key
 and shows it; a second click hides it again. The key of the aliases file counts
@@ -2912,10 +2852,10 @@ minutes by default). A tool that is denied never runs.</p>
   resolved and checked against the working directory and the directories in
   <code>permissions.include_dirs</code>. The rules of the user cannot widen that.</li>
 <li><strong>The key is only shown on request.</strong> The settings page only gets
-  <code>api_key_set</code> and the last four characters; the preview of the layers has
-  every secret replaced by <code>***</code>. The key itself is sent when you click the
-  field of the key, and that request needs the header of the client, so a page
-  somewhere else cannot ask for it.</li>
+  <code>api_key_set</code> and the last four characters; every secret of the layers the
+  API hands out has been replaced by <code>***</code>. The key itself is sent when you
+  click the field of the key, and that request needs the header of the client,
+  so a page somewhere else cannot ask for it.</li>
 <li><strong>The api key is written to the user file only</strong>, never to the project file
   that goes into the repository.</li>
 <li><strong>A download cannot reach into the network.</strong> The downloads of the skills
@@ -2955,7 +2895,7 @@ minutes by default). A tool that is denied never runs.</p>
 <tr>
 <td>The model configuration</td>
 <td>A text file</td>
-<td>A form, plus a preview of the layers</td>
+<td>A form</td>
 </tr>
 <tr>
 <td>The files of the project</td>

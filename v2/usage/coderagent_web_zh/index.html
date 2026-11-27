@@ -767,23 +767,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="设置页">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test-a-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        测一个模型
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -2034,23 +2017,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="设置页">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test-a-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        测一个模型
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -2362,12 +2328,8 @@ slash 命令不能带图。</p>
 <td><code>model.model_name</code>，比如 <code>deepseek/deepseek-flash</code>。厂商可以写在前面（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）：页面会显示算出来的厂商</td>
 </tr>
 <tr>
-<td>Litellm config file</td>
-<td><code>model.litellm_config</code>——别名文件，模型名可以是里面的一条别名</td>
-</tr>
-<tr>
 <td>API base</td>
-<td><code>model.api_base</code>——第三方模型的地址。地址写在别名文件里时，这一栏是空的，页面把它显示在下面</td>
+<td><code>model.api_base</code>——第三方模型的地址</td>
 </tr>
 <tr>
 <td>API key</td>
@@ -2377,43 +2339,17 @@ slash 命令不能带图。</p>
 <td>Max retries</td>
 <td><code>model.max_retries</code></td>
 </tr>
-<tr>
-<td>Cache control</td>
-<td><code>model.set_cache_control</code>（<code>default_end</code> 或空）</td>
-</tr>
-<tr>
-<td>Reasoning effort</td>
-<td><code>model.reasoning_effort</code>——模型想多久：<code>minimal</code>、<code>low</code>、<code>medium</code>、<code>high</code>，留空是模型的默认</td>
-</tr>
-<tr>
-<td>Verbosity</td>
-<td><code>model.verbosity</code>——模型说多少：<code>low</code>、<code>medium</code>、<code>high</code>，留空是模型自己的习惯</td>
-</tr>
-<tr>
-<td>Review model</td>
-<td><code>model.review_model</code>——审查改动用的模型。留空就是会话自己的模型</td>
-</tr>
-<tr>
-<td>Routing</td>
-<td><code>model.routing</code>，一行一个 <code>用途: 模型</code></td>
-</tr>
-<tr>
-<td>Routing rules</td>
-<td><code>model.routing_rules</code>，一行一个 <code>when: purpose</code></td>
-</tr>
-<tr>
-<td>Extra parameters</td>
-<td><code>model.model_kwargs</code> 的其余部分（YAML，原样传给厂商）</td>
-</tr>
 </tbody>
 </table>
+<p>模型的其他设置写在配置文件里，不在页面上：思考预算（<code>model.reasoning_effort</code>）、
+啰嗦程度（<code>model.verbosity</code>）、评审模型（<code>model.review_model</code>）、路由
+（<code>model.routing</code> 和 <code>model.routing_rules</code>）、附加参数（<code>model.model_kwargs</code>）
+和别名文件（<code>model.litellm_config</code>）。<strong>API</strong> 这些都还收：<code>PUT /api/config/model</code>
+照单全收，不传的设置在文件里原样不动。</p>
 <p>这次调用自己的参数（<code>model</code>、<code>messages</code>、<code>tools</code>、<code>stream</code>、<code>stream_options</code>）是 agent 设的：
 页面直接拒绝，不写进一个 agent 起不来的文件。</p>
-<p>每个字段下面写着它来自哪一层：<code>defaults</code>、<code>user</code>、<code>alias</code> 或 <code>env</code>（项目定不了模型）。
-别名文件自己算一层：用户没写的设置用它填，用户写了地址就听用户的。
-页面底部的表格列出所有层，含密钥的项都被抹成 <code>***</code>。页面读的是<strong>配置文件</strong>；命令行上的
-<code>-m</code> 和 <code>-c</code> 是给会话用的，所以 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是
-文件里的那个模型。</p>
+<p>页面读的是<strong>配置文件</strong>；命令行上的 <code>-m</code> 和 <code>-c</code> 是给会话用的，所以
+<code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是文件里的那个模型。</p>
 <p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。它报七件事：</p>
 <table>
 <thead>
@@ -2453,32 +2389,6 @@ slash 命令不能带图。</p>
 </tr>
 </tbody>
 </table>
-<h3 id="test-a-model">测一个模型</h3>
-<p>还有一块独立的面板，不写任何文件，只管试：Endpoint、API Key、Model Name，
-右边一个 <code>Test connection</code> 按钮——就是厂商后台给你表单的那个样子。</p>
-<table>
-<thead>
-<tr>
-<th>字段</th>
-<th>意思</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Endpoint</td>
-<td>厂商的地址。可以直接粘完整的 <code>https://api.example.com/v1/chat/completions</code>：<code>/v1</code> 后面那段会被剪掉，因为 litellm 自己会加</td>
-</tr>
-<tr>
-<td>API Key</td>
-<td>这个地址的 key。点一下显示上面设置里的 key，再点一下收起来</td>
-</tr>
-<tr>
-<td>Model Name</td>
-<td>模型名，按写的发过去：<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code> 或者 <code>MiniMax-M2.7</code>。调谁由服务端来定：先看名字，再看接口地址，最后看模型系列</td>
-</tr>
-</tbody>
-</table>
-<p>地址或 key 留空，就用上面设置里的。结果和表单那边的测试一样，也是那几行。</p>
 <p>三件要记住的事：</p>
 <ul>
 <li><strong>只写用户级文件</strong> <code>~/.coderagent/config.yaml</code>（或者 <code>$MSWEA_CODER_HOME/config.yaml</code>）。
@@ -2488,7 +2398,7 @@ slash 命令不能带图。</p>
 <li><strong>对新会话生效</strong>。跑着的服务保留启动时的配置，新会话建 loop 时重新读一遍文件。
   当前这个会话想立刻换模型，用 <code>/model &lt;名字&gt;</code>。</li>
 <li><strong>环境变量里的 key 也算数</strong>。页面先读配置文件，再读环境：<code>DEEPSEEK_API_KEY</code> 这类变量
-  里的 key 一样会显示出来，<code>api_key_set</code> 是 true，字段下面那行写着来源是 <code>env</code>。
+  里的 key 一样会显示出来，<code>api_key_set</code> 是 true，页面会写明 key 的来源是设置还是环境。
   看哪个变量由模型的厂商决定：<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>，<code>deepseek/…</code> 找 <code>DEEPSEEK_API_KEY</code>。</li>
 <li><strong>key 那一栏</strong>。平时只显示 <code>set (********1234)</code>，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
@@ -2868,8 +2778,8 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <li><strong>浏览器骗不到它</strong>。驱动 agent 的接口要一个跨站请求发不出来的头。</li>
 <li><strong>浏览器看不到工作目录外面</strong>。每个路径都先 <code>resolve()</code>，再跟工作目录和
   <code>permissions.include_dirs</code> 比对；用户写的规则放宽不了这个边界。</li>
-<li><strong>key 只在你要的时候才露面</strong>。设置页平时只拿到 <code>api_key_set</code> 和末四位；分层预览里所有密钥
-  都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
+<li><strong>key 只在你要的时候才露面</strong>。设置页平时只拿到 <code>api_key_set</code> 和末四位；API 交出去的每一层
+  里的密钥都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
   别的站点的页面问不到它。</li>
 <li><strong>API key 只写用户级文件</strong>，绝不写进会进 git 的项目级文件。</li>
 <li><strong>下载探不进内网</strong>。技能页的下载只走 <code>https://</code>，指向内网的主机被拒绝。</li>
@@ -2907,7 +2817,7 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <tr>
 <td>模型配置</td>
 <td>一个文本文件</td>
-<td>一个表单，外加分层预览</td>
+<td>一个表单</td>
 </tr>
 <tr>
 <td>项目文件</td>

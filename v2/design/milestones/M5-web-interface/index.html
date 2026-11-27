@@ -3174,6 +3174,7 @@ executor._prepare()
 <hr>
 <h2 id="8">8. 模型配置页</h2>
 <h3 id="81">8.1 显式字段</h3>
+<p>页面只留决定「调哪个模型」的那几项：</p>
 <table>
 <thead>
 <tr>
@@ -3186,7 +3187,7 @@ executor._prepare()
 <tr>
 <td><code>model_name</code></td>
 <td><code>model.model_name</code></td>
-<td>如 <code>deepseek/deepseek-flash</code></td>
+<td>如 <code>deepseek/deepseek-flash</code>；厂商写在前面或省略都行</td>
 </tr>
 <tr>
 <td><code>api_base</code></td>
@@ -3203,38 +3204,18 @@ executor._prepare()
 <td><code>model.max_retries</code></td>
 <td>死配置，接线见 §8.4</td>
 </tr>
-<tr>
-<td><code>set_cache_control</code></td>
-<td><code>model.set_cache_control</code></td>
-<td><code>default_end</code> / 空（mini 只认这两个）</td>
-</tr>
-<tr>
-<td><code>litellm_config</code></td>
-<td><code>model.litellm_config</code></td>
-<td>别名文件；里面的别名可以当模型名用</td>
-</tr>
-<tr>
-<td><code>routing</code></td>
-<td><code>model.routing</code></td>
-<td><code>{purpose: model}</code></td>
-</tr>
-<tr>
-<td><code>routing_rules</code></td>
-<td><code>model.routing_rules</code></td>
-<td><code>{when, purpose}</code> 行</td>
-</tr>
-<tr>
-<td>附加 kwargs</td>
-<td><code>model.model_kwargs</code> 其余</td>
-<td>自由 YAML/JSON 编辑框</td>
-</tr>
 </tbody>
 </table>
+<p><strong>其余的设置不在页面上</strong>：<code>set_cache_control</code>、<code>litellm_config</code>、<code>routing</code>、
+<code>routing_rules</code>、<code>reasoning_effort</code>、<code>verbosity</code>、<code>review_model</code> 和附加 kwargs
+都写在配置文件里。<code>PUT /api/config/model</code> 这些字段照样收，不传的保持文件里的原样。</p>
 <h3 id="82">8.2 分层预览</h3>
 <p><code>GET /api/config</code> 返回 <code>sources: {"model_name": "user", "api_base": "project", ...}</code>，
 按优先级 defaults &lt; project &lt; user 逐层看，<strong>最后一个定义了该 key 的层</strong>说了算；
 环境变量只在<strong>没有任何层定义</strong>时兜底（目前只有 <code>model_name</code> 与 <code>api_key</code> 走这条路，
 层名报 <code>env</code>）。</p>
+<p><strong>只有 API 有这一层</strong>：页面上不再有「设置来自哪一层」的表格，也不再有每个字段底下
+那行来源——它们和模型表单里那一堆开关一起从页面上拿掉了。</p>
 <h3 id="83">8.3 写入</h3>
 <p>只写 <code>config_home()/"config.yaml"</code>（<code>paths.py:7</code>），<strong>项目级 <code>.coderagent/config.yaml</code> 永不写</strong>
 （它会进 git）。读现有 YAML → 只改 <code>model:</code> 下用户提交的子键 → <code>yaml.safe_dump(sort_keys=False)</code>
