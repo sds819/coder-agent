@@ -1913,14 +1913,15 @@
 <p><a href="https://github.com/sds819/coder-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a></p>
 <p><code>coder</code> 是一个交互式 coding agent：它读代码、写代码、跑命令，然后告诉你它改了什么。
 它能跑在终端里，<strong>也能</strong>跑在浏览器里，还是一个能当库用的东西。</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 <span class="nb">cd</span><span class="w"> </span>my-project
 
 coder<span class="w">                        </span><span class="c1"># 终端界面</span>
 coder<span class="w"> </span>web<span class="w">                    </span><span class="c1"># 同一个 agent，跑在浏览器里</span>
 coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>path/to/suite<span class="w">     </span><span class="c1"># 拿一个任务集跑这个 agent</span>
 </code></pre></div>
-<p>这个包还没发到 PyPI 上，所以从仓库里装。</p>
+<p>这个包已经发到 PyPI 上。想跟着仓库走：
+<code>pip install "coder-agent @ git+https://github.com/sds819/coder-agent"</code>。</p>
 <h2 id="_1">它能做什么</h2>
 <p><strong>工具。</strong> 十四个内置工具：<code>read</code>、<code>write</code>、<code>edit</code>、<code>multi_edit</code> 和 <code>apply_patch</code> 改文件；
 <code>glob</code>、<code>grep</code> 和 <code>ls</code> 找代码；<code>bash</code>、<code>bash_output</code> 和 <code>bash_kill</code> 跑命令（也能放后台跑）；

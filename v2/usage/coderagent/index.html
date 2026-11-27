@@ -2662,24 +2662,23 @@ is the <code>coder-agent</code> package.</p>
 <h2 id="installation">Installation</h2>
 <p>Python 3.10 or newer is needed, and <code>git</code> when the package comes from the
 repository.</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
-<p>That is the whole installation. The package is not on PyPI yet, so it is
-installed from the repository; once it is published, <code>pip install coder-agent</code>
-does the same.</p>
+<p>That is the whole installation. To follow the repository instead:
+<code>pip install "coder-agent @ git+https://github.com/sds819/coder-agent"</code>.</p>
 <p>To change the code, work in a clone:</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sds819/coder-agent.git
 <span class="nb">cd</span><span class="w"> </span>coder-agent
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span>
 </code></pre></div>
 <p>With <code>uv</code> or <code>pipx</code> the package becomes a command on the path:</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
-pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>coder-agent
+pipx<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
 <p>In a conda environment:</p>
 <div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>coder-agent<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
 conda<span class="w"> </span>activate<span class="w"> </span>coder-agent
-pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
 <h3 id="the-extras">The extras</h3>
 <table>
@@ -2712,7 +2711,7 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"code
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full] @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full]"</span>
 </code></pre></div>
 <h3 id="the-files-of-the-installation">The files of the installation</h3>
 <table>
@@ -2991,7 +2990,7 @@ be inside the working directory. A project may not choose the editor: that
 program runs on your machine, so the choice is yours.</p>
 <h2 id="the-web-interface">The web interface</h2>
 <p>The same agent, in the browser:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web] @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web]"</span>
 coder<span class="w"> </span>web
 </code></pre></div>
 <p>The chat page is the terminal interface with a window around it, and the
@@ -3765,7 +3764,7 @@ block an action, rewrite its arguments or add something to the context.</p>
 <h3 id="the-mcp-servers">The MCP servers</h3>
 <p>The tools of an <a href="https://modelcontextprotocol.io">MCP</a> server are available
 under the name <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>. The MCP SDK is optional:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[mcp] @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[mcp]"</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">servers</span><span class="p">:</span>

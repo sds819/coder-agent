@@ -2206,23 +2206,23 @@
 </ul>
 <h2 id="install">安装</h2>
 <p>要 Python 3.10 或更新的版本；从仓库装还要有 <code>git</code>。</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
-<p>这就是全部的安装步骤。这个包还没发到 PyPI 上，所以是从仓库装的；以后发了之后，
-<code>pip install coder-agent</code> 说的是同一件事。</p>
+<p>这就是全部的安装步骤。想跟着仓库走：
+<code>pip install "coder-agent @ git+https://github.com/sds819/coder-agent"</code>。</p>
 <p>要改代码就在克隆里干活：</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sds819/coder-agent.git
 <span class="nb">cd</span><span class="w"> </span>coder-agent
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[full]"</span>
 </code></pre></div>
 <p>用 <code>uv</code> 或 <code>pipx</code> 的话，这个包会变成 path 上的一个命令：</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
-pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>coder-agent
+pipx<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
 <p>在 conda 环境里：</p>
 <div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>coder-agent<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
 conda<span class="w"> </span>activate<span class="w"> </span>coder-agent
-pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent @ git+https://github.com/sds819/coder-agent"</span>
+pip<span class="w"> </span>install<span class="w"> </span>coder-agent
 </code></pre></div>
 <h3 id="extras">可选依赖</h3>
 <table>
@@ -2255,7 +2255,7 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"code
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full] @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[full]"</span>
 </code></pre></div>
 <h3 id="files">装完有哪些文件</h3>
 <table>
@@ -2446,7 +2446,7 @@ coder
 </code></pre></div>
 <p>agent 会自己读代码、改文件、跑测试。写入文件前它会先存一个 checkpoint，可以用 <code>/rewind</code> 退回去。</p>
 <h2 id="web">也可以在浏览器里跑</h2>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web] @ git+https://github.com/sds819/coder-agent"</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"coder-agent[web]"</span>
 coder<span class="w"> </span>web
 </code></pre></div>
 <p>同一个 agent，在浏览器里跑：聊天页是终端界面的窗口版，设置页可以把模型和 API key 配好（API key 只写进用户级的 <code>~/.coderagent/config.yaml</code>，永远不明文回浏览器）。</p>
