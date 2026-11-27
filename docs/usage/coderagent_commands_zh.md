@@ -24,7 +24,7 @@ agent 正在干活的时候敲命令会被拒绝：它会说
 | 命令 | 干什么 | 收什么 |
 |---|---|---|
 | `/help` | 命令的列表 | `[name]` |
-| `/model`（`/m`） | 看或者换模型 | `[model-name]` |
+| `/model`（`/m`） | 看或者换模型，试试设置，或者把它们写下来 | `[model-name\|name=… base=… key=… retries=…\|--test\|--save]` |
 | `/mode` | 看或者换权限模式 | `[default\|acceptEdits\|plan\|bypass\|readonly]` |
 | `/plan` | 切到 plan 模式，什么都不改 | |
 | `/compact` | 现在就压缩对话 | |
@@ -68,6 +68,14 @@ agent 正在干活的时候敲命令会被拒绝：它会说
 
 `/mode bypass` 把护栏全拆了，所以它要问一次：命令只说会做什么，什么都不改。
 `/mode bypass --yes` 才真的切过去。
+
+`/model` 有好几种写法：光敲 `/model` 是看模型的设置，`/model <名字>` 是换掉
+会话的模型，`/model name=… base=… key=… retries=…` 是设会话的设置，
+`/model --test` 是试试这些设置，`/model --save` 是把它们写进用户级的文件
+（`~/.coderagent/config.yaml`）。
+
+试试不写任何东西，写下来也不等试试的结果：暂时还不好使的设置也值得写下来，
+以后再修。终端里的 `coder model` 和网页上的设置页也是这两步。
 
 `/review` 让模型看一遍改动，说出哪里有问题。不带范围时审的是工作区里的改动，
 带范围时（`/review main..HEAD`）审的是那个范围。新加的、还没进版本库的文件

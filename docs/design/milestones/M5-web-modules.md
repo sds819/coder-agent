@@ -23,7 +23,7 @@ M5 那篇讲的是「为什么这么做」。本文讲的是「具体是哪个�
 | 应用装配 | `web/app.py` | 组装 app、挂静态资源与模板 | `create_app(...)` | `web.api`、`web.sessions` |
 | 服务入口 | `web/server.py` | uvicorn 启动 | `serve(...)` | `web.app`、litellm |
 | 页面语言 | `web/i18n.py` | 页面文案与语言选择 | `STRINGS`、`LANGUAGES`、`locale_of` | `paths` |
-| 配置 API | `web/config_api.py` | 配置读取、脱敏、写回、连通性测试 | `model_view`、`write_user_model`、`effective_model`、`test_connection` | `config.loader`、`paths` |
+| 配置 API | `web/config_api.py` | 权限的读取与写回 | `permissions_view` | `config.writer`、`models.settings`、`paths` |
 | 文件浏览 | `web/files.py` | 越界检查、列目录、读文件、diff | `policy_for`、`resolve`、`directory`、`read`、`diff`、`OutsideBounds` | `tools.*` |
 | 前端 | `web/static/app.js` + `templates/{en,zh}/*.html` | 三个页面的渲染与交互 | `render(item)` 等 | 纯 REST/SSE |
 
@@ -347,13 +347,25 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 
 ---
 
-## 9. `web/config_api.py` — 配置 API
+## 9. 配置 API
+
+**模型的那部分搬进核心里了**：设置页、终端和终端界面共用一份实现。
+
+| 模块 | 干什么 | 函数 |
+|---|---|---|
+| `models/settings.py` | 多层合并、脱敏后的模型设置 | `hint`、`model_view`、`effective_model`、`effective_api_key`、`provider_of`、`env_api_key` |
+| `models/check.py` | 试机 | `test_connection`、`check_tools`、`check_litellm_config`、`report_text` |
+| `config/writer.py` | 写用户级 `config.yaml` | `user_config_path`、`write_user_model`、`write_user_permissions` |
+| `web/config_api.py` | 权限的读取与写回 | `permissions_view`、`ENV_KEYS`（权限的常量在 `config/writer.py`） |
+
+`config/` 不 import `web/`；`models/` 只 import `config.loader`——所以这三个模块
+放得下，没有环。
 
 ### 9.1 常量
 
 | 名字 | 含义 |
 |---|---|
-| `SECRET_FIELDS = ("api_base", "api_key")` | 模型里自有字段的那两个；旧地方是 `model_kwargs` |
+| `SECRET_FIELDS = ("api_base", "api_key")` | 模型里自有字段的那两个；旧地方是 `model_kwargs`（在 `config/writer.py`） |
 | `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；从 `models/provider.py` 的 `PROVIDERS` 来 |
 
 ### 9.2 函数
@@ -397,10 +409,12 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 
 ### 9.4 `test_connection(effective)`
 
-- 临时把 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT` 设成 `1`（**错的 key 要立刻失败，不是重试十次**），
-  结束后恢复原值。
-- 成功：`{"ok": True, "content": 前 200 字, "cost", "latency_ms"}`
+- 后端建的时候 `max_retries=1`（**错的 key 要立刻失败，不是重试十次**）。
+- 报告的键：`ok`、`resolved`（模型、厂商、别名、地址、key 有没有、掩码、来源、环境变量名）、
+  `file`（别名文件查得怎么样）、`error`、`content`（前 200 字）、`cost`、`latency_ms`、
+  `tools`（模型会不会调工具）。
 - 失败：`{"ok": False, "error": "类型: 消息"}` —— **不抛异常**。
+- **不写任何东西**：写下来是另一步（`config/writer.py`）。
 
 ---
 
@@ -562,7 +576,7 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 | 新的事件类型 | `web/events.py` 的 `normalize` 加一个分支 + `app.js` 的 `render` 加一个 case |
 | 新的 API 端点 | `web/api.py` 加路由（写接口记得挂 `Depends(require_client)`） |
 | 新的内置命令 | `ui/commands/builtin.py` —— web **自动就有**（`/api/commands` 与 `run()` 都是复用） |
-| 新的模型设置 | `config_api.py` 的 `model_view` + `write_user_model` + 设置页加字段 |
+| 新的模型设置 | `models/settings.py` 的 `model_view` + `config/writer.py` 的 `write_user_model` + 设置页加字段 |
 | 新的页面 | `app.py` 加 `templates.TemplateResponse` + `mkdocs.yml` nav |
 
 ---

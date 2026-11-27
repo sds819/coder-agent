@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from coderagent.config.loader import load_config
 from coderagent.core.session import SessionStore
+from coderagent.paths import config_home
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.ui.cli import app, main_impl
 
@@ -89,6 +90,43 @@ def test_help_is_available():
     assert "--output-format" in help_text
     assert "--profile" in help_text
     assert "--output-schema" in help_text
+
+
+def _model(*arguments: str, tmp_path=None) -> "CliRunner":
+    """The command of the model, with the environment of the user out of the way."""
+    return CliRunner().invoke(app, ["model", *arguments, "--cwd", str(tmp_path or ".")])
+
+
+def test_the_model_command_shows_the_settings(tmp_path, monkeypatch):
+    monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
+
+    result = _model(tmp_path=tmp_path)
+
+    assert result.exit_code == 0
+    assert "model:" in result.output
+    assert "provider:" in result.output
+    assert "api key:" in result.output
+    assert str(config_home() / "config.yaml") in result.output
+
+
+def test_the_model_command_writes_the_settings(tmp_path, monkeypatch):
+    monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
+
+    result = _model("--name", "deepseek/deepseek-flash", tmp_path=tmp_path)
+
+    assert result.exit_code == 0
+    assert "deepseek/deepseek-flash" in (config_home() / "config.yaml").read_text(encoding="utf-8")
+
+
+def test_the_try_out_fails_and_writes_nothing(tmp_path, monkeypatch):
+    """The try-out and the writing are two steps: the try-out writes nothing."""
+    monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
+
+    result = _model("--test", "--name", "not-a-real-provider/nope", tmp_path=tmp_path)
+
+    assert result.exit_code == 1
+    assert "error" in result.output
+    assert not (config_home() / "config.yaml").exists()
 
 
 def test_the_answer_fits_the_schema(tmp_path, monkeypatch):

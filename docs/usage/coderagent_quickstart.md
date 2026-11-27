@@ -117,6 +117,26 @@ coder -m deepseek/deepseek-flash --task "..."
 模型的优先级是：**配置文件里的 `model.model_name` > 环境变量 `MSWEA_MODEL_NAME` > 内置默认值**。
 没配置时默认用 `anthropic/claude-sonnet-4-5`。
 
+### 把模型写下来 {#model-write}
+
+配置也可以直接从终端写进用户级的文件（`~/.coderagent/config.yaml`）：
+
+```bash
+coder model                                                   # 看现在的设置
+coder model --name X --api-base Y --api-key Z --max-retries N # 写下来
+coder model --test                                            # 试试保存下来的设置
+coder model --test --name X                                   # 试试这些，什么都不写
+```
+
+试试和写下来是两件事：`--test` 什么也不写，写下来也不等试试的结果——暂时还
+不好使的设置也值得写下来，以后再修。试试失败时退出码是 1，脚本能看出来。
+
+写的是用户级的文件，**项目级的文件永远不会被写**。命令行上的 key 会留在 shell
+的历史里，放在厂商的环境变量里更安全。
+
+终端界面里的 `/model` 有同样的三件事：`/model --test` 试试，`/model --save` 写下来，
+`/model name=… base=… key=… retries=…` 设会话的设置。网页上的设置页也一样。
+
 ### 换别的厂商 {#providers}
 
 litellm 支持的模型都能用，key 从同名环境变量读：
@@ -302,6 +322,7 @@ rules:
 | `/help` | 所有命令的列表 |
 | `/plan` | 切成只读模式，先让它给出方案 |
 | `/mode` | 看/切权限模式 |
+| `/model` | 看/切模型，试试设置（`--test`），或者写下来（`--save`） |
 | `/cost` | 这次会话花了多少钱，花在哪 |
 | `/diff` | 看工作区的改动 |
 | `/review` | 让模型审一遍改动（`/review main..HEAD` 审一个范围） |
@@ -439,7 +460,8 @@ python -c "import coderagent.ui.cli, os; print(os.getenv('ANTHROPIC_API_KEY'))"
 `/rewind` 看 checkpoint，带 id 就把文件和对话一起退回去。默认保留最近 50 个（`checkpoint.keep`）。
 
 **「想换个模型」**
-会话里 `/model <名字>`，或者 `coder -m <名字>`。也可以在配置里写 `model.routing`，让压缩、总结、子 agent 各自用便宜的模型。
+会话里 `/model <名字>`，或者 `coder -m <名字>`。想让它记住，用 `coder model --name <名字>`
+写进用户级的配置，或者会话里 `/model --save`。也可以在配置里写 `model.routing`，让压缩、总结、子 agent 各自用便宜的模型。
 
 **「agent 好像忘了项目的事」**
 会话结束时它会把值得记的事实写进 `.coderagent/memory/projects.md`。用 `/memory` 看。也可以直接写 `AGENTS.md` 或 `CLAUDE.md`，agent 开工前会读。

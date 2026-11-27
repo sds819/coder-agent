@@ -538,7 +538,7 @@ coder export           # 导出会话 trace
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -> list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写用户级 config.yaml、脱敏、连通性测试
+├── config_api.py    # 权限的读取与写回（模型设置在核心里：models/settings.py、models/check.py、config/writer.py）
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：地区判定 + 浏览器文案
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -778,7 +778,9 @@ src/coderagent/
 │   ├── streaming.py         # ModelEvent, 增量 tool_call 拼接
 │   ├── router.py            # ModelRouter, 路由规则
 │   ├── backends.py          # litellm 后端包装
-│   └── litellm_config.py    # litellm 别名文件（model_list）
+│   ├── litellm_config.py    # litellm 别名文件（model_list）
+│   ├── settings.py          # 模型设置：多层合并、脱敏（终端 / TUI / 网页共用）
+│   └── check.py             # 模型的试机：报告与文字
 ├── tools/
 │   ├── base.py              # Tool, ToolResult, ToolContext
 │   ├── registry.py          # ToolRegistry（schema 生成 / 预算裁剪）
@@ -812,7 +814,7 @@ src/coderagent/
 │   ├── sessions.py          # SessionRuntime / SessionRegistry：线程、环形缓冲、turn
 │   ├── events.py            # normalize(Event) -> 前端条目
 │   ├── approver.py          # WebApprover：阻塞式审批
-│   ├── config_api.py        # 配置读取、脱敏、写回、连通性测试
+│   ├── config_api.py        # 权限的读取与写回（模型设置在核心里）
 │   ├── files.py             # 文件浏览与 diff（路径越界 403）
 │   ├── i18n.py              # 页面语言与地区判定
 │   ├── server.py            # serve()：uvicorn 入口
@@ -821,6 +823,7 @@ src/coderagent/
 ├── config/
 │   ├── schema.py            # pydantic 配置模型
 │   ├── loader.py            # 四层配置合并
+│   ├── writer.py            # 写用户级 config.yaml（终端 / TUI / 网页共用）
 │   └── defaults.yaml
 ├── testing/
 │   └── scripted_model.py    # 脚本化假模型（测试用）

@@ -71,32 +71,97 @@ def _line(name: str, description: str, usage: str) -> str:
     return f"{line}  {usage}" if usage else line
 
 
+MODEL_SETTINGS = ("name", "base", "key", "retries")
+"""The settings of the model that `/model` can set."""
+
+
 def _model(context: CommandContext, argument: str) -> None:
+    from coderagent.config import writer
+    from coderagent.models import check, settings
+
+    argument = argument.strip()
     if not argument:
-        routing = ", ".join(f"{name} -> {target}" for name, target in context.config.model.routing.items())
-        effort = context.config.model.reasoning_effort
-        verbosity = context.config.model.verbosity
+        model = context.config.model
+        routing = ", ".join(f"{name} -> {target}" for name, target in model.routing.items())
         context.say(
-            f"model: {context.config.model.model_name}"
-            f"\neffort: {effort or 'the default of the model'}"
-            f"\nverbosity: {verbosity or 'the habit of the model'}"
+            settings.view_text(settings.model_view_of(model), str(writer.user_config_path()))
+            + f"\neffort: {model.reasoning_effort or 'the default of the model'}"
+            + f"\nverbosity: {model.verbosity or 'the habit of the model'}"
             + (f"\nrouting: {routing}" if routing else "\n(no routing configured)")
         )
         return
+    if argument == "--test":
+        """The try-out and the saving are two steps: the try-out writes nothing."""
+        report = check.test_connection(settings.effective_of(context.config.model, {}))
+        context.say(check.report_text(report))
+        return
+    if argument == "--save":
+        path = writer.write_user_model(_model_payload(context.config.model))
+        context.say(f"Wrote {path}")
+        return
+    if "=" in argument:
+        _set_model(context, argument)
+        return
     context.config.model.model_name = argument
+    _rebuild_model(context)
+    context.say(f"model: {context.loop.model.backend.model_name}")
+
+
+def _model_payload(model) -> dict:
+    """The settings of the session, as they are written down."""
+    payload = {
+        "model_name": model.model_name,
+        "api_base": model.api_base,
+        "max_retries": model.max_retries,
+    }
+    if model.api_key:
+        payload["api_key"] = model.api_key
+    return payload
+
+
+def _set_model(context: CommandContext, argument: str) -> None:
+    """Set the settings of the session: `/model name=gpt-4o base=https://… key=sk-… retries=3`."""
+    from coderagent.models.settings import api_base_of
+
+    values = {}
+    for part in argument.split():
+        key, _, value = part.partition("=")
+        values[key.strip()] = value.strip()
+    unknown = [key for key in values if key not in MODEL_SETTINGS]
+    if unknown:
+        context.say(f"Unknown setting '{unknown[0]}'. Use one of: {', '.join(MODEL_SETTINGS)}.")
+        return
+    if "retries" in values and not values["retries"].isdigit():
+        context.say(f"'{values['retries']}' is not a number of retries.")
+        return
+    model = context.config.model
+    if "name" in values:
+        model.model_name = values["name"]
+    if "base" in values:
+        model.api_base = api_base_of(values["base"])
+    if "key" in values:
+        model.api_key = values["key"]
+    if "retries" in values:
+        model.max_retries = int(values["retries"])
+    _rebuild_model(context)
+    context.say(f"model: {context.loop.model.backend.model_name}")
+
+
+def _rebuild_model(context: CommandContext) -> None:
+    """Build the backend of the session again: the name, the address or the key changed."""
+    model = context.config.model
     backend = LiteLLMBackend(
-        argument,
-        model_kwargs=context.config.model.model_kwargs,
-        litellm_config=context.config.model.litellm_config,
-        reasoning_effort=context.config.model.reasoning_effort,
-        max_retries=context.config.model.max_retries,
-        api_key=context.config.model.api_key,
-        api_base=context.config.model.api_base,
+        model.model_name,
+        model_kwargs=model.model_kwargs,
+        litellm_config=model.litellm_config,
+        reasoning_effort=model.reasoning_effort,
+        max_retries=model.max_retries,
+        api_key=model.api_key,
+        api_base=model.api_base,
     )
     context.loop.model.backend = backend
     if context.loop.router is not None:
-        context.loop.router.override = argument
-    context.say(f"model: {backend.model_name}")
+        context.loop.router.override = model.model_name
 
 
 def _mode(context: CommandContext, argument: str) -> None:
@@ -593,7 +658,13 @@ def _exit(context: CommandContext, argument: str) -> None:
 
 register(Command(name="help", description="List the commands", handler=_help, usage="[name]"))
 register(
-    Command(name="model", description="Show or switch the model", handler=_model, aliases=["m"], usage="[model-name]")
+    Command(
+        name="model",
+        description="Show or switch the model",
+        handler=_model,
+        aliases=["m"],
+        usage="[model-name|name=… base=… key=… retries=…|--test|--save]",
+    )
 )
 register(Command(name="mode", description="Show or switch the permission mode", handler=_mode, usage=f"[{MODES}]"))
 register(Command(name="plan", description="Switch to plan mode, where nothing is changed", handler=_plan))

@@ -1292,6 +1292,24 @@ function keySource(resolved) {
   return t("not_set");
 }
 
+function reportText(report) {
+  // The report of the try-out of the model: what it resolved to, and what it did.
+  const resolved = report.resolved || {};
+  const lines = [];
+  lines.push(`${t("field_model")}: ${resolved.model_name || ""}`);
+  lines.push(t("provider_is", { provider: resolved.provider || "" }));
+  if (resolved.api_base) lines.push(`${t("field_api_base")}: ${resolved.api_base}`);
+  if (report.error) {
+    lines.push(t("error", { message: report.error }));
+    return lines.join("\n");
+  }
+  lines.push(t("test_latency", { ms: report.latency_ms || 0 }));
+  lines.push(t("test_cost", { cost: (report.cost || 0).toFixed(6) }));
+  const tools = report.tools || {};
+  lines.push(tools.ok ? t("test_tools_ok") : t("test_tools_bad", { message: tools.error || "" }));
+  return lines.join("\n");
+}
+
 function wireApiKey(input, placeholder, note) {
   // A click shows the key of the settings, a second click hides it again.
   let revealed = false;
@@ -1387,6 +1405,22 @@ async function startSettings() {
       message.textContent = t("error", { message: error.message });
     }
   };
+
+  const testButton = document.getElementById("model-test");
+  const testResult = document.getElementById("model-test-result");
+  if (testButton && testResult) {
+    /* The test tries the settings of the form out. It writes nothing: saving is
+       a step of its own. */
+    testButton.onclick = async () => {
+      testResult.textContent = t("testing");
+      try {
+        const report = await api("/api/config/model/test", { method: "POST", body: payload() });
+        testResult.textContent = reportText(report);
+      } catch (error) {
+        testResult.textContent = t("error", { message: error.message });
+      }
+    };
+  }
 
   document.getElementById("permissions-form").onsubmit = async (event) => {
     event.preventDefault();

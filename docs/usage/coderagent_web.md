@@ -129,11 +129,19 @@ The page reads the **configuration files**; the `-m` and `-c` of the command
 line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the
 page still shows the model of the files.
 
-**Testing a model.** The page has no button for it: a test costs two calls to
-the model (one to answer, one to call a tool), and the chat page uses the
-settings anyway. The **API** still has it — `POST /api/config/model/test` with
-the settings of the form sends one cheap call to the model and reports seven
-things:
+**Testing a model.** The page has a **Test** button next to **Save**: it sends
+the settings of the form to the model and reports what came back — the model
+the call went to, the provider, the address, the latency, the cost, whether the
+model calls the tools (without that the agent cannot work), and the error, if
+there is one.
+
+The test **writes nothing**. Saving is a step of its own: **Save** never waits
+for the test, and a setting that does not work yet is worth writing down, to be
+fixed later. The same two steps are in the terminal (`coder model`) and in the
+terminal interface (`/model --test` and `/model --save`).
+
+The **API** has it too — `POST /api/config/model/test` with the settings of the
+form sends one cheap call to the model and reports seven things:
 
 | What | What it tells you |
 |---|---|

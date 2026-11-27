@@ -13,6 +13,7 @@ from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubagentSpec, load_subagents
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
+from coderagent.paths import config_home
 from coderagent.skills.install import Installed, write_lock
 from coderagent.skills.source import Source
 from coderagent.testing.factory import build_executor
@@ -184,6 +185,45 @@ def test_the_thinking_budget_is_shown_and_survives_a_switch_of_the_model(tmp_pat
 
     _run(context, output, "/model other/model")
     assert context.loop.model.backend.model_kwargs["reasoning_effort"] == "high"
+
+
+def test_the_settings_of_the_model_are_set(tmp_path):
+    context, output = _context(tmp_path)
+
+    _run(context, output, "/model name=other/model base=https://api.example.com/v1 key=sk-secret retries=4")
+
+    assert context.config.model.model_name == "other/model"
+    assert context.config.model.api_base == "https://api.example.com/v1"
+    assert context.config.model.api_key == "sk-secret"
+    assert context.config.model.max_retries == 4
+    assert context.loop.model.backend.model_name == "other/model"
+    """The backend of the session is built again: the model changed."""
+
+
+def test_a_setting_that_does_not_exist_is_refused(tmp_path):
+    context, output = _context(tmp_path)
+
+    assert "Unknown setting 'colour'" in _run(context, output, "/model colour=blue")
+    assert context.config.model.model_name == ""
+
+
+def test_the_model_is_written_to_the_user_file(tmp_path):
+    context, output = _context(tmp_path)
+    context.config.model.model_name = "other/model"
+
+    _run(context, output, "/model --save")
+
+    assert "other/model" in (config_home() / "config.yaml").read_text(encoding="utf-8")
+
+
+def test_the_model_of_the_session_is_tried_out(tmp_path):
+    context, output = _context(tmp_path)
+    context.config.model.model_name = "not-a-real-provider/nope"
+
+    answer = _run(context, output, "/model --test")
+
+    assert "error" in answer
+    """The model does not exist, so the report says why."""
 
 
 def test_the_todos_are_shown(tmp_path):

@@ -250,6 +250,49 @@ def _warn_pending(cwd: Path) -> None:
         )
 
 
+@app.command("model")
+def model_command(
+    name: str | None = typer.Option(None, "--name", help="The name of the model"),
+    api_base: str | None = typer.Option(None, "--api-base", help="The address of the provider"),
+    api_key: str | None = typer.Option(None, "--api-key", help="The key of the provider"),
+    max_retries: int | None = typer.Option(None, "--max-retries", help="How many times a call is tried at most"),
+    test: bool = typer.Option(False, "--test", help="Try the model out, without writing anything"),
+    cwd: Path = typer.Option(Path("."), "--cwd", help="The directory the settings are read from"),
+) -> None:
+    """Show, write down or try out the model.
+
+    The try-out and the writing are two steps: `--test` never writes, and the
+    writing never waits for the try-out. A configuration that does not work yet
+    is worth writing down, to be fixed later.
+
+    The key on the command line stays in the history of the shell: the
+    environment variable of the provider is the safer place for it.
+    """
+    from coderagent.config import writer
+    from coderagent.models import check, settings
+
+    payload = {
+        key: value
+        for key, value in (
+            ("model_name", name),
+            ("api_base", api_base),
+            ("api_key", api_key),
+            ("max_retries", max_retries),
+        )
+        if value is not None
+    }
+    if test:
+        report = check.test_connection(settings.effective_model(cwd, payload))
+        typer.echo(check.report_text(report))
+        if not report["ok"]:
+            raise typer.Exit(code=1)
+        return
+    if payload:
+        typer.echo(f"Wrote {writer.write_user_model(payload)}")
+        return
+    typer.echo(settings.view_text(settings.model_view(cwd), str(writer.user_config_path())))
+
+
 @app.command()
 def web(
     cwd: Path = typer.Option(Path("."), "--cwd", help="The directory the agent works in"),

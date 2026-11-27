@@ -50,7 +50,7 @@ src/coderagent/web/
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -> list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写 ~/.coderagent/config.yaml、脱敏、连通性测试
+├── config_api.py    # 权限的读取与写回（模型的设置与试机在核心里）
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：STRINGS、LANGUAGES、地区判断与 cookie
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -237,7 +237,7 @@ executor._prepare()
 | `model_name` | `model.model_name` | 如 `deepseek/deepseek-flash`；厂商写在前面或省略都行 |
 | `api_base` | `model.api_base` | **显式字段**，因为它直通 litellm |
 | `api_key` | `model.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
-| `max_retries` | `model.max_retries` | 死配置，接线见 §8.4 |
+| `max_retries` | `model.max_retries` | 死配置，接线见 §8.5 |
 
 **其余的设置不在页面上**：`set_cache_control`、`litellm_config`、`routing`、
 `routing_rules`、`reasoning_effort`、`verbosity`、`review_model` 和附加 kwargs
@@ -251,13 +251,17 @@ executor._prepare()
 `key_env`、`max_retries`。
 
 **权限还留着来源**：`permissions_view()` 的 `source` 按 `config_layers()` 逐层判断每个
-权限字段来自哪一层（见 §8.5）。
+权限字段来自哪一层（见 §8.6）。
 
 ### 8.3 写入
 
 只写 `config_home()/"config.yaml"`（`paths.py:7`），**项目级 `.coderagent/config.yaml` 永不写**
 （它会进 git）。读现有 YAML → 只改 `model:` 下用户提交的子键 → `yaml.safe_dump(sort_keys=False)`
 写回。未知顶层段（`agent:`/`tools:`/`mcp:`…）与未知 `model:` 子键原样保留。
+
+**这段逻辑在核心里，不在 web 层**：`config/writer.py` 的 `write_user_model()` /
+`write_user_permissions()`。终端的 `coder model`、TUI 的 `/model --save` 和页面写的是同一个
+文件，走的是同一份实现。
 
 **已知代价**：注释会丢（不引 ruamel）。
 
@@ -267,14 +271,27 @@ executor._prepare()
 `load_config()` 生效（`web/sessions.py` 的 `SessionRegistry.create()`）。页面要提示
 「新配置对新会话生效，当前会话用 `/model <name>` 切换」。
 
-### 8.4 `max_retries` 的接线
+### 8.4 试机按钮
+
+页面上 **Save** 旁边有个 **Test** 按钮（`id="model-test"`，结果在 `id="model-test-result"`）：
+把表单的值发给 `POST /api/config/model/test`，把报告显示出来——打到哪个模型、哪个厂商、
+延迟多少、花了多少钱、模型会不会调工具、错在哪。
+
+**试机不写任何东西，写下来也不等试机**：试试和保存是两个步骤，一个暂时还不好使的设置
+也值得写下来，以后再修。**Save** 的那条路一点没动。
+
+试机本身在核心里：`models/check.py` 的 `test_connection()`（只试一次，`max_retries=1`），
+读设置用 `models/settings.py` 的 `effective_model()`。终端的 `coder model --test` 和
+TUI 的 `/model --test` 用的是同两个函数。
+
+### 8.5 `max_retries` 的接线
 
 mini 的 retry 次数来自 `$MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
 （`minisweagent/models/utils/retry.py:21`），不是 `model.max_retries`。
 在 `web/server.py` 建模型前把这个环境变量设成 `model.max_retries`，一行解决；
 否则表单里就是个摆设。
 
-### 8.5 权限设置
+### 8.6 权限设置
 
 权限分两层，作用不同：
 
@@ -283,7 +300,7 @@ mini 的 retry 次数来自 `$MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
 | 设置页 | 用户级配置文件的 `permissions:` 段 | **新会话** |
 | 聊天页检查器 | 当前会话的 `PermissionPolicy` | **立刻** |
 
-**写**：`web/config_api.py` 的 `write_user_permissions()`，和 `write_user_model()` 同构——
+**写**：`config/writer.py` 的 `write_user_permissions()`，和 `write_user_model()` 同构——
 只写用户级文件，只改 `permissions.mode` / `deny_paths` / `include_dirs`，
 **`permissions.rules` 原样保留**（规则是审批卡片上 `Always allow` 按钮写的，不是页面的事）。
 

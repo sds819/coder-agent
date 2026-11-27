@@ -26,7 +26,7 @@ does not run. Wait for the turn to end, or press `ctrl+c` to stop the agent.
 | Command | What it does | What it takes |
 |---|---|---|
 | `/help` | The list of the commands | `[name]` |
-| `/model` (`/m`) | Show or switch the model | `[model-name]` |
+| `/model` (`/m`) | Show or switch the model, try the settings out, or write them down | `[model-name\|name=… base=… key=… retries=…\|--test\|--save]` |
 | `/mode` | Show or switch the permission mode | `[default\|acceptEdits\|plan\|bypass\|readonly]` |
 | `/plan` | Switch to plan mode, where nothing is changed | |
 | `/compact` | Compact the conversation now | |
@@ -71,6 +71,16 @@ at zero, whatever the session before it spent.
 
 `/mode bypass` takes the guards off, so it asks once: the command says what it
 would do and changes nothing. `/mode bypass --yes` switches the mode on.
+
+`/model` has several forms: on its own it shows the settings of the model,
+`/model <name>` switches the model of the session, `/model name=… base=… key=…
+retries=…` sets the settings of the session, `/model --test` tries them out and
+`/model --save` writes them to the user level file (`~/.coderagent/config.yaml`).
+
+The try-out writes nothing, and the saving does not wait for the try-out: a
+setting that does not work yet is worth writing down, to be fixed later. The
+same two steps are in the terminal (`coder model`) and in the browser (the
+settings page).
 
 `/review` asks the model to look at the changes and say what is wrong with them.
 Without a range it reviews the working tree; with one (`/review main..HEAD`) it

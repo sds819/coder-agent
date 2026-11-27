@@ -206,6 +206,12 @@ sessions keeps it.
   that model when the routing has no `review` of its own.
 - **Retries** — `max_retries`, three by default, the same in the terminal and in
   the browser.
+- **Configured from anywhere** — the terminal (`coder model`), the terminal
+  interface (`/model`) and the browser (the settings page) write the same user
+  level file, and each of them can try the settings out.
+- **The test never decides the save** — the try-out says whether the settings
+  work and writes nothing; the writing does not wait for it, so a setting that
+  does not work yet is worth writing down, to be fixed later.
 - **Routing by purpose** — a different model for `main`, `cheap`, `summarize`,
   `reflect`, `strong` and `review`.
 - **Routing by the state of the session** — a rule like `tokens > 50000`
@@ -1233,8 +1239,9 @@ and `○` (pending).
   that comes late reads the whole answer.
 - **The settings page** — the model as a form: the name, the address, the key and
   the retries. The rest of the model is written in the configuration file.
-- **The connectivity test** — only in the API (`POST /api/config/model/test`):
-  one cheap call, and it says whether the model calls the tools at all.
+- **The connectivity test** — a **Test** button on the settings page: one cheap
+  call, it says whether the model calls the tools at all, and it writes nothing.
+  **Save** is a step of its own and does not wait for the test.
 - **The permissions in two places** — the settings page for the next
   session, the chat page for the session that is running, right away.
 - **The approvals in the browser** — the same three answers.

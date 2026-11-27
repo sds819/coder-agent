@@ -13,12 +13,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError
 
+from coderagent.config import writer
 from coderagent.config.loader import problems
 from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.content import check_image
 from coderagent.core.session import session_priced
 from coderagent.core.subagent import effective_turns, load_subagents
 from coderagent.core.telemetry import collect
+from coderagent.models import check, settings
 from coderagent.models.backends import priced_name
 from coderagent.tools.permissions import ApprovalDecision, PermissionMode
 from coderagent.ui.commands import COMMANDS, load_builtins
@@ -356,9 +358,9 @@ def get_config(request: Request) -> dict[str, Any]:
     cwd = request.app.state.cwd
     try:
         return {
-            "model": config_api.model_view(cwd),
+            "model": settings.model_view(cwd),
             "permissions": config_api.permissions_view(cwd, server_mode=_server_mode(request)),
-            "user_config_path": str(config_api.user_config_path()),
+            "user_config_path": str(writer.user_config_path()),
         }
     except ValidationError as error:
         """A configuration that is not understood is the fault of the user, not of the server."""
@@ -369,23 +371,23 @@ def get_config(request: Request) -> dict[str, Any]:
 def put_config(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Write the model settings to the user level configuration file."""
     try:
-        path = config_api.write_user_model(body)
+        path = writer.write_user_model(body)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    return {"ok": True, "path": str(path), "model": config_api.model_view(request.app.state.cwd)}
+    return {"ok": True, "path": str(path), "model": settings.model_view(request.app.state.cwd)}
 
 
 @router.get("/config/model/key")
 def get_config_key(request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """The key of the model, so that it can be read in the settings page."""
-    return {"api_key": config_api.effective_api_key(request.app.state.cwd)}
+    return {"api_key": settings.effective_api_key(request.app.state.cwd)}
 
 
 @router.put("/config/permissions")
 def put_permissions(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Write the permission settings to the user level configuration file."""
     try:
-        path = config_api.write_user_permissions(body)
+        path = writer.write_user_permissions(body)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     return {
@@ -398,7 +400,7 @@ def put_permissions(body: dict, request: Request, _: None = Depends(require_clie
 @router.post("/config/model/test")
 def check_model(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Try the model out, to see whether the settings work."""
-    return config_api.test_connection(config_api.effective_model(request.app.state.cwd, body))
+    return check.test_connection(settings.effective_model(request.app.state.cwd, body))
 
 
 # -- the files -------------------------------------------------------------

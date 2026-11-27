@@ -129,6 +129,28 @@ configuration:
 coder -c model.model_name=deepseek/deepseek-flash -c permissions.mode=plan
 ```
 
+### The model
+
+`coder model` is a command of its own: it shows the settings of the model, writes
+them down, or tries them out.
+
+```bash
+coder model                                                   # show the settings
+coder model --name X --api-base Y --api-key Z --max-retries N # write them down
+coder model --test                                            # try the saved ones out
+coder model --test --name X                                   # try these out, write nothing
+```
+
+The try-out and the writing are two steps: `--test` never writes anything, and
+the writing never waits for the try-out. A configuration that does not work yet
+is worth writing down, to be fixed later. The exit code is 1 when the try-out
+fails, so a script can tell.
+
+The settings are written to the user level file (`~/.coderagent/config.yaml`); the
+project level file is never written. The key on the command line stays in the
+history of the shell: the environment variable of the provider is the safer place
+for it.
+
 ### The output
 
 While the agent works, the terminal shows dots that grow and shrink. The line
@@ -375,6 +397,15 @@ The layers are the same for the numbers: a project may lower the ceilings of a
 session (`agent.max_turns` and the like), never raise them.
 
 ### The model
+
+The model can be written down from the terminal, from the terminal interface and
+from the browser: `coder model`, `/model --save` and the settings page write the
+same file, the user level one (`~/.coderagent/config.yaml`). The project level
+file is never written.
+
+The try-out is a step of its own in all three: it says whether the settings work
+and it writes nothing. A configuration that does not work yet is worth writing
+down, to be fixed later.
 
 `model.model_name` is the model of the agent. `model.api_key` and `model.api_base`
 are the key and the address of the provider; they have a field of their own, so

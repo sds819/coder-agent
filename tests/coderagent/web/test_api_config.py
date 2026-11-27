@@ -5,6 +5,8 @@ import yaml
 
 pytest.importorskip("fastapi")
 
+from coderagent.config import writer  # noqa: E402
+from coderagent.models import check, settings  # noqa: E402
 from coderagent.paths import config_home  # noqa: E402
 from coderagent.web.config_api import ENV_KEYS  # noqa: E402
 
@@ -153,7 +155,7 @@ def test_a_name_that_is_not_an_alias_is_reported(make_client, tmp_path):
 
 
 def test_the_endpoint_is_cut_at_the_v1():
-    from coderagent.web.config_api import api_base_of
+    from coderagent.models.settings import api_base_of
 
     assert api_base_of("https://api.nengpa.com/v1/chat/completions") == "https://api.nengpa.com/v1"
     assert api_base_of("https://api.nengpa.com/v1/completions") == "https://api.nengpa.com/v1"
@@ -170,12 +172,10 @@ def test_the_full_endpoint_is_written_cut(make_client):
 
 
 def test_the_test_panel_uses_the_key_of_the_settings_when_there_is_none(make_client, tmp_path):
-    from coderagent.web import config_api
-
     client = make_client()
     client.put("/api/config/model", json={"api_key": "sk-secret-value"})
 
-    effective = config_api.effective_model(tmp_path, {"model_name": "x/y"})
+    effective = settings.effective_model(tmp_path, {"model_name": "x/y"})
 
     assert effective["model_kwargs"]["api_key"] == "sk-secret-value"
 
@@ -270,15 +270,13 @@ def test_the_page_says_the_key_is_set_when_it_comes_from_the_environment(make_cl
 
 def test_the_test_panel_counts_the_key_of_the_environment(monkeypatch):
     """The panel of the test says which key is used: the one of the environment counts too."""
-    from coderagent.web import config_api
-
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
     effective = {
         "model_name": "deepseek/deepseek-flash",
         "model_kwargs": {"api_base": "http://127.0.0.1:1/v1"},
     }
 
-    report = config_api.test_connection(effective)
+    report = check.test_connection(effective)
 
     assert report["resolved"]["api_key_set"] is True
     assert report["resolved"]["api_key_hint"] == "********" + "sk-env-value"[-4:]
@@ -305,8 +303,8 @@ def test_a_provider_without_a_key_in_the_environment_has_no_key(make_client, mon
 
 
 def test_the_model_has_to_call_the_tools():
+    from coderagent.models.check import check_tools
     from coderagent.testing.scripted_model import ScriptedModel
-    from coderagent.web.config_api import check_tools
 
     call = {"id": "c1", "type": "function", "function": {"name": "ping", "arguments": "{}"}}
     assert check_tools(ScriptedModel([{"role": "assistant", "content": "", "tool_calls": [call]}]))["ok"] is True
@@ -366,12 +364,23 @@ def test_the_page_has_no_second_panel_to_test_a_model(make_client):
     assert 'id="layers"' not in page
 
 
-def test_the_page_has_no_button_to_test_the_model(make_client):
-    """The test costs two calls to the model; the settings are used by the chat page anyway."""
+def test_the_page_has_a_button_to_test_the_model(make_client):
+    """The button tries the settings of the form out. It writes nothing."""
     page = make_client().get("/settings").text
 
+    assert 'id="model-test"' in page
+    assert 'id="model-test-result"' in page
     assert 'id="test-connection"' not in page
-    assert 'id="model-test"' not in page
+
+
+def test_the_settings_are_written_by_the_core(make_client, tmp_path):
+    """The page does not write the file itself any more: the core does."""
+    client = make_client()
+
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    assert writer.user_config_path() == config_home() / "config.yaml"
+    assert settings.model_view(tmp_path)["model_name"] == "deepseek/deepseek-flash"
 
 
 def test_the_verbosity_is_written_and_read_back(make_client):

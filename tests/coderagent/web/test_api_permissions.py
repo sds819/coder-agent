@@ -5,6 +5,7 @@ import yaml
 
 pytest.importorskip("fastapi")
 
+from coderagent.config import writer  # noqa: E402
 from coderagent.paths import config_home  # noqa: E402
 from coderagent.web import config_api  # noqa: E402
 from tests.coderagent.web.conftest import assistant  # noqa: E402
@@ -15,7 +16,7 @@ def test_the_permissions_are_written_to_the_user_file(tmp_path):
     user_file.parent.mkdir(parents=True, exist_ok=True)
     user_file.write_text("agent:\n  max_turns: 7\n", encoding="utf-8")
 
-    config_api.write_user_permissions({"mode": "bypass", "deny_paths": ["secrets/"], "include_dirs": ["/tmp"]})
+    writer.write_user_permissions({"mode": "bypass", "deny_paths": ["secrets/"], "include_dirs": ["/tmp"]})
 
     data = yaml.safe_load(user_file.read_text(encoding="utf-8"))
     assert data["permissions"]["mode"] == "bypass"
@@ -32,7 +33,7 @@ def test_the_rules_of_the_permissions_are_kept(tmp_path):
         "permissions:\n  rules:\n  - tool: bash\n    pattern: ls\n    decision: allow\n", encoding="utf-8"
     )
 
-    config_api.write_user_permissions({"mode": "readonly"})
+    writer.write_user_permissions({"mode": "readonly"})
 
     data = yaml.safe_load(user_file.read_text(encoding="utf-8"))
     assert data["permissions"]["rules"] == [{"tool": "bash", "pattern": "ls", "decision": "allow"}]
@@ -43,26 +44,26 @@ def test_the_project_file_is_never_written(tmp_path):
     (tmp_path / ".coderagent").mkdir()
     (tmp_path / ".coderagent" / "config.yaml").write_text("permissions:\n  mode: plan\n", encoding="utf-8")
 
-    config_api.write_user_permissions({"mode": "bypass"})
+    writer.write_user_permissions({"mode": "bypass"})
 
     assert "bypass" not in (tmp_path / ".coderagent" / "config.yaml").read_text(encoding="utf-8")
 
 
 def test_an_unknown_mode_is_refused():
     with pytest.raises(ValueError):
-        config_api.write_user_permissions({"mode": "turbo"})
+        writer.write_user_permissions({"mode": "turbo"})
     """A mode that does not exist must not reach the file."""
 
 
 def test_the_network_is_written_to_the_user_file(tmp_path):
-    config_api.write_user_permissions({"network": "deny"})
+    writer.write_user_permissions({"network": "deny"})
     data = yaml.safe_load((config_home() / "config.yaml").read_text(encoding="utf-8"))
     assert data["permissions"]["network"] == "deny"
 
 
 def test_an_unknown_network_policy_is_refused():
     with pytest.raises(ValueError):
-        config_api.write_user_permissions({"network": "sometimes"})
+        writer.write_user_permissions({"network": "sometimes"})
     """A network policy that does not exist must not reach the file."""
 
 
