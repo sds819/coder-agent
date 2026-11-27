@@ -3,11 +3,13 @@
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from coderagent.config.schema import Config, ContextConfig
+from coderagent.config.writer import write_user_capability
 from coderagent.core import os_sandbox, shell_env
 from coderagent.core.budget import context_window_for
 from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
@@ -55,6 +57,19 @@ from coderagent.tools.rules import load_rules
 from coderagent.ui.commands import register as register_command
 
 logger = logging.getLogger("coderagent.run")
+
+
+def remember_capability(model: str, modality: str, supported: bool) -> None:
+    """Write what a model takes into the user level configuration file.
+
+    The file of the user is the only place where it is kept: a project does not
+    say what the model of the user takes. A file that cannot be written is not
+    a failure of the turn: the answer is in the session anyway.
+    """
+    try:
+        write_user_capability(model, modality, supported)
+    except OSError:
+        logger.warning("The capability of the model was not written", exc_info=True)
 
 
 def build_model(config: Config, model_name: str = "") -> ModelBackend:
@@ -157,6 +172,7 @@ def build_loop(
     user_home: Path | None = None,
     output_schema: dict | None = None,
     enforce_ceilings: bool = False,
+    remember: Callable[[str, str, bool], None] | None = None,
 ) -> AgentLoop:
     store = store or build_store(config)
     session = session or store.create(cwd)
@@ -317,6 +333,7 @@ def build_loop(
         output_schema=output_schema,
         enforce_ceilings=enforce_ceilings,
         capabilities=config.model.capabilities,
+        remember=remember,
     )
     holder["loop"] = loop
     ctx.cancel = lambda: bool(loop.cancel and loop.cancel())
@@ -415,6 +432,7 @@ def run_turn(
     session=None,
     permission_mode: str | None = None,
     output_schema: dict | None = None,
+    remember: Callable[[str, str, bool], None] | None = None,
 ) -> TurnResult:
     loop = build_loop(
         config,
@@ -424,6 +442,7 @@ def run_turn(
         session=session,
         permission_mode=permission_mode,
         output_schema=output_schema,
+        remember=remember,
     )
     result = loop.run_turn(task)
     """A session that ends is settled in the memory, the same way as in the interface."""

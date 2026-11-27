@@ -1187,7 +1187,8 @@ $ python -m pytest -q
   with the text that goes with it. The agent asks first whether the model takes
   pictures: a model that cannot see one would answer about it anyway, and the
   answer would be made up. `model.capabilities` says what a model takes, for the
-  models litellm does not know.
+  models litellm does not know. When nobody says it, the agent asks the model
+  itself, once, and writes the answer to the configuration file of the user.
 - **A file opens in your editor** — `/open src/app.py` opens it in the program
   of `ui.file_opener` (`vscode`, `cursor`, `windsurf`, or a command of your own).
   A project may not choose the editor.

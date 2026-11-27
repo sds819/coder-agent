@@ -21,7 +21,7 @@ from coderagent.core.loop import AgentLoop
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.models.backends import has_price, priced_name
-from coderagent.run import build_loop, build_store, settle
+from coderagent.run import build_loop, build_store, remember_capability, settle
 from coderagent.tools.permissions import PermissionMode
 from coderagent.web.approver import WebApprover
 from coderagent.web.events import TRANSIENT_KINDS, normalize
@@ -303,6 +303,7 @@ class SessionRuntime:
                 permission_mode=self._permission_mode,
                 bus=self.bus,
                 approver=self.approver,
+                remember=remember_capability,
             )
             self._loop.cancel = self.cancel.is_set
         return self._loop

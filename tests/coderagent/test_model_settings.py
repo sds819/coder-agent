@@ -65,6 +65,21 @@ def test_a_model_that_does_not_work_is_written_all_the_same():
     assert _user_file()["model"]["model_name"] == "not-a-real-provider/nope"
 
 
+def test_what_a_model_takes_is_written_to_the_user_file():
+    writer.write_user_capability("openai/MiniMax-M3", "image", True)
+
+    assert _user_file()["model"]["capabilities"] == {"openai/MiniMax-M3": {"image": True}}
+
+
+def test_what_a_model_takes_is_added_to_the_settings_that_are_there():
+    writer.write_user_model({"model_name": "openai/MiniMax-M3"})
+    writer.write_user_capability("openai/MiniMax-M3", "image", False)
+
+    model = _user_file()["model"]
+    assert model["model_name"] == "openai/MiniMax-M3"
+    assert model["capabilities"] == {"openai/MiniMax-M3": {"image": False}}
+
+
 def test_the_view_shows_the_eight_settings(tmp_path):
     view = settings.model_view(tmp_path)
 

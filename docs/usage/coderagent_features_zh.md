@@ -1072,6 +1072,7 @@ $ python -m pytest -q
 - **可以发图片**——`/image shot.png 这是什么` 把图片和这句话一起发过去。发之前
   agent 会先问模型看不看得图：看不懂的模型也会照样回答，而且答案是编的。
   `model.capabilities` 写模型能吃什么，给 litellm 不认识的那些模型用。
+  没人写的时候，agent 会自己问模型一次，把答案写进用户自己的配置文件。
 - **文件在你的编辑器里打开**——`/open src/app.py` 用 `ui.file_opener` 指定的
   程序打开它（`vscode`、`cursor`、`windsurf`，或者你自己的命令）。
   **项目不能挑编辑器**。

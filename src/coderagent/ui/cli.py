@@ -16,7 +16,7 @@ from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore, session_priced
 from coderagent.models.backends import priced_name
-from coderagent.run import build_loop, build_store, run_turn
+from coderagent.run import build_loop, build_store, remember_capability, run_turn
 from coderagent.ui.render import last_message, render
 from coderagent.ui.spinner import TerminalDots
 
@@ -58,6 +58,7 @@ def main_impl(
             session=session,
             permission_mode=permission_mode,
             output_schema=output_schema,
+            remember=remember_capability,
         )
     finally:
         dots.stop()
@@ -107,7 +108,7 @@ def run_command(
     """Run a slash command instead of a turn."""
     from coderagent.ui.commands import CommandContext, run
 
-    loop = build_loop(config, cwd, store=store, session=session)
+    loop = build_loop(config, cwd, store=store, session=session, remember=remember_capability)
     context = CommandContext(
         loop=loop,
         session=loop.session,

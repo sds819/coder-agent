@@ -125,6 +125,11 @@ station names its models in its own way — say it here: `image: false` for a
 model that only reads text, `image: true` for one that looks at pictures. A
 project may not say this: the models are yours.
 
+Say nothing and the agent asks the model itself, once: it shows it a picture
+of one color and asks what color it is. The answer is written to your own
+configuration file, `~/.coderagent/config.yaml`, and the next time the
+configuration says it.
+
 `/mention` sends a **file** to the model, with its content in the message, so
 that the model does not have to read it again with a tool call:
 

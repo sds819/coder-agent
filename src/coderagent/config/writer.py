@@ -53,6 +53,33 @@ def _keep(model: dict, key: str, value: Any, default: Any) -> None:
         model[key] = value
 
 
+def write_user_capability(model: str, modality: str, supported: bool) -> Path:
+    """Remember what a model takes, in the user level configuration file.
+
+    A project does not say what the model of the user takes, so this is written
+    to the file of the user: the next session reads it and does not ask again.
+    """
+    path = user_config_path()
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
+    if not isinstance(data, dict):
+        data = {}
+    section = data.get("model")
+    if not isinstance(section, dict):
+        section = {}
+    capabilities = section.get("capabilities")
+    if not isinstance(capabilities, dict):
+        capabilities = {}
+    takes = capabilities.get(model)
+    if not isinstance(takes, dict):
+        takes = {}
+    capabilities[model] = {**takes, modality: bool(supported)}
+    section["capabilities"] = capabilities
+    data["model"] = section
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return path
+
+
 def write_user_permissions(payload: dict) -> Path:
     """Merge the permission settings into the user level configuration file.
 

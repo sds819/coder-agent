@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from coderagent.config.schema import ModelConfig
-from coderagent.core.capabilities import support
+from coderagent.core.capabilities import probe, support
 from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
@@ -23,7 +23,7 @@ def _assistant(content: str = "") -> dict:
     return {"role": "assistant", "content": content, "tool_calls": [], "extra": {"cost": 0.0}}
 
 
-def _loop(tmp_path, responses, capabilities=None):
+def _loop(tmp_path, responses, capabilities=None, remember=None):
     store = SessionStore(tmp_path)
     session = store.create(tmp_path)
     bus = EventBus()
@@ -39,6 +39,7 @@ def _loop(tmp_path, responses, capabilities=None):
         bus,
         tools=executor.registry.schemas(),
         capabilities=capabilities or {},
+        remember=remember,
     )
     return loop, store, session
 
@@ -74,16 +75,89 @@ def test_a_model_that_sees_pictures_answers_the_turn(tmp_path):
     assert "image_url" in str(loop.model.backend.calls[0])
 
 
-def test_a_model_that_nobody_knows_about_refuses_the_turn(tmp_path):
-    """A model that may not see pictures would answer about them anyway, and make it up."""
-    loop, _, _ = _loop(tmp_path, [_assistant("a red square")])
+def test_a_model_that_nobody_knows_about_is_asked_first(tmp_path):
+    """Nobody said what the model takes, so the agent asks it."""
+    loop, _, _ = _loop(tmp_path, [_assistant("magenta"), _assistant("a red square")])
+
+    result = loop.run_turn(PICTURE)
+
+    assert result.stop_reason == "end_turn"
+    assert result.messages[-1]["content"] == "a red square"
+    assert loop.model.n_calls == 2
+    assert "What color is this picture?" in loop.model.backend.calls[0][0]["content"][0]["text"]
+
+
+def test_the_answer_of_the_probe_is_remembered(tmp_path):
+    remembered = []
+    loop, _, _ = _loop(
+        tmp_path,
+        [_assistant("magenta"), _assistant("a red square")],
+        remember=lambda *args: remembered.append(args),
+    )
+
+    loop.run_turn(PICTURE)
+
+    assert remembered == [("scripted", "image", True)]
+    assert loop.capabilities == {"scripted": {"image": True}}
+
+
+def test_a_model_that_does_not_see_pictures_is_refused_after_the_probe(tmp_path):
+    loop, _, _ = _loop(tmp_path, [_assistant("I cannot see the picture")])
+
+    result = loop.run_turn(PICTURE)
+
+    assert result.stop_reason == "error"
+    assert "cannot take pictures" in result.error
+    assert loop.model.n_calls == 1
+
+
+def test_nobody_knows_when_the_model_does_not_answer_the_probe(tmp_path):
+    loop, _, _ = _loop(tmp_path, [_assistant(""), _assistant("")])
 
     result = loop.run_turn(PICTURE)
 
     assert result.stop_reason == "error"
     assert "Nobody knows" in result.error
     assert "model.capabilities" in result.error
-    assert loop.model.n_calls == 0
+    assert loop.model.n_calls == 2
+
+
+def test_a_model_that_did_not_answer_is_not_asked_again(tmp_path):
+    loop, _, _ = _loop(tmp_path, [_assistant(""), _assistant("")])
+
+    loop.run_turn(PICTURE)
+    result = loop.run_turn(PICTURE)
+
+    assert "Nobody knows" in result.error
+    assert loop.model.n_calls == 2
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected"),
+    [("magenta", True), ("It is purple", True), ("a red square", False), ("", None)],
+)
+def test_the_probe_asks_a_picture_of_one_color(answer, expected):
+    said = probe(lambda messages: answer, "image")
+
+    assert said is expected
+
+
+def test_the_probe_says_no_when_the_provider_refuses_the_picture():
+    def refuse(messages):
+        raise RuntimeError("this model does not support image input")
+
+    assert probe(refuse, "image") is False
+
+
+def test_the_probe_says_nothing_when_the_call_fails():
+    def fail(messages):
+        raise RuntimeError("the connection is down")
+
+    assert probe(fail, "image") is None
+
+
+def test_the_probe_asks_nothing_about_the_sound():
+    assert probe(lambda messages: "yes", "audio") is None
 
 
 def test_a_turn_without_a_picture_is_never_refused(tmp_path):

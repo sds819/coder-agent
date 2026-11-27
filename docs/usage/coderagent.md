@@ -277,7 +277,10 @@ model:
 ```
 
 litellm knows most models. For the ones it does not know — a relay station
-names its models in its own way — say it there.
+names its models in its own way — the agent asks the model itself: it shows it
+a picture of one color and asks what color it is. The answer is written into
+your own configuration file, so a model is asked only once. Say it there
+yourself, and the agent never asks.
 
 A file goes to the model with its content in the message, with `/mention` or by
 naming it in the question:
@@ -458,6 +461,11 @@ model:
 What the user says wins over litellm, which knows most models but few of the
 ones a relay station names in its own way. A project may not say this: the
 models belong to the user.
+
+When nobody says it, the agent finds out: it shows the model a picture of one
+color and asks what color it is. The answer is written to the file of the user,
+`~/.coderagent/config.yaml`, and the next time the configuration says it, so
+the model is asked only once.
 
 #### How much the model thinks
 

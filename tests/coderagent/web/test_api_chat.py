@@ -6,9 +6,11 @@ import threading
 import time
 
 import pytest
+import yaml
 
 pytest.importorskip("fastapi")
 
+from coderagent.paths import config_home  # noqa: E402
 from coderagent.testing.scripted_model import ScriptedModel  # noqa: E402
 from tests.coderagent.web.conftest import assistant, bash_call, read_call, trust  # noqa: E402
 
@@ -244,6 +246,21 @@ def test_a_model_that_cannot_see_the_picture_refuses_the_turn(make_client, wait_
 
     assert not model.calls
     assert "cannot take pictures" in [item for item in items if item["kind"] == "error"][0]["error"]
+
+
+def test_a_model_nobody_knows_about_is_asked_first(make_client, wait_for):
+    """Nobody said what the model takes, so the agent asks it, and remembers."""
+    model = ScriptedModel([assistant("magenta"), assistant("all done")])
+    client = make_client(model=model, capabilities={})
+    session_id = client.post("/api/sessions").json()["id"]
+
+    client.post(f"/api/sessions/{session_id}/messages", json={"text": "what is this?", "images": [PNG]})
+    items = wait_for(client, session_id, "turn_end")
+
+    assert items[-1]["stop_reason"] == "end_turn"
+    assert len(model.calls) == 2
+    written = yaml.safe_load((config_home() / "config.yaml").read_text(encoding="utf-8"))
+    assert written["model"]["capabilities"] == {"scripted": {"image": True}}
 
 
 def test_a_model_that_fails_ends_the_turn_with_an_error(make_client, send, wait_for):

@@ -21,7 +21,7 @@ from coderagent.core.loop import stop_note
 from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
 from coderagent.models import warm_up_litellm
-from coderagent.run import build_loop, build_store
+from coderagent.run import build_loop, build_store, remember_capability
 from coderagent.tools.permissions import ApprovalDecision
 from coderagent.ui.commands import CommandContext
 from coderagent.ui.commands import run as run_command
@@ -126,7 +126,13 @@ class CoderApp(App):
         self.approver = approver or TUIAprover(self.bus, config.ui.approval_timeout)
         self.store = store or build_store(config)
         self.loop = loop or build_loop(
-            config, self.cwd, bus=self.bus, approver=self.approver, store=self.store, session=session
+            config,
+            self.cwd,
+            bus=self.bus,
+            approver=self.approver,
+            store=self.store,
+            session=session,
+            remember=remember_capability,
         )
         self.cards: dict[str, ToolCard] = {}
         self.current: MessageBlock | None = None

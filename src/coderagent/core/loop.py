@@ -2,13 +2,13 @@
 
 import logging
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
 from coderagent.config.schema import ContextConfig
 from coderagent.core import schema
-from coderagent.core.capabilities import TAKES, support
+from coderagent.core.capabilities import TAKES, probe, support
 from coderagent.core.content import describe_message, modalities_of, text_of, with_text
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
@@ -110,6 +110,7 @@ class AgentLoop:
         output_schema: dict | None = None,
         enforce_ceilings: bool = False,
         capabilities: dict | None = None,
+        remember: Callable[[str, str, bool], None] | None = None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -149,6 +150,10 @@ class AgentLoop:
         """The shape the answer of the agent has to have. None means: any shape is fine."""
         self.capabilities = capabilities or {}
         """What the models take, as the user said it."""
+        self.remember = remember
+        """Where the answer of a probe is written down. None means: it stays in this session."""
+        self._asked: set[tuple[str, str]] = set()
+        """The models that did not answer a probe. They are not asked again."""
         self._exported = 0
         """How many events of the session the backend has seen."""
         self.cancel = None
@@ -286,17 +291,20 @@ class AgentLoop:
         self._route()
         """The model of this turn is known before the message goes into the context:
         what the user sent has to fit the model that answers."""
+        base = self.session.total_cost
         refusal = self._refuses(prompt)
         if refusal:
             """The model cannot take what the user sent. It would answer anyway, and make it up."""
             self.context.append({"role": "user", "content": describe_message(prompt)}, original=original)
             self.session.turn_count += 1
+            self._set_state(SessionState.ERROR)
+            cost = self.session.total_cost - base
             self._publish(EventType.ERROR, {"error": refusal})
-            self._publish(EventType.TURN_END, {"stop_reason": "error", "error": refusal, "calls": 0, "cost": 0.0})
+            self._publish(EventType.TURN_END, {"stop_reason": "error", "error": refusal, "calls": 0, "cost": cost})
             return TurnResult(
                 session_id=self.session.id,
                 turn_count=self.session.turn_count,
-                cost=0.0,
+                cost=cost,
                 stop_reason="error",
                 error=refusal,
             )
@@ -315,7 +323,6 @@ class AgentLoop:
         verify_rounds = 0
         schema_attempts = 0
         output = None
-        base = self.session.total_cost
         before = (self.model.total_cost, self.model.total_tokens)
         while True:
             # The tools of the last round may have spent money too.
@@ -424,6 +431,7 @@ class AgentLoop:
 
         A model that cannot see a picture answers about it anyway, and the answer
         is made up. So the turn does not start: the user is told what is missing.
+        A model nobody knows about is asked first, and the answer is remembered.
         """
         wanted = modalities_of(prompt)
         if not wanted:
@@ -432,6 +440,8 @@ class AgentLoop:
         names = [getattr(backend, "alias", ""), getattr(backend, "model_name", "")]
         for modality in sorted(wanted):
             said = support(names, modality, self.capabilities)
+            if said is None:
+                said = self._measure(modality)
             if said is True:
                 continue
             name = next((one for one in names if one), "of this session")
@@ -445,6 +455,33 @@ class AgentLoop:
                 f"Say what it takes in model.capabilities, or use a model that can."
             )
         return ""
+
+    def _measure(self, modality: str) -> bool | None:
+        """Ask the model whether it takes this kind of content, and remember it.
+
+        The answer is written down, so that the next time the configuration says
+        it and the model is not asked again.
+        """
+        name = getattr(self.model.backend, "model_name", "") or getattr(self.model.backend, "alias", "")
+        if (name, modality) in self._asked:
+            """The model did not answer the last time. It is not asked again."""
+            return None
+        self._set_state(SessionState.THINKING)
+        before = (self.model.total_cost, self.model.total_tokens)
+        said = probe(self._ask, modality)
+        self._bill(before)
+        """The probe is a call like any other: the session pays for it."""
+        if said is None:
+            self._asked.add((name, modality))
+            return None
+        self.capabilities = {**self.capabilities, name: {**self.capabilities.get(name, {}), modality: said}}
+        if self.remember:
+            self.remember(name, modality, said)
+        return said
+
+    def _ask(self, messages: list[dict]) -> str:
+        """What the model answers to a question of the agent itself."""
+        return self.model.complete(messages)
 
     def _check_schema(self, response: dict) -> tuple[list[str], Any]:
         """The ways the answer does not fit the schema, and the answer when it does."""

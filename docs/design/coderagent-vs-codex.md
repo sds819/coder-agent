@@ -322,8 +322,10 @@ CRLF 变体和「不唯一」的报错，可读性不错。**`apply_patch` 的�
   - **发之前先问模型看不看得图**（`core/capabilities.py`）：看不懂图的模型也会
     照样回答，而且答案是编的。所以这一轮不会开始，agent 会说清是哪个模型、
     该怎么办。**谁能吃什么是三态的**：`model.capabilities` 里用户写的说了算，
-    其次 litellm 知道的（`supports_vision` 之类），**都不知道就是不知道**——
-    中转站的模型 litellm 大多不认识，这时候只有用户能说。
+    其次 litellm 知道的（`supports_vision` 之类），**都不知道就问模型自己**：
+    给它看一张纯色的图，问它是什么颜色，答案写进用户自己的配置文件
+    （`config/writer.py` 的 `write_user_capability()`），下次配置里就有了。
+    中转站的模型 litellm 大多不认识，这时候 agent 自己问一次就够了。
     消息里带了图片/音频/视频就按这个查（`core/content.py` 的 `modalities_of()`），
     项目不能替用户说模型能吃什么（模型是用户的）。
 - **Markdown（4.3）**：回答说完之后用 textual 的 `Markdown` 部件渲染
