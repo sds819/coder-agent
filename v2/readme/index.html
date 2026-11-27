@@ -588,7 +588,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Read more">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Questions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1857,7 +1868,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Read more">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Questions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1914,11 +1936,13 @@
 
 
 <blockquote>
-<p>The English README lives in <code>README.md</code> in the root of the repository.</p>
+<p>The README lives in the root of the repository:
+<a href="https://github.com/sds819/coder-agent/blob/main/README.md">README.md</a>.
+中文版：<a href="../readme_zh/">readme_zh.md</a>.</p>
 </blockquote>
 <h1 id="the-coding-agent">The coding agent</h1>
 <blockquote>
-<p>中文版：<a href="../readme_zh/">README_zh.md</a></p>
+<p>中文版：<a href="https://github.com/sds819/coder-agent/blob/main/README_zh.md">README_zh.md</a></p>
 </blockquote>
 <p><a href="https://github.com/sds819/coder-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a></p>
 <p><code>coder</code> is an interactive coding agent: it reads the code, writes the code, runs
@@ -2016,12 +2040,23 @@ again. A model that cannot take pictures is refused the turn, instead of making 
 <ul>
 <li><a href="../design/coding-agent-architecture/">The architecture</a> — the layers, the modules, the interfaces, the key decisions</li>
 <li><a href="../design/coderagent-design-logic/">The design logic</a> — why it grew this way: the load-bearing decisions, the invariants, the trade-offs</li>
+<li><a href="../design/coderagent-answers/">The questions and their answers</a> — 41 questions about the agent, answered</li>
+</ul>
+<h2 id="questions">Questions</h2>
+<ul>
+<li><strong>Something is broken.</strong> <a href="https://github.com/sds819/coder-agent/issues/new/choose">Open a bug report</a> — the
+  template asks for the error message and how to reproduce it. The log of the last session is in
+  <code>~/.coderagent/sessions</code> (<code>coder export</code> writes it out).</li>
+<li><strong>An error you do not understand.</strong> <a href="../usage/coderagent_features/">Everything <code>coder</code> can do</a> has a
+  "When something goes wrong" section for every part of the agent.</li>
+<li><strong>A question.</strong> <a href="https://github.com/sds819/coder-agent/issues/new/choose">Open a question</a> or ask on
+  <a href="https://discord.gg/AVEFbBn2rH">Discord</a>.</li>
 </ul>
 <p><a id="chinese"></a></p>
 <h3 id="_1">中文</h3>
 <p>这份 README 有中文版，文档也有中文的：</p>
 <ul>
-<li><a href="../readme_zh/">中文版 README</a>——整篇中文的这份介绍</li>
+<li><a href="https://github.com/sds819/coder-agent/blob/main/README_zh.md">中文版 README</a>——整篇中文的这份介绍</li>
 <li><a href="../usage/coderagent_quickstart/">快速开始</a>——装上、配置模型、跑第一轮</li>
 <li><a href="../usage/coderagent_features_zh/">功能</a>——一页看完所有功能，外加你可能撞到的报错</li>
 <li><a href="../usage/coderagent_web_zh/">网页版</a>——聊天页、设置页、HTTP API、安全模型</li>

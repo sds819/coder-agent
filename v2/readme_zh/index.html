@@ -622,6 +622,17 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
+        有问题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         来历
       
     </span>
@@ -1846,6 +1857,17 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
+        有问题
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         来历
       
     </span>
@@ -1880,11 +1902,13 @@
 
 
 <blockquote>
-<p>这份 README 的中文版在仓库根目录的 <code>README_zh.md</code> 里。</p>
+<p>这份 README 在仓库根目录：
+<a href="https://github.com/sds819/coder-agent/blob/main/README_zh.md">README_zh.md</a>。
+英文版：<a href="../readme/">readme.md</a>。</p>
 </blockquote>
 <h1 id="coding-agent">coding agent</h1>
 <blockquote>
-<p>英文版：<a href="../readme/">README.md</a></p>
+<p>英文版：<a href="https://github.com/sds819/coder-agent/blob/main/README.md">README.md</a></p>
 </blockquote>
 <p><a href="https://github.com/sds819/coder-agent/tree/main/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-green?style=for-the-badge&amp;logo=materialformkdocs&amp;logoColor=white"></a></p>
 <p><code>coder</code> 是一个交互式 coding agent：它读代码、写代码、跑命令，然后告诉你它改了什么。
@@ -1984,8 +2008,17 @@ coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w">
 <ul>
 <li><a href="../design/coding-agent-architecture/">架构</a>——层次、模块、接口、关键决定</li>
 <li><a href="../design/coderagent-design-logic/">设计逻辑</a>——它为什么长成这样：承重的决定、不变量、取舍</li>
+<li><a href="../design/coderagent-answers/">答问录</a>——关于这个 agent 的 41 个问题和答案</li>
 </ul>
-<h2 id="_4">来历</h2>
+<h2 id="_4">有问题</h2>
+<ul>
+<li><strong>哪儿坏了</strong>：<a href="https://github.com/sds819/coder-agent/issues/new/choose">提一个 bug</a>——模板里会问
+  报错信息和复现步骤。最近一次会话的日志在 <code>~/.coderagent/sessions</code>（<code>coder export</code> 能导出来）。</li>
+<li><strong>报错看不懂</strong>：<a href="../usage/coderagent_features_zh/">功能</a>里每一节都有「出错了怎么办」。</li>
+<li><strong>想问个问题</strong>：<a href="https://github.com/sds819/coder-agent/issues/new/choose">提一个问题</a>，或者到
+  <a href="https://discord.gg/AVEFbBn2rH">Discord</a> 上说。</li>
+</ul>
+<h2 id="_5">来历</h2>
 <p>这个 agent 建立在 <a href="https://github.com/SWE-agent/mini-swe-agent">mini-swe-agent</a> 的想法之上：
 消息的线性历史、只用 <code>bash</code> 一个工具跑命令、litellm 的模型层，以及随它而来的那些沙箱环境
 （Docker、Singularity、bubblewrap、contree、SWE-ReX）。其余的——agent 的循环、工具系统和权限层、
