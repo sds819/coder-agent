@@ -2350,7 +2350,9 @@ slash 命令不能带图。</p>
 页面直接拒绝，不写进一个 agent 起不来的文件。</p>
 <p>页面读的是<strong>配置文件</strong>；命令行上的 <code>-m</code> 和 <code>-c</code> 是给会话用的，所以
 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是文件里的那个模型。</p>
-<p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。它报七件事：</p>
+<p><strong>测模型</strong>。页面上没有这个按钮：测一次要花两次调用（一次回答，一次调工具），
+而聊天页本来就在用这些设置。<strong>API</strong> 里还有：<code>POST /api/config/model/test</code> 拿设置发一次
+最便宜的调用，报七件事：</p>
 <table>
 <thead>
 <tr>

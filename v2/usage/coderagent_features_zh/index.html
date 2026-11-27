@@ -4744,10 +4744,10 @@ $ python -m pytest -q
 <li><strong>聊天页</strong>——三栏：左边是会话和文件，中间是对话，右边是状态、改动和
   文件。</li>
 <li><strong>答案是流式到的</strong>——走 SSE，中途才打开页面的浏览器看到的是整段回答。</li>
-<li><strong>设置页</strong>——模型写成表单，每个字段下面写着它来自哪一层，底下的表格
-  列出所有层，密钥都被抹掉。</li>
-<li><strong>测一下连接</strong>——发一次最便宜的调用，顺带告诉模型会不会调工具。</li>
-<li><strong>测一个模型</strong>——一块独立的面板：端点、key、模型名，不写任何文件。</li>
+<li><strong>设置页</strong>——模型写成表单：模型名、接口地址、API key、最多重试；其余的模型
+  设置写在配置文件里。</li>
+<li><strong>连通性测试</strong>——只在 API 里（<code>POST /api/config/model/test</code>）：发一次最便宜
+  的调用，顺带告诉模型会不会调工具。</li>
 <li><strong>权限在两个地方</strong>——设置页管下一个会话，聊天页管当前这个会话，立刻生效。</li>
 <li><strong>浏览器里也有审批</strong>——同样三个答案。</li>
 <li><strong>浏览器里也能发图</strong>——输入框旁边的「+」按钮，或者直接粘进去。图跟消息

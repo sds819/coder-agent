@@ -4862,12 +4862,10 @@ and <code>○</code> (pending).</p>
   right.</li>
 <li><strong>The answer streams in</strong> — over a server sent event stream, and a browser
   that comes late reads the whole answer.</li>
-<li><strong>The settings page</strong> — the model as a form, the layer every field comes
-  from, the preview of all the layers with the secrets taken out.</li>
-<li><strong>Test the connection</strong> — one cheap call, and it says whether the model
-  calls the tools at all.</li>
-<li><strong>Test a model</strong> — a panel for an endpoint, a key and a model name, without
-  writing anything.</li>
+<li><strong>The settings page</strong> — the model as a form: the name, the address, the key and
+  the retries. The rest of the model is written in the configuration file.</li>
+<li><strong>The connectivity test</strong> — only in the API (<code>POST /api/config/model/test</code>):
+  one cheap call, and it says whether the model calls the tools at all.</li>
 <li><strong>The permissions in two places</strong> — the settings page for the next
   session, the chat page for the session that is running, right away.</li>
 <li><strong>The approvals in the browser</strong> — the same three answers.</li>
