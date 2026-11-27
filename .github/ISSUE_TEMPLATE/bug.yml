@@ -13,7 +13,8 @@ body:
       Please also include your operating system where relevant.
       Markdown formatting is appreciated 😉
 
-      Hint: The full history of your last `mini` run is saved to your global config directory.
+      Hint: The full history of your last `coder` run is saved in your global config directory
+      (`~/.coderagent/sessions`); `coder export` writes it out as a file.
       Including it helps us understand the issue.
   validations:
     required: true

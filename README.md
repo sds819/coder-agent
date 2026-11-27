@@ -1,6 +1,6 @@
 # The coding agent
 
-> 中文版：[README_zh.md](docs/readme_zh.md)
+> 中文版：[README_zh.md](https://github.com/sds819/coder-agent/blob/main/README_zh.md)
 
 [![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
 
@@ -124,6 +124,17 @@ And if you want to know how it was designed, see `docs/design`:
 
 * [The architecture](docs/design/coding-agent-architecture.md) — the layers, the modules, the interfaces, the key decisions
 * [The design logic](docs/design/coderagent-design-logic.md) — why it grew this way: the load-bearing decisions, the invariants, the trade-offs
+* [The questions and their answers](docs/design/coderagent-answers.md) — 41 questions about the agent, answered
+
+## Questions
+
+* **Something is broken.** [Open a bug report](https://github.com/sds819/coder-agent/issues/new/choose) — the
+  template asks for the error message and how to reproduce it. The log of the last session is in
+  `~/.coderagent/sessions` (`coder export` writes it out).
+* **An error you do not understand.** [Everything `coder` can do](docs/usage/coderagent_features.md) has a
+  "When something goes wrong" section for every part of the agent.
+* **A question.** [Open a question](https://github.com/sds819/coder-agent/issues/new/choose) or ask on
+  [Discord](https://discord.gg/AVEFbBn2rH).
 
 <a id="chinese"></a>
 
@@ -131,7 +142,7 @@ And if you want to know how it was designed, see `docs/design`:
 
 这份 README 有中文版，文档也有中文的：
 
-* [中文版 README](docs/readme_zh.md)——整篇中文的这份介绍
+* [中文版 README](https://github.com/sds819/coder-agent/blob/main/README_zh.md)——整篇中文的这份介绍
 * [快速开始](docs/usage/coderagent_quickstart.md)——装上、配置模型、跑第一轮
 * [功能](docs/usage/coderagent_features_zh.md)——一页看完所有功能，外加你可能撞到的报错
 * [网页版](docs/usage/coderagent_web_zh.md)——聊天页、设置页、HTTP API、安全模型

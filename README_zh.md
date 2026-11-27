@@ -1,6 +1,6 @@
 # coding agent
 
-> 英文版：[README.md](docs/readme.md)
+> 英文版：[README.md](https://github.com/sds819/coder-agent/blob/main/README.md)
 
 [![Docs](https://img.shields.io/badge/Docs-green?style=for-the-badge&logo=materialformkdocs&logoColor=white)](https://github.com/sds819/coder-agent/tree/main/docs)
 
@@ -127,6 +127,15 @@ coder model --test                                            # 试一下这个�
 
 * [架构](docs/design/coding-agent-architecture.md)——层次、模块、接口、关键决定
 * [设计逻辑](docs/design/coderagent-design-logic.md)——它为什么长成这样：承重的决定、不变量、取舍
+* [答问录](docs/design/coderagent-answers.md)——关于这个 agent 的 41 个问题和答案
+
+## 有问题
+
+* **哪儿坏了**：[提一个 bug](https://github.com/sds819/coder-agent/issues/new/choose)——模板里会问
+  报错信息和复现步骤。最近一次会话的日志在 `~/.coderagent/sessions`（`coder export` 能导出来）。
+* **报错看不懂**：[功能](docs/usage/coderagent_features_zh.md)里每一节都有「出错了怎么办」。
+* **想问个问题**：[提一个问题](https://github.com/sds819/coder-agent/issues/new/choose)，或者到
+  [Discord](https://discord.gg/AVEFbBn2rH) 上说。
 
 ## 来历
 
