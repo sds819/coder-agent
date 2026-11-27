@@ -2679,8 +2679,8 @@
 <tr>
 <td>配置 API</td>
 <td><code>web/config_api.py</code></td>
-<td>配置分层、脱敏、写回、连通性测试</td>
-<td><code>model_view</code>、<code>sources</code>、<code>layers_preview</code>、<code>write_user_model</code>、<code>effective_model</code>、<code>test_connection</code></td>
+<td>配置读取、脱敏、写回、连通性测试</td>
+<td><code>model_view</code>、<code>write_user_model</code>、<code>effective_model</code>、<code>test_connection</code></td>
 <td><code>config.loader</code>、<code>paths</code></td>
 </tr>
 <tr>
@@ -3291,7 +3291,7 @@
 <tr>
 <td>GET</td>
 <td><code>/api/config</code></td>
-<td><code>{"model": model_view, "permissions": permissions_view, "sources": {...}, "layers": [...], "user_config_path": str}</code></td>
+<td><code>{"model": model_view, "permissions": permissions_view, "user_config_path": str}</code></td>
 </tr>
 <tr>
 <td>PUT</td>
@@ -3437,16 +3437,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>SECRET_MARKERS = ("key", "token", "secret", "password")</code></td>
-<td>名字里含这些词的一律当密钥</td>
-</tr>
-<tr>
-<td><code>DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")</code></td>
-<td>直接在 <code>model:</code> 下的字段</td>
-</tr>
-<tr>
-<td><code>MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")</code></td>
-<td>配置页要展示的字段</td>
+<td><code>SECRET_FIELDS = ("api_base", "api_key")</code></td>
+<td>模型里自有字段的那两个；旧地方是 <code>model_kwargs</code></td>
 </tr>
 <tr>
 <td><code>ENV_KEYS = {"openai": "OPENAI_API_KEY", …}</code></td>
@@ -3465,34 +3457,14 @@
 </thead>
 <tbody>
 <tr>
-<td><code>is_secret(name) -&gt; bool</code></td>
-<td></td>
-<td>名字含密钥词</td>
-</tr>
-<tr>
-<td><code>redact(value) -&gt; Any</code></td>
-<td></td>
-<td>递归：dict 的密钥名是密钥 → 值替换成 <code>"***"</code></td>
-</tr>
-<tr>
 <td><code>hint(secret) -&gt; str</code></td>
 <td></td>
 <td><code>********abcd</code>（末 4 位）；短于 4 位 → <code>********</code></td>
 </tr>
 <tr>
-<td><code>sources(cwd) -&gt; dict[str, str]</code></td>
-<td>字段 → 层名</td>
-<td>层名：<code>defaults</code> / <code>project</code> / <code>user</code> / <code>env</code>。<strong>文件赢过环境变量</strong>；<code>model_name</code> 与 <code>api_key</code> 都会是 <code>env</code></td>
-</tr>
-<tr>
 <td><code>model_view(cwd) -&gt; dict</code></td>
 <td>见下</td>
-<td><strong>永不含明文密钥</strong></td>
-</tr>
-<tr>
-<td><code>layers_preview(cwd) -&gt; list[dict]</code></td>
-<td><code>[{layer, model}]</code></td>
-<td>每一层都过 <code>redact</code></td>
+<td><strong>永不含明文密钥</strong>；只有页面要的那几项</td>
 </tr>
 <tr>
 <td><code>user_config_path() -&gt; Path</code></td>
@@ -3532,10 +3504,10 @@
 </tbody>
 </table>
 <p><strong><code>model_view</code> 的字段</strong></p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"litellm_config"</span><span class="p">,</span> <span class="s2">"api_base"</span><span class="p">,</span> <span class="s2">"api_key_set"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="s2">"api_key_hint"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
- <span class="s2">"max_retries"</span><span class="p">,</span> <span class="s2">"set_cache_control"</span><span class="p">,</span> <span class="s2">"routing"</span><span class="p">,</span> <span class="s2">"routing_rules"</span><span class="p">,</span>
- <span class="s2">"model_kwargs"</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="n">不含密钥</span><span class="o">...</span><span class="p">}}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"provider"</span><span class="p">,</span> <span class="s2">"api_base"</span><span class="p">,</span> <span class="s2">"api_key_set"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="s2">"api_key_hint"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+ <span class="s2">"key_source"</span><span class="p">,</span> <span class="s2">"key_env"</span><span class="p">,</span> <span class="s2">"max_retries"</span><span class="p">}</span>
 </code></pre></div>
+<p>只有设置页要的那几项——<strong>没有分层来源，也没有别名的地址</strong>：那些从接口里也拿掉了。</p>
 <h3 id="93-write_user_modelpayload">9.3 <code>write_user_model(payload)</code> 的写回语义</h3>
 <table>
 <thead>
@@ -3748,12 +3720,8 @@
 <td>拉 <code>/commands</code> 填下拉框</td>
 </tr>
 <tr>
-<td><code>parseKeyValues(text)</code> / <code>formatKeyValues(obj)</code></td>
-<td>「附加参数」框：先试 JSON，失败按 <code>key: value</code> 行解析</td>
-</tr>
-<tr>
 <td><code>startSettings()</code></td>
-<td>设置页：填表单 → 标每字段来源 → 渲染分层预览 → 保存 / 测试连接</td>
+<td>设置页：填表单 → 写用户级文件 → 保存</td>
 </tr>
 </tbody>
 </table>
@@ -4008,7 +3976,7 @@
 </tr>
 <tr>
 <td>新的模型设置</td>
-<td><code>config_api.py</code> 的 <code>DIRECT_FIELDS</code> + <code>model_view</code> + <code>write_user_model</code> + 设置页加字段</td>
+<td><code>config_api.py</code> 的 <code>model_view</code> + <code>write_user_model</code> + 设置页加字段</td>
 </tr>
 <tr>
 <td>新的页面</td>
@@ -4043,9 +4011,9 @@
 <td>没走 checkpoint 的写操作不会出现在变更列表里</td>
 </tr>
 <tr>
-<td>Q4</td>
-<td><code>model_view</code> 的 <code>model_kwargs</code> 过滤掉了密钥，所以前端<strong>看不到</strong> <code>api_base</code> 之外的额外密钥</td>
-<td>有意的，但要在设置页说明</td>
+<td>~~Q4~~</td>
+<td>~~<code>model_view</code> 的 <code>model_kwargs</code> 过滤掉了密钥，所以前端<strong>看不到</strong> <code>api_base</code> 之外的额外密钥~~ → <strong>已消</strong>：页面上不再有「附加参数」那一栏，<code>model_view</code> 也只回那八项</td>
+<td>—</td>
 </tr>
 <tr>
 <td>Q5</td>

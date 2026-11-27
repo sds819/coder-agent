@@ -3585,7 +3585,7 @@ coder export           # 导出会话 trace
 ├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
 ├── events.py        # normalize(Event) -&gt; list[item]：核心事件 → 前端条目
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
-├── config_api.py    # 读写用户级 config.yaml、分层预览、脱敏、连通性测试
+├── config_api.py    # 读写用户级 config.yaml、脱敏、连通性测试
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
 ├── i18n.py          # 页面语言：地区判定 + 浏览器文案
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
@@ -3605,9 +3605,9 @@ FastAPI 的事件循环里<strong>绝不</strong>跑 agent 代码——碰文件
 <p><strong>审批</strong>：<code>WebApprover</code> 在 worker 线程上阻塞（<code>threading.Event</code> 唤醒），答案由
 <code>POST /api/approvals/{id}</code> 送回；<strong>没人回答就是拒绝</strong>（超时自动 DENY，与 TUI 一致）。
 <code>Always allow</code> 会往用户级规则文件写一条规则，前端必须提示这一点。</p>
-<p><strong>模型配置页</strong>：显式字段 + 自由 kwargs，附<strong>分层来源预览</strong>（每个字段来自 <code>defaults</code> /
-<code>project</code> / <code>user</code> / <code>env</code> 哪一层）与<strong>连通性测试</strong>（一次 <code>max_tokens=1</code> 的调用，外加一次
-工具调用测试）。密钥只回 <code>api_key_set</code> + 掩码，点击才取明文。写入<strong>只落用户级文件</strong>
+<p><strong>模型配置页</strong>：四个字段（模型名、接口地址、API key、最多重试），其余的模型设置写在
+配置文件里。<strong>连通性测试只在 API 里</strong>（一次 <code>max_tokens=1</code> 的调用，外加一次工具调用测试），
+页面上没有这个按钮。密钥只回 <code>api_key_set</code> + 掩码，点击才取明文。写入<strong>只落用户级文件</strong>
 <code>~/.coderagent/config.yaml</code>——<strong>项目级 <code>.coderagent/config.yaml</code> 永远不写</strong>（它会进 git）。</p>
 <p><strong>权限的两个入口</strong>：设置页写用户级配置文件的 <code>permissions:</code> 段（对<strong>下一个</strong>会话生效），
 聊天页的模式下拉框改<strong>当前</strong>会话的 <code>PermissionPolicy</code>（<strong>立刻</strong>生效，策略是原地改的）。
@@ -3921,7 +3921,7 @@ uvicorn（fastapi 已进核心依赖，uvicorn 还在 <code>web</code> extra 里
 │   ├── sessions.py          # SessionRuntime / SessionRegistry：线程、环形缓冲、turn
 │   ├── events.py            # normalize(Event) -&gt; 前端条目
 │   ├── approver.py          # WebApprover：阻塞式审批
-│   ├── config_api.py        # 配置分层、脱敏、写回、连通性测试
+│   ├── config_api.py        # 配置读取、脱敏、写回、连通性测试
 │   ├── files.py             # 文件浏览与 diff（路径越界 403）
 │   ├── i18n.py              # 页面语言与地区判定
 │   ├── server.py            # serve()：uvicorn 入口
@@ -4483,7 +4483,7 @@ CLI 说「配置看不懂：哪一项、应该是什么」，网页版回 400。
 <tr>
 <td>密钥泄漏到仓库或日志</td>
 <td>高</td>
-<td>只写用户级文件；API 只回掩码；分层预览里的密钥全抹成 <code>***</code></td>
+<td>只写用户级文件；API 只回掩码，明文要带客户端头才取</td>
 </tr>
 </tbody>
 </table>

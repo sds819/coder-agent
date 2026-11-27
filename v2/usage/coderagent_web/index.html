@@ -2722,7 +2722,7 @@ do not ask for the header — they start nothing.</p>
 <tr>
 <td>GET</td>
 <td><code>/api/config</code></td>
-<td>The model configuration, with the layer of every field</td>
+<td>The model and the permission configuration, as the settings page sees them</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -2854,10 +2854,10 @@ minutes by default). A tool that is denied never runs.</p>
   resolved and checked against the working directory and the directories in
   <code>permissions.include_dirs</code>. The rules of the user cannot widen that.</li>
 <li><strong>The key is only shown on request.</strong> The settings page only gets
-  <code>api_key_set</code> and the last four characters; every secret of the layers the
-  API hands out has been replaced by <code>***</code>. The key itself is sent when you
-  click the field of the key, and that request needs the header of the client,
-  so a page somewhere else cannot ask for it.</li>
+  <code>api_key_set</code> and the last four characters; the API hands out no other
+  secret. The key itself is sent when you click the field of the key, and that
+  request needs the header of the client, so a page somewhere else cannot ask
+  for it.</li>
 <li><strong>The api key is written to the user file only</strong>, never to the project file
   that goes into the repository.</li>
 <li><strong>A download cannot reach into the network.</strong> The downloads of the skills
