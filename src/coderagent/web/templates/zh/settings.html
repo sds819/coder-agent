@@ -12,131 +12,29 @@
   <form id="model-form">
     <label>模型名
       <input id="model-name" placeholder="deepseek/deepseek-flash">
-      <small id="source-model_name" class="source"></small>
       <small id="model-provider" class="source"></small>
       <small class="source">厂商可以写在名字前面（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）。不写的时候由接口地址和模型系列来定</small>
     </label>
-    <label>Litellm 配置文件
-      <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
-      <small id="source-litellm_config" class="source"></small>
-    </label>
     <label>接口地址
       <input id="api-base" placeholder="https://api.deepseek.com">
-      <small id="source-api_base" class="source"></small>
-      <small id="alias-api_base" class="source"></small>
     </label>
     <label>API key
       <input id="api-key" type="password" placeholder="点一下显示">
-      <small id="source-api_key" class="source"></small>
       <small id="model-key-source" class="source"></small>
       <small class="source">点一下显示 key，再点一下收起来</small>
     </label>
     <label>最多重试
       <input id="max-retries" type="number" min="0" max="20">
-      <small id="source-max_retries" class="source"></small>
     </label>
-    <label>缓存标记
-      <select id="set-cache-control">
-        <option value="">none</option>
-        <option value="default_end">default_end</option>
-      </select>
-      <small id="source-set_cache_control" class="source"></small>
-    </label>
-    <label>思考预算
-      <select id="reasoning-effort">
-        <option value="" title="模型想多久是它自己的事。">模型的默认</option>
-        <option value="minimal">minimal</option>
-        <option value="low">low</option>
-        <option value="medium">medium</option>
-        <option value="high">high</option>
-      </select>
-      <small id="source-reasoning_effort" class="source"></small>
-      <small class="source">模型想多久。Anthropic 数 token，其它家数档位。</small>
-    </label>
-    <label>啰嗦程度
-      <select id="verbosity">
-        <option value="" title="模型说多少是它自己的事。">模型自己的习惯</option>
-        <option value="low">low</option>
-        <option value="medium">medium</option>
-        <option value="high">high</option>
-      </select>
-      <small id="source-verbosity" class="source"></small>
-      <small class="source">模型说多少。这是一句提示词，所以哪家厂商都听得懂。</small>
-    </label>
-    <label>评审模型
-      <input id="review-model" type="text" placeholder="anthropic/claude-sonnet-4-5">
-      <small id="source-review_model" class="source"></small>
-      <small class="source">审查改动用的模型。留空就是会话自己的模型。</small>
-    </label>
-    <label>路由
-      <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
-      <small class="source">一行一个用途：<code>用途: 模型</code></small>
-    </label>
-    <label>路由规则
-      <textarea id="routing-rules" rows="3" placeholder="tokens &gt; 50000: strong"></textarea>
-      <small class="source">一行一条规则：<code>when: 用途</code></small>
-    </label>
-    <label>附加参数
-      <textarea id="model-kwargs" rows="5" placeholder="temperature: 0.2"></textarea>
-      <small class="source">YAML，原样传给厂商</small>
-    </label>
-    <details class="history">
-      <summary>示例：第三方端点</summary>
-      <div class="history-body">
-        <p class="note">
-          模型名可以是 litellm 配置文件里模型列表的一条别名。
-          这样端点的 key 就留在那个文件里，不在这儿。
-        </p>
-        <pre># ~/.coderagent/litellm_config.yaml
-model_list:
-  - model_name: nengpa/minimax-m2.7
-    litellm_params:
-      model: openai/MiniMax-M2.7
-      api_base: https://api.nengpa.com/v1
-      api_key: sk-cp-...</pre>
-        <p class="note">
-          <code>model</code> 是 litellm 真正调的模型，前面带着厂商。
-          <code>api_base</code> 停在 <code>/v1</code>：后面那截
-          <code>/chat/completions</code> 是 litellm 自己加的。
-        </p>
-        <pre># ~/.coderagent/config.yaml
-model:
-  model_name: nengpa/minimax-m2.7
-  litellm_config: ~/.coderagent/litellm_config.yaml</pre>
-      </div>
-    </details>
+    <p class="note">
+      模型的其他设置（思考预算、路由、附加参数）写在配置文件里。
+    </p>
     <div class="row">
       <button type="submit" class="primary">保存</button>
       <button type="button" id="test-connection">测一下连接</button>
       <span id="config-message" class="note"></span>
     </div>
     <div id="model-test"></div>
-  </form>
-
-  <h2>测一个模型</h2>
-  <p class="note">
-    不写任何文件，只管试：接口地址、key、模型名。地址可以写完整的
-    <code>/chat/completions</code>——<code>/v1</code> 后面那段会被剪掉，
-    因为 litellm 自己会加。key 留空就用上面设置里的。
-  </p>
-
-  <form id="test-form">
-    <label>接口地址
-      <input id="test-endpoint" placeholder="https://api.nengpa.com/v1/chat/completions">
-    </label>
-    <label>API key
-      <input id="test-api-key" type="password" placeholder="这个地址的 key">
-      <small class="source">点一下显示上面设置里的 key，再点一下收起来</small>
-    </label>
-    <label>模型名
-      <input id="test-model-name" placeholder="MiniMax-M2.7">
-      <small class="source">名字就按写的发过去：厂商可以写在前头（<code>openai/MiniMax-M2.7</code>、<code>openai:MiniMax-M2.7</code>），也可以不写（<code>MiniMax-M2.7</code>）。调谁由服务端来定</small>
-    </label>
-    <div class="row">
-      <button type="submit" class="primary">测一下连接</button>
-      <span id="test-message" class="note"></span>
-    </div>
-    <div id="test-result"></div>
   </form>
 
   <h2>权限</h2>
@@ -171,11 +69,5 @@ model:
     </div>
     <p class="note" id="server-mode-note"></p>
   </form>
-
-  <h2>设置来自哪一层</h2>
-  <table id="layers">
-    <thead><tr><th>层</th><th>模型</th></tr></thead>
-    <tbody></tbody>
-  </table>
 </main>
 {% endblock %}

@@ -1278,37 +1278,6 @@ function wire() {
 
 // -- the settings ----------------------------------------------------------
 
-function parseKeyValues(text) {
-  const trimmed = (text || "").trim();
-  if (!trimmed) return {};
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && typeof parsed === "object") return parsed;
-  } catch (error) {
-    /* not json, so it is a list of `key: value` lines */
-  }
-  const result = {};
-  for (const line of trimmed.split("\n")) {
-    const index = line.indexOf(":");
-    if (index < 0) continue;
-    const key = line.slice(0, index).trim();
-    const value = line.slice(index + 1).trim();
-    if (!key) continue;
-    try {
-      result[key] = JSON.parse(value);
-    } catch (error) {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-function formatKeyValues(object) {
-  return Object.entries(object || {})
-    .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
-    .join("\n");
-}
-
 function splitLines(text) {
   return (text || "")
     .split("\n")
@@ -1323,9 +1292,9 @@ function keySource(resolved) {
   return t("not_set");
 }
 
-function renderTest(answer, target = "model-test") {
+function renderTest(answer) {
   // What the test found out: the settings, the file, the call and the tools.
-  const box = document.getElementById(target);
+  const box = document.getElementById("model-test");
   box.innerHTML = "";
   const resolved = answer.resolved || {};
   const file = answer.file || {};
@@ -1394,22 +1363,8 @@ async function startSettings() {
   if (providerNote) {
     providerNote.textContent = model.provider ? t("provider_is", { provider: model.provider }) : "";
   }
-  document.getElementById("litellm-config").value = model.litellm_config || "";
   document.getElementById("api-base").value = model.api_base || "";
-  const aliasBase = document.getElementById("alias-api_base");
-  if (aliasBase) {
-    aliasBase.textContent = model.alias_api_base ? t("alias_base", { base: model.alias_api_base }) : "";
-  }
   document.getElementById("max-retries").value = model.max_retries;
-  document.getElementById("set-cache-control").value = model.set_cache_control || "";
-  document.getElementById("reasoning-effort").value = model.reasoning_effort || "";
-  document.getElementById("verbosity").value = model.verbosity || "";
-  document.getElementById("review-model").value = model.review_model || "";
-  document.getElementById("routing").value = formatKeyValues(model.routing);
-  document.getElementById("routing-rules").value = (model.routing_rules || [])
-    .map((rule) => `${rule.when}: ${rule.purpose}`)
-    .join("\n");
-  document.getElementById("model-kwargs").value = formatKeyValues(model.model_kwargs);
 
   document.getElementById("permission-mode").value = permissions.mode || "default";
   document.getElementById("deny-paths").value = (permissions.deny_paths || []).join("\n");
@@ -1430,24 +1385,6 @@ async function startSettings() {
       : "";
   }
 
-  for (const [field, source] of Object.entries(data.sources || {})) {
-    const node = document.getElementById(`source-${field}`);
-    if (node) node.textContent = t("from", { source });
-  }
-
-  const body = document.querySelector("#layers tbody");
-  if (body) {
-    body.innerHTML = "";
-    for (const layer of data.layers || []) {
-      const row = el("tr");
-      row.appendChild(el("td", "", layer.layer));
-      const cell = el("td");
-      cell.appendChild(el("pre", "", JSON.stringify(layer.model, null, 2)));
-      row.appendChild(cell);
-      body.appendChild(row);
-    }
-  }
-
   const keyInput = document.getElementById("api-key");
   keyInput.type = "password";
   keyInput.value = "";
@@ -1461,18 +1398,8 @@ async function startSettings() {
   const payload = () => {
     const form = {
       model_name: document.getElementById("model-name").value.trim(),
-      litellm_config: document.getElementById("litellm-config").value.trim(),
       api_base: document.getElementById("api-base").value.trim(),
       max_retries: Number(document.getElementById("max-retries").value || 0),
-      set_cache_control: document.getElementById("set-cache-control").value,
-      reasoning_effort: document.getElementById("reasoning-effort").value,
-      verbosity: document.getElementById("verbosity").value,
-      review_model: document.getElementById("review-model").value.trim(),
-      routing: parseKeyValues(document.getElementById("routing").value),
-      routing_rules: Object.entries(parseKeyValues(document.getElementById("routing-rules").value)).map(
-        ([when, purpose]) => ({ when, purpose })
-      ),
-      model_kwargs: parseKeyValues(document.getElementById("model-kwargs").value),
     };
     const key = keyInput.value.trim();
     if (key) form.api_key = key;
@@ -1503,33 +1430,6 @@ async function startSettings() {
       renderTest(answer);
     } catch (error) {
       message.textContent = t("error", { message: error.message });
-    }
-  };
-
-  const testEndpoint = document.getElementById("test-endpoint");
-  const testKey = document.getElementById("test-api-key");
-  const testName = document.getElementById("test-model-name");
-  const testNote = document.getElementById("test-message");
-  testEndpoint.value = model.api_base || "";
-  testName.value = model.model_name || "";
-  testKey.type = "password";
-  testKey.value = "";
-  wireApiKey(testKey, () => t("key_of_endpoint"), testNote);
-
-  document.getElementById("test-form").onsubmit = async (event) => {
-    event.preventDefault();
-    const body = { model_name: testName.value.trim() };
-    const endpoint = testEndpoint.value.trim();
-    if (endpoint) body.api_base = endpoint;
-    const key = testKey.value.trim();
-    if (key) body.api_key = key;
-    testNote.textContent = t("trying");
-    try {
-      const answer = await api("/api/config/model/test", { method: "POST", body });
-      testNote.textContent = answer.ok ? t("ok_ms", { ms: answer.latency_ms }) : t("error", { message: answer.error });
-      renderTest(answer, "test-result");
-    } catch (error) {
-      testNote.textContent = t("error", { message: error.message });
     }
   };
 

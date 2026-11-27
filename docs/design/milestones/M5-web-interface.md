@@ -230,17 +230,18 @@ executor._prepare()
 
 ### 8.1 显式字段
 
+页面只留决定「调哪个模型」的那几项：
+
 | 字段 | 落点 | 说明 |
 |---|---|---|
-| `model_name` | `model.model_name` | 如 `deepseek/deepseek-flash` |
+| `model_name` | `model.model_name` | 如 `deepseek/deepseek-flash`；厂商写在前面或省略都行 |
 | `api_base` | `model.model_kwargs.api_base` | **显式字段**，因为它直通 litellm |
 | `api_key` | `model.model_kwargs.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
 | `max_retries` | `model.max_retries` | 死配置，接线见 §8.4 |
-| `set_cache_control` | `model.set_cache_control` | `default_end` / 空（mini 只认这两个） |
-| `litellm_config` | `model.litellm_config` | 别名文件；里面的别名可以当模型名用 |
-| `routing` | `model.routing` | `{purpose: model}` |
-| `routing_rules` | `model.routing_rules` | `{when, purpose}` 行 |
-| 附加 kwargs | `model.model_kwargs` 其余 | 自由 YAML/JSON 编辑框 |
+
+**其余的设置不在页面上**：`set_cache_control`、`litellm_config`、`routing`、
+`routing_rules`、`reasoning_effort`、`verbosity`、`review_model` 和附加 kwargs
+都写在配置文件里。`PUT /api/config/model` 这些字段照样收，不传的保持文件里的原样。
 
 ### 8.2 分层预览
 
@@ -248,6 +249,9 @@ executor._prepare()
 按优先级 defaults < project < user 逐层看，**最后一个定义了该 key 的层**说了算；
 环境变量只在**没有任何层定义**时兜底（目前只有 `model_name` 与 `api_key` 走这条路，
 层名报 `env`）。
+
+**只有 API 有这一层**：页面上不再有「设置来自哪一层」的表格，也不再有每个字段底下
+那行来源——它们和模型表单里那一堆开关一起从页面上拿掉了。
 
 ### 8.3 写入
 

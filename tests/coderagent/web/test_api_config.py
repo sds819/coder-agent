@@ -327,13 +327,12 @@ def test_the_model_has_to_call_the_tools():
     )
 
 
-def test_the_settings_page_offers_a_cache_control_mode_that_mini_accepts(make_client):
-    """mini only knows `default_end` and nothing, so the page may not offer anything else."""
+def test_the_settings_page_offers_no_cache_control_mode(make_client):
+    """The page has no cache control any more, so it can not offer one mini rejects."""
     from coderagent.compat import set_cache_control
 
     page = make_client().get("/settings").text
-    assert 'value="default_end"' in page
-    assert 'value="ephemeral"' not in page
+    assert "set-cache-control" not in page
     assert set_cache_control([], mode="default_end") == []
 
 
@@ -353,11 +352,31 @@ def test_a_thinking_budget_that_does_not_exist_is_refused(make_client):
     assert "unknown reasoning effort" in response.json()["detail"]
 
 
-def test_the_page_offers_the_levels_of_the_model(make_client):
+def test_the_page_offers_no_levels_of_the_model(make_client):
+    """The thinking budget and the verbosity are written in the file, not on the page."""
     page = make_client().get("/settings").text
 
-    assert 'value="minimal"' in page
-    assert 'value="high"' in page
+    assert "reasoning-effort" not in page
+    assert "verbosity" not in page
+
+
+def test_the_page_offers_the_model_the_address_and_the_key(make_client):
+    """The page keeps the four settings that decide which model is called."""
+    page = make_client().get("/settings").text
+
+    for field in ("model-name", "api-base", "api-key", "max-retries"):
+        assert f'id="{field}"' in page
+    for gone in ("litellm-config", "routing", "routing-rules", "model-kwargs", "review-model"):
+        assert f'id="{gone}"' not in page
+
+
+def test_the_page_has_no_second_panel_to_test_a_model(make_client):
+    """The button of the model form tests the settings of the form, so a second panel is one too many."""
+    page = make_client().get("/settings").text
+
+    assert 'id="test-form"' not in page
+    assert 'id="test-endpoint"' not in page
+    assert 'id="layers"' not in page
 
 
 def test_the_verbosity_is_written_and_read_back(make_client):

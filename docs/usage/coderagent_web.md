@@ -109,34 +109,25 @@ The model configuration, in a form:
 | Field | What it is |
 |---|---|
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider may be in front of the name (`openai/MiniMax-M2.7`, `openai:MiniMax-M2.7`) or left out (`MiniMax-M2.7`): the page shows the provider it worked out |
-| Litellm config file | `model.litellm_config` — the file with the aliases of the models |
-| API base | `model.api_base` — the address of the provider. When the address lives in the aliases file, the field stays empty and the page shows the address of that file under it |
+| API base | `model.api_base` — the address of the provider |
 | API key | `model.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again. The page says where the key comes from: the settings, or which variable of the environment |
 | Retries | `model.max_retries` |
-| Cache control | `model.set_cache_control` |
-| Reasoning effort | `model.reasoning_effort` — how much the model thinks: `minimal`, `low`, `medium`, `high`, or empty for the default of the model |
-| Verbosity | `model.verbosity` — how much the model says: `low`, `medium`, `high`, or empty for the habit of the model |
-| Review model | `model.review_model` — the model that reviews the changes. Empty means: the model of the session |
-| Routing | `model.routing` |
-| Routing rules | `model.routing_rules` |
-| Extra parameters | Everything else of `model.model_kwargs` |
+
+The rest of the model is written in the configuration file, not on the page: the
+thinking budget (`model.reasoning_effort`), the verbosity (`model.verbosity`),
+the review model (`model.review_model`), the routing (`model.routing` and
+`model.routing_rules`), the extra parameters (`model.model_kwargs`) and the
+aliases file (`model.litellm_config`). The **API** still takes all of them:
+`PUT /api/config/model` writes what it is given, and a setting that is not
+sent stays as it is in the file.
 
 The parameters of the call itself (`model`, `messages`, `tools`, `stream`,
 `stream_options`) belong to the agent: the page refuses them instead of
 writing a file that the agent would not start with.
 
-Under every field is the layer it comes from: `defaults`, `user`, `alias` or
-`env`. The aliases file is a layer of its own: what it holds is used when no
-file of the user sets the setting, and the address of the user wins over it.
-The table at the bottom shows every layer, with the secrets taken out.
 The page reads the **configuration files**; the `-m` and `-c` of the command
 line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the
 page still shows the model of the files.
-
-The **Example** block under the fields shows how a third party endpoint is
-written: the model name is then an alias of the model list of a litellm config
-file, and the key of the endpoint stays in that file instead of the settings of
-the agent.
 
 `Test connection` sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
@@ -152,19 +143,6 @@ reports seven things:
 | The aliases file | Whether the file exists, whether it parses, and which aliases it has |
 | The tools | Whether the model calls the tools — without that the agent cannot work |
 
-**Test a model.** A second panel tries a model out without saving anything:
-the endpoint, the key and the name of the model, and a `Test connection`
-button. It is the shape a provider hands them out in.
-
-| Field | What it is |
-|---|---|
-| Endpoint | The address of the provider. The full address of the chat completions (`https://api.example.com/v1/chat/completions`) is fine — the part behind `/v1` is cut off, because litellm adds it itself |
-| API Key | The key of that endpoint. A click shows the key of the settings above, a second click hides it again |
-| Model Name | The name of the model, written as it is: `openai/MiniMax-M2.7`, `openai:MiniMax-M2.7` or `MiniMax-M2.7`. The server works out who is called: the name first, then the address of the endpoint, then the family of the model |
-
-An empty endpoint or an empty key means the one of the settings above. The
-result is the same four lines as the test of the form.
-
 **What is written where**: only the user level file, `~/.coderagent/config.yaml`
 (or `$MSWEA_CODER_HOME/config.yaml`). The project level file
 (`.coderagent/config.yaml`) is **never** written — it is in the repository.
@@ -179,9 +157,9 @@ version is dropped the next time the page is saved.
 **A key in the environment is in the page.** The page reads the configuration
 files first and then the environment: a provider key that comes from the
 environment (`DEEPSEEK_API_KEY` and the like) is shown like any other key, and
-`api_key_set` is true. The layer under the field says `env` when the key comes
-from there. The name of the model says which variable is looked at: `openai/…`
-means `OPENAI_API_KEY`, `deepseek/…` means `DEEPSEEK_API_KEY`.
+`api_key_set` is true. The page says where the key comes from: the settings or
+the environment. The name of the model says which variable is looked at:
+`openai/…` means `OPENAI_API_KEY`, `deepseek/…` means `DEEPSEEK_API_KEY`.
 
 **The key of the field.** The field of the key shows `set (********1234)` while
 the key itself stays hidden. A click on the field asks the server for the key
@@ -433,10 +411,10 @@ Read this before you put it on a network.
   resolved and checked against the working directory and the directories in
   `permissions.include_dirs`. The rules of the user cannot widen that.
 - **The key is only shown on request.** The settings page only gets
-  `api_key_set` and the last four characters; the preview of the layers has
-  every secret replaced by `***`. The key itself is sent when you click the
-  field of the key, and that request needs the header of the client, so a page
-  somewhere else cannot ask for it.
+  `api_key_set` and the last four characters; every secret of the layers the
+  API hands out has been replaced by `***`. The key itself is sent when you
+  click the field of the key, and that request needs the header of the client,
+  so a page somewhere else cannot ask for it.
 - **The api key is written to the user file only**, never to the project file
   that goes into the repository.
 - **A download cannot reach into the network.** The downloads of the skills
@@ -451,7 +429,7 @@ Read this before you put it on a network.
 | Approvals | Yes | Yes, with the same three answers |
 | Slash commands | Yes | Yes, the same ones |
 | Pictures | `/image` | The `+` button, or a paste |
-| The model configuration | A text file | A form, plus a preview of the layers |
+| The model configuration | A text file | A form |
 | The files of the project | The tools of the agent | A tree on the left |
 | The cost | `/cost` | The status bar, and `/cost` |
 

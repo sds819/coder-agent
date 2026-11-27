@@ -103,26 +103,21 @@ slash 命令不能带图。
 | 字段 | 落到哪 |
 |---|---|
 | Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。厂商可以写在前面（`openai/MiniMax-M2.7`、`openai:MiniMax-M2.7`），也可以不写（`MiniMax-M2.7`）：页面会显示算出来的厂商 |
-| Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
-| API base | `model.api_base`——第三方模型的地址。地址写在别名文件里时，这一栏是空的，页面把它显示在下面 |
+| API base | `model.api_base`——第三方模型的地址 |
 | API key | `model.api_key`。点一下显示，再点一下收起。页面会写明 key 的来源：设置里的，还是环境变量里的 |
 | Max retries | `model.max_retries` |
-| Cache control | `model.set_cache_control`（`default_end` 或空） |
-| Reasoning effort | `model.reasoning_effort`——模型想多久：`minimal`、`low`、`medium`、`high`，留空是模型的默认 |
-| Verbosity | `model.verbosity`——模型说多少：`low`、`medium`、`high`，留空是模型自己的习惯 |
-| Review model | `model.review_model`——审查改动用的模型。留空就是会话自己的模型 |
-| Routing | `model.routing`，一行一个 `用途: 模型` |
-| Routing rules | `model.routing_rules`，一行一个 `when: purpose` |
-| Extra parameters | `model.model_kwargs` 的其余部分（YAML，原样传给厂商） |
+
+模型的其他设置写在配置文件里，不在页面上：思考预算（`model.reasoning_effort`）、
+啰嗦程度（`model.verbosity`）、评审模型（`model.review_model`）、路由
+（`model.routing` 和 `model.routing_rules`）、附加参数（`model.model_kwargs`）
+和别名文件（`model.litellm_config`）。**API** 这些都还收：`PUT /api/config/model`
+照单全收，不传的设置在文件里原样不动。
 
 这次调用自己的参数（`model`、`messages`、`tools`、`stream`、`stream_options`）是 agent 设的：
 页面直接拒绝，不写进一个 agent 起不来的文件。
 
-每个字段下面写着它来自哪一层：`defaults`、`user`、`alias` 或 `env`（项目定不了模型）。
-别名文件自己算一层：用户没写的设置用它填，用户写了地址就听用户的。
-页面底部的表格列出所有层，含密钥的项都被抹成 `***`。页面读的是**配置文件**；命令行上的
-`-m` 和 `-c` 是给会话用的，所以 `coder web -m deepseek/deepseek-flash` 时页面显示的还是
-文件里的那个模型。
+页面读的是**配置文件**；命令行上的 `-m` 和 `-c` 是给会话用的，所以
+`coder web -m deepseek/deepseek-flash` 时页面显示的还是文件里的那个模型。
 
 `Test the connection` 用表单里的设置发一次最便宜的调用，测通了再 `Save`。它报七件事：
 
@@ -136,19 +131,6 @@ slash 命令不能带图。
 | 别名文件 | 文件在不在、能不能解析、里面有哪些别名 |
 | 工具 | 模型会不会调工具——不会的话 agent 干不了活 |
 
-### 测一个模型 {#test-a-model}
-
-还有一块独立的面板，不写任何文件，只管试：Endpoint、API Key、Model Name，
-右边一个 `Test connection` 按钮——就是厂商后台给你表单的那个样子。
-
-| 字段 | 意思 |
-|---|---|
-| Endpoint | 厂商的地址。可以直接粘完整的 `https://api.example.com/v1/chat/completions`：`/v1` 后面那段会被剪掉，因为 litellm 自己会加 |
-| API Key | 这个地址的 key。点一下显示上面设置里的 key，再点一下收起来 |
-| Model Name | 模型名，按写的发过去：`openai/MiniMax-M2.7`、`openai:MiniMax-M2.7` 或者 `MiniMax-M2.7`。调谁由服务端来定：先看名字，再看接口地址，最后看模型系列 |
-
-地址或 key 留空，就用上面设置里的。结果和表单那边的测试一样，也是那几行。
-
 三件要记住的事：
 
 - **只写用户级文件** `~/.coderagent/config.yaml`（或者 `$MSWEA_CODER_HOME/config.yaml`）。
@@ -158,7 +140,7 @@ slash 命令不能带图。
 - **对新会话生效**。跑着的服务保留启动时的配置，新会话建 loop 时重新读一遍文件。
   当前这个会话想立刻换模型，用 `/model <名字>`。
 - **环境变量里的 key 也算数**。页面先读配置文件，再读环境：`DEEPSEEK_API_KEY` 这类变量
-  里的 key 一样会显示出来，`api_key_set` 是 true，字段下面那行写着来源是 `env`。
+  里的 key 一样会显示出来，`api_key_set` 是 true，页面会写明 key 的来源是设置还是环境。
   看哪个变量由模型的厂商决定：`openai/…` 找 `OPENAI_API_KEY`，`deepseek/…` 找 `DEEPSEEK_API_KEY`。
 - **key 那一栏**。平时只显示 `set (********1234)`，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
@@ -364,8 +346,8 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 - **浏览器骗不到它**。驱动 agent 的接口要一个跨站请求发不出来的头。
 - **浏览器看不到工作目录外面**。每个路径都先 `resolve()`，再跟工作目录和
   `permissions.include_dirs` 比对；用户写的规则放宽不了这个边界。
-- **key 只在你要的时候才露面**。设置页平时只拿到 `api_key_set` 和末四位；分层预览里所有密钥
-  都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
+- **key 只在你要的时候才露面**。设置页平时只拿到 `api_key_set` 和末四位；API 交出去的每一层
+  里的密钥都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
   别的站点的页面问不到它。
 - **API key 只写用户级文件**，绝不写进会进 git 的项目级文件。
 - **下载探不进内网**。技能页的下载只走 `https://`，指向内网的主机被拒绝。
@@ -378,7 +360,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | 审批 | 有 | 有，同样三个答案 |
 | slash 命令 | 有 | 有，同一套 |
 | 图片 | `/image` | 「+」按钮，或者直接粘 |
-| 模型配置 | 一个文本文件 | 一个表单，外加分层预览 |
+| 模型配置 | 一个文本文件 | 一个表单 |
 | 项目文件 | agent 的工具 | 左边的文件树 |
 | 花费 | `/cost` | 状态条，外加 `/cost` |
 
