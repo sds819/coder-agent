@@ -74,6 +74,22 @@ coder eval path/to/suite     # 拿一个任务集跑这个 agent
 coder -m deepseek/deepseek-flash --task "修好那个失败的测试"
 ```
 
+模型可以在终端、终端界面和浏览器里配置，三处写的是同一个文件：`~/.coderagent/config.yaml`。
+
+```bash
+coder model                                                   # 看看当前生效的设置
+coder model --name deepseek/deepseek-flash --max-retries 3    # 把设置写下来
+coder model --test                                            # 试一下这个模型
+```
+
+试一下和写下来是两件事：`--test` 什么都不写，写下来也不等试的结果——暂时还不好用的配置也值得
+先写下来，等下再修。终端界面里也是这三步（`/model name=… base=… key=… retries=…`、
+`/model --test`、`/model --save`），浏览器的设置页上则是**保存**旁边的一个**测试**按钮。
+
+**图片。** 把图片发给一个谁也不了解它能不能看的模型时，agent 会问它一次——发一张纯色的图，
+问它是什么颜色——然后把答案写进你自己的配置文件。下一次配置里已经有答案了，就不再问。
+看不到图片的模型会被直接拒绝这一轮，而不是编一个答案出来。
+
 ## 文档
 
 `docs/usage` 里：

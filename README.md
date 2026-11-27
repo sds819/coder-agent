@@ -81,6 +81,26 @@ from `~/.coderagent/.env`.
 coder -m deepseek/deepseek-flash --task "fix the failing test"
 ```
 
+The model is configured in the terminal, in the terminal interface and in the browser. All three
+write the same file, `~/.coderagent/config.yaml`:
+
+```bash
+coder model                                                   # show the settings in effect
+coder model --name deepseek/deepseek-flash --max-retries 3    # write them down
+coder model --test                                            # try the model out
+```
+
+The try-out and the writing are two steps: `--test` never writes anything, and the writing never
+waits for the try-out — a configuration that does not work yet is worth writing down, to be fixed
+later. The terminal interface has the same three steps (`/model name=… base=… key=… retries=…`,
+`/model --test`, `/model --save`), and the settings page of the browser has a **Test** button next
+to **Save**.
+
+**Pictures.** When a picture is sent to a model nobody knows anything about, the agent asks it
+once — with a picture of one color and the question what color it is — and writes the answer to
+your own configuration file. The next time the configuration says it, and the model is never asked
+again. A model that cannot take pictures is refused the turn, instead of making up an answer.
+
 ## Read more
 
 In `docs/usage`:
