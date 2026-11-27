@@ -1979,6 +1979,21 @@ key of the provider is read from the environment (<code>ANTHROPIC_API_KEY</code>
 from <code>~/.coderagent/.env</code>.</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<span class="w"> </span>--task<span class="w"> </span><span class="s2">"fix the failing test"</span>
 </code></pre></div>
+<p>The model is configured in the terminal, in the terminal interface and in the browser. All three
+write the same file, <code>~/.coderagent/config.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>model<span class="w">                                                   </span><span class="c1"># show the settings in effect</span>
+coder<span class="w"> </span>model<span class="w"> </span>--name<span class="w"> </span>deepseek/deepseek-flash<span class="w"> </span>--max-retries<span class="w"> </span><span class="m">3</span><span class="w">    </span><span class="c1"># write them down</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w">                                            </span><span class="c1"># try the model out</span>
+</code></pre></div>
+<p>The try-out and the writing are two steps: <code>--test</code> never writes anything, and the writing never
+waits for the try-out — a configuration that does not work yet is worth writing down, to be fixed
+later. The terminal interface has the same three steps (<code>/model name=… base=… key=… retries=…</code>,
+<code>/model --test</code>, <code>/model --save</code>), and the settings page of the browser has a <strong>Test</strong> button next
+to <strong>Save</strong>.</p>
+<p><strong>Pictures.</strong> When a picture is sent to a model nobody knows anything about, the agent asks it
+once — with a picture of one color and the question what color it is — and writes the answer to
+your own configuration file. The next time the configuration says it, and the model is never asked
+again. A model that cannot take pictures is refused the turn, instead of making up an answer.</p>
 <h2 id="read-more">Read more</h2>
 <p>In <code>docs/usage</code>:</p>
 <ul>

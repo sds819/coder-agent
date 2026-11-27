@@ -1937,6 +1937,17 @@ coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span
 <code>OPENAI_API_KEY</code> 等），或者从 <code>~/.coderagent/.env</code> 读。</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash<span class="w"> </span>--task<span class="w"> </span><span class="s2">"修好那个失败的测试"</span>
 </code></pre></div>
+<p>模型可以在终端、终端界面和浏览器里配置，三处写的是同一个文件：<code>~/.coderagent/config.yaml</code>。</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>model<span class="w">                                                   </span><span class="c1"># 看看当前生效的设置</span>
+coder<span class="w"> </span>model<span class="w"> </span>--name<span class="w"> </span>deepseek/deepseek-flash<span class="w"> </span>--max-retries<span class="w"> </span><span class="m">3</span><span class="w">    </span><span class="c1"># 把设置写下来</span>
+coder<span class="w"> </span>model<span class="w"> </span>--test<span class="w">                                            </span><span class="c1"># 试一下这个模型</span>
+</code></pre></div>
+<p>试一下和写下来是两件事：<code>--test</code> 什么都不写，写下来也不等试的结果——暂时还不好用的配置也值得
+先写下来，等下再修。终端界面里也是这三步（<code>/model name=… base=… key=… retries=…</code>、
+<code>/model --test</code>、<code>/model --save</code>），浏览器的设置页上则是<strong>保存</strong>旁边的一个<strong>测试</strong>按钮。</p>
+<p><strong>图片。</strong> 把图片发给一个谁也不了解它能不能看的模型时，agent 会问它一次——发一张纯色的图，
+问它是什么颜色——然后把答案写进你自己的配置文件。下一次配置里已经有答案了，就不再问。
+看不到图片的模型会被直接拒绝这一轮，而不是编一个答案出来。</p>
 <h2 id="_3">文档</h2>
 <p><code>docs/usage</code> 里：</p>
 <ul>
